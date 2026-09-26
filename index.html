@@ -2193,9 +2193,7 @@ function munta(gltf, tipo) {
   const accions = {};
   gltf.animations.forEach(c => { accions[c.name] = mixer.clipAction(c); });
   const repos = accions.repos || Object.values(accions)[0] || null;
-  // el repòs va endavant i enrere: la «Breathing Idle» no acaba igual que comença i, en bucle normal,
-  // a cada volta feia una sotragada d'un fotograma
-  if (repos) repos.setLoop(THREE.LoopPingPong, Infinity).play();
+  if (repos) repos.play();
   mixer.update(0);
   const os = re => { let t = null; cos.traverse(o => { if (o.isBone && re.test(o.name)) t = o; }); return t; };
   // [os, signe]: el braç esquerre del nan és a +X (mira cap a +Z), i s'obre girant cap a +Z
@@ -2211,7 +2209,9 @@ function munta(gltf, tipo) {
   arrel.rotation.y = 0.32;   // una mica girat cap a la placa del nom
   escena.add(arrel);
   // només torna a respirar quan acaba el gest que es veu; un de trepitjat per un altre no compta
-  mixer.addEventListener("finished", e => { if (actiu && e.action === actiu.ara) torna(); });
+  // el canvi de tornada es fa al fotograma següent, no a dins de l'actualització del mixer (si s'hi fa,
+  // aquell fotograma hi barreja la postura de repòs de l'esquelet, amb els braços amunt)
+  mixer.addEventListener("finished", e => { if (actiu && e.action === actiu.ara) actiu.pendent = true; });
   return { tipo, arrel, mixer, accions, repos, bracos, ample: Math.max(bb.max.x - bb.min.x, 0.5), ara: repos };
 }
 
@@ -2274,25 +2274,46 @@ function enquadra() {
 
 // Obre els braços al pla de davant del nan. `pes` = quant de repòs hi ha a la barreja (1 quiet, 0 en un gest).
 const _q = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qm = new THREE.Quaternion(), _eix = new THREE.Vector3();
+// LA SOTRAGADA (26/09/2026, mesurada amb prova_bucle.py): el mixer del three.js només escriu un os quan
+// el valor del clip CANVIA. Just quan el bucle torna a començar el valor queda quiet un parell de
+// fotogrames, l'os es quedava amb el gir d'aquest arranjament ja posat, i s'hi tornava a sumar: els
+// braços s'obrien el doble de cop (un salt del 17 % de l'alçada del nan) i tornaven. Ara cada os guarda
+// la seva postura neta (la del mixer) i el gir es fa sempre a partir d'aquella, mai a sobre del d'abans.
 function postura(m, pes) {
   if (!m.bracos || !m.bracos.length) return;
   m.arrel.updateMatrixWorld(true);
   _eix.set(0, 0, 1).applyQuaternion(m.arrel.quaternion);   // cap on mira el nan
   for (const [os, signe, max] of m.bracos) {
+    const u = os.userData;
+    if (!u.neta) { u.neta = new THREE.Quaternion(); u.feta = new THREE.Quaternion(); u.te = false; }
+    // si el mixer no ha escrit l'os aquest fotograma, encara hi ha el gir d'abans: la neta és la guardada
+    if (!u.te || !os.quaternion.equals(u.feta)) u.neta.copy(os.quaternion);
+    os.quaternion.copy(u.neta);
     const angle = signe * (max === OBRE ? OBRE_GEST + (OBRE - OBRE_GEST) * pes : max * pes);
-    if (!angle) continue;
-    os.parent.getWorldQuaternion(_qp);
-    _qm.setFromAxisAngle(_eix, angle);
-    // gir al món → gir local: q = pare⁻¹ · gir · pare
-    _q.copy(_qp).invert().multiply(_qm).multiply(_qp);
-    os.quaternion.premultiply(_q);
+    if (angle) {
+      os.parent.getWorldQuaternion(_qp);
+      _qm.setFromAxisAngle(_eix, angle);
+      // gir al món → gir local: q = pare⁻¹ · gir · pare
+      _q.copy(_qp).invert().multiply(_qm).multiply(_qp);
+      os.quaternion.premultiply(_q);
+    }
+    u.feta.copy(os.quaternion); u.te = true;
   }
 }
 const pesRepos = m => (m.repos && m.repos.isRunning() ? m.repos.getEffectiveWeight() : m.ara === m.repos ? 1 : 0);
 
+function pas(dt) {
+  actiu.mixer.update(dt);
+  if (actiu.pendent) { actiu.pendent = false; torna(); }
+  // l'obertura dels braços segueix el pes del repòs suavitzat: en tornar d'un gest, el three.js dona al
+  // repòs el pes sencer un fotograma abans que comenci el fos, i els braços s'obrien de cop aquell fotograma
+  const objectiu = pesRepos(actiu);
+  actiu.pes = actiu.pes == null ? objectiu : actiu.pes + (objectiu - actiu.pes) * Math.min(1, dt * 7);
+  postura(actiu, actiu.pes);
+}
 function tic() {
   const dt = Math.min(0.05, rellotge.getDelta());
-  if (actiu) { actiu.mixer.update(dt); postura(actiu, pesRepos(actiu)); }
+  if (actiu) pas(dt);
   rend.render(escena, cam);
 }
 function engega() { if (corrent) return; corrent = true; rellotge.getDelta(); rend.setAnimationLoop(tic); }
@@ -2356,7 +2377,29 @@ function prova(nom, frac, ambPostura = true) {
   return rend.domElement.toDataURL("image/png");
 }
 
-window.Escena3D = { reacciona, foto, prova };
+// Per a les proves: fa córrer el nan fotograma a fotograma (60 per segon) durant `seg` segons, com ho fa
+// tic(), i apunta on són les mans a cada fotograma. Un salt (la «sotragada») és un fotograma on una mà es
+// mou molt més que als del voltant. `gests` = [[segon, gest], ...] per provar també els canvis de clip.
+function diag(seg = 16, gests = [], bucle = null) {
+  if (!actiu) return null;
+  atura();
+  if (bucle && actiu.repos) actiu.repos.setLoop(THREE[bucle], Infinity);
+  const mans = [];
+  actiu.arrel.traverse(o => { if (o.isBone && /(Left|Right)Hand$/.test(o.name)) mans.push(o); });
+  const v = new THREE.Vector3(), abans = mans.map(() => new THREE.Vector3()), out = [];
+  const dt = 1 / 60;
+  for (let i = 0; i < seg * 60; i++) {
+    for (const [t, g] of gests) if (Math.abs(i * dt - t) < dt / 2) reacciona(g);
+    pas(dt);
+    let max = 0;
+    mans.forEach((m, k) => { m.getWorldPosition(v); if (i) max = Math.max(max, v.distanceTo(abans[k])); abans[k].copy(v); });
+    out.push([+(i * dt).toFixed(3), +(max / ALT * 1000).toFixed(2), actiu.repos ? +actiu.repos.time.toFixed(3) : 0]);
+  }
+  engega();
+  return out;
+}
+
+window.Escena3D = { reacciona, foto, prova, diag, clip: nom => (actiu && actiu.accions[nom] ? actiu.accions[nom].getClip() : null) };
 document.addEventListener("fragua:heroe", ev => { posa(ev.detail); });
 posa(window.FRAGUA_HEROE || null);
 
