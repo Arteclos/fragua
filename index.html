@@ -607,6 +607,18 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .mat-full>img{justify-self:center;width:240px;height:240px;object-fit:contain;border-radius:12px}
 .talles{margin-top:8px}
 .talles .chip{min-width:52px;justify-content:center}
+.clan-sug{display:grid;margin-top:4px}
+.clan-sug:empty{display:none}
+.clan-fila.sug{padding:6px 0}
+.clan-nom small{display:block;font-weight:400;color:var(--fum);font-size:12.5px}
+.sug-no{margin:6px 0 0;color:#e6a45a;font-size:14px}
+.conf-clan{display:grid;justify-items:center;gap:12px;text-align:center}
+.conf-nom{font-family:var(--display);font-size:24px;overflow-wrap:anywhere}
+.conf-av{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#15110e;border:2px solid #c57b37}
+.clan-perfil{justify-self:start;padding:6px 0;border:0;background:none;color:var(--crema);font:700 16px var(--text);text-align:left;text-decoration:underline;text-decoration-color:rgba(255,181,94,.4);text-underline-offset:4px}
+.mini-clan{width:100%;border:0;background:none;color:var(--crema);font:inherit;cursor:pointer}
+.mini-clan .gran{margin:auto 0 0}
+.mini-clan .fantasma .gran{opacity:.25;font-size:44px;margin:auto}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -2938,7 +2950,7 @@ function cosAj(k) {
   if (k === "social") {
     const so = soc(), gm = so.yo && so.yo.gimnas, menor = !sessio || sessio.franja !== "major";
     return `<div class="aj-fila"><span>Los rankings<small>${so.participa ? "Participas: sales en los rankings de tu zona y de tu clan." : "No participas. Para entrar, ve a Social."}</small></span>${so.participa ? `<button class="btn marc" data-accion="social-surt">Salir</button>` : `<button class="btn marc" data-accion="vista" data-v="social">Ir a Social</button>`}</div>
-    ${so.participa ? `<div class="aj-fila"><span>Cómo sales<small>${so.visible === "publico" ? (menor ? "Con tu nickname, que solo ven los de tu clan: tienes menos de 18." : "Con tu nickname, tu personaje, tu rango y tus días.") : "Como «Anónimo», también para tu clan."}</small></span></div>
+    ${so.participa ? `<div class="aj-fila"><span>Cómo sales<small>${so.visible === "publico" ? (menor ? "Con tu nickname, que solo ven los de tu clan: tienes menos de 18." : "Con tu nickname, tu personaje, tu rango y tus días.") : "Como «Anónimo». Los de tu clan sí te ven."}</small></span></div>
     <div class="fila envolta" style="margin:2px 0 8px"><button class="chip" data-accion="social-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Con mi nickname</button><button class="chip" data-accion="social-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button></div>` : ""}
     <div class="aj-fila"><span>Tu gimnasio en Social<small>${gm ? esc([gm.nom, gm.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="soc-gims">${gm ? "Cambiar" : "Elegir"}</button></div>`;
   }
@@ -3481,7 +3493,7 @@ async function carregaRanking() {
 const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span class="av-img"><img src="${imgPersonaje(PERSONAJES[tipo] ? tipo : "herrero")}" alt="" loading="lazy"></span><b class="num">${nivell || 1}</b></span>`;
 function filaRanking(f, so) {
   const v = f.valor;
-  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos}</span>${avatar(f.personatge, f.nivell)}
+  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${avatar(f.personatge, f.nivell)}
     <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
@@ -3531,15 +3543,15 @@ function formAlta(so) {
       <p class="suau petit" style="margin:6px 0 0">Tu rango es un yunque, de madera a estelar, según tu fuerza para tu peso. Y tus días de gimnasio cuentan todos, seguidos o no.</p></div>
     <div class="yunques-fila">${YUNQUES.map(y => `<img src="${ACTIUS}yunques/${y[1]}.webp" alt="${y[2]}" title="${y[2]}" loading="lazy">`).join("")}</div>
     <div class="vis-2" role="radiogroup" aria-label="Cómo sales en los rankings">
-      <button type="button" class="vis marc" role="radio" data-accion="so-vis" data-v="publico" aria-checked="${v === "publico"}" aria-pressed="${v === "publico"}"><b>Con mi nickname</b><small>${menor ? "Lo ven solo tus amigos del clan. Para el resto sales como «Anónimo»." : "Te ven con tu nickname, tu personaje, tu rango y tus días."}</small></button>
-      <button type="button" class="vis marc" role="radio" data-accion="so-vis" data-v="anonimo" aria-checked="${v === "anonimo"}" aria-pressed="${v === "anonimo"}"><b>Anónimo</b><small>Sales con tu personaje y sin tu nickname, también para tu clan.</small></button>
+      <button type="button" class="vis marc" role="radio" data-accion="so-vis" data-v="publico" aria-checked="${v === "publico"}" aria-pressed="${v === "publico"}"><b>Con mi nickname</b><small>${menor ? "Lo ven solo los de tu clan. Para el resto sales como «Anónimo»." : "Te ven con tu nickname, tu personaje, tu rango y tus días."}</small></button>
+      <button type="button" class="vis marc" role="radio" data-accion="so-vis" data-v="anonimo" aria-checked="${v === "anonimo"}" aria-pressed="${v === "anonimo"}"><b>Anónimo</b><small>En los rankings sales con tu personaje, sin tu nickname. Los de tu clan sí te ven.</small></button>
     </div>
     ${sessio && sessio.salut ? "" : `<p class="suau petit" style="margin:0">Sin permiso para guardar tu peso sales en el ranking de días de gym, pero no en el de fuerza. Se da en Ajustes, en «Tu cuenta».</p>`}
     <p class="suau petit" style="margin:0">Se usan tu mejor marca de cada ejercicio y tu gimnasio, nunca dónde estás. Lo cambias, o sales de los rankings, cuando quieras en Ajustes. <a href="privacidad/" target="_blank" rel="noopener">Privacidad</a></p>
     <button class="btn clar marc" type="submit">PARTICIPAR</button></form>`;
 }
 function vistaRankings(so) {
-  const r = so.rank[claveRank(so)], sol = so.ambit === "amigos" && r && r.llista && r.total <= 1;
+  const r = so.rank[claveRank(so)], sol = so.ambit === "amigos" && r && r.llista && !((so.clan || {}).amics || []).length;
   return `<div class="seg" role="group" aria-label="Qué ranking">${[["rango", "Rango"], ["dias", "Días de gym"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
@@ -3553,14 +3565,89 @@ function vistaRankings(so) {
 // El clan: les sol·licituds que t'arriben, a dalt i marcades; afegir pel nickname exacte; les que esperen; i el clan.
 function vistaClan(so) {
   const cl = so.clan || {}, reb = cl.rebudes || [], env = cl.enviades || [], am = cl.amics || [];
-  const fila = (p, dreta) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}<span class="clan-nom">${esc(p.nom)}</span><span class="clan-acc">${dreta}</span></div>`;
+  const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
   return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren entrar en tu clan</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
-    <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" placeholder="Su nickname, tal cual" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">ENVIAR</button></span></label>
+    <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
+      <div id="c-sug" class="clan-sug" aria-live="polite"></div>
       <p class="suau petit" style="margin:0">Le llega una solicitud y entra en tu clan cuando la acepta. <button type="button" class="enllac" data-accion="clan-comparteix">Pasar mi nickname</button></p></form>
     ${env.length ? `<div class="panel pad"><b class="clan-t">Esperando respuesta</b>${env.map(p => fila(p, `<button class="enllac" data-accion="clan-cancela" data-p="${p.pid}">Cancelar</button>`)).join("")}</div>` : ""}
+    ${(S.ui.clanNick || "").trim().length >= 2 ? (setTimeout(() => suggereix(S.ui.clanNick), 0), "") : ""}
     <div class="panel pad"><b class="clan-t">Tu clan${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
-      ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`)).join("")
+      ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`, true)).join("")
         : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : "Cargando…"}</p>`}</div>`;
+}
+// La fitxa «Tu clan» de l'entrada (l'Albert, 26-09-2026 nit: «canviaria la visió de volumen semanal per la posició al
+// ranking de amigos; i que fent clic puguis entrar»). El lloc al rànquing de força del clan; si encara no hi tens rang,
+// el de dies. Es torna a demanar cada deu minuts com a molt.
+async function carregaClanInici() {
+  try {
+    const [rr, rd] = await Promise.all([api("GET", "/ranking?metrica=rango&ambit=amigos&grupo=general"), api("GET", "/ranking?metrica=dias&ambit=amigos&grupo=general")]);
+    const ara = Date.now();
+    S.social = { ...soc(), rank: { ...soc().rank, "rango|amigos|general": { ...rr, at: ara }, "dias|amigos|-": { ...rd, at: ara } } }; guardar();
+    if ((S.ui.vista || "inicio") === "inicio") render();
+  } catch (e) {}
+}
+function miniClan() {
+  const so = soc();
+  if (S.demo || !teCompte() || !so.participa || !(so.yo && so.yo.gimnas))
+    return `<div class="fantasma"><span class="gran num" aria-hidden="true">·</span><div class="pista">Entra en Social y compite con tu clan</div></div>`;
+  const rr = so.rank["rango|amigos|general"], rd = so.rank["dias|amigos|-"], ara = Date.now();
+  if (ara - Math.min((rr || {}).at || 0, (rd || {}).at || 0) > 600000 && ara - (intent.inici || 0) > 60000) { intent.inici = ara; setTimeout(carregaClanInici, 0); }
+  const r = rr && rr.yo ? rr : rd && rd.yo ? rd : null;
+  if (!rr && !rd) return '<div class="buit">Cargando…</div>';
+  if (!r || r.total <= 1) return '<div class="buit">Añade a alguien a tu clan</div>';
+  return `<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
+}
+// El buscador del clan (l'Albert, 26-09-2026 nit: «autocompletar i buscar si existeix; s'ha de confirmar que li envies
+// a algú»): mentre escrius, si el nickname existeix i, a sota, els adults amb perfil públic que comencen així. Els menors
+// i els anònims només surten amb el nickname exacte, sense personatge (skill menors). Enviar passa per una confirmació.
+let tSug = null, qSug = "", sugDades = null;
+const avatarAmagat = () => `<span class="avatar"><span class="av-img"><img src="${ACTIUS}icones/social.webp" alt=""></span></span>`;
+function filaSug(p, nota) {
+  return `<div class="clan-fila sug">${p.public ? avatar(p.personatge, p.nivell) : avatarAmagat()}<span class="clan-nom">${esc(p.nom)}${nota ? `<small>${esc(nota)}</small>` : ""}</span><span class="clan-acc">${
+    p.estat === "tu" ? '<small class="suau">Eres tú</small>' : p.estat === "amic" ? '<small class="suau">En tu clan</small>' : p.estat === "enviada" ? '<small class="suau">Enviada</small>'
+    : p.estat === "rebuda" ? '<small class="suau">Te la envió: acéptala arriba</small>'
+    : `<button type="button" class="btn clar marc" data-accion="clan-confirma" data-n="${esc(p.nom)}">Añadir</button>`}</span></div>`;
+}
+function suggereix(q) {
+  clearTimeout(tSug);
+  const el = $("#c-sug"); if (!el) return;
+  q = (q || "").trim().replace(/^@/, "");
+  if (q.length < 2) { el.innerHTML = ""; sugDades = null; qSug = ""; return; }
+  tSug = setTimeout(async () => {
+    qSug = q;
+    let r;
+    try { r = await api("GET", "/amigos/sugerencias?q=" + encodeURIComponent(q)); } catch (e) { return; }
+    if (qSug !== q || !$("#c-sug")) return;      // mentrestant n'ha escrit una altra
+    sugDades = r;
+    const ex = r.exacte, resta = (r.suggeriments || []).filter(p => !ex || p.nom !== ex.nom);
+    $("#c-sug").innerHTML = (ex ? filaSug(ex, "Existe") : q.length >= 3 ? `<p class="sug-no">Nadie se llama «${esc(q)}» exactamente.</p>` : "")
+      + resta.map(p => filaSug(p, p.prop)).join("")
+      + (!ex && q.length >= 3 ? '<p class="suau petit" style="margin:4px 0 0">Los menores y los perfiles anónimos solo salen si escribes su nickname exacto.</p>' : "");
+  }, 250);
+}
+function confirmaSollicitud(nom) {
+  const r = sugDades || {}, p = (r.exacte && r.exacte.nom === nom ? r.exacte : (r.suggeriments || []).find(x => x.nom === nom)) || { nom, public: false };
+  S.ui.clanConf = nom;
+  obreFull(`<div class="conf-clan">${p.public ? avatar(p.personatge, p.nivell, "gran") : `<img class="conf-av" src="${ACTIUS}icones/social.webp" alt="">`}
+    <b class="or conf-nom">${esc(p.nom)}</b>
+    <p class="suau petit" style="margin:0">Le llegará tu solicitud y entrará en tu clan cuando la acepte.</p>
+    <div style="width:100%">${botoForja('data-accion="clan-envia-conf"', "ENVIAR SOLICITUD", "")}</div>
+    <button class="enllac" data-accion="clan-conf-no">Cancelar</button></div>`, "¿Es esta persona?");
+}
+// El botó del formulari (o l'Intro): mira si existeix i, si hi és, demana la confirmació.
+async function buscaIConfirma(q) {
+  q = (q || "").trim().replace(/^@/, "");
+  if (q.length < 3) { avis("Escribe su nickname: al menos 3 letras.", true); return; }
+  let r = sugDades && qSug === q ? sugDades : null;
+  if (!r) { try { r = await api("GET", "/amigos/sugerencias?q=" + encodeURIComponent(q)); sugDades = r; qSug = q; } catch (e) { avis(e.message, true); return; } }
+  const ex = r.exacte;
+  if (!ex) { avis("No hay nadie con ese nickname. Revisa cómo se escribe.", true); return; }
+  if (ex.estat === "tu") { avis("Ese es tu nickname.", true); return; }
+  if (ex.estat === "amic") { avis(`${ex.nom} ya está en tu clan.`); return; }
+  if (ex.estat === "enviada") { avis(`Ya le has enviado la solicitud a ${ex.nom}.`); return; }
+  if (ex.estat === "rebuda") { avis(`${ex.nom} ya te envió una solicitud: acéptala arriba, en «Quieren entrar en tu clan».`); return; }
+  confirmaSollicitud(ex.nom);
 }
 function refrescaSocial(so, t) {
   const ara = Date.now();
@@ -3593,7 +3680,8 @@ async function carregaClan(forca) {
     const [s, a] = await Promise.all([api("GET", "/amigos/solicitudes"), api("GET", "/amigos")]);
     const nou = { rebudes: s.rebudes || [], enviades: s.enviades || [], amics: a || [] }, cl = soc().clan || {};
     const canvia = JSON.stringify([cl.rebudes, cl.enviades, cl.amics]) !== JSON.stringify([nou.rebudes, nou.enviades, nou.amics]);
-    S.social = { ...soc(), clan: { ...nou, at: Date.now() } }; guardar();
+    const nouClan = JSON.stringify(cl.amics || []) !== JSON.stringify(nou.amics);     // algú ha entrat o sortit: els rànquings, de nou
+    S.social = { ...soc(), clan: { ...nou, at: Date.now() }, ...(nouClan && cl.at ? { rank: {} } : {}) }; guardar();
     if (S.ui.vista === "social" && tabSoc() !== "gimnasios" && (forca || canvia)) render();
   } catch (e) { if (forca) avis(e.message, true); }
 }
@@ -3604,6 +3692,7 @@ async function enviaSollicitud(nick) {
     const j = await api("POST", "/amigos/solicitud", { nick });
     S.ui.clanNick = "";
     if (j.estat === "amics") { Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); avis(`${j.nom} ya está en tu clan.`); S.social = { ...soc(), rank: {} }; }
+    else if (j.estat === "rebuda") avis(`${j.nom} ya te envió una solicitud: acéptala arriba, en «Quieren entrar en tu clan».`);
     else { Efectos.suena("chisporroteo"); avis(`Solicitud enviada a ${j.nom}. Entra en tu clan cuando la acepte.`); }
     await carregaClan(true);
   } catch (e) { avis(e.message, true); }
@@ -3681,6 +3770,9 @@ async function accioSocial(acc, b) {
     case "clan-rebutja": case "clan-cancela":
       try { await api("DELETE", "/amigos/solicitud/" + b.dataset.p); await carregaClan(true); } catch (e) { avis(e.message, true); }
       return true;
+    case "clan-confirma": confirmaSollicitud(b.dataset.n); return true;
+    case "clan-envia-conf": { const n = S.ui.clanConf; S.ui.clanConf = null; tancaFull(); if (n) await enviaSollicitud(n); return true; }
+    case "clan-conf-no": S.ui.clanConf = null; tancaFull(); return true;
     case "clan-treu": S.ui.clanTreu = b.dataset.p; render(); return true;
     case "clan-treu-no": S.ui.clanTreu = null; render(); return true;
     case "clan-treu-si":
@@ -3883,7 +3975,8 @@ async function accioGimnasos(acc, b) {
 
 // Els gestos d'aquí són asíncrons: el despatxador diu que són seus a l'acte i els deixa córrer.
 const ACC_SOCIAL = new Set(["social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
-  "soc-tab", "soc-tria", "soc-tria-no", "soc-gims", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix"]);
+  "soc-tab", "soc-tria", "soc-tria-no", "soc-gims", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
+  "clan-confirma", "clan-envia-conf", "clan-conf-no"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
 /* ---- reservar el material amb la talla (l'Albert, 26-09-2026: «que la gent pugui reservar una ja mola, no? Amb la
    seva talla?»). No es paga res: és per saber quantes en vol la gent, i de quina talla, abans de fer-ne. ---- */
@@ -4635,13 +4728,11 @@ function vistaInicio() {
   const act = activa(), dia = act ? act.dia : siguienteDia(), d = act ? { t: act.dt || (RUTINA[act.dia - 1] || {}).t || "" } : (diaRutina(dia) || { t: "" });
   const k = hoy(), obj = objetivoProt(), prot = totalDia(k).p;
   const sf = serieFuerza(), fz = Stats.fuerza(S);
-  const vol = Stats.volumenSemanal(S).map(x => x.kg);
   const nom = p.nombre || PERSONAJES[p.tipo].nombre;
   const mida = nom.length > 12 ? " molt-llarg" : nom.length > 9 ? " llarg" : "";
   const fuerza = sf
     ? grafLinia(sf) + (fz.pocas ? '<div class="dada">por semana</div>' : `<div class="dada num ${fz.cambio >= 0 ? "puja" : ""}">${fz.cambio >= 0 ? "+" : ""}${n0(fz.cambio * 100)} % este mes</div>`)
     : `<div class="fantasma">${grafLinia(FANTASMA_L, 102, 74, true)}<div class="pista">Entrena dos semanas y verás tu línea</div></div>`;
-  const volumen = vol.some(x => x > 0) ? grafBarres(vol) : `<div class="fantasma">${grafBarres(FANTASMA_B, 102, 74, null, true)}<div class="pista">Tu primer entreno enciende la barra</div></div>`;
   const proteina = obj ? grafAnell(prot / obj.lo, `${n0(prot)} / ${obj.lo} g`) : '<div class="buit">Pon tu peso en Ajustes</div>';
   return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK">${S.demo ? bandaDemo() : ""}
   <div class="heroe">
@@ -4649,7 +4740,7 @@ function vistaInicio() {
     <div class="placa marc">
       <div class="placa-nom${mida}" data-accion="vista" data-v="personaje" role="button" tabindex="0" aria-label="Ver a ${esc(nom)}"><span class="or">${esc(nom)}</span></div>
       <div class="linia"></div>
-      <div class="placa-nivell">${hexagon(xp.nivel)}
+      <div class="placa-nivell" data-accion="vista" data-v="personaje" role="button" tabindex="0" aria-label="Nivel ${xp.nivel}. Ver a ${esc(nom)}">${hexagon(xp.nivel)}
         <div><div class="barra" role="img" aria-label="Experiencia: ${xp.enNivel} de ${xp.paraSubir}"><i style="width:${(xp.enNivel / xp.paraSubir * 100).toFixed(1)}%"></i></div><div class="xp num">${xp.enNivel} / ${xp.paraSubir} XP</div></div>
       </div>
       <div class="linia"></div>
@@ -4663,7 +4754,7 @@ function vistaInicio() {
   <section class="com-vas"><h2 class="pestanya marc">Cómo vas</h2>
     <div class="panel"><div class="tres">
       <div class="mini marc"><h3>Fuerza</h3>${fuerza}</div>
-      <div class="mini marc"><h3>Volumen semanal</h3>${volumen}</div>
+      <button class="mini marc mini-clan" data-accion="inici-clan" aria-label="Tu puesto en tu clan: abrir los rankings"><h3>Tu clan</h3>${miniClan()}</button>
       <div class="mini marc"><h3>Proteína hoy</h3>${proteina}</div>
     </div></div>
   </section>
@@ -5183,12 +5274,17 @@ document.addEventListener("click", ev => {
   const acc = b.dataset.accion, k = hoy();
   switch (acc) {
     case "vista": veure(b.dataset.v); break;
+    case "inici-clan": {      // la fitxa «Tu clan» de l'entrada porta al rànquing del clan (o a Social, si encara no hi ets)
+      const so = soc();
+      if (so.participa && so.yo && so.yo.gimnas) { S.ui.socTab = "rank"; S.social = { ...so, ambit: "amigos" }; }
+      veure("social"); break;
+    }
     case "heroi": {
       const r = b.getBoundingClientRect();
       Efectos.lanza(ev.clientX || r.left + r.width / 2, ev.clientY || r.top + r.height / 2, 22, 1.1); if (!Efectos.suena("crit")) Efectos.suena("yunque"); Efectos.vibra([20, 40, 30]);
+      // tocar el personatge fa l'animació i prou; la seva pàgina s'obre des del nom o del nivell (l'Albert, 26-09-2026 nit:
+      // «mola que faci l'animació i ja; prefereixo que sigui fent clic a sobre d'Arteclos o el nivell»)
       reacciona("tria");
-      // a l'entrada, tocar el personatge l'obre (Albert, 26/09: «per guanyar una casella»)
-      if (teCompte() && (S.ui.vista || "inicio") === "inicio") setTimeout(() => veure("personaje"), 420);
       break;
     }
     case "tria": triaIdx = (triaIdx + Number(b.dataset.d) + TIPOS.length) % TIPOS.length; render(); break;
@@ -5357,7 +5453,7 @@ document.addEventListener("click", ev => {
 document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "tria-q") { S.ui.triaQ = t.value; refrescaTria(); return; }
-  if (t.id === "c-nick") { S.ui.clanNick = t.value; return; }     // que un repintat del clan no s'ho mengi
+  if (t.id === "c-nick") { S.ui.clanNick = t.value; suggereix(t.value); return; }     // que un repintat no s'ho mengi, i l'autocompletar
   if (t.dataset && t.dataset.camp) {
     const s = activa(); if (!s) return;
     const z = s.ej[+t.dataset.i].sets[+t.dataset.j];
@@ -5406,7 +5502,7 @@ document.addEventListener("submit", async ev => {
     registrar([{ a, q, modo: x.ud && x.gr !== "fruta" ? "ud" : "g" }], $("#n-c").value, diaReg || hoy());
     guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); avis("Apuntado.");
   } else if (tipus === "clan-nick") {
-    enviaSollicitud($("#c-nick").value);
+    buscaIConfirma($("#c-nick").value);
   } else if (tipus === "gim-cerca") {
     if (document.activeElement) document.activeElement.blur();
     cercaGims($("#g-q").value);
