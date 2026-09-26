@@ -655,6 +655,51 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .pujada-pos .a{margin-left:10px;font-size:72px;animation:pujaYunque 1.1s cubic-bezier(.2,1.5,.4,1) .75s both}
 @keyframes pujaDe{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.pujada-yunque img,.pujada-llum,.pujada-pos *{animation:none}}
+.avisos-full{display:grid;justify-items:center;gap:12px;text-align:center}
+.avisos-full p{margin:0;line-height:1.5}
+.avisos-flama svg{width:86px;height:106px;filter:drop-shadow(0 0 18px rgba(255,140,40,.6));animation:flamaViva 1.6s ease-in-out infinite}
+@keyframes flamaViva{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.08) rotate(2deg)}}
+.avisos-t{font-size:21px}
+.avisos-nos{margin:0;color:var(--fum);font-size:14px}
+.avisos-nos .enllac{font-size:14px}
+.aj-hora{height:44px;padding:0 10px;border-radius:8px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--crema);font-size:17px}
+.dies-avis{margin:4px 0 8px}
+.tut{display:grid;justify-items:center;gap:12px;text-align:center}
+.tut p{margin:0;line-height:1.5}
+.tut-mobil{width:190px}
+.tut-mobil svg{display:block;width:100%;height:auto}
+.tut-mobil [data-capa]{opacity:0;transition:opacity .4s}
+.tut-mobil[data-pas="0"] [data-capa="0"],.tut-mobil[data-pas="1"] [data-capa="1"],.tut-mobil[data-pas="2"] [data-capa="2"],.tut-mobil[data-pas="3"] [data-capa="3"]{opacity:1}
+.tut-cos{fill:#0b0908;stroke:#c57b37;stroke-width:2}
+.tut-pantalla{fill:#1b1512}
+.tut-illa{fill:#000}
+.tut-logo{fill:#f3c46b;font:900 20px var(--display);text-anchor:middle;letter-spacing:1px}
+.tut-barra{fill:#2c2420}
+.tut-barra-baix{fill:#27201c}
+.tut-ic{fill:#9a8a7a;font:700 20px var(--text)}
+.tut-share{fill:none;stroke:#e6a45a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tut-punt{fill:#e6a45a}
+.tut-full{fill:#2a221e;stroke:rgba(197,123,55,.5)}
+.tut-t{fill:#e3d3bf;font:600 10.5px var(--text)}
+.tut-tb{font-weight:800;fill:#fff0cf}
+.tut-blau{fill:#9a8a7a}
+.tut-marcat{fill:#5a2a10;stroke:#f0a050;stroke-width:1.5}
+.tut-app{fill:#3a302a}
+.tut-klonk{fill:#b3200a;stroke:#f0a050;stroke-width:1.5;animation:tutKlonk 1.3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.tut-k{fill:#fff0cf;font:900 15px var(--display);text-anchor:middle;pointer-events:none}
+@keyframes tutKlonk{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.tut-ona{fill:none;stroke:#fff0cf;stroke-width:2;opacity:0;animation:tutOna 1.3s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.tut-punta{fill:rgba(255,240,220,.9)}
+.tut-dit{animation:tutDit 1.3s ease-in-out infinite}
+@keyframes tutOna{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.6)}}
+@keyframes tutDit{0%,100%{transform:scale(1)}40%{transform:scale(.8)}}
+.tut-passos{display:grid;gap:6px;width:100%;margin:0;padding:0;list-style:none;text-align:left;counter-reset:pas}
+.tut-passos li{display:grid;grid-template-columns:26px 1fr;gap:2px 10px;padding:8px 10px;border-radius:10px;color:var(--fum);counter-increment:pas;transition:background .3s,color .3s}
+.tut-passos li::before{content:counter(pas);grid-row:span 2;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--bronze-fil);font:800 13px var(--text)}
+.tut-passos li small{grid-column:2;font-size:12.5px;line-height:1.35}
+.tut-passos li.actiu{background:rgba(179,32,10,.28);color:var(--crema)}
+.tut-passos li.actiu::before{background:#b3200a;border-color:#f0a050;color:#fff0cf}
+@media (prefers-reduced-motion:reduce){.tut-dit,.tut-ona,.tut-klonk,.avisos-flama svg{animation:none}}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -2961,7 +3006,7 @@ const pct = v => `+${fmt(v)} %`;
 const interruptor = (acc, on, label, extra = "") => `<button class="interruptor" role="switch" aria-checked="${!!on}" data-accion="${acc}" aria-label="${esc(label)}"${extra}></button>`;
 const pas = (acc, k, val, menys, mes) => `<span class="pas"><button data-accion="${acc}" data-k="${k}" data-d="${menys}" aria-label="Menos">−</button><b class="num">${val}</b><button data-accion="${acc}" data-k="${k}" data-d="${mes}" aria-label="Más">+</button></span>`;
 
-const AJ_SECC = [["cuenta", "Tu cuenta"], ["perfil", "Tu perfil"], ["social", "Social"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"], ["somos", "Quiénes somos"]];
+const AJ_SECC = [["cuenta", "Tu cuenta"], ["perfil", "Tu perfil"], ["social", "Social"], ["avisos", "Avisos"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"], ["somos", "Quiénes somos"]];
 function resumAj(k) {
   const G = gim(), P = progres(), pr = S.perfil;
   return {
@@ -2975,6 +3020,7 @@ function resumAj(k) {
     social: soc().participa ? (soc().visible === "publico" ? "Con tu nickname" : "Anónimo") : "No participas",
     calcula: "",
     somos: "",
+    avisos: { actius: "Activados", pregunta: "Desactivados", bloquejats: "Bloqueados", instal: "Añade KLONK al inicio", no: "No disponibles" }[estatAvisos()],
   }[k] || "";
 }
 function vistaAjustes() {
@@ -2993,6 +3039,20 @@ function cosAj(k) {
     ${so.participa ? `<div class="aj-fila"><span>Cómo sales<small>${so.visible === "publico" ? (menor ? "Con tu nickname, que solo ven los de tu clan: tienes menos de 18." : "Con tu nickname, tu personaje, tu rango y tus días.") : "Como «Anónimo». Los de tu clan sí te ven."}</small></span></div>
     <div class="fila envolta" style="margin:2px 0 8px"><button class="chip" data-accion="social-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Con mi nickname</button><button class="chip" data-accion="social-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button></div>` : ""}
     <div class="aj-fila"><span>Tu gimnasio en Social<small>${gm ? esc([gm.nom, gm.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="soc-gims">${gm ? "Cambiar" : "Elegir"}</button></div>`;
+  }
+  // els avisos (27-09-2026): en aquest mòbil, el recordatori amb l'hora i els dies, i els del clan
+  if (k === "avisos") {
+    const e = estatAvisos(), p = prefsAvisos();
+    const estat = { actius: "Activados en este móvil.", pregunta: "Desactivados en este móvil.", bloquejats: "Bloqueados en el navegador.", instal: "En iPhone llegan solo con KLONK en la pantalla de inicio.", no: "Este navegador no deja recibir avisos." }[e];
+    const boto = e === "actius" ? `<button class="btn marc" data-accion="avisos-desactiva">Desactivar</button>` : e === "pregunta" ? `<button class="btn clar marc" data-accion="avisos-activa">Activar</button>`
+      : e === "instal" ? `<button class="btn clar marc" data-accion="avisos-tutorial">Cómo</button>` : e === "bloquejats" ? `<button class="btn marc" data-accion="avisos-bloquejats">Cómo</button>` : "";
+    return `<div class="aj-fila"><span>En este móvil<small>${estat}</small></span>${boto}</div>
+    <div class="aj-fila"><span>Recordarme entrenar<small>A tu hora, los días que elijas, si aún no has entrenado.</small></span>${interruptor("avisos-entreno", p.entreno, "Recordarme entrenar")}</div>
+    ${p.entreno ? `<div class="aj-fila"><span>A las</span><input type="time" class="aj-hora" data-avisos-hora value="${esc(p.hora)}" max="22:59" aria-label="Hora del aviso"></div>
+    <div class="fila envolta dies-avis">${DIES_SET.map(([n, l, nom]) => { const d = String(n === 0 ? 7 : n); return `<button class="chip dia-s" data-accion="avisos-dia" data-d="${d}" aria-pressed="${p.dies.includes(d)}" aria-label="${nom}">${l}</button>`; }).join("")}</div>` : ""}
+    <div class="aj-fila"><span>Mi clan<small>Cuando alguien quiere entrar, te acepta o te avisa de que ya ha entrenado.</small></span>${interruptor("avisos-clan", p.clan, "Avisos de mi clan")}</div>
+    ${instalPrompt && !esInstalada() ? `<div class="aj-fila"><span>Instalar KLONK<small>Se abre como una app, a pantalla completa, y los avisos llegan mejor.</small></span><button class="btn clar marc" data-accion="avisos-instala">Instalar</button></div>` : ""}
+    ${e === "actius" ? `<p style="margin:10px 0 0"><button class="enllac" data-accion="avisos-prova">Enviarme un aviso de prueba</button></p>` : ""}`;
   }
   // «Quiénes somos», a Ajustes (l'Albert, 26-09-2026 nit: abans era a Social)
   if (k === "somos") return `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
@@ -3251,7 +3311,8 @@ function pagEntreno(d) {
     ${d.records.length ? `<div class="r-recs">${d.records.map((r, i) => `<div class="r-rec entra" style="--d:${(1.8 + i * 0.3).toFixed(2)}s" data-so="record" data-quan="${1800 + i * 300}" data-n="${esc(r.n)}"><span class="r-medalla">${I_MEDALLA}</span><span class="r-rec-t"><b>${esc(r.n)}</b><small>${kgTxt(r.kg)} kg × ${r.reps}. Tu máximo estimado: ${n0(r.v)} kg (${n0(r.abans)} antes)</small></span></div>`).join("")}</div>`
       : d.primeres ? `<p class="r-nota entra" style="--d:1.8s">Has puesto tu marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}. Desde hoy, cada vez que la superes será un récord.</p>`
       : `<p class="r-nota entra" style="--d:1.8s">Hoy no has batido ninguno. La constancia también forja: los récords llegan.</p>`}
-    ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}`;
+    ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}
+    ${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<p class="entra" style="--d:2.4s;text-align:center;margin:14px 0 0"><button class="btn marc" data-accion="clan-avisa">Avisar a mi clan</button></p>` : ""}`;
 }
 function pagMejoras(d) {
   const amb = d.mejoras.filter(m => m.vals.length >= 2), sense = d.mejoras.filter(m => m.vals.length < 2);
@@ -3528,9 +3589,9 @@ const imgYunque = (p, cls = "") => { const y = yunqueDe(p); return y ? `<img cla
 function fullYunques() {
   const so = soc(), p = so.yo && so.yo.poder, meu = yunqueDe(p);
   const seg = p == null ? null : YUNQUES.find(t => t[0] > p);
-  return `<p style="margin-top:0">Tu yunque sale de tu <b>poder</b>: en cada ejercicio comparamos lo que levantas <b>para tu peso</b> (la fuerza relativa) con lo de todos los que lo hacen en KLONK, y el poder es la media de esos puestos, de 0 a 1000. Por eso alguien ligero que levanta mucho para lo que pesa puede estar muy arriba.</p>
-    ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de poder para ${seg[2]}.</b></p>` : ""}
-    <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de poder: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
+  return `<p style="margin-top:0">Tu yunque sale de tu <b>temple</b>: en cada ejercicio comparamos lo que levantas <b>para tu peso</b> (la fuerza relativa) con lo de todos los que lo hacen en KLONK, y el temple es la media de esos puestos, de 0 a 1000. Por eso alguien ligero que levanta mucho para lo que pesa puede estar muy arriba.</p>
+    ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de temple para ${seg[2]}.</b></p>` : ""}
+    <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de temple: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
 }
 const AMBITS2 = [["amigos", "Amigos"], ["gimnasio", "Mi gimnasio"], ["ciudad", "Ciudad"], ["provincia", "Provincia"], ["ccaa", "Comunidad"], ["pais", "País"], ["continente", "Continente"], ["mundo", "Mundo"]];
 const GRUPS_R = ["general", "Pecho", "Espalda", "Pierna", "Hombro", "Brazo"];
@@ -3564,7 +3625,7 @@ function capSocial(so) {
   let rang = "";
   if (so.participa && gim) {
     const y = yunqueDe(yo.poder), dif = yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
-    rang = `<div class="perfil-rang">${y ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
+    rang = `<div class="perfil-rang">${y ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
       : sessio && sessio.salut ? `<small>Termina un entreno para tener rango de fuerza. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
       : `<small>Sin permiso para guardar tu peso no hay rango de fuerza. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</div>`;
   }
@@ -3672,7 +3733,7 @@ function mostraPujada() {
   if (p.t === "yunque") {
     setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); Efectos.lluvia(1.3); Efectos.vibra([30, 40, 60]); }, 250);
     celebra(`<div class="gran or entra-gran">¡NUEVO YUNQUE!</div><div class="pujada-yunque"><i class="pujada-llum"></i><img src="${ACTIUS}yunques/${p.y.id}.webp" alt="${p.y.nom}"></div>
-      <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Poder ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
+      <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Temple ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
   } else {
     setTimeout(() => { Efectos.suena("triar"); Efectos.lluvia(0.8); Efectos.vibra([20, 30, 40]); }, 250);
     celebra(`<div class="gran or entra-gran">¡SUBES EN TU CLAN!</div><div class="pujada-pos"><span class="num de">${p.de}.º</span><svg class="fletxa" viewBox="0 0 40 24" width="40" height="24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num or a">${p.a}.º</span></div>
@@ -3781,6 +3842,7 @@ async function enviaSollicitud(nick) {
 }
 // Un enllaç klonk.fit/#amigo=Nick (el que envia «Pasar mi nickname»): obre el clan amb el nickname posat.
 function mirarEnllacAmic() {
+  if (location.hash === "#clan") { history.replaceState(null, "", location.pathname); S.ui.socTab = "clan"; S.ui.vista = "social"; guardar(); return; }
   const m = location.hash.match(/^#amigo=([^&]+)/);
   if (!m) return;
   history.replaceState(null, "", location.pathname);
@@ -3834,7 +3896,7 @@ async function accioSocial(acc, b) {
         const p = await api("GET", "/perfil/" + b.dataset.p), y = yunqueDe(p.poder);
         $("#capa .full-cap h2").textContent = p.nick;
         const cos = `<div class="perfil-gran"><img src="${imgPersonaje(PERSONAJES[p.personatge] ? p.personatge : "herrero")}" alt=""><div>${imgYunque(p.poder, "gran")}<b class="or">${y ? y.nom : ""}</b><small>Nivel ${p.nivell}</small></div></div>
-          <div class="r-tiles tres-t"><div class="r-tile marc"><b class="or num">${p.dies}</b><span>días de gym</span></div><div class="r-tile marc"><b class="or num">${p.racha || 0}</b><span>este año</span></div><div class="r-tile marc"><b class="or num">${p.poder != null ? n0(p.poder) : "·"}</b><span>Poder</span></div></div>
+          <div class="r-tiles tres-t"><div class="r-tile marc"><b class="or num">${p.dies}</b><span>días de gym</span></div><div class="r-tile marc"><b class="or num">${p.racha || 0}</b><span>este año</span></div><div class="r-tile marc"><b class="or num">${p.poder != null ? n0(p.poder) : "·"}</b><span>Temple</span></div></div>
           <div class="grups-perfil">${Object.entries(p.poder_grups || {}).map(([g, v]) => `<div>${imgYunque(v)}<small>${esc(g)}</small></div>`).join("")}</div>`;
         const d = $("#capa .dins"); d.querySelectorAll(":scope > p").forEach(x => x.remove()); d.insertAdjacentHTML("beforeend", cos);
       } catch (e) { tancaFull(); avis(e.message, true); }
@@ -4061,6 +4123,215 @@ const ACC_SOCIAL = new Set(["social-alta", "so-vis", "social-metrica", "social-a
   "soc-tab", "soc-tria", "soc-tria-no", "soc-gims", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
   "clan-confirma", "clan-envia-conf", "clan-conf-no", "soc-yunques"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
+/* ---- ELS AVISOS (27-09-2026, l'Albert: «sobretot notificacions, que és el que fa que entrenin; que ens repregunti quan
+   entrem; a Ajustes s'ha de poder posar o no»). A l'iPhone només arriben amb KLONK a la pantalla d'inici: llavors el primer
+   pas és el tutorial animat per afegir-l'hi («com fan les apps bones»). ---- */
+const esIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const esInstalada = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const potAvisos = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+function estatAvisos() {
+  if (!potAvisos()) return esIOS && !esInstalada() ? "instal" : "no";
+  if (Notification.permission === "denied") return "bloquejats";
+  return Notification.permission === "granted" && S.ui.avisosSub ? "actius" : "pregunta";
+}
+const b64aBytes = t => { const p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+// els dies d'avís d'entrada, segons els que entrena (Tus datos): 3 dies → dilluns, dimecres i divendres
+const diesPerDefecte = () => ({ 1: "1", 2: "14", 3: "135", 4: "1245", 5: "12345", 6: "123456", 7: "1234567" })[S.perfil.diasSemana || 4] || "1245";
+// l'hora, com a molt les 22:59: a partir de les 23 el servidor ja no envia el recordatori (i qui entrena a les 23 no el rebria mai)
+const horaAvis = h => /^\d{2}:\d{2}$/.test(h || "") ? (h <= "22:59" ? h : "22:00") : "18:00";
+const prefsAvisos = () => { const p = { hora: S.perfil.horaEntreno || "18:00", dies: diesPerDefecte(), entreno: true, clan: true, ...(S.avisos || {}) }; p.hora = horaAvis(p.hora); return p; };
+const zonaHoraria = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return "Europe/Madrid"; } };
+async function registraSW() { if (!("serviceWorker" in navigator)) return null; try { return await navigator.serviceWorker.register("sw.js"); } catch (e) { return null; } }
+let instalPrompt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); instalPrompt = e; if ((S.ui.vista || "") === "ajustes") render(); });
+window.addEventListener("appinstalled", () => { instalPrompt = null; });
+// Tocar un avís amb KLONK obert: el service worker no recarrega la pàgina (es perdria el descans en marxa); ens diu on anar.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", ev => {
+    const d = ev.data || {};
+    if (d.klonk !== "avis" || activa()) return;
+    if (/#clan$/.test(d.url || "")) { S.ui.socTab = "clan"; S.ui.vista = "social"; guardar(); render(); }
+  });
+  try { navigator.serviceWorker.startMessages(); } catch (e) {}
+}
+// En sortir del compte (o esborrar-lo): aquest mòbil deixa de rebre els avisos d'aquell compte.
+async function treuAvisosAqui() {
+  try {
+    const reg = "serviceWorker" in navigator && await navigator.serviceWorker.getRegistration(), sub = reg && await reg.pushManager.getSubscription();
+    if (sub) { await api("POST", "/avisos/treu", { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe().catch(() => {}); }
+  } catch (e) {}
+  S.ui.avisosSub = null;
+}
+// Un cop al dia, si els avisos són actius: que el servidor encara tingui aquest mòbil (el navegador la pot haver canviat, o el
+// servei d'avisos esborrada) i la zona horària d'avui. Si no es pot refer sense cap toc, la pantalla diu la veritat: desactivats.
+async function revisaSubscripcio() {
+  if (!teCompte() || S.demo || !potAvisos() || Notification.permission !== "granted" || !S.ui.avisosSub || S.ui.avisosRevisat === hoy()) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const { clau } = await api("GET", "/avisos");
+      sub = clau && await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(clau) });
+    }
+    if (!sub) throw new Error("sense subscripció");
+    const j = sub.toJSON(), p = prefsAvisos();
+    await api("POST", "/avisos", { endpoint: j.endpoint, keys: j.keys, hora: p.hora, dies: p.dies, entreno: p.entreno, clan: p.clan, tz: zonaHoraria() });
+    S.ui.avisosSub = j.endpoint; S.ui.avisosRevisat = hoy(); guardar();
+  } catch (e) { if (!navigator.onLine) return; S.ui.avisosSub = null; guardar(); render(); }
+}
+// El dia d'entreno al servidor, perquè el recordatori no avisi qui entrena o ja ha entrenat: en començar i en acabar. Si no hi
+// ha xarxa (un gimnàs sense cobertura), es queda apuntat i es torna a provar en tornar la connexió o en obrir l'app.
+function marcaEntrenat() {
+  if (!teCompte() || S.demo || !S.avisos) return;      // només a qui ha activat els avisos: a la resta, aquesta data no li serveix de res
+  const d = hoy(); S.ui.fetPendent = d; guardar();
+  api("POST", "/entreno/fet", { dia: d }).then(() => { if (S.ui.fetPendent === d) { S.ui.fetPendent = null; guardar(); } }).catch(() => {});
+}
+function reintentaEntrenat() {
+  if (!S.ui.fetPendent) return;
+  if (S.ui.fetPendent === hoy()) marcaEntrenat(); else { S.ui.fetPendent = null; guardar(); }
+}
+window.addEventListener("online", reintentaEntrenat);
+
+async function activaAvisos() {
+  if (!potAvisos()) { if (esIOS && !esInstalada()) obreFull(fullInstal(), "Añade KLONK a tu inicio"); else avis("Este navegador no deja recibir avisos.", true); return; }
+  let perm = "default";
+  try { perm = await Notification.requestPermission(); } catch (e) {}       // el primer que es fa, dins del toc (iPhone)
+  if (perm !== "granted") {
+    S.ui.avisosNo = Date.now(); guardar(); tancaFull(); render();
+    avis(perm === "denied" ? "Avisos bloqueados: se activan en los ajustes del móvil." : "Sin avisos, de momento.", perm === "denied"); return;
+  }
+  try {
+    const reg = (await registraSW()) || (await navigator.serviceWorker.ready);
+    await navigator.serviceWorker.ready;
+    const { clau } = await api("GET", "/avisos");
+    if (!clau) throw new Error("el servidor aún no los tiene");
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(clau) }));
+    const j = sub.toJSON(), p = prefsAvisos();
+    await api("POST", "/avisos", { endpoint: j.endpoint, keys: j.keys, hora: p.hora, dies: p.dies, entreno: p.entreno, clan: p.clan, tz: zonaHoraria() });
+    S.avisos = p; S.ui.avisosSub = j.endpoint; S.ui.avisosNo = null; guardar(); tancaFull(); render();
+    Efectos.suena("triar"); avis("Avisos activados. Te avisaremos a tu hora si aún no has entrenado.");
+  } catch (e) { avis("No se han podido activar los avisos: " + e.message, true); }
+}
+async function desactivaAvisos() {
+  await treuAvisosAqui();
+  S.ui.avisosNo = Date.now(); guardar(); render(); avis("Avisos desactivados en este móvil.");
+}
+async function desaPrefsAvisos(canvi) {
+  S.avisos = { ...prefsAvisos(), ...canvi }; guardar(); render();
+  if (!teCompte() || S.demo) return;
+  try { await api("POST", "/avisos/prefs", { ...canvi, tz: zonaHoraria() }); } catch (e) { avis(e.message, true); }
+}
+
+// La pregunta en entrar (i en entrar al compte): un cop per obertura, mai a mig entreno. Si diuen «ahora no», torna al cap de
+// tres dies, i com a molt tres vegades (l'Albert: «tornar-hi de tant en tant si diuen que no»; sense fi seria insistir, i hi
+// ha menors). «No me lo preguntes más» la para del tot. Si els han bloquejat al navegador, no surt sola: el com, a Ajustes.
+const AVISOS_MAX_NO = 3;
+let preguntatAra = false;
+function preguntaAvisos(forca) {
+  if (!forca && (preguntatAra || navigator.webdriver || S.demo || !teCompte() || activa() || (S.ui.vista || "inicio") !== "inicio" || $("#capa").innerHTML || $("#celebra").innerHTML)) return;
+  const e = estatAvisos(), dies = (Date.now() - (S.ui.avisosNo || 0)) / 864e5;
+  if (!forca && (e === "actius" || e === "no" || e === "bloquejats" || S.ui.avisosMai || (S.ui.avisosNoN || 0) >= AVISOS_MAX_NO || dies < 3)) return;
+  preguntatAra = true;
+  if (e === "instal") obreFull(fullInstal(), "Añade KLONK a tu inicio");
+  else if (e === "bloquejats") obreFull(fullBloquejats(), "Los avisos");
+  else obreFull(fullPregunta(), "Los avisos");
+}
+function fullPregunta() {
+  return `<div class="avisos-full"><div class="avisos-flama">${flama(true)}</div><b class="or avisos-t">Que tu fuego no se apague</b>
+    <p>Te avisamos a tu hora los días que entrenas, si aún no has ido. Y cuando alguien quiere entrar en tu clan.</p>
+    <div style="width:100%">${botoForja('data-accion="avisos-activa"', "ACTIVAR AVISOS", "Los cambias cuando quieras en Ajustes")}</div>
+    <p class="avisos-nos"><button class="enllac" data-accion="avisos-ara-no">Ahora no</button> · <button class="enllac" data-accion="avisos-mai">No me lo preguntes más</button></p></div>`;
+}
+function fullBloquejats() {
+  return `<div class="avisos-full"><b class="or avisos-t">Los avisos están bloqueados</b>
+    <p>Para activarlos: ${esIOS ? "Ajustes del iPhone, Notificaciones, KLONK, y «Permitir notificaciones»" : "toca el candado junto a la dirección, o ve a Ajustes del móvil, Apps, KLONK, Notificaciones"}.</p>
+    <button class="btn marc" data-accion="avisos-entes">Entendido</button></div>`;
+}
+
+// El tutorial per afegir KLONK a la pantalla d'inici: un mòbil dibuixat que fa cada toc, i el pas marcat a sota.
+const PASSOS_IOS = [["Toca «Compartir»", "El cuadrado con la flecha, abajo en Safari. Si no lo ves, toca los tres puntos ··· y luego «Compartir»."],
+  ["Toca «Añadir a pantalla de inicio»", "Baja un poco en la lista si no sale a la primera."], ["Toca «Añadir»", "Arriba a la derecha."],
+  ["Abre KLONK desde su icono", "Entra con tu cuenta (desde el icono se entra de nuevo) y activa los avisos: desde ahí ya llegan."]];
+const PASSOS_AND = [["Toca el menú ⋮", "Arriba a la derecha en Chrome."], ["Toca «Instalar aplicación»", "O «Añadir a pantalla de inicio»."],
+  ["Toca «Instalar»", ""], ["Abre KLONK desde su icono", "Y activa los avisos."]];
+let tTut = null;
+function fullInstal() {
+  const ios = esIOS || !/Android/i.test(navigator.userAgent), passos = ios ? PASSOS_IOS : PASSOS_AND;
+  setTimeout(() => arrencaTutorial(passos.length), 60);
+  return `<div class="tut">${ios ? "<p>En iPhone, los avisos solo llegan si KLONK está en tu pantalla de inicio. Son tres toques:</p>" : "<p>Instala KLONK en tu pantalla de inicio: se abre como una app y te llegan los avisos.</p>"}
+    ${instalPrompt ? `<div style="width:100%">${botoForja('data-accion="avisos-instala"', "INSTALAR KLONK", "")}</div>` : ""}
+    <div class="tut-mobil" data-pas="0" aria-hidden="true">${svgMobil(ios)}</div>
+    <ol class="tut-passos">${passos.map(([t, d], i) => `<li data-i="${i}"${i ? "" : ' class="actiu"'}><b>${t}</b>${d ? `<small>${d}</small>` : ""}</li>`).join("")}</ol>
+    <p class="avisos-nos"><button class="enllac" data-accion="avisos-ara-no">Ahora no</button> · <button class="enllac" data-accion="avisos-mai">No me lo preguntes más</button></p></div>`;
+}
+function arrencaTutorial(n) {
+  clearInterval(tTut);
+  let i = 0;
+  tTut = setInterval(() => {
+    const m = document.querySelector(".tut-mobil"); if (!m) { clearInterval(tTut); return; }
+    i = (i + 1) % n; m.dataset.pas = i;
+    document.querySelectorAll(".tut-passos li").forEach(li => li.classList.toggle("actiu", +li.dataset.i === i));
+  }, 2600);
+}
+const dit = (x, y) => `<g class="tut-dit" style="transform-origin:${x}px ${y}px"><circle cx="${x}" cy="${y}" r="16" class="tut-ona"/><circle cx="${x}" cy="${y}" r="9" class="tut-punta"/></g>`;
+function svgMobil(ios) {
+  const graella = (x0, y0, klonk) => Array.from({ length: 16 }, (_, k) => { const x = x0 + (k % 4) * 36, y = y0 + Math.floor(k / 4) * 40, es = k === klonk;
+    return `<rect x="${x}" y="${y}" width="26" height="26" rx="7" class="${es ? "tut-klonk" : "tut-app"}"/>${es ? `<text x="${x + 13}" y="${y + 18}" class="tut-k">K</text>` : ""}`; }).join("");
+  const comu = `<rect x="10" y="4" width="180" height="372" rx="30" class="tut-cos"/><rect x="19" y="14" width="162" height="352" rx="22" class="tut-pantalla"/>
+    <rect x="78" y="22" width="44" height="12" rx="6" class="tut-illa"/>`;
+  const pagina = `<text x="100" y="${ios ? 78 : 96}" class="tut-logo">KLONK</text><rect x="40" y="${ios ? 96 : 112}" width="120" height="10" rx="5" class="tut-barra"/>
+    <rect x="40" y="${ios ? 114 : 130}" width="90" height="10" rx="5" class="tut-barra"/><rect x="40" y="${ios ? 140 : 156}" width="120" height="70" rx="10" class="tut-barra"/>`;
+  if (ios) return `<svg viewBox="0 0 200 380">${comu}
+    <g data-capa="0">${pagina}<rect x="19" y="318" width="162" height="48" class="tut-barra-baix"/>
+      <text x="40" y="347" class="tut-ic">‹</text><text x="66" y="347" class="tut-ic">›</text>
+      <path d="M93 346v-15h14v15M100 322v14M95 327l5-5 5 5" class="tut-share"/><rect x="128" y="332" width="12" height="14" rx="2" class="tut-share"/><rect x="152" y="332" width="12" height="12" rx="2" class="tut-share"/>${dit(100, 336)}</g>
+    <g data-capa="1">${pagina}<rect x="19" y="150" width="162" height="216" rx="16" class="tut-full"/>
+      <text x="36" y="186" class="tut-t">Copiar</text><text x="36" y="214" class="tut-t">Añadir a favoritos</text>
+      <rect x="28" y="228" width="144" height="26" rx="7" class="tut-marcat"/><text x="36" y="246" class="tut-t tut-tb" textLength="128" lengthAdjust="spacingAndGlyphs">Añadir a pantalla de inicio</text>
+      <text x="36" y="276" class="tut-t">Buscar en la página</text>${dit(132, 241)}</g>
+    <g data-capa="2"><rect x="19" y="44" width="162" height="150" rx="16" class="tut-full"/><text x="34" y="70" class="tut-t tut-blau">Cancelar</text>
+      <rect x="130" y="56" width="42" height="22" rx="6" class="tut-marcat"/><text x="151" y="71" class="tut-t tut-tb" text-anchor="middle" textLength="34" lengthAdjust="spacingAndGlyphs">Añadir</text>
+      <rect x="32" y="96" width="38" height="38" rx="9" class="tut-klonk"/><text x="51" y="121" class="tut-k">K</text><text x="80" y="120" class="tut-t tut-tb">KLONK</text>${dit(151, 67)}</g>
+    <g data-capa="3">${graella(34, 70, 6)}${dit(122, 123)}</g></svg>`;
+  return `<svg viewBox="0 0 200 380">${comu}
+    <g data-capa="0">${pagina}<rect x="19" y="40" width="162" height="34" class="tut-barra-baix"/><rect x="30" y="48" width="120" height="18" rx="9" class="tut-barra"/>
+      <circle cx="166" cy="51" r="2" class="tut-punt"/><circle cx="166" cy="57" r="2" class="tut-punt"/><circle cx="166" cy="63" r="2" class="tut-punt"/>${dit(166, 57)}</g>
+    <g data-capa="1">${pagina}<rect x="70" y="46" width="108" height="150" rx="10" class="tut-full"/><text x="80" y="72" class="tut-t">Nueva pestaña</text>
+      <text x="80" y="98" class="tut-t">Historial</text><rect x="74" y="110" width="100" height="24" rx="6" class="tut-marcat"/><text x="80" y="127" class="tut-t tut-tb" textLength="88" lengthAdjust="spacingAndGlyphs">Instalar aplicación</text>
+      <text x="80" y="156" class="tut-t">Ajustes</text>${dit(150, 122)}</g>
+    <g data-capa="2">${pagina}<rect x="30" y="140" width="140" height="100" rx="14" class="tut-full"/><text x="100" y="172" class="tut-t tut-tb" text-anchor="middle">¿Instalar KLONK?</text>
+      <rect x="112" y="200" width="50" height="24" rx="12" class="tut-marcat"/><text x="137" y="216" class="tut-t tut-tb" text-anchor="middle">Instalar</text>${dit(137, 212)}</g>
+    <g data-capa="3">${graella(34, 70, 6)}${dit(122, 123)}</g></svg>`;
+}
+
+async function accioAvisos(acc, b) {
+  switch (acc) {
+    case "avisos-activa": return activaAvisos();
+    case "avisos-desactiva": return desactivaAvisos();
+    case "avisos-ara-no": S.ui.avisosNo = Date.now(); S.ui.avisosNoN = (S.ui.avisosNoN || 0) + 1; guardar(); clearInterval(tTut); tancaFull(); return;
+    case "avisos-mai": S.ui.avisosMai = true; guardar(); clearInterval(tTut); tancaFull(); avis("No te lo volveremos a preguntar. Si un día los quieres, están en Ajustes, Avisos."); return;
+    case "avisos-entes": tancaFull(); return;
+    case "avisos-tutorial": obreFull(fullInstal(), "Añade KLONK a tu inicio"); return;
+    case "avisos-bloquejats": obreFull(fullBloquejats(), "Los avisos"); return;
+    case "avisos-entreno": return desaPrefsAvisos({ entreno: !prefsAvisos().entreno });
+    case "avisos-clan": return desaPrefsAvisos({ clan: !prefsAvisos().clan });
+    case "avisos-dia": { const d = b.dataset.d, ara = prefsAvisos().dies; return desaPrefsAvisos({ dies: ara.includes(d) ? ara.replace(d, "") : [...(ara + d)].sort().join("") }); }
+    case "avisos-prova":
+      try { const r = await api("POST", "/avisos/prova"); avis(r.enviats ? "Enviado: te debería llegar ahora mismo." : "No ha llegado a ningún móvil: vuelve a activar los avisos."); } catch (e) { avis(e.message, true); }
+      return;
+    case "avisos-instala": if (instalPrompt) { instalPrompt.prompt(); instalPrompt.userChoice.finally(() => { instalPrompt = null; tancaFull(); render(); }); } return;
+    case "clan-avisa":      // «Avisar a mi clan», en acabar l'entreno i si vols: un cop al dia encara que entrenis dos cops
+      b.disabled = true;
+      try {
+        const r = await api("POST", "/avisos/clan");
+        avis(r.avisats ? `Hemos avisado a ${r.avisats === 1 ? "1 persona" : `${r.avisats} personas`} de tu clan.` : "Nadie de tu clan lo necesitaba ahora: ya han entrenado, hoy descansan o es tarde.");
+        S.ui.clanAvisat = hoy(); guardar();
+      } catch (e) { if (/ya has avisado/.test(e.message || "")) { S.ui.clanAvisat = hoy(); guardar(); } else b.disabled = false; avis(e.message, true); }
+      return;
+  }
+}
+const ACC_AVISOS = new Set(["avisos-activa", "avisos-desactiva", "avisos-ara-no", "avisos-mai", "avisos-entes", "avisos-tutorial", "avisos-bloquejats", "avisos-entreno", "avisos-clan", "avisos-dia", "avisos-prova", "avisos-instala", "clan-avisa"]);
+
 /* ---- reservar el material amb la talla (l'Albert, 26-09-2026: «que la gent pugui reservar una ja mola, no? Amb la
    seva talla?»). No es paga res: és per saber quantes en vol la gent, i de quina talla, abans de fer-ne. ---- */
 const MATERIAL = [["camiseta", "Camiseta"], ["sudadera", "Sudadera"], ["bolsa", "Bolsa de gimnasio"], ["shaker", "Shaker"]];
@@ -4098,6 +4369,7 @@ async function accioMaterial(acc, b) {
 }
 const ACC_MAT = new Set(["mat-obre", "mat-talla", "mat-reserva", "mat-anula"]);
 function accioServidor(acc, b) {
+  if (ACC_AVISOS.has(acc)) { accioAvisos(acc, b); return true; }
   if (ACC_MAT.has(acc)) { accioMaterial(acc, b); return true; }
   if (ACC_SOCIAL.has(acc)) { accioSocial(acc, b); return true; }
   if (ACC_GIM.has(acc)) { accioGimnasos(acc, b); return true; }
@@ -4316,14 +4588,17 @@ async function despresEntrar(r, nou) {
   if (S.personaje && !sessio.nick) { try { const n = await apiCompte("POST", "/nick", { nick: S.personaje.nombre }); desaSessio({ ...sessio, nick: n.nick }); } catch (e) { S.ui.nickPendent = true; } }
   guardarYa(); render(); window.scrollTo({ top: 0 });
   Efectos.suena("triar");
+  setTimeout(() => preguntaAvisos(false), 1500);     // en entrar (també a l'app acabada d'instal·lar a l'iPhone, que torna a demanar el compte)
 }
 async function surtCompte() {
   try { await puja(); } catch (e) {}
+  try { await treuAvisosAqui(); } catch (e) {}      // abans de sortir, que encara hi ha sessió: aquest mòbil deixa de rebre els avisos del compte
   try { await apiCompte("POST", "/compte/surt"); } catch (e) {}
   desaSessio(null); desaVersio(0);
   S = BASE(); guardarYa(); render(); window.scrollTo({ top: 0 });
 }
 async function esborraCompte() {
+  try { await treuAvisosAqui(); } catch (e) {}
   await apiCompte("DELETE", "/yo");
   desaSessio(null); desaVersio(0);
   try { localStorage.removeItem(LLAVE); } catch (e) {}
@@ -5253,6 +5528,8 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 // La música de l'entrada s'atura si surts de l'app o bloqueges el mòbil; la de l'entreno continua sonant (l'Albert,
 // 26-09-2026 nit). En tornar, la de l'entrada segueix on era.
 document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
+  if (document.visibilityState === "visible") reintentaEntrenat();
   if (activa()) return;
   if (document.visibilityState === "hidden") Efectos.Musica.silenci();
   else if (musicaEngegada) musica();
@@ -5420,7 +5697,7 @@ document.addEventListener("click", ev => {
     case "tria": triaIdx = (triaIdx + Number(b.dataset.d) + TIPOS.length) % TIPOS.length; render(); break;
     case "empezar": {
       if (activa()) { veure("entreno"); avis("Ya tienes un entreno en marcha."); break; }
-      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); Efectos.suena("fuego"); Efectos.vibra([20, 30, 40]); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
+      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); marcaEntrenat(); Efectos.suena("fuego"); Efectos.vibra([20, 30, 40]); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
       setTimeout(() => reacciona("tria"), 80);
       break;
     }
@@ -5479,6 +5756,7 @@ document.addEventListener("click", ev => {
       const pujaAbans = { poder: (soc().yo || {}).poder, pos: ((soc().rank["rango|amigos|general"] || {}).yo || {}).pos };
       terminar(); S.ui.vista = "inicio"; musica();
       if (soc().participa) miraPujada(pujaAbans); else sincronitza();
+      marcaEntrenat();     // que el recordatori no avisi qui ja ha entrenat (i si no hi ha xarxa, es torna a provar)
       const des = Stats.experiencia(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
       // la meta de dies de l'any: si l'ha feta avui, la seva bossa (una vegada per any)
       const any = String(new Date().getFullYear()), meta = (S.metaAny || {})[any];
@@ -5598,6 +5876,12 @@ document.addEventListener("input", ev => {
   }
 });
 document.addEventListener("change", ev => {
+  if (ev.target.dataset && ev.target.dataset.avisosHora !== undefined) {
+    const h = ev.target.value;
+    if (/^\d{2}:\d{2}$/.test(h) && h <= "22:59") desaPrefsAvisos({ hora: h });
+    else if (/^\d{2}:\d{2}$/.test(h)) { ev.target.value = prefsAvisos().hora; avis("Como muy tarde, a las 22:59: a partir de las 23 no enviamos avisos.", true); }
+    return;
+  }
   if (canviAjustes(ev.target)) return;
   if (ev.target.name === "c-c") { const l = $("#c-p-l"); if (l) l.hidden = !CARGAS[ev.target.value].paso; }
   if (ev.target.id === "n-a") refrescaAfegeix();
@@ -5685,6 +5969,10 @@ document.addEventListener("touchend", ev => { if (x0 == null) return; const dx =
 mirarEnllacCompte();
 mirarEnllacAmic();
 render();
+registraSW().then(() => revisaSubscripcio());
+reintentaEntrenat();
+if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
+setTimeout(() => preguntaAvisos(false), 1800);
 if (S.activa) pedirPantalla();
 if (teCompte()) baixaEstat(false);
 if (teCompte()) carregaPla();
