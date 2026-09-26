@@ -485,6 +485,10 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .pila i{display:grid;place-items:center;height:16px;border-radius:3px;background:linear-gradient(180deg,#4a4038,#2a241f);border:1px solid #6b5a4c;box-shadow:inset 0 1px 0 rgba(255,220,160,.15)}
 .pila i b{font:900 10px/1 var(--display);color:#ffd27a}
 .sense-kg{display:grid;place-items:center;height:50px;border-radius:8px;border:1px dashed rgba(197,123,55,.35);color:var(--fum);font-size:13px}
+.casella{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45;cursor:pointer}
+.casella input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:#f0a050}
+.aj-legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin:14px 0 0;font-size:14.5px}
+.aj-legal a,.panel a,.suau a{color:var(--flama)}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -2769,6 +2773,7 @@ function cosAj(k) {
     <div class="aj-fila"><span>Modo demostración<small>La app llena de entrenos y medidas de ejemplo, para enseñarla. Tus datos se guardan aparte y vuelven al apagarlo.</small></span>${interruptor("aj-demo", S.demo, "Modo demostración")}</div>
     <p class="suau petit">Hasta que tengamos servidor, tus datos viven solo en este móvil. De vez en cuando, cópialos y guárdalos en tus notas.</p>
     <div class="fila envolta"><button class="btn marc" data-accion="copia">Copiar mis datos</button><button class="btn marc" data-accion="restaura-veure">Pegar una copia</button></div><div id="restaura"></div>
+    <p class="aj-legal"><a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     <div style="margin-top:14px"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div>`;
   if (k === "calcula") return `<div class="text-llarg">
     <p><b>Proteína</b>: entre 1,6 y 2 g por kilo de peso. Los alimentos, de la base del USDA; el yogur, la leche y el pavo en lonchas, de etiquetas de supermercado en España.</p>
@@ -3224,12 +3229,13 @@ function diesGym() {
 }
 function sincronitza() {
   const so = soc();
-  if (!so.participa || !S.perfil.peso || S.demo) return (sincro = Promise.resolve(null));
+  if (!so.participa || S.demo) return (sincro = Promise.resolve(null));
+  const ambPes = !!(so.consentPes && S.perfil.peso);
   const dg = diesGym(), xp = Stats.experiencia(S);
   sincro = (async () => {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: so.nick || null, publico: so.visible === "publico", menor: so.menor !== false, sexe: S.perfil.sexo || null,
-      pes: S.perfil.peso, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
+      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
@@ -3277,7 +3283,7 @@ function vistaSocial() {
     h += `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "gran")}
       <div class="perfil-dades"><b class="perfil-nick">${esc(so.nick || nomHeroi())}</b><small>${so.visible === "publico" ? (so.menor !== false ? "Perfil público, solo para tus amigos" : "Perfil público") : "Anónimo: nadie ve tu nick"}</small>
         <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> días de gym</span><span>${flama(Stats.diasAno(S) > 0)}<b class="num">${Stats.diasAno(S)}</b> este año</span></div></div>
-      <div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small>` : `<small>Termina un entreno para tener rango</small>`}</div></div>
+      <div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small>` : so.consentPes ? `<small>Termina un entreno para tener rango</small>` : `<small>Sin permiso para usar tu peso no hay rango de fuerza</small><button class="enllac" data-accion="social-alta">Dar permiso</button>`}</div></div>
       ${!yo || !yo.gimnas ? `<button class="avis-gim marc" data-accion="vista" data-v="gimnasios"><img src="${ACTIUS}icones/entreno.webp" alt="" width="40" height="40"><span><b>Elige tu gimnasio</b><small>Para ver los rankings de tu gimnasio, tu ciudad, tu provincia y más allá.</small></span></button>` : ""}
       <div class="tabs-t"><button class="chip" data-accion="social-metrica" data-m="rango" aria-pressed="${so.metrica === "rango"}">Rango</button><button class="chip" data-accion="social-metrica" data-m="dias" aria-pressed="${so.metrica === "dias"}">Días de gym</button></div>
       <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
@@ -3309,18 +3315,22 @@ function fullAlta() {
   return `<form class="form" data-form="social-alta">
     <label>Tu nickname<input id="so-nick" maxlength="20" autocomplete="off" value="${esc(nick)}" placeholder="torvald_forja"></label>
     <p class="suau petit" style="margin:-4px 0 0">De 3 a 20 letras o números, sin espacios. Es único.</p>
-    <div><div style="font-weight:700;margin-bottom:8px">¿Tienes 18 años o más?</div><div class="fila envolta"><button type="button" class="chip" data-accion="so-edat" data-v="major" aria-pressed="${so.menor === false}">Sí</button><button type="button" class="chip" data-accion="so-edat" data-v="menor" aria-pressed="${so.menor === true}">No</button></div></div>
+    <div><div style="font-weight:700;margin-bottom:8px">¿Cuántos años tienes?</div><div class="fila envolta">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="so-edat" data-v="${k}" aria-pressed="${edatDe(so) === k}">${t}</button>`).join("")}</div></div>
     <div><div style="font-weight:700;margin-bottom:8px">Cómo apareces en los rankings</div><div class="fila envolta"><button type="button" class="chip" data-accion="so-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button><button type="button" class="chip" data-accion="so-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Perfil público</button></div>
       <p class="suau petit" style="margin:8px 0 0">Anónimo: nadie ve tu nick, solo tu personaje. Público: la gente puede ver tu personaje, tu rango y tus días. Si tienes menos de 18, solo tus amigos.</p></div>
-    <div class="panel pad" style="margin:0"><p class="suau petit" style="margin:0">A nuestro servidor va: tu nick, tu personaje y su nivel, tus días de gym, tu mejor marca de cada ejercicio, tu peso redondeado y el gimnasio que elijas. Nunca dónde estás ni tus medidas. Lo borras todo cuando quieras.</p></div>
+    <label class="casella"><input type="checkbox" id="so-pes"${so.consentPes ? " checked" : ""}><span>Acepto que KLONK use mi peso, redondeado, para calcular mi fuerza relativa y compararla con la de otras personas. Sin esto sales en el ranking de días de gym, pero no en el de fuerza.</span></label>
+    <div class="panel pad" style="margin:0"><p class="suau petit" style="margin:0">A nuestro servidor va: tu nick, tu personaje y su nivel, tus días de gym, tu mejor marca de cada ejercicio, tu peso redondeado si lo aceptas y el gimnasio que elijas. Nunca dónde estás ni tus medidas. Lo borras todo cuando quieras. <a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a></p></div>
     <button class="btn clar marc" type="submit">${so.participa ? "GUARDAR" : "PARTICIPAR"}</button></form>`;
 }
+// L'edat en tres franges (26-09-2026): a Espanya es consent des dels 14 (LOPDGDD art. 7). Per sota, l'app funciona igual però res surt del mòbil.
+const edatDe = so => so.edatTria || so.edat || (so.menor === false ? "major" : null);
 async function desaAlta() {
-  const nick = $("#so-nick").value.trim(), so = soc();
+  const nick = $("#so-nick").value.trim(), so = soc(), edat = edatDe(so), pes = $("#so-pes").checked;
   if (!/^[A-Za-z0-9_.ÑñÁÉÍÓÚáéíóú]{3,20}$/.test(nick)) { avis("El nickname: de 3 a 20 letras o números, sin espacios.", true); return; }
-  if (so.menorTria == null && so.menor == null) { avis("Dinos si tienes 18 años o más.", true); return; }
+  if (!edat) { avis("Dinos cuántos años tienes.", true); return; }
+  if (edat === "nen") { avis("Para entrar en Social hay que tener 14 años. Puedes seguir usando KLONK igual: tus datos no salen de tu móvil.", true); return; }
   const abans = { ...so };
-  S.social = { ...so, nick, participa: true, menor: so.menorTria != null ? so.menorTria : so.menor, visible: so.visTria || so.visible };
+  S.social = { ...so, nick, participa: true, edat, menor: edat !== "major", visible: so.visTria || so.visible, consentPes: pes ? (so.consentPes || new Date().toISOString()) : null };
   const yo = await sincronitza();
   if (!yo) { S.social = abans; guardar(); avis(S.ui.errSocial || "No se ha podido guardar.", true); return; }
   tancaFull(); Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); render();
@@ -3329,8 +3339,8 @@ async function desaAlta() {
 async function accioSocial(acc, b) {
   const so = soc();
   switch (acc) {
-    case "social-alta": if (S.demo) { avis("En el modo demostración no se envía nada.", true); return true; } S.social = { ...so, menorTria: so.menor, visTria: so.visible }; obreFull(fullAlta(), so.participa ? "Tu perfil" : "Participar"); return true;
-    case "so-edat": S.social = { ...so, menorTria: b.dataset.v === "menor" }; b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); return true;
+    case "social-alta": if (S.demo) { avis("En el modo demostración no se envía nada.", true); return true; } S.social = { ...so, edatTria: null, visTria: so.visible }; obreFull(fullAlta(), so.participa ? "Tu perfil" : "Participar"); return true;
+    case "so-edat": S.social = { ...so, edatTria: b.dataset.v }; b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); return true;
     case "so-vis": S.social = { ...so, visTria: b.dataset.v }; b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); return true;
     case "social-metrica": S.social = { ...so, metrica: b.dataset.m }; guardar(); render(); return true;
     case "social-ambit": S.social = { ...so, ambit: b.dataset.a }; guardar(); render(); return true;
@@ -4091,6 +4101,7 @@ function vistaTienda() {
     h += `${[["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]].map(([k2, n, q, e]) =>
       `<button class="paquet marc" data-accion="compra-oro" data-p="${k2}">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Comprar</div></div></button>`).join("")}
     <p class="suau petit" style="text-align:center">Con tarjeta o PayPal. Si tienes menos de 18 años, pídele a tu madre o a tu padre que lo pague. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
+    <p class="suau petit" style="text-align:center">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     ${bloc("Cómo se gana", `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div><div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
   }
   return h;
