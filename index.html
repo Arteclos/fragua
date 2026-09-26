@@ -2141,7 +2141,7 @@ function vistaRutinas() {
       <button class="btn clar marc" style="width:100%;margin-top:4px" data-accion="rut-nova">Crear una rutina nueva</button></section>
     ${rebudes.length ? `<section class="seccio"><h2>Te han compartido</h2>${rebudes.map(x => `<div class="rutina marc rebuda"><span class="rutina-cap"><span class="rutina-nom">${esc(x.rutina.nombre)}</span><span class="toca">de ${esc(x.de)}</span></span>
       <span class="rutina-dades"><span>${nDies(x.rutina.dias.length)}</span></span><span class="fila envolta" style="margin-top:8px"><button class="btn clar marc" data-accion="rut-guarda-rebuda" data-id="${x.id}">GUARDAR</button><button class="btn marc" data-accion="rut-descarta-rebuda" data-id="${x.id}">Descartar</button></span></div>`).join("")}</section>` : ""}
-    <section class="seccio"><h2>Plantillas de la Fragua</h2>${[RUTINA_BASE, ...PLANTILLAS].map(carta).join("")}</section>
+    <section class="seccio"><h2>Plantillas de KLONK</h2>${[RUTINA_BASE, ...PLANTILLAS].map(carta).join("")}</section>
     ${bloc("Por qué funcionan", CIENCIA.map(([t, d, f]) => `<div class="ciencia"><b>${esc(t)}</b><p>${esc(d)}</p><small>${esc(f)}</small></div>`).join(""), "graf")}`;
 }
 function vistaRutina() {
@@ -2284,7 +2284,7 @@ function fullCompartir(r) {
   const amics = (S.ui.amicsLlista || []);
   if (S.cuenta && !S.demo) setTimeout(carregaAmics, 0);
   return `<p class="suau petit" style="margin:0">${esc(r.nombre)}: ${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana.</p>
-    ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre la Fragua")}
+    ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre KLONK")}
     <h3 class="grup-tria">A un amigo de tu clan</h3>
     <div id="amics-comparteix">${S.cuenta ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
 }
@@ -2296,7 +2296,7 @@ async function carregaAmics() {
 async function carregaRebudes() {
   try { S.recibidas = (await api("GET", "/rutinas/recibidas")).map(x => ({ ...x, rutina: rutinaValida(x.rutina) })).filter(x => x.rutina); guardar(); if (S.ui.vista === "rutinas") render(); } catch (e) {}
 }
-// L'enllaç: https://arteclos.github.io/fragua/#rutina=<la rutina en base64>. En obrir-lo, la Fragua pregunta si la guardes.
+// L enllaç: https://klonk.fit/#rutina=<la rutina en base64>. En obrir-lo, l app pregunta si la guardes.
 function mirarEnllacRutina() {
   const m = location.hash.match(/^#rutina=([A-Za-z0-9_-]+)$/);
   if (!m) return;
@@ -2888,30 +2888,30 @@ function canviAjustes(t) {
 // desbloquejant el lore de la fragua; això ho fa molt bé l'Arc Raiders»). La crònica d'abans parlava del teu
 // personatge amb el teu nom i «era una mica friqui»: ara és del lloc, i cada personatge té la seva història a part.
 const CRONICA = [
-  [1, "El fuego de la montaña", "Hace mucho, en el corazón de una montaña, alguien encendió un fuego que nunca se apagó. A su alrededor nació la Fragua: un sitio donde se forjan las herramientas y, sobre todo, las personas."],
-  [3, "El primer yunque", "El primer yunque fue de madera y se partió al tercer golpe. El segundo, de piedra, aguantó un invierno. Así aprendió la Fragua que todo empieza débil y se endurece a golpes."],
-  [5, "La ley del descanso", "Los viejos maestros escribieron una sola ley en la pared: el metal que no descansa, se rompe. Por eso en la Fragua los fuegos se bajan cada noche."],
-  [8, "Los clanes", "Llegaron clanes de todas partes: del desierto, de los bosques, de las islas y de las ciudades. Cada uno traía su manera de hacerse fuerte, y la Fragua las aprendió todas."],
-  [10, "El oro que no compra", "Unos mercaderes quisieron comprar la fuerza de la Fragua con oro. Se fueron enfadados: aquí el oro compra muchas cosas, pero no los kilos. Los que se quedaron a entrenar se hicieron ricos de otra manera."],
-  [12, "El yunque de obsidiana", "En la erupción del año largo, la lava cubrió la Fragua. De ella salió el primer yunque de obsidiana, negro como la noche y caliente durante un siglo."],
+  [1, "El fuego de la montaña", "Hace mucho, en el corazón de una montaña, alguien encendió un fuego que nunca se apagó. A su alrededor nació Klonk, una fragua donde se forjan las herramientas y, sobre todo, las personas. Le pusieron el nombre del ruido del martillo."],
+  [3, "El primer yunque", "El primer yunque fue de madera y se partió al tercer golpe. El segundo, de piedra, aguantó un invierno. Así aprendió Klonk que todo empieza débil y se endurece a golpes."],
+  [5, "La ley del descanso", "Los viejos maestros escribieron una sola ley en la pared: el metal que no descansa, se rompe. Por eso en Klonk los fuegos se bajan cada noche."],
+  [8, "Los clanes", "Llegaron clanes de todas partes: del desierto, de los bosques, de las islas y de las ciudades. Cada uno traía su manera de hacerse fuerte, y Klonk las aprendió todas."],
+  [10, "El oro que no compra", "Unos mercaderes quisieron comprar la fuerza de Klonk con oro. Se fueron enfadados: aquí el oro compra muchas cosas, pero no los kilos. Los que se quedaron a entrenar se hicieron ricos de otra manera."],
+  [12, "El yunque de obsidiana", "En la erupción del año largo, la lava cubrió Klonk. De ella salió el primer yunque de obsidiana, negro como la noche y caliente durante un siglo."],
   [15, "La pared de los nombres", "En la pared del fondo están grabados los nombres de quienes nunca abandonaron. En esa lista no hay reyes: solo gente que volvió al día siguiente."],
   [18, "El metal de las estrellas", "Una noche cayó una estrella en la montaña. De su metal salió el yunque estelar. Dicen que solo lo toca quien ha forjado su fuerza año tras año."],
-  [20, "La Fragua de todos", "Hoy la Fragua está en cada gimnasio donde alguien vuelve mañana. Si has llegado hasta aquí, tu nombre ya podría estar en la pared."],
+  [20, "Klonk es de todos", "Hoy Klonk está en cada gimnasio donde alguien vuelve mañana. Si has llegado hasta aquí, tu nombre ya podría estar en la pared."],
   [25, "Lo que nadie cuenta", "Los maestros más viejos guardan un secreto: el fuego de la montaña nunca fue el que forjó a nadie. Siempre fueron los que volvían. El fuego solo los esperaba."],
 ];
 // La història de cada personatge, com les dels campions del LoL: d'on ve i per què entrena.
 const HISTORIA = {
-  herrero: "Nació en las minas bajo la montaña, donde el martillo se aprende antes que las palabras. Dejó su clan para buscar la Fragua de la que hablaban los viejos.",
-  forjadora: "Templaba espadas en el puerto hasta que entendió que lo más difícil de templar era ella misma. Llegó a la Fragua con una sola regla: cada día, un poco mejor que ayer.",
-  genio: "Nadie sabe si nació del fuego o si el fuego nació de él. Dicen que despierta cuando alguien vuelve a la Fragua muchas veces, y que solo acompaña a quien no abandona.",
+  herrero: "Nació en las minas bajo la montaña, donde el martillo se aprende antes que las palabras. Dejó su clan para buscar Klonk, la fragua de la que hablaban los viejos.",
+  forjadora: "Templaba espadas en el puerto hasta que entendió que lo más difícil de templar era ella misma. Llegó a Klonk con una sola regla: cada día, un poco mejor que ayer.",
+  genio: "Nadie sabe si nació del fuego o si el fuego nació de él. Dicen que despierta cuando alguien vuelve a Klonk muchas veces, y que solo acompaña a quien no abandona.",
   estoico: "Ha pasado por mil batallas sin quejarse de ninguna. Aprendió que la fuerza no es lo que levantas, sino lo que aguantas cuando nadie mira.",
-  cazadora: "Creció en los bosques del norte, donde fallar un tiro es volver a casa con hambre. En la Fragua busca lo mismo que en el bosque: precisión, paciencia y un buen descanso.",
+  cazadora: "Creció en los bosques del norte, donde fallar un tiro es volver a casa con hambre. En Klonk busca lo mismo que en el bosque: precisión, paciencia y un buen descanso.",
   amazona: "Viene de un pueblo donde todos cargan agua antes de saber leer. No pide permiso para ser fuerte: simplemente lo es.",
-  barbaro: "Bajó de las tierras heladas con más fuerza que técnica. Al maestro de la Fragua le costó un invierno entero enseñarle a no doblar las barras.",
+  barbaro: "Bajó de las tierras heladas con más fuerza que técnica. Al maestro de Klonk le costó un invierno entero enseñarle a no doblar las barras.",
   powerlifter: "Tres levantamientos y una sola obsesión: que el número de mañana sea mayor que el de hoy. En su cuaderno no hay excusas, solo kilos.",
   espartano: "Se crio en la disciplina y entrena igual con sol que con tormenta. Su lema cabe en dos palabras: hoy también.",
   valquiria: "Guía a los que caen y se levantan. Dicen que busca por los gimnasios a quien hace la última repetición cuando ya no puede más.",
-  titan: "Lo forjaron placa a placa con el hierro de todas las barras rotas de la Fragua. No habla. Levanta.",
+  titan: "Lo forjaron placa a placa con el hierro de todas las barras rotas de Klonk. No habla. Levanta.",
 };
 const nomHeroi = () => (S.personaje && (S.personaje.nombre || (PERSONAJES[S.personaje.tipo] || {}).nombre)) || "Tu herrero";
 const capitol = c => ({ nivel: c[0], titol: c[1], text: c[2] });
@@ -3025,8 +3025,8 @@ function pagExperiencia(d) {
     ${puja ? `<div class="r-puja entra" style="--d:1.6s" data-so="nivell" data-quan="1600"><b class="or">¡NIVEL ${d.des.nivel}!</b><span>Ahora eres ${esc(d.des.titulo)}</span></div>` : ""}
     <div class="oro-guanyat entra" style="--d:${puja ? 2.1 : 1.5}s">${MONEDA}<b class="or num" data-compta="${d.oro}" data-signe="+" data-quan="${puja ? 2100 : 1500}">+0</b> de oro</div>
     ${cap ? `<div class="r-cronica entra nou" style="--d:${puja ? 2.6 : 2}s" data-so="titol" data-quan="${puja ? 2600 : 2000}">
-      <div class="r-cronica-cap">Nueva crónica de la Fragua</div><b class="or">${esc(cap.titol)}</b><p>${esc(cap.text)}</p>
-      ${seg ? `<small>La siguiente, en el nivel ${seg[0]}.</small>` : ""}</div>` : seg ? `<p class="r-nota entra" style="--d:${puja ? 2.6 : 2}s">La próxima crónica de la Fragua se desbloquea en el nivel ${seg[0]}.</p>` : ""}`;
+      <div class="r-cronica-cap">Nueva crónica de Klonk</div><b class="or">${esc(cap.titol)}</b><p>${esc(cap.text)}</p>
+      ${seg ? `<small>La siguiente, en el nivel ${seg[0]}.</small>` : ""}</div>` : seg ? `<p class="r-nota entra" style="--d:${puja ? 2.6 : 2}s">La próxima crónica de Klonk se desbloquea en el nivel ${seg[0]}.</p>` : ""}`;
 }
 const I_MEDALLA = '<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M7 2h4l1 5-3 1zM17 2h-4l-1 5 3 1z" fill="#b3200a"/><circle cx="12" cy="15" r="7" fill="url(#gOr)" stroke="#7a4a12" stroke-width="1.2"/><path d="M12 11l1.2 2.5 2.7.3-2 1.8.6 2.7-2.5-1.4-2.5 1.4.6-2.7-2-1.8 2.7-.3z" fill="#7a4a12"/></svg>';
 const I_GEL = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke="#9fd8ff" stroke-width="2" stroke-linecap="round"/><path d="M9.5 3.5L12 6l2.5-2.5M9.5 20.5L12 18l2.5 2.5" stroke="#9fd8ff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
@@ -3198,9 +3198,9 @@ async function api(met, ruta, cos) {
   let r;
   try {
     r = await fetch(API + ruta, { method: met, headers: { "Content-Type": "application/json", ...(c ? { Authorization: `Bearer ${c.id}.${c.token}` } : {}) }, body: cos ? JSON.stringify(cos) : undefined });
-  } catch (e) { throw new Error("Sin conexión con la Fragua. Prueba en un rato."); }
+  } catch (e) { throw new Error("Sin conexión con KLONK. Prueba en un rato."); }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "La Fragua no ha podido guardarlo.");
+  if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "KLONK no ha podido guardarlo.");
   return j;
 }
 // El compte, un de sol encara que el demanin dues peticions alhora.
@@ -3298,7 +3298,7 @@ function vistaSocial() {
         <div class="aj-fila"><span>Nickname y cómo apareces<small>${esc(so.nick || "")}, ${so.visible === "publico" ? "perfil público" : "anónimo"}</small></span><button class="btn marc" data-accion="social-alta">Cambiar</button></div>
         <p style="margin:14px 0 0"><button class="enllac" data-accion="social-surt">Salir de los rankings y borrar mis datos del servidor</button></p>`)}`;
   }
-  h += bloc("Gimnasios", `<p class="suau petit" style="margin-top:0">Los gimnasios de tu zona en el mapa, con el precio y las estrellas que pone la gente de la Fragua.</p>${botoForja('data-accion="vista" data-v="gimnasios"', "VER EL MAPA", "")}`);
+  h += bloc("Gimnasios", `<p class="suau petit" style="margin-top:0">Los gimnasios de tu zona en el mapa, con el precio y las estrellas que pone la gente de KLONK.</p>${botoForja('data-accion="vista" data-v="gimnasios"', "VER EL MAPA", "")}`);
   h += bloc("Quiénes somos", `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
       <p>Creemos que el que se lo curra tiene que notarse. Por eso los personajes buenos no se compran: se ganan entrenando, un día tras otro.</p>
       <p>Que descansar también es entrenar. Que no hace falta obsesionarse con los números para mejorar. Y que una comunidad se cuida sin llenarla de anuncios.</p></div>`);
@@ -3825,7 +3825,7 @@ const FANTASMA_B = [3, 4.2, 3.6, 3.4, 4.4, 5.2, 6];
 
 /* ---------------------------------------------------------------- peces comunes */
 function capcalera(titol) {
-  return `<div class="cap"><button class="enrere marc" data-accion="vista" data-v="inicio">${I_ENRERE}<span>La Fragua</span></button><img src="${ACTIUS}logo.webp" alt="Fragua"></div>${titol ? `<h1 class="titol-pag or">${esc(titol)}</h1>` : ""}`;
+  return `<div class="cap"><button class="enrere marc" data-accion="vista" data-v="inicio">${I_ENRERE}<span>Inicio</span></button><img src="${ACTIUS}logo.webp" alt="KLONK"></div>${titol ? `<h1 class="titol-pag or">${esc(titol)}</h1>` : ""}`;
 }
 // Un panell amb la pestanya al damunt, com el «Cómo vas» de la A.
 const bloc = (titol, html, cls = "") => `<section class="bloc ${cls}"><h2 class="pestanya marc">${esc(titol)}</h2><div class="panel pad">${html}</div></section>`;
@@ -3852,7 +3852,7 @@ function vistaInicio() {
     : `<div class="fantasma">${grafLinia(FANTASMA_L, 102, 74, true)}<div class="pista">Entrena dos semanas y verás tu línea</div></div>`;
   const volumen = vol.some(x => x > 0) ? grafBarres(vol) : `<div class="fantasma">${grafBarres(FANTASMA_B, 102, 74, null, true)}<div class="pista">Tu primer entreno enciende la barra</div></div>`;
   const proteina = obj ? grafAnell(prot / obj.lo, `${n0(prot)} / ${obj.lo} g`) : '<div class="buit">Pon tu peso en Ajustes</div>';
-  return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">${S.demo ? bandaDemo() : ""}
+  return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK">${S.demo ? bandaDemo() : ""}
   <div class="heroe">
     ${heroi(p.tipo, "", VISTA_INICI)}
     <div class="placa marc">
@@ -3889,7 +3889,7 @@ function vistaEleccion() {
   const t = TIPOS[triaIdx], P = PERSONAJES[t];
   const esq = TIPOS[(triaIdx + TIPOS.length - 1) % TIPOS.length], dre = TIPOS[(triaIdx + 1) % TIPOS.length];
   const nou = !S.personaje;
-  return `${nou ? `<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">` : capcalera("")}
+  return `${nou ? `<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK">` : capcalera("")}
   <h1 class="titol-pag or">Elige tu personaje</h1>
   <div class="carrusel" id="carrusel">
     <figure class="costat esq"><img src="${imgPersonaje(esq)}" alt=""${esTeu(esq) ? "" : ' class="bloq"'}></figure>
@@ -3903,14 +3903,14 @@ function vistaEleccion() {
   <div class="fitxa panel pad"><div class="nom or">${esc(P.nombre)}</div><div class="lema">${esc(P.lema)}</div>
     <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div></div>
   <form class="form" data-form="personaje" style="margin-top:14px">
-    <label>Tu nombre<input id="f-nom" maxlength="18" autocomplete="off" value="${esc(S.personaje?.nombre || "")}" placeholder="Cómo te llamará la fragua"></label>
+    <label>El nombre de tu personaje<input id="f-nom" maxlength="18" autocomplete="off" value="${esc(S.personaje?.nombre || "")}" placeholder="Escribe su nombre"></label>
     ${esTeu(t) ? botoForja('type="submit"', nou ? "FORJAR PERSONAJE" : "ELEGIR ESTE", "")
        : `<p class="falta">Bloqueado: se forja con ${P.precio} de oro en la tienda.</p>${nou ? "" : botoForja('type="button" data-accion="vista" data-v="tienda"', "IR A LA TIENDA", "")}`}
   </form>`;
 }
 function vistaDatos() {
-  return `<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua"><h1 class="titol-pag or">Tus datos</h1>
-  <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, la fragua calcula tu proteína. Todo se queda en este móvil.</p>
+  return `<div class="cap"><button class="enrere marc" data-accion="vista" data-v="eleccion">${I_ENRERE}<span>Tu personaje</span></button><img src="${ACTIUS}logo.webp" alt="KLONK"></div><h1 class="titol-pag or">Tus datos</h1>
+  <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, KLONK calcula tu proteína. Todo se queda en este móvil.</p>
   <form class="form panel pad" data-form="datos">
     <div class="dos"><label>Tu peso, en kg<input id="d-peso" inputmode="decimal" autocomplete="off" required value="${fmt(S.perfil.peso)}"></label>
       <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura)}"></label></div>
@@ -4078,7 +4078,7 @@ function vistaPersonaje() {
   ${bloc("El camino de la forja", `${Stats.TITULOS.map(([n, t]) => `<div class="reg"><div><div style="font-weight:700;font-size:15.5px;${xp.nivel >= n ? "color:#ffd08a" : ""}">${esc(t)}</div><div class="d">Nivel ${n}</div></div><div class="flames">${flama(xp.nivel >= n)}</div><span></span></div>`).join("")}
     <p class="llegenda">Cada serie da 10 XP, cada entreno terminado 50 y cada récord 25. Solo puntúa un entreno al día.</p>`, "graf")}
   <details class="plega marc"><summary>Su historia</summary><p>${esc(HISTORIA[p.tipo] || "")}</p></details>
-  <details class="plega marc"><summary>Crónicas de la Fragua <small>${capitolsFins(xp.nivel).length} de ${CRONICA.length}</small></summary>${capitolsFins(xp.nivel).map(c => `<div class="cron"><div class="cron-cap"><b class="or">${esc(c.titol)}</b><span>Nivel ${c.nivel}</span></div><p>${esc(c.text)}</p></div>`).join("")}${CRONICA.find(c => c[0] > xp.nivel) ? `<p class="llegenda">La siguiente, en el nivel ${CRONICA.find(c => c[0] > xp.nivel)[0]}.</p>` : ""}</details>
+  <details class="plega marc"><summary>Crónicas de Klonk <small>${capitolsFins(xp.nivel).length} de ${CRONICA.length}</small></summary>${capitolsFins(xp.nivel).map(c => `<div class="cron"><div class="cron-cap"><b class="or">${esc(c.titol)}</b><span>Nivel ${c.nivel}</span></div><p>${esc(c.text)}</p></div>`).join("")}${CRONICA.find(c => c[0] > xp.nivel) ? `<p class="llegenda">La siguiente, en el nivel ${CRONICA.find(c => c[0] > xp.nivel)[0]}.</p>` : ""}</details>
   <p style="text-align:center;margin-top:16px" class="fila envolta" ><span style="flex:1"></span><button class="btn marc" data-accion="vista" data-v="eleccion">Cambiar de nombre</button><button class="btn clar marc" data-accion="vista" data-v="tienda">${MONEDA.replace("<svg", '<svg width="18" height="18"')} Tienda</button><span style="flex:1"></span></p>`;
 }
 
@@ -4095,8 +4095,8 @@ function vistaTienda() {
     // el material de la Fragua (Albert, 26/09): «samarretes... la bossa de gimnàs... el shaker». Encara no es ven:
     // cap preu inventat fins que hi hagi proveïdor.
     h += `<div class="botiga">${[["camiseta", "Camiseta"], ["sudadera", "Sudadera"], ["bolsa", "Bolsa de gimnasio"], ["shaker", "Shaker"]].map(([k, n]) =>
-      `<div class="carta marc material"><img src="${ACTIUS}material/${k}.webp" alt="${n} de la Fragua" loading="lazy"><span class="carta-nom">${n}</span><span class="aviat">Próximamente</span></div>`).join("")}</div>
-      <p class="suau petit" style="text-align:center;margin-top:12px">El material de la Fragua, para ir al gimnasio con tu clan. Lo estamos preparando.</p>`;
+      `<div class="carta marc material"><img src="${ACTIUS}material/${k}.webp" alt="${n} de KLONK" loading="lazy"><span class="carta-nom">${n}</span><span class="aviat">Próximamente</span></div>`).join("")}</div>
+      <p class="suau petit" style="text-align:center;margin-top:12px">El material de KLONK, para ir al gimnasio con tu clan. Lo estamos preparando.</p>`;
   } else {
     h += `${[["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]].map(([k2, n, q, e]) =>
       `<button class="paquet marc" data-accion="compra-oro" data-p="${k2}">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Comprar</div></div></button>`).join("")}
@@ -4535,7 +4535,8 @@ document.addEventListener("submit", async ev => {
   if (tipus === "personaje") {
     if (!esTeu(TIPOS[triaIdx])) { avis("Ese personaje aún está bloqueado.", true); return; }
     const nom = $("#f-nom").value.trim().slice(0, 18);
-    S.personaje = { tipo: TIPOS[triaIdx], nombre: nom || PERSONAJES[TIPOS[triaIdx]].nombre };
+    if (nom.length < 2) { avis("Ponle un nombre a tu personaje.", true); $("#f-nom").focus(); return; }
+    S.personaje = { tipo: TIPOS[triaIdx], nombre: nom };
     S.ui.vista = S.perfil.peso ? "inicio" : "datos"; S.ui.triaIniciada = false; guardar();
     Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 60]); render(); window.scrollTo({ top: 0 });
   } else if (tipus === "datos" || tipus === "ajustes") {
@@ -4586,7 +4587,7 @@ document.addEventListener("submit", async ev => {
     const fit = $("#r-fit").files && $("#r-fit").files[0];
     if (!txt && fit) txt = await fit.text();
     try { const o = JSON.parse(txt); if (!o || o.v !== 1) throw 0; S = Object.assign(BASE(), o); guardar(); render(); avis("Datos recuperados."); }
-    catch (e) { avis("Ese texto no es una copia de Fragua: pega el texto entero, empieza por {"); }
+    catch (e) { avis("Ese texto no es una copia de KLONK: pega el texto entero, empieza por {"); }
   }
 });
 // Sense zoom de pessic: Safari no fa cas de user-scalable=no des de l'iOS 10, però sí de gesturestart.
