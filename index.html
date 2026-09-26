@@ -1280,11 +1280,29 @@ const Efectos = (() => {
 
   // La música: la de l'entrada fora de l'entreno i la llista «warrior» durant l'entreno. Un sol <audio>
   // que va passant cançons; s'engega amb el primer toc (els mòbils no deixen sonar res sense un gest)
-  // i es treu amb S.musica = false. Si la llista d'un moment és buida, no sona res.
+  // i es treu amb S.musica = false.
+  // L'IPHONE (26/09, l'Albert: «li clico al botó i no es para»): a Safari el volum d'un <audio> és de només
+  // lectura i sempre val 1. La parada abaixava el volum fins a zero abans de fer pause(), i a l'iPhone no hi
+  // arribava mai. Ara, on el volum no es pot tocar, es para de cop; on sí, fos curt i pause() segur.
+  // (No es passa per l'àudio de la pàgina: a l'iPhone amb l'interruptor de silenci, aquell no sona.)
   const Musica = (() => {
-    let el = null, mode = null, ordre = [], i = 0, fade = null;
+    let el = null, mode = null, ordre = [], i = 0, fos = null;
     const on = () => typeof S === "undefined" || S.musica !== false;
     const llista = m => (typeof MUSICA !== "undefined" && MUSICA[m]) || [];
+    const base = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
+    const volumReal = (() => { try { const a = new Audio(); a.volume = 0.5; return Math.abs(a.volume - 0.5) < 0.01; } catch (e) { return false; } })();
+    const volum = (elm, v) => { if (volumReal) { try { elm.volume = v; } catch (e) {} } };
+    function apaga(elm, fet) {
+      if (!elm || elm.paused) return;
+      if (!volumReal) { elm.pause(); if (fet) fet(); return; }
+      let passos = 0;
+      const t = setInterval(() => {
+        passos++;
+        try { elm.volume = Math.max(0, elm.volume - 0.08); } catch (e) {}
+        if (elm.volume <= 0.01 || passos >= 12) { clearInterval(t); elm.pause(); if (fet) fet(); }
+      }, 40);
+      return t;
+    }
     function prepara() {
       if (el) return el;
       el = new Audio(); el.preload = "none";
@@ -1293,9 +1311,9 @@ const Efectos = (() => {
     }
     function toca() {
       if (!ordre.length) return;
-      const base = typeof ACTIUS === "string" ? ACTIUS : "assets/";
-      el.src = base + ordre[i];
-      el.volume = mode === "entreno" ? 0.55 : 0.32;
+      clearInterval(fos);
+      el.src = base() + ordre[i];
+      volum(el, mode === "entreno" ? 0.55 : 0.32);
       const p = el.play(); if (p && p.catch) p.catch(() => {});
     }
     function posa(nou) {
@@ -1303,30 +1321,24 @@ const Efectos = (() => {
       if (nou === mode && el && !el.paused) return;
       const ll = llista(nou);
       if (!ll.length) return;   // sense cançons per a aquest moment: segueix la que sonava
-      prepara(); clearInterval(fade);
+      prepara();
       mode = nou; ordre = [...ll].sort(() => Math.random() - 0.5); i = 0;
       toca();
     }
-    function para() {
-      if (!el || el.paused) return;
-      clearInterval(fade);
-      fade = setInterval(() => { el.volume = Math.max(0, el.volume - 0.06); if (el.volume <= 0.01) { clearInterval(fade); el.pause(); } }, 50);
-    }
+    function para() { clearInterval(fos); fos = apaga(el); }
     const sona = () => !!el && !el.paused;
-    // L'ambient de la fragua (cops, foc que crepita): en bucle i fluix, només quan no sona música.
+    // L'ambient de la fragua (cops, foc que crepita): fluix i en bucle quan la música és encesa però en
+    // aquell moment no té cançons. Amb el botó de música apagat, silenci: ni música ni ambient.
     let amb = null;
     function ambient() {
       const ll = llista("ambient");
-      const cal = ll.length && (typeof S === "undefined" || S.sonido !== false) && !sona();
-      if (!cal) { if (amb && !amb.paused) amb.pause(); return; }
-      if (!amb) {
-        amb = new Audio(); amb.loop = true; amb.volume = 0.22; amb.preload = "none";
-        const base = typeof ACTIUS === "string" ? ACTIUS : "assets/";
-        amb.src = base + ll[Math.floor(Math.random() * ll.length)];
-      }
+      const cal = ll.length && on() && (typeof S === "undefined" || S.sonido !== false) && !sona();
+      if (!cal) { apaga(amb); return; }
+      if (!amb) { amb = new Audio(); amb.loop = true; amb.preload = "none"; amb.src = base() + ll[Math.floor(Math.random() * ll.length)]; }
+      volum(amb, 0.22);
       if (amb.paused) { const p = amb.play(); if (p && p.catch) p.catch(() => {}); }
     }
-    return { posa: m => { posa(m); setTimeout(ambient, 700); }, para: () => { para(); setTimeout(ambient, 1200); }, sona, ambient, hiHa: m => llista(m).length > 0 };
+    return { posa: m => { posa(m); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, sona, ambient, hiHa: m => llista(m).length > 0 };
   })();
   // L'hàptica. A l'Android, navigator.vibrate. A l'iPhone Safari no en té: des de l'iOS 17.4 un
   // <input type="checkbox" switch> fa un toc quan canvia, i n'hi ha prou de clicar-ne l'etiqueta
