@@ -616,7 +616,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .conf-nom{font-family:var(--display);font-size:24px;overflow-wrap:anywhere}
 .conf-av{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#15110e;border:2px solid #c57b37}
 .clan-perfil{justify-self:start;padding:6px 0;border:0;background:none;color:var(--crema);font:700 16px var(--text);text-align:left;text-decoration:underline;text-decoration-color:rgba(255,181,94,.4);text-underline-offset:4px}
-.mini-clan{width:100%;border:0;background:none;color:var(--crema);font:inherit;cursor:pointer}
+.mini-clan{width:100%;color:var(--crema);font:inherit;cursor:pointer}
 .mini-clan .gran{margin:auto 0 0}
 .mini-clan .fantasma .gran{opacity:.25;font-size:44px;margin:auto}
 .seg-llast{display:inline-grid;grid-template-columns:auto auto;margin-top:8px;border:1px solid var(--bronze-fil);border-radius:8px;overflow:hidden}
@@ -626,6 +626,35 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .suport{display:grid;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(197,123,55,.25)}
 .suport p{margin:0}
 .suport .btn{justify-self:start}
+.reg-ses{width:100%;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.reg-ses svg{width:18px;height:18px;transform:rotate(-90deg);color:var(--fum)}
+.ses-ej{display:grid;gap:6px;margin-top:12px}
+.ses-ej>b{font-size:15.5px}
+.ses-z{display:inline-block;margin-right:12px;color:var(--fum);font-size:14px}
+.ses-serie{display:grid;grid-template-columns:26px 1fr 14px 1fr 40px;gap:6px;align-items:center}
+.ses-serie .camp input{height:44px;font-size:17px}
+.ses-serie .i{font-family:var(--display);font-weight:900;text-align:center;color:var(--fum)}
+.ses-serie .treu{width:40px;height:40px;border-radius:8px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--fum);display:grid;place-items:center}
+.yunque-boto{padding:0;border:0;background:none;cursor:pointer}
+.perfil-rang small+small{display:block;margin-top:2px}
+.yunques-llista{display:grid;gap:6px}
+.yunque-fila{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 8px;border-radius:10px}
+.yunque-fila img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.yunque-fila span{display:grid;gap:1px}
+.yunque-fila small{color:var(--fum);font-size:12.5px;line-height:1.35}
+.yunque-fila.yunque-meu{box-shadow:inset 0 0 0 1px #f0a050;background:rgba(179,32,10,.18)}
+.mini-clan .yunque.mini-y{width:40px;height:40px;margin:6px auto 0}
+.pujada-yunque{position:relative;display:grid;place-items:center;height:210px;margin:10px 0 4px}
+.pujada-yunque img{position:relative;width:190px;height:190px;object-fit:contain;filter:drop-shadow(0 8px 16px rgba(0,0,0,.7));animation:pujaYunque 1.3s cubic-bezier(.2,1.5,.4,1) .25s both}
+.pujada-llum{position:absolute;inset:0;margin:auto;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,90,.75),rgba(255,120,30,.25) 45%,transparent 70%);animation:pujaLlum 1.6s ease-out .2s both}
+@keyframes pujaYunque{0%{transform:scale(.15) rotate(-28deg);opacity:0;filter:brightness(4) drop-shadow(0 0 0 transparent)}55%{transform:scale(1.18) rotate(7deg);opacity:1}100%{transform:scale(1) rotate(0);filter:brightness(1) drop-shadow(0 8px 16px rgba(0,0,0,.7))}}
+@keyframes pujaLlum{0%{transform:scale(.2);opacity:0}40%{opacity:1}100%{transform:scale(1.25);opacity:.55}}
+.pujada-pos{display:flex;align-items:center;justify-content:center;gap:22px;margin:18px 0 8px;font-family:var(--display);font-weight:900}
+.pujada-pos .de{font-size:40px;color:var(--fum);animation:pujaDe .7s ease-out .3s both}
+.pujada-pos .fletxa{flex:none;width:40px;height:24px;color:#f0a050;animation:pujaDe .5s ease-out .6s both}
+.pujada-pos .a{margin-left:10px;font-size:72px;animation:pujaYunque 1.1s cubic-bezier(.2,1.5,.4,1) .75s both}
+@keyframes pujaDe{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pujada-yunque img,.pujada-llum,.pujada-pos *{animation:none}}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -2034,7 +2063,9 @@ const Efectos = (() => {
       volum(amb, 0.22);
       if (amb.paused) { const p = amb.play(); if (p && p.catch) p.catch(() => {}); }
     }
-    return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, seguent, sona, ambient,
+    // En sortir de l'app o bloquejar el mòbil sense entreno: ni música ni ambient (l'Albert, 26-09-2026 nit)
+    function silenci() { para(); apaga(amb); }
+    return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, silenci, seguent, sona, ambient,
       hiHa: m => llista(m).length > 0, titol: () => (ordre.length && el && el.src ? titol(ordre[i]) : "") };
   })();
   // L'hàptica. A l'Android, navigator.vibrate. A l'iPhone Safari no en té: des de l'iOS 17.4 un
@@ -3494,6 +3525,13 @@ const YUNQUES = [[0, "madera", "Madera"], [100, "piedra", "Piedra"], [250, "cobr
   [700, "acero", "Acero"], [800, "oro", "Oro"], [880, "obsidiana", "Obsidiana"], [940, "criselefantino", "Criselefantino"], [980, "estelar", "Estelar"]];
 const yunqueDe = p => { if (p == null) return null; let y = YUNQUES[0]; YUNQUES.forEach(t => { if (p >= t[0]) y = t; }); return { id: y[1], nom: y[2], des: y[0] }; };
 const imgYunque = (p, cls = "") => { const y = yunqueDe(p); return y ? `<img class="yunque ${cls}" src="${ACTIUS}yunques/${y.id}.webp" alt="Rango ${y.nom}" title="${y.nom}">` : ""; };
+function fullYunques() {
+  const so = soc(), p = so.yo && so.yo.poder, meu = yunqueDe(p);
+  const seg = p == null ? null : YUNQUES.find(t => t[0] > p);
+  return `<p style="margin-top:0">Tu yunque sale de tu <b>poder</b>: en cada ejercicio comparamos lo que levantas <b>para tu peso</b> (la fuerza relativa) con lo de todos los que lo hacen en KLONK, y el poder es la media de esos puestos, de 0 a 1000. Por eso alguien ligero que levanta mucho para lo que pesa puede estar muy arriba.</p>
+    ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de poder para ${seg[2]}.</b></p>` : ""}
+    <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de poder: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
+}
 const AMBITS2 = [["amigos", "Amigos"], ["gimnasio", "Mi gimnasio"], ["ciudad", "Ciudad"], ["provincia", "Provincia"], ["ccaa", "Comunidad"], ["pais", "País"], ["continente", "Continente"], ["mundo", "Mundo"]];
 const GRUPS_R = ["general", "Pecho", "Espalda", "Pierna", "Hombro", "Brazo"];
 const intent = {};
@@ -3522,17 +3560,17 @@ function filaRanking(f, so) {
    nickname, amb sol·licitud i acceptació («no puc buscar el nom i enviar sol·licitud? I que accepti?»). */
 const tabSoc = () => S.ui.socTab || "rank";
 function capSocial(so) {
-  const yo = so.yo, gim = yo && yo.gimnas, dg = diesGym(), any = Stats.diasAno(S);
+  const yo = so.yo, gim = yo && yo.gimnas, dg = diesGym();
   let rang = "";
   if (so.participa && gim) {
     const y = yunqueDe(yo.poder), dif = yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
-    rang = `<div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<span><b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small></span>`
-      : sessio && sessio.salut ? `<small>Termina un entreno para tener rango de fuerza.</small>`
+    rang = `<div class="perfil-rang">${y ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
+      : sessio && sessio.salut ? `<small>Termina un entreno para tener rango de fuerza. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
       : `<small>Sin permiso para guardar tu peso no hay rango de fuerza. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</div>`;
   }
   return `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "gran")}
     <div class="perfil-dades"><b class="perfil-nick">${esc(nomHeroi())}</b>${gim ? `<small class="perfil-gim">${esc(gim.nom)}</small>` : ""}
-      <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> días de gym</span><span>${flama(any > 0)}<b class="num">${any}</b> este año</span></div></div>${rang}</div>`;
+      <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> ${dg.dies === 1 ? "día" : "días"} de gym</span><span><b class="num">${n0(Stats.experiencia(S).xp)}</b> XP en total</span></div></div>${rang}</div>`;
 }
 function vistaSocial() {
   const so = soc(), yo = so.yo, gim = yo && yo.gimnas;
@@ -3611,7 +3649,36 @@ function miniClan() {
   const r = rr && rr.yo ? rr : rd && rd.yo ? rd : null;
   if (!rr && !rd) return '<div class="buit">Cargando…</div>';
   if (!r || r.total <= 1) return '<div class="buit">Añade a alguien a tu clan</div>';
-  return `<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
+  return `${so.yo && so.yo.poder != null ? imgYunque(so.yo.poder, "mini-y") : ""}<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
+}
+// Després d'un entreno: si has pujat de yunque o de lloc al rànquing del clan, una celebració pròpia. Es mira quan el
+// servidor ha tornat el poder nou; si el resum encara és obert, s'espera que es tanqui.
+async function miraPujada(abans) {
+  const yo = await sincronitza(); if (!yo) return;
+  const pujades = [], ya = yunqueDe(abans.poder), yd = yunqueDe(yo.poder);
+  if (yd && (!ya || YUNQUES.findIndex(t => t[1] === yd.id) > YUNQUES.findIndex(t => t[1] === ya.id))) pujades.push({ t: "yunque", y: yd, poder: yo.poder });
+  try {
+    const r = await api("GET", "/ranking?metrica=rango&ambit=amigos&grupo=general");
+    S.social = { ...soc(), rank: { ...soc().rank, "rango|amigos|general": { ...r, at: Date.now() } } };
+    if (abans.pos && r.yo && r.yo.pos < abans.pos && r.total > 1) pujades.push({ t: "clan", de: abans.pos, a: r.yo.pos, total: r.total });
+  } catch (e) {}
+  if (!pujades.length) return;
+  S.ui.pujades = [...(S.ui.pujades || []), ...pujades]; guardar();
+  if (!$("#celebra").innerHTML) mostraPujada();
+}
+function mostraPujada() {
+  const p = (S.ui.pujades || []).shift(); if (!p) return false;
+  guardar();
+  if (p.t === "yunque") {
+    setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); Efectos.lluvia(1.3); Efectos.vibra([30, 40, 60]); }, 250);
+    celebra(`<div class="gran or entra-gran">¡NUEVO YUNQUE!</div><div class="pujada-yunque"><i class="pujada-llum"></i><img src="${ACTIUS}yunques/${p.y.id}.webp" alt="${p.y.nom}"></div>
+      <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Poder ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
+  } else {
+    setTimeout(() => { Efectos.suena("triar"); Efectos.lluvia(0.8); Efectos.vibra([20, 30, 40]); }, 250);
+    celebra(`<div class="gran or entra-gran">¡SUBES EN TU CLAN!</div><div class="pujada-pos"><span class="num de">${p.de}.º</span><svg class="fletxa" viewBox="0 0 40 24" width="40" height="24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num or a">${p.a}.º</span></div>
+      <div class="sub">de ${p.total} en fuerza. <button class="enllac" data-accion="inici-clan">Ver el ranking</button></div>`, "A LA FRAGUA");
+  }
+  return true;
 }
 // El buscador del clan (l'Albert, 26-09-2026 nit: «autocompletar i buscar si existeix; s'ha de confirmar que li envies
 // a algú»): mentre escrius, si el nickname existeix i, a sota, els adults amb perfil públic que comencen així. Els menors
@@ -3749,6 +3816,7 @@ async function accioSocial(acc, b) {
       S.ui.socTab = b.dataset.t; S.ui.clanTreu = null; guardar(); render();
       if (b.dataset.t === "clan") { intent.clan = Date.now(); carregaClan(false); }
       return true;
+    case "soc-yunques": obreFull(fullYunques(), "Los yunques"); return true;
     case "soc-tria": S.ui.socTria = true; guardar(); render(); return true;
     case "soc-tria-no": S.ui.socTria = false; guardar(); render(); window.scrollTo({ top: 0 }); return true;
     case "soc-gims": if (so.yo && so.yo.gimnas && so.participa) S.ui.socTab = "gimnasios"; else S.ui.socTria = true; veure("social"); return true;
@@ -3991,7 +4059,7 @@ async function accioGimnasos(acc, b) {
 // Els gestos d'aquí són asíncrons: el despatxador diu que són seus a l'acte i els deixa córrer.
 const ACC_SOCIAL = new Set(["social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
   "soc-tab", "soc-tria", "soc-tria-no", "soc-gims", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
-  "clan-confirma", "clan-envia-conf", "clan-conf-no"]);
+  "clan-confirma", "clan-envia-conf", "clan-conf-no", "soc-yunques"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
 /* ---- reservar el material amb la talla (l'Albert, 26-09-2026: «que la gent pugui reservar una ja mola, no? Amb la
    seva talla?»). No es paga res: és per saber quantes en vol la gent, i de quina talla, abans de fer-ne. ---- */
@@ -4853,7 +4921,7 @@ function vistaEntreno() {
         ${ob ? `<div class="dia-prev">${dd.ej.map(e => { const c = cfgEj(e[0], e[1]); return `<div class="ej-prev">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${esc(e[0])}</span><small class="num">${c.series} × ${c.min}-${c.max}</small></div>`; }).join("")}
           <p style="margin:10px 0 0"><button class="enllac" data-accion="rut-compartir-dia" data-id="${r.id}" data-dia="${n}">Compartir solo este día</button></p></div>` : ""}
       </div>`; }).join("")}
-    ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<div class="reg"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div><span></span></div>`).join("")}</div></section>` : ""}`;
+    ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<button class="reg reg-ses" data-accion="ses-obre" data-id="${x.id}"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div>${I_BAIXA}</button>`).join("")}</div></section>` : ""}`;
   }
   const d = { t: s.dt || (RUTINA[s.dia - 1] || {}).t || "" };
   const fetsEj = s.ej.filter(e => e.sets.length && e.sets.every(z => z.ok)).length;
@@ -4876,6 +4944,31 @@ function vistaEntreno() {
   h += `<div style="margin-top:20px">${botoForja('data-accion="terminar"', "TERMINAR ENTRENO", "Forja lo que has hecho")}</div>
     <p style="text-align:center;margin-top:14px"><button class="btn marc" data-accion="descartar">Descartar este entreno</button></p>`;
   return h;
+}
+
+/* ---- un entreno fet: mirar-lo, i els tres primers dies, corregir-lo o esborrar-lo (l'Albert, 26-09-2026 nit: «com puc
+   editar o eliminar un entreno anterior? S'ha de poder durant uns dies»). L'experiència, l'or i les gràfiques surten
+   dels entrenos, o sigui que es recalculen soles. ---- */
+const DIES_CORREGIR = 3;
+const esCorregible = s => s && s.fin && Date.now() - s.fin < DIES_CORREGIR * 864e5;
+function fullSessio(id) {
+  const s = S.ses.find(x => x.id === id); if (!s) return '<p class="suau">Ese entreno ya no está.</p>';
+  const edita = S.ui.sesEdita === id && esCorregible(s), fets = s.ej.map((e, i) => ({ e, i })).filter(({ e }) => e.sets.some(z => z.ok));
+  const titol = `<p style="margin:0"><b>Día ${s.dia}, ${esc((s.dt || (RUTINA[s.dia - 1] || {}).t || "").toLowerCase())}</b><br><span class="suau petit">${fechaLarga(s.fecha)}</span></p>`;
+  const cos = fets.map(({ e, i }) => `<div class="ses-ej"><b>${esc(e.n)}</b>${e.sets.map((z, j) => !z.ok ? "" : edita
+      ? `<div class="ses-serie"><span class="i">${j + 1}</span>${e.x === "lastre" ? `<label class="camp"><input inputmode="decimal" data-ses-kg="${i}-${j}" value="${fmt(z.kg || 0)}" aria-label="Lastre"><span class="u">+kg</span></label>` : `<label class="camp"><input inputmode="decimal" data-ses-kg="${i}-${j}" value="${fmt(z.kg)}" aria-label="Kilos"><span class="u">kg</span></label>`}<span class="x">×</span><label class="camp"><input inputmode="numeric" data-ses-reps="${i}-${j}" value="${z.reps ?? ""}" aria-label="Repeticiones"><span class="u">rep</span></label><button class="treu" data-accion="ses-treu-serie" data-i="${i}" data-j="${j}" aria-label="Quitar la serie ${j + 1}">${I_X}</button></div>`
+      : `<span class="ses-z num">${e.x === "lastre" ? (z.kg ? `+${fmt(z.kg)} kg` : "tu peso") : `${fmt(z.kg || 0)} kg`} × ${z.reps}</span>`).join("")}</div>`).join("") || '<p class="suau">Sin series hechas.</p>';
+  if (!esCorregible(s)) return `${titol}${cos}<p class="suau petit">Solo se pueden cambiar los entrenos de los últimos ${DIES_CORREGIR} días.</p>`;
+  if (S.ui.sesEsborra) return `${titol}<p>¿Borrar este entreno? Se quitan también la experiencia, el oro y el día de gym que te dio.</p>
+    <div class="fila envolta"><button class="btn clar marc" data-accion="ses-esborra-si" data-id="${id}">SÍ, BORRARLO</button><button class="btn marc" data-accion="ses-obre" data-id="${id}">No</button></div>`;
+  return `${titol}${cos}${edita
+    ? `<div style="margin-top:14px">${botoForja(`data-accion="ses-desa"`, "GUARDAR", "")}</div>`
+    : `<div class="fila envolta" style="margin-top:14px"><button class="btn clar marc" data-accion="ses-edita" data-id="${id}">Corregir</button><button class="btn marc" data-accion="ses-esborra" data-id="${id}">Borrar</button></div>
+       <p class="suau petit" style="margin:8px 0 0">Puedes corregirlo o borrarlo hasta ${DIES_CORREGIR} días después.</p>`}`;
+}
+function llegeixSessio(s) {
+  document.querySelectorAll("#capa [data-ses-kg]").forEach(inp => { const [i, j] = inp.dataset.sesKg.split("-").map(Number), z = s.ej[i] && s.ej[i].sets[j], v = num(inp.value); if (z) z.kg = Number.isFinite(v) && v >= 0 ? v : z.kg; });
+  document.querySelectorAll("#capa [data-ses-reps]").forEach(inp => { const [i, j] = inp.dataset.sesReps.split("-").map(Number), z = s.ej[i] && s.ej[i].sets[j], v = num(inp.value); if (z) { if (v > 0) z.reps = Math.round(v); else z.ok = false; } });
 }
 
 /* ---------------------------------------------------------------- estadístiques */
@@ -5157,6 +5250,13 @@ let bloqueig = null;
 async function pedirPantalla() { try { if ("wakeLock" in navigator && !bloqueig) { bloqueig = await navigator.wakeLock.request("screen"); bloqueig.addEventListener("release", () => { bloqueig = null; }); } } catch (e) { bloqueig = null; } }
 function soltarPantalla() { try { bloqueig && bloqueig.release(); } catch (e) {} bloqueig = null; }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.activa) pedirPantalla(); });
+// La música de l'entrada s'atura si surts de l'app o bloqueges el mòbil; la de l'entreno continua sonant (l'Albert,
+// 26-09-2026 nit). En tornar, la de l'entrada segueix on era.
+document.addEventListener("visibilitychange", () => {
+  if (activa()) return;
+  if (document.visibilityState === "hidden") Efectos.Musica.silenci();
+  else if (musicaEngegada) musica();
+});
 let tToast = null;
 function avis(txt, error = false) { if (error) { Efectos.suena("error"); Efectos.vibra([40, 60, 40]); } const t = $("#toast"); t.textContent = txt; t.hidden = false; clearTimeout(tToast); tToast = setTimeout(() => { t.hidden = true; }, 2600); }
 const aviso = avis;   // el motor l'anomena així
@@ -5289,6 +5389,12 @@ document.addEventListener("click", ev => {
   const acc = b.dataset.accion, k = hoy();
   switch (acc) {
     case "vista": veure(b.dataset.v); break;
+    case "ses-obre": S.ui.sesEdita = null; S.ui.sesEsborra = false; obreFull(fullSessio(b.dataset.id), "Entreno"); break;
+    case "ses-edita": S.ui.sesEdita = b.dataset.id; $("#capa .dins").innerHTML = fullSessio(b.dataset.id); break;
+    case "ses-treu-serie": { const s = S.ses.find(x => x.id === S.ui.sesEdita); if (!s) break; llegeixSessio(s); const e = s.ej[+b.dataset.i]; if (e) e.sets.splice(+b.dataset.j, 1); $("#capa .dins").innerHTML = fullSessio(s.id); break; }
+    case "ses-desa": { const s = S.ses.find(x => x.id === S.ui.sesEdita); if (!s) break; llegeixSessio(s); S.ui.sesEdita = null; guardarYa(); tancaFull(); render(); Efectos.suena("yunque"); avis("Entreno corregido."); break; }
+    case "ses-esborra": S.ui.sesEsborra = true; $("#capa .dins").innerHTML = fullSessio(b.dataset.id); break;
+    case "ses-esborra-si": { S.ses = S.ses.filter(x => x.id !== b.dataset.id); S.ui.sesEsborra = false; guardarYa(); tancaFull(); render(); Efectos.suena("apaga"); avis("Entreno borrado."); break; }
     case "suport-oro": S.ui.tiendaTab = "oro"; veure("tienda"); break;     // la crida de «Quiénes somos» (l'Albert: «i demana pasta allà»)
     case "ej-lastre": {
       const s = activa(), e = s && s.ej[+b.dataset.i]; if (!e) break;
@@ -5298,6 +5404,7 @@ document.addEventListener("click", ev => {
       guardar(); render(); Efectos.suena("tap"); break;
     }
     case "inici-clan": {      // la fitxa «Tu clan» de l'entrada porta al rànquing del clan (o a Social, si encara no hi ets)
+      $("#celebra").innerHTML = "";
       const so = soc();
       if (so.participa && so.yo && so.yo.gimnas) { S.ui.socTab = "rank"; S.social = { ...so, ambit: "amigos" }; }
       veure("social"); break;
@@ -5369,7 +5476,9 @@ document.addEventListener("click", ev => {
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
       if (!series) { avis("Aún no has hecho ninguna serie."); break; }
-      terminar(); S.ui.vista = "inicio"; musica(); sincronitza();
+      const pujaAbans = { poder: (soc().yo || {}).poder, pos: ((soc().rank["rango|amigos|general"] || {}).yo || {}).pos };
+      terminar(); S.ui.vista = "inicio"; musica();
+      if (soc().participa) miraPujada(pujaAbans); else sincronitza();
       const des = Stats.experiencia(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
       // la meta de dies de l'any: si l'ha feta avui, la seva bossa (una vegada per any)
       const any = String(new Date().getFullYear()), meta = (S.metaAny || {})[any];
@@ -5388,7 +5497,7 @@ document.addEventListener("click", ev => {
         const n = S.pendentNivell; S.pendentNivell = null; const xp = Stats.experiencia(S);
         setTimeout(() => Efectos.suena("nivell"), 150);
         celebra(`<div class="gran or">¡NIVEL ${n}!</div><div class="sub" style="font-size:18px;margin-top:10px">Ahora eres</div><div class="gran or" style="font-size:28px">${esc(xp.titulo)}</div>`, "A LA FRAGUA");
-      } else setTimeout(() => reacciona("celebra"), 120);
+      } else if (!mostraPujada()) setTimeout(() => reacciona("celebra"), 120);
       break;
     }
     case "descartar": { const s = activa(); if (s) { S.ses = S.ses.filter(x => x.id !== s.id); S.activa = null; guardar(); soltarPantalla(); pararDescanso(); render(); Efectos.suena("apaga"); musica(); avis("Entreno descartado."); } break; }
