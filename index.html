@@ -522,7 +522,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .pila{display:grid;gap:3px;padding:6px;border-radius:8px;background:linear-gradient(90deg,#15110f,#2a221c,#15110f);border:1px solid #5b4a3e}
 .pila i{display:grid;place-items:center;height:16px;border-radius:3px;background:linear-gradient(180deg,#4a4038,#2a241f);border:1px solid #6b5a4c;box-shadow:inset 0 1px 0 rgba(255,220,160,.15)}
 .pila i b{font:900 10px/1 var(--display);color:#ffd27a}
-.sense-kg{display:grid;place-items:center;height:50px;border-radius:8px;border:1px dashed rgba(197,123,55,.35);color:var(--fum);font-size:13px}
+.sense-kg{display:grid;place-items:center;min-width:0;height:50px;padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-radius:8px;border:1px dashed rgba(197,123,55,.35);color:var(--fum);font-size:13px}
 .casella{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.45;cursor:pointer}
 .casella input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:#f0a050}
 .aj-legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin:14px 0 0;font-size:14.5px}
@@ -619,6 +619,13 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .mini-clan{width:100%;border:0;background:none;color:var(--crema);font:inherit;cursor:pointer}
 .mini-clan .gran{margin:auto 0 0}
 .mini-clan .fantasma .gran{opacity:.25;font-size:44px;margin:auto}
+.seg-llast{display:inline-grid;grid-template-columns:auto auto;margin-top:8px;border:1px solid var(--bronze-fil);border-radius:8px;overflow:hidden}
+.seg-llast button{min-height:34px;padding:0 12px;border:0;background:rgba(15,13,12,.9);color:var(--fum);font:700 13.5px var(--text);white-space:nowrap}
+.seg-llast button+button{border-left:1px solid var(--bronze-fil)}
+.seg-llast button[aria-pressed="true"]{background:linear-gradient(180deg,#b3200a,#7c0e03);color:#fff0cf}
+.suport{display:grid;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(197,123,55,.25)}
+.suport p{margin:0}
+.suport .btn{justify-self:start}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -664,6 +671,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .personatge img{position:absolute;left:50%;bottom:0;height:100%;width:auto;max-width:125%;transform:translateX(-50%);transform-origin:50% 100%;
   filter:drop-shadow(0 8px 14px rgba(0,0,0,.7));animation:respira 3.6s ease-in-out infinite}
 .personatge canvas{position:absolute;inset:-10px -20px 0;width:calc(100% + 40px);height:calc(100% + 10px);pointer-events:none}
+.personatge[data-vista] canvas{inset:-34px auto 0 -20px;width:calc(100% + 160px);height:calc(100% + 34px)}
 .personatge.amb3d img{display:none}
 .personatge img.foto3d{top:-10px;left:-20px;bottom:auto;width:calc(100% + 40px);height:calc(100% + 10px);max-width:none;object-fit:contain;transform:none;animation:none;filter:none}
 .personatge.salta img{animation:salta .6s ease-out}
@@ -2922,7 +2930,7 @@ const pct = v => `+${fmt(v)} %`;
 const interruptor = (acc, on, label, extra = "") => `<button class="interruptor" role="switch" aria-checked="${!!on}" data-accion="${acc}" aria-label="${esc(label)}"${extra}></button>`;
 const pas = (acc, k, val, menys, mes) => `<span class="pas"><button data-accion="${acc}" data-k="${k}" data-d="${menys}" aria-label="Menos">−</button><b class="num">${val}</b><button data-accion="${acc}" data-k="${k}" data-d="${mes}" aria-label="Más">+</button></span>`;
 
-const AJ_SECC = [["cuenta", "Tu cuenta"], ["perfil", "Tu perfil"], ["social", "Social"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"]];
+const AJ_SECC = [["cuenta", "Tu cuenta"], ["perfil", "Tu perfil"], ["social", "Social"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"], ["somos", "Quiénes somos"]];
 function resumAj(k) {
   const G = gim(), P = progres(), pr = S.perfil;
   return {
@@ -2935,6 +2943,7 @@ function resumAj(k) {
     cuenta: typeof sessio !== "undefined" && sessio ? sessio.email || "" : "",
     social: soc().participa ? (soc().visible === "publico" ? "Con tu nickname" : "Anónimo") : "No participas",
     calcula: "",
+    somos: "",
   }[k] || "";
 }
 function vistaAjustes() {
@@ -2954,6 +2963,12 @@ function cosAj(k) {
     <div class="fila envolta" style="margin:2px 0 8px"><button class="chip" data-accion="social-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Con mi nickname</button><button class="chip" data-accion="social-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button></div>` : ""}
     <div class="aj-fila"><span>Tu gimnasio en Social<small>${gm ? esc([gm.nom, gm.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="soc-gims">${gm ? "Cambiar" : "Elegir"}</button></div>`;
   }
+  // «Quiénes somos», a Ajustes (l'Albert, 26-09-2026 nit: abans era a Social)
+  if (k === "somos") return `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
+      <p>Creemos que el que se lo curra tiene que notarse. Por eso los personajes buenos no se compran: se ganan entrenando, un día tras otro.</p>
+      <p>Que descansar también es entrenar. Que no hace falta obsesionarse con los números para mejorar. Y que una comunidad se cuida sin llenarla de anuncios.</p></div>
+    <div class="suport"><b class="or">¿Te gusta KLONK?</b><p class="suau petit">Apóyanos: con el oro que compras pagamos el servidor y seguimos mejorándola, sin anuncios. Si tienes menos de 18, pídeselo a tu madre o a tu padre.</p>
+      <button class="btn clar marc" data-accion="suport-oro">APÓYANOS CON ORO</button></div>`;
   if (k === "perfil") return `<form class="form" data-form="ajustes"><div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
       <label>Sueles entrenar a las<input id="a-hora" type="time" value="${esc(pr.horaEntreno || "18:00")}"></label>
       <p class="suau petit" style="margin:0">Tu peso de cada semana, mejor en Estadísticas, en «Cuerpo»: así ves cómo cambia.</p><button class="btn clar marc" type="submit">GUARDAR</button></form>`;
@@ -3176,6 +3191,7 @@ function dadesResum(o) {
   s.ej.forEach(e => e.sets.forEach(z => { if (z.ok && z.reps && e.x !== "lastre") kg += (z.kg || 0) * z.reps; }));
   // els rècords d'avui: el millor 1RM estimat de l'exercici contra tots els entrenos d'abans
   const records = [];
+  let primeres = 0;
   fetes.forEach(e => {
     if (e.x === "lastre") return;
     let abans = 0;
@@ -3183,13 +3199,14 @@ function dadesResum(o) {
     const millor = e.sets.filter(z => z.ok && z.reps).reduce((m, z) => Stats.e1rm(z.kg || 0, z.reps) > Stats.e1rm(m.kg || 0, m.reps) ? z : m, { kg: 0, reps: 0 });
     const v = Stats.e1rm(millor.kg || 0, millor.reps);
     if (abans && v > abans + 0.01) records.push({ n: e.n, kg: millor.kg, reps: millor.reps, v, abans });
+    if (!abans && v > 0) primeres++;
   });
   const mejoras = fetes.map(e => {
     const c = Stats.curvaEjercicio(S, e.n).slice(-10).map(p => p.valor);
     return { n: e.n, vals: c, canvi: c.length >= 2 ? c[c.length - 1] / c[0] - 1 : null };
   });
   const hitos = Stats.HITOS.filter(h => h > o.mrAbans && h <= o.mrDes);
-  return { s, min: Math.max(1, Math.round((s.fin - s.inicio) / 60000)), series, kg: Math.round(kg), ejercicios: fetes.length, records, mejoras,
+  return { s, min: Math.max(1, Math.round((s.fin - s.inicio) / 60000)), series, kg: Math.round(kg), ejercicios: fetes.length, records, primeres, mejoras,
     hitos, meta: o.meta, puntua: Stats.puntuables(S).has(s.id), ...o };
 }
 
@@ -3199,8 +3216,9 @@ function pagEntreno(d) {
   return `<div class="gran or entra" style="--d:.05s">¡ENTRENO FORJADO!</div>
     <div class="r-sub entra" style="--d:.2s">Día ${d.s.dia}, ${esc((d.s.dt || "").toLowerCase())}</div>
     <div class="r-tiles">${tiles.map(([v, et], i) => `<div class="r-tile marc entra" style="--d:${(0.45 + i * 0.28).toFixed(2)}s"><b class="or num" data-compta="${v}" data-quan="${450 + i * 280}">0</b><span>${et}</span></div>`).join("")}</div>
-    <h3 class="r-h entra" style="--d:1.6s">${d.records.length ? (d.records.length === 1 ? "Un récord" : `${d.records.length} récords`) : "Récords"}</h3>
+    <h3 class="r-h entra" style="--d:1.6s">${d.records.length ? (d.records.length === 1 ? "Un récord" : `${d.records.length} récords`) : d.primeres ? "Primeras marcas" : "Récords"}</h3>
     ${d.records.length ? `<div class="r-recs">${d.records.map((r, i) => `<div class="r-rec entra" style="--d:${(1.8 + i * 0.3).toFixed(2)}s" data-so="record" data-quan="${1800 + i * 300}" data-n="${esc(r.n)}"><span class="r-medalla">${I_MEDALLA}</span><span class="r-rec-t"><b>${esc(r.n)}</b><small>${kgTxt(r.kg)} kg × ${r.reps}. Tu máximo estimado: ${n0(r.v)} kg (${n0(r.abans)} antes)</small></span></div>`).join("")}</div>`
+      : d.primeres ? `<p class="r-nota entra" style="--d:1.8s">Has puesto tu marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}. Desde hoy, cada vez que la superes será un récord.</p>`
       : `<p class="r-nota entra" style="--d:1.8s">Hoy no has batido ninguno. La constancia también forja: los récords llegan.</p>`}
     ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}`;
 }
@@ -3557,10 +3575,7 @@ function vistaRankings(so) {
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
     <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.total} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
       + (sol ? `<p class="suau petit" style="margin:10px 0 0">Aún no hay nadie de tu clan. <button class="enllac" data-accion="soc-tab" data-t="clan">Añade a alguien por su nickname</button></p>` : "") : `<p class="suau petit">Cargando…</p>`}</div>
-    ${S.ui.errSocial ? `<p class="falta">${esc(S.ui.errSocial)}</p>` : ""}
-    ${bloc("Quiénes somos", `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
-      <p>Creemos que el que se lo curra tiene que notarse. Por eso los personajes buenos no se compran: se ganan entrenando, un día tras otro.</p>
-      <p>Que descansar también es entrenar. Que no hace falta obsesionarse con los números para mejorar. Y que una comunidad se cuida sin llenarla de anuncios.</p></div>`)}`;
+    ${S.ui.errSocial ? `<p class="falta">${esc(S.ui.errSocial)}</p>` : ""}`;
 }
 // El clan: les sol·licituds que t'arriben, a dalt i marcades; afegir pel nickname exacte; les que esperen; i el clan.
 function vistaClan(so) {
@@ -4506,7 +4521,6 @@ function vistaMenu() {
       <div class="menu-items">${p.vacia ? `<span class="suau petit">${esc(p.nota || "")}</span>` : p.items.filter(it => !it.op).map(it => `<span>${esc(val(it.a).n)} <small>${cantidadTxt(it)}</small></span>`).join("")}</div>
       <div class="fila envolta" style="margin-top:8px"><button class="btn marc" data-accion="menu-edita" data-slot="${slot}">${m ? "Cambiar" : ambPla() ? "Poner el mío" : "Añadir"}</button>${m ? `<button class="enllac" data-accion="menu-auto" data-slot="${slot}">${ambPla() ? "Volver a automático" : "Vaciar"}</button>` : ""}</div></section>`;
   });
-  h += `<p style="text-align:center;margin-top:14px"><button class="btn marc" data-accion="menu-productes">Tu yogur, tu leche y tu hora de entreno</button></p>`;
   return h;
 }
 
@@ -4614,6 +4628,7 @@ const I_LLAPIS = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" st
 const I_PLAY = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8.5 5.3v13.4c0 .8.9 1.3 1.6.8l10.2-6.7c.6-.4.6-1.3 0-1.7L10.1 4.5c-.7-.5-1.6 0-1.6.8z" fill="currentColor"/></svg>';
 const I_COMPARTIR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
 const I_CANVI = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
+const ambLlast = n => { const c = S.cfg[n] || {}; return c.ambLastre ?? !!gim().lastre; };
 const I_X = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 // Els degradats es declaren un sol cop per a tota la pàgina (un id repetit a cada gràfica és invàlid).
 document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -4846,13 +4861,13 @@ function vistaEntreno() {
     <div><div class="dia-n or">Día ${s.dia}</div><div class="dia-t">${esc(d.t)}</div><div class="sessio-estrelles">${htmlEstrellas(rutinaActual())}</div>
     <div class="barra"><i style="width:${(fetsEj / s.ej.length * 100).toFixed(1)}%"></i></div><div class="xp num">${fetsEj} de ${s.ej.length} ejercicios</div></div></div>`;
   s.ej.forEach((e, i) => {
-    const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre";
+    const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
     const foto = fotoEj(e.n);
-    h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div></div>
+    h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
       <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min}-${c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
       ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}"><span class="i">${j + 1}</span>
-        ${lastre && !gim().lastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
+        ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
         <span class="x">×</span>
         <label class="camp"><span class="lector">Repeticiones de la serie ${j + 1}</span><input inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-camp="reps" data-i="${i}" data-j="${j}" value="${z.reps ?? ""}" placeholder="${c.min}-${c.max}"><span class="u">rep</span></label>
         <button class="xec" data-accion="serie" data-i="${i}" data-j="${j}" aria-pressed="${!!z.ok}" aria-label="Serie ${j + 1} hecha">${I_CHECK}</button></div>`).join("")}
@@ -5274,6 +5289,14 @@ document.addEventListener("click", ev => {
   const acc = b.dataset.accion, k = hoy();
   switch (acc) {
     case "vista": veure(b.dataset.v); break;
+    case "suport-oro": S.ui.tiendaTab = "oro"; veure("tienda"); break;     // la crida de «Quiénes somos» (l'Albert: «i demana pasta allà»)
+    case "ej-lastre": {
+      const s = activa(), e = s && s.ej[+b.dataset.i]; if (!e) break;
+      const amb = b.dataset.v === "1";
+      S.cfg[e.n] = { ...(S.cfg[e.n] || {}), ambLastre: amb };
+      if (!amb) e.sets.forEach(z => { if (!z.ok) z.kg = 0; });      // només el teu pes: sense llast a les que queden
+      guardar(); render(); Efectos.suena("tap"); break;
+    }
     case "inici-clan": {      // la fitxa «Tu clan» de l'entrada porta al rànquing del clan (o a Social, si encara no hi ets)
       const so = soc();
       if (so.participa && so.yo && so.yo.gimnas) { S.ui.socTab = "rank"; S.social = { ...so, ambit: "amigos" }; }
@@ -5611,7 +5634,7 @@ function prepara() {
   rend.toneMappingExposure = 1.15;
   rend.domElement.setAttribute("aria-hidden", "true");
   escena = new THREE.Scene();
-  cam = new THREE.PerspectiveCamera(28, 1, 0.05, 50);
+  cam = new THREE.PerspectiveCamera(FOV, 1, 0.05, 50);
   rellotge = new THREE.Clock();
   // La llum de la fragua: la brasa de davant i de baix, un contrallum taronja i poc cel.
   escena.add(new THREE.HemisphereLight(0xffe3c4, 0x1a0c05, 1.1));
@@ -5772,18 +5795,27 @@ function torna() {
   actiu.ara = actiu.repos;
 }
 
+// A l'entrada (data-vista), el llenç té aire de més a la dreta i a dalt perquè, en fer força, el braç no es talli a la
+// vora (l'Albert, 26-09-2026 nit: «al fer l'animació de flexing després de l'entreno es talla el braç»). Ha de coincidir
+// amb el CSS de `.personatge[data-vista] canvas`. L'enquadrament del personatge no canvia: es calcula amb el marc de
+// sempre i el camp de visió s'eixampla just el que ocupa l'aire.
+const AIRE_D = 120, AIRE_A = 24, FOV = 28;
 function enquadra() {
   if (!rend || !caixa || !caixa.isConnected) return;
-  const w = Math.max(1, caixa.clientWidth + 40), h = Math.max(1, caixa.clientHeight + 10);
+  const ad = caixa.dataset.vista ? AIRE_D : 0, aa = caixa.dataset.vista ? AIRE_A : 0;
+  const w0 = Math.max(1, caixa.clientWidth + 40), h0 = Math.max(1, caixa.clientHeight + 10), w = w0 + ad, h = h0 + aa;
   rend.setSize(w, h, false);
-  cam.aspect = w / h;
-  const t = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+  const t0 = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
   // per defecte, el cos sencer amb aire; amb data-vista="centre,alçada", només aquell tros del cos
   const [centre, alt] = caixa.dataset.vista ? caixa.dataset.vista.split(",").map(Number) : [ALT * 0.5, ALT * 1.1];
   const ample = (actiu ? actiu.ample : 1) * 1.05;
-  const d = Math.max(alt / 2 / t, ample / 2 / (t * cam.aspect));
-  cam.position.set(0, centre + alt * 0.03, d);
-  cam.lookAt(0, centre, 0);
+  const d = Math.max(alt / 2 / t0, ample / 2 / (t0 * w0 / h0));
+  const mpp = 2 * d * t0 / h0;                                   // metres per píxel a la distància del personatge
+  cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(t0 * h / h0));
+  cam.aspect = w / h;
+  const dx = ad / 2 * mpp, dy = aa / 2 * mpp;                    // el centre del llenç, respecte del marc de sempre
+  cam.position.set(dx, centre + alt * 0.03 + dy, d);
+  cam.lookAt(dx, centre + dy, 0);
   cam.near = d / 20; cam.far = d * 6;
   cam.updateProjectionMatrix();
   if (!corrent) rend.render(escena, cam);
