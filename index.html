@@ -1,8 +1,50 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Fragua"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icono-180.png"><link rel="icon" type="image/png" sizes="192x192" href="icono-192.png"><link rel="manifest" href="manifest.webmanifest"></head><body><title>Fragua</title>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="KLσNK"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icono-180.png"><link rel="icon" type="image/png" sizes="192x192" href="icono-192.png"><link rel="manifest" href="manifest.webmanifest"></head><body><title>KLσNK</title>
 <meta name="theme-color" content="#000000">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Noto+Serif:wdth,wght@62.5..100,400..700&display=swap">
+<style>/* Cinzel i Noto Serif servides des de casa (OFL). Abans, fonts.googleapis.com: Google veia la IP de cada usuari. */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url(assets/fonts/Cinzel-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 700 900;
+  font-display: swap;
+  src: url(assets/fonts/Cinzel-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Noto Serif';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+  src: url(assets/fonts/NotoSerif-greek.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Noto Serif';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+  src: url(assets/fonts/NotoSerif-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Noto Serif';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 62.5% 100%;
+  font-display: swap;
+  src: url(assets/fonts/NotoSerif-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
 <style>
 /* FRAGUA, direcció A (26/09/2026). L'Albert: «m'ha agradat molt la versió A... espero que puguis
    clavar-la al pixel». Tot surt de referencies/inici-calma/ref-1.png, amidada: panells de basalt amb
@@ -2223,7 +2265,7 @@ function afegeixPropi(i) {
 
 /* ---- compartir rutines (Albert, 26/09 nit: «compartir-la per WhatsApp o dins de l'app seleccionar l'amic, i que a l'amic
    ja li aparegui: t'han compartit una rutina») ---- */
-const APP_URL = "https://arteclos.github.io/fragua/";
+const APP_URL = "https://klonk.fit/";
 const b64u = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => { bin += String.fromCharCode(x); }); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
 const deb64u = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)));
 const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 3)) })) });
@@ -2269,7 +2311,7 @@ async function accioCompartir(acc, b) {
     case "rut-compartir": if (r) obreFull(fullCompartir(r), "Compartir"); return true;
     case "rut-enllac": {
       if (!r) return true;
-      const url = APP_URL + "#rutina=" + b64u(JSON.stringify(perCompartir(r))), txt = `Te paso mi rutina de la Fragua, «${r.nombre}»: ${url}`;
+      const url = APP_URL + "#rutina=" + b64u(JSON.stringify(perCompartir(r))), txt = `Te paso mi rutina de KLONK, «${r.nombre}»: ${url}`;
       if (navigator.share) navigator.share({ text: txt }).catch(() => {});
       else { try { await navigator.clipboard.writeText(txt); avis("Enlace copiado: pégalo en WhatsApp."); } catch (e) { avis("No se ha podido copiar el enlace.", true); } }
       return true;
@@ -3136,7 +3178,7 @@ function accioPagines(acc, b) {
    algú posa a un gimnàs. */
 "use strict";
 
-const API = "https://vintanys.com/fragua-api/v1";
+const API = "https://api.klonk.fit/v1";
 const ZONAS = [["01", "Álava"], ["02", "Albacete"], ["03", "Alicante"], ["04", "Almería"], ["33", "Asturias"], ["05", "Ávila"], ["06", "Badajoz"], ["08", "Barcelona"],
   ["48", "Bizkaia"], ["09", "Burgos"], ["10", "Cáceres"], ["11", "Cádiz"], ["39", "Cantabria"], ["12", "Castellón"], ["51", "Ceuta"], ["13", "Ciudad Real"], ["14", "Córdoba"],
   ["15", "A Coruña"], ["16", "Cuenca"], ["20", "Gipuzkoa"], ["17", "Girona"], ["18", "Granada"], ["19", "Guadalajara"], ["21", "Huelva"], ["22", "Huesca"], ["07", "Illes Balears"],
@@ -3311,7 +3353,7 @@ async function accioSocial(acc, b) {
         await cuenta();
         const j = await api("POST", "/amigos/codigo" + (acc === "social-codi-nou" ? "?nou=true" : ""));
         S.social = { ...soc(), codi: j.codi }; guardar(); render();
-        const txt = `Únete a mi clan en FRAGUA con el código ${j.codi}: https://arteclos.github.io/fragua/`;
+        const txt = `Únete a mi clan en KLONK con el código ${j.codi}: ${APP_URL}`;
         if (acc === "social-codi" && so.codi && navigator.share) navigator.share({ text: txt }).catch(() => {});
         else if (acc === "social-codi" && so.codi) { try { await navigator.clipboard.writeText(txt); avis("Copiado. Pégalo en un mensaje."); } catch (e) { avis("Tu código: " + j.codi); } }
       } catch (e) { avis(e.message, true); }
