@@ -359,7 +359,75 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
   padding:10px 16px;border-radius:999px;background:#1a1512;border:1px solid #f0a050;color:#ffe6b6;font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.6)}
 .descansant .toast{bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .lector{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+/* ---- les rutines ---- */
+.rutina,.rutina-act{--x:10px;display:grid;gap:6px;width:100%;text-align:left;padding:12px 14px;margin-bottom:10px;color:var(--crema)}
+.rutina-cap{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rutina-nom{font-weight:700;font-size:17px;line-height:1.25}
+.rutina-dades{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--fum)}
+.estrelles{display:inline-flex;gap:1px;vertical-align:middle}
+.ciencia{padding:9px 0;border-bottom:1px solid rgba(197,123,55,.18)}
+.ciencia:last-child{border-bottom:0}
+.ciencia p{margin:3px 0;font-size:14px}.ciencia small{color:var(--fum-2);font-size:12px}
+.rutina-fitxa{text-align:center}.rutina-fitxa p{margin:6px 0 0}
+.dia-rut{margin-top:10px}
+.ej-llista{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ej-mini{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(197,123,55,.25);font-size:13px}
+.ej-mini img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.dia-ed{margin-top:12px}
+.dia-ed .form input{height:42px}
+.ej-ed{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(197,123,55,.16)}
+.ej-ed img,.sense-foto{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#15110e;display:block}
+.ej-ed .nom{font-size:15px}
+.ej-botons{display:flex;gap:4px}
+.ej-botons button{width:36px;height:36px;border-radius:8px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--crema);display:grid;place-items:center}
+.ej-botons button:disabled{opacity:.35}
+.grup-tria{font-size:15px;color:#ffb55e;margin:14px 0 6px}
+.ej-tria{display:flex;align-items:center;gap:12px;width:100%;padding:6px;margin-bottom:6px;border-radius:10px;border:1px solid rgba(197,123,55,.25);background:rgba(0,0,0,.3);color:var(--crema);text-align:left;font-size:15px}
+.ej-tria img{width:48px;height:48px;border-radius:8px;object-fit:cover}
+.dies-tria{display:flex;gap:8px;flex-wrap:wrap}
+.sessio-estrelles{margin:-4px 0 8px}
+
+/* ---- el rècord: salta enmig de l'entreno, sense aturar-lo ---- */
+.pop-record{position:fixed;left:50%;top:32%;z-index:58;transform:translate(-50%,-50%);pointer-events:none;display:grid;place-items:center}
+.pop-record .pr-raig{position:absolute;width:320px;height:320px;border-radius:50%;
+  background:repeating-conic-gradient(rgba(255,190,70,.38) 0 10deg,transparent 10deg 24deg);
+  -webkit-mask:radial-gradient(circle,#000 25%,transparent 68%);mask:radial-gradient(circle,#000 25%,transparent 68%);animation:gira 4s linear infinite}
+.pop-record .pr-cos{position:relative;padding:14px 24px 12px;border-radius:14px;text-align:center;
+  background:radial-gradient(120% 140% at 50% 110%,#c42a0a,#6a0a02 70%);border:2px solid #ffc060;box-shadow:0 0 34px rgba(255,120,30,.75);animation:pop-in .55s cubic-bezier(.2,.9,.3,1.5)}
+.pr-t{font-family:var(--display);font-weight:900;font-size:26px;line-height:1.2}
+.pr-ej{font-weight:700;font-size:15px;color:#ffe6b6}
+.pr-n{font-size:15px;color:#ffd9a0;margin-top:4px}.pr-n b{font-family:var(--display);font-size:22px}
+.pr-peu{font-size:11.5px;color:#ffcf99}
+.pop-record.surt{animation:pop-out .45s ease-in forwards}
+@keyframes pop-in{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes pop-out{to{transform:translate(-50%,-50%) scale(.6);opacity:0}}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* ---- el resum de l'entreno: cada peça entra per torn ---- */
+.stats-fi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0 8px}
+.stats-fi .st{padding:9px 4px 7px;border-radius:10px;background:rgba(0,0,0,.4);border:1px solid rgba(197,123,55,.4)}
+.st b{display:block;font-family:var(--display);font-weight:900;font-size:25px;line-height:1.15}
+.st span{font-size:12px;color:var(--fum);font-weight:700}
+.st,.xp-fila,.oro-guanyat,.fila-ratxa,.gel-text{opacity:0;animation:apareix .5s cubic-bezier(.2,.9,.3,1.35) forwards}
+@keyframes apareix{from{opacity:0;transform:translateY(12px) scale(.85)}to{opacity:1;transform:none}}
+.entra-gran{animation:entra-gran .6s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes entra-gran{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+/* el gel de la ratxa: el bloc cobreix la flama, s'esquerda amb la destral i peta en trossos */
+.ratxa-gel{position:relative;display:inline-grid;place-items:center;width:44px;height:52px}
+.ratxa-gel > svg{width:44px;height:52px}
+.gel-bloc{position:absolute;inset:-6px -9px;border-radius:10px;background:linear-gradient(160deg,rgba(225,247,255,.94),rgba(150,205,240,.8) 55%,rgba(95,165,225,.85));
+  box-shadow:inset 0 0 12px rgba(255,255,255,.85),0 0 16px rgba(140,210,255,.65);animation:gel-fora .35s ease-in calc(var(--t) + 550ms) forwards}
+.gel-bloc::after{content:"";position:absolute;inset:0;opacity:0;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 44%,rgba(255,255,255,.95) 46%,transparent 48%),linear-gradient(35deg,transparent 60%,rgba(255,255,255,.9) 62%,transparent 64%);
+  animation:esquerda .08s linear calc(var(--t) + 250ms) forwards}
+.gel-tros{position:absolute;left:50%;top:50%;width:13px;height:13px;opacity:0;background:rgba(205,238,255,.95);clip-path:polygon(50% 0,100% 40%,70% 100%,0 70%);
+  animation:tros .75s ease-out calc(var(--t) + 560ms) forwards}
+.gel-tros.t1{--dx:-44px;--dy:-30px}.gel-tros.t2{--dx:46px;--dy:-28px}.gel-tros.t3{--dx:-40px;--dy:32px}.gel-tros.t4{--dx:42px;--dy:36px}
+@keyframes gel-fora{40%{transform:scale(1.08) rotate(-3deg)}100%{transform:scale(1.35);opacity:0}}
+@keyframes esquerda{to{opacity:1}}
+@keyframes tros{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(160deg)}}
+.gel-text{color:#9fd8ff}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}.st,.xp-fila,.oro-guanyat,.fila-ratxa,.gel-text{opacity:1}.gel-bloc,.gel-tros{display:none}}
 @media (max-width:370px){.placa-nom{font-size:22px}.foc-t{font-size:12px;font-stretch:80%}.foc-n{font-size:16px;font-stretch:90%}.flames svg{width:13px;height:17px}.btn-forja span{font-size:22px}.eina{font-size:13.5px}.mini h3{font-size:11.5px}}
 </style>
 
@@ -402,6 +470,15 @@ const RUTINA = [
   { n: 5, t: "Brazos y hombros", ej: [["Curl de bíceps en banco", "a"], ["Extensión de tríceps", "a"], ["Elevaciones laterales en polea", "a", "fino"], ["Curl de bíceps unilateral en banco", "a"], ["Press militar", "c"], ["Extensión de tríceps tipo katana en polea", "a"], ["Curl martillo", "a"], ["Elevaciones posteriores en polea", "a", "fino"]] },
   { n: 6, t: "Pierna", ej: [["Curl femoral tumbado", "a"], ["Extensión de cuádriceps", "a"], ["Hack Squat", "c"], ["Curl femoral sentado", "a"], ["Abducción de cadera en máquina", "a"], ["Aducción de cadera en máquina", "a"], ["Elevación de gemelos", "a"]] },
 ];
+// La rutina de sempre és una de tantes (26/09): la base. L'activa la tria cadascú (src/rutinas.js).
+const RUTINA_BASE = { id: "seis-dias", nombre: "Hipertrofia 6 días", precio: 0,
+  resumen: "Seis días: pecho y hombro, espalda y bíceps, pierna, pecho y espalda, brazos y hombro, y pierna otra vez.",
+  dias: RUTINA.map(d => ({ t: d.t, ej: d.ej })) };
+function rutinaActual() {
+  const totes = typeof totesRutinas === "function" ? totesRutinas() : [RUTINA_BASE];
+  return totes.find(r => r.id === S.rutinaActiva) || RUTINA_BASE;
+}
+function diaRutina(n) { const r = rutinaActual(), d = r.dias[n - 1]; return d ? { n, t: d.t, ej: d.ej } : null; }
 const RANGO = { c: [6, 10], a: [10, 15] };
 const DESCANSO = { c: 120, a: 75 };
 
@@ -509,7 +586,7 @@ const EQUIV = { hc: "c", prot: "p", grasa: "g", fruta: "c", dulce: "c" };
 
 /* ---------- estado (solo en este móvil) ---------- */
 const LLAVE = "fragua.v1";
-const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVisto: 1, desbloq: ["herrero", "forjadora", "genio"], oroGastado: 0, oroComprado: 0, perfil: { peso: null, altura: null, yogur: "natural", leche: "semi", horaEntreno: "18:00" }, sinStock: [],
+const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVisto: 1, desbloq: ["herrero", "forjadora", "genio"], oroGastado: 0, oroComprado: 0, rutinas: [], rutinaActiva: null, rutinasDesbloq: [], perfil: { peso: null, altura: null, yogur: "natural", leche: "semi", horaEntreno: "18:00" }, sinStock: [],
   ses: [], activa: null, cfg: {}, reg: {}, tipo: {}, hambre: {}, prop: {}, menus: [], ui: { tab: "hoy", abiertas: {} } });
 let guardable = true;
 let S = cargar();
@@ -764,8 +841,8 @@ function sugerencia(nombre, tipo, extra, excepto) {
   return { kg: top, reps: null, texto: base + "Repite el peso y busca una repetición más." };
 }
 function empezar(dia) {
-  const d = RUTINA[dia - 1];
-  const s = { id: uid(), dia, fecha: hoy(), inicio: Date.now(), fin: null, ej: [] };
+  const d = diaRutina(dia) || diaRutina(1);
+  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [] };
   s.ej = d.ej.map(([n, t, x]) => {
     const c = cfgEj(n, t);
     const sug = sugerencia(n, t, x, s.id);
@@ -778,9 +855,10 @@ function empezar(dia) {
 }
 const activa = () => S.ses.find(s => s.id === S.activa) || null;
 function siguienteDia() {
-  const hechas = S.ses.filter(s => s.fin);
+  const r = rutinaActual();
+  const hechas = S.ses.filter(s => s.fin && (s.rut || "seis-dias") === r.id);
   if (!hechas.length) return 1;
-  return (hechas[hechas.length - 1].dia % 6) + 1;
+  return (hechas[hechas.length - 1].dia % r.dias.length) + 1;
 }
 function e1rm(kg, reps) { return reps > 0 ? kg * (1 + reps / 30) : 0; }
 function terminar() {
@@ -1399,6 +1477,185 @@ void main(){
   return { actiu: () => !!gl };
 })();
 
+/* FRAGUA · les rutines (26/09/2026).
+   L'Albert: «et falta posar un configurador de rutines, important... la gent ha de poder editar la
+   rutina, o bé afegir-ne o comprar-ne de noves... veure quantes estrelles té... tot amb ciència darrera».
+   Aquí hi ha el catàleg d'exercicis (els 29 il·lustrats), les plantilles, les estrelles, i les pantalles
+   «Mis rutinas», la fitxa d'una rutina i l'editor. El motor (src/motor.js) en fa servir l'activa.
+   Va abans que src/app.js al mateix <script>: aquí només hi ha dades i funcions. */
+"use strict";
+
+// El catàleg: [nom, tipus, extra]. c = multiarticular (6-10 repeticions, 2 min de descans); a = aïllament
+// (10-15, 75 s); lastre = s'apunta el pes afegit; fino = puja d'1 en 1 kg.
+const CATALOGO = [
+  ["Press de pecho en máquina", "c"], ["Press plano en máquina", "c"], ["Press inclinado", "c"], ["Press inclinado en Smith", "c"],
+  ["Fondos", "c", "lastre"], ["Peck Deck", "a"],
+  ["Press militar", "c"], ["Elevaciones laterales en polea", "a", "fino"], ["Elevaciones posteriores en polea", "a", "fino"],
+  ["Dominadas", "c", "lastre"], ["Jalón al pecho", "c"], ["Remo Gironda", "c"], ["Remo unilateral", "c"], ["Remo en T", "c"], ["Extensión lumbar", "a"],
+  ["Curl de bíceps en banco", "a"], ["Curl de bíceps en banco con soporte", "a"], ["Curl de bíceps unilateral en banco", "a"], ["Curl martillo", "a"],
+  ["Extensión de tríceps", "a"], ["Extensión de tríceps tipo katana en polea", "a"],
+  ["Hack Squat", "c"], ["Prensa de piernas", "c"], ["Extensión de cuádriceps", "a"], ["Curl femoral tumbado", "a"], ["Curl femoral sentado", "a"],
+  ["Abducción de cadera en máquina", "a"], ["Aducción de cadera en máquina", "a"], ["Elevación de gemelos", "a"],
+];
+const catalogo = n => CATALOGO.find(e => e[0] === n) || null;
+const nDies = n => `${n} ${n === 1 ? "día" : "días"}`;
+
+// Les plantilles. La base («seis-dias») és la rutina de sempre (RUTINA, a motor.js).
+// Per què són així (la font a cada una, a CIENCIA): cada múscul dues vegades per setmana, 10-20 sèries
+// per múscul i setmana, els multiarticulars primer i amb més descans.
+const P = (t, ...ej) => ({ t, ej: ej.map(n => catalogo(n) || [n, "a"]) });
+const PLANTILLAS = [
+  { id: "iniciacion", nombre: "Iniciación: cuerpo completo", precio: 0, resumen: "Tres días de cuerpo entero con máquinas. Para empezar o volver.",
+    dias: [P("Cuerpo completo A", "Prensa de piernas", "Press de pecho en máquina", "Jalón al pecho", "Curl femoral sentado", "Elevaciones laterales en polea"),
+      P("Cuerpo completo B", "Hack Squat", "Remo Gironda", "Press militar", "Extensión de cuádriceps", "Curl martillo"),
+      P("Cuerpo completo C", "Prensa de piernas", "Press plano en máquina", "Remo unilateral", "Curl femoral tumbado", "Extensión de tríceps")] },
+  { id: "torso-pierna", nombre: "Torso y pierna", precio: 0, resumen: "Cuatro días: dos de torso y dos de pierna. Cada músculo, dos veces por semana.",
+    dias: [P("Torso A", "Press inclinado en Smith", "Remo Gironda", "Press militar", "Jalón al pecho", "Curl de bíceps en banco", "Extensión de tríceps"),
+      P("Pierna A", "Hack Squat", "Curl femoral tumbado", "Extensión de cuádriceps", "Elevación de gemelos", "Extensión lumbar"),
+      P("Torso B", "Press de pecho en máquina", "Remo en T", "Dominadas", "Elevaciones laterales en polea", "Curl martillo", "Extensión de tríceps tipo katana en polea"),
+      P("Pierna B", "Prensa de piernas", "Curl femoral sentado", "Abducción de cadera en máquina", "Aducción de cadera en máquina", "Elevación de gemelos")] },
+  { id: "gluteo-pierna", nombre: "Glúteo y pierna", precio: 300, resumen: "Cuatro días con la pierna y el glúteo de protagonistas y el torso para equilibrar.",
+    dias: [P("Pierna y glúteo A", "Hack Squat", "Prensa de piernas", "Abducción de cadera en máquina", "Curl femoral tumbado", "Elevación de gemelos"),
+      P("Torso A", "Press de pecho en máquina", "Jalón al pecho", "Remo Gironda", "Elevaciones laterales en polea", "Extensión de tríceps"),
+      P("Pierna y glúteo B", "Prensa de piernas", "Curl femoral sentado", "Aducción de cadera en máquina", "Extensión de cuádriceps", "Extensión lumbar"),
+      P("Torso B", "Press inclinado", "Remo unilateral", "Press militar", "Curl martillo", "Elevaciones posteriores en polea")] },
+  { id: "ppl", nombre: "Empuje, tirón y pierna", precio: 450, resumen: "Seis días: empujar, tirar y pierna, dos vueltas por semana. Para quien ya entrena.",
+    dias: [P("Empuje A", "Press inclinado en Smith", "Press de pecho en máquina", "Press militar", "Elevaciones laterales en polea", "Extensión de tríceps", "Fondos"),
+      P("Tirón A", "Dominadas", "Remo Gironda", "Remo unilateral", "Elevaciones posteriores en polea", "Curl de bíceps en banco con soporte", "Curl martillo"),
+      P("Pierna A", "Hack Squat", "Curl femoral tumbado", "Extensión de cuádriceps", "Elevación de gemelos", "Abducción de cadera en máquina"),
+      P("Empuje B", "Press plano en máquina", "Press inclinado", "Peck Deck", "Elevaciones laterales en polea", "Extensión de tríceps tipo katana en polea"),
+      P("Tirón B", "Jalón al pecho", "Remo en T", "Extensión lumbar", "Curl de bíceps en banco", "Curl de bíceps unilateral en banco"),
+      P("Pierna B", "Prensa de piernas", "Curl femoral sentado", "Aducción de cadera en máquina", "Extensión de cuádriceps", "Elevación de gemelos")] },
+];
+const CIENCIA = [
+  ["Cada músculo, dos veces por semana", "Entrenar un músculo dos veces por semana hace crecer más que una sola.", "Schoenfeld, Ogborn y Krieger, Sports Medicine, 2016"],
+  ["Diez series o más por músculo y semana", "Más series semanales dan más músculo; por debajo de diez se crece menos.", "Schoenfeld, Ogborn y Krieger, Journal of Sports Sciences, 2017"],
+  ["Descansar de verdad en los ejercicios grandes", "Tres minutos entre series ganaron más fuerza y músculo que uno.", "Schoenfeld y otros, Journal of Strength and Conditioning Research, 2016"],
+  ["Cerca del fallo, con más o menos peso", "Con series de 6 a 15 repeticiones cerca del fallo se crece parecido.", "Schoenfeld, Grgic, Ogborn y Krieger, Journal of Strength and Conditioning Research, 2017"],
+  ["Entrenar fuerza siendo joven es seguro", "Con buena técnica y progresión, la fuerza es segura y buena en adolescentes.", "Faigenbaum y otros, posición de la NSCA, 2009"],
+];
+
+// Les estrelles: la dificultat surt de les sèries per setmana (3 per exercici, o les que hagi posat).
+function seriesSemana(r) { return r.dias.reduce((a, d) => a + d.ej.reduce((b, e) => b + cfgEj(e[0], e[1]).series, 0), 0); }
+function estrellas(r) { const s = seriesSemana(r); return s < 40 ? 1 : s < 70 ? 2 : s < 95 ? 3 : s < 120 ? 4 : 5; }
+const I_ESTRELLA = on => `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17.1 6.1 20.3l1.3-6.5L2.5 9.3l6.6-.8z" fill="${on ? "url(#gOr)" : "#3a302a"}" stroke="${on ? "#7a4a12" : "#5a4a3e"}" stroke-width="1"/></svg>`;
+const htmlEstrellas = r => `<span class="estrelles" role="img" aria-label="Dificultad ${estrellas(r)} de 5">${[1, 2, 3, 4, 5].map(i => I_ESTRELLA(i <= estrellas(r))).join("")}</span>`;
+
+// Totes les rutines que es veuen: la base, les plantilles i les pròpies.
+const rutinaPropia = id => (S.rutinas || []).find(r => r.id === id);
+function totesRutinas() { return [RUTINA_BASE, ...PLANTILLAS, ...(S.rutinas || [])]; }
+const rutinaTeva = r => !r.precio || (S.rutinasDesbloq || []).includes(r.id) || !!rutinaPropia(r.id);
+
+/* ---------------------------------------------------------------- les pantalles */
+function vistaRutinas() {
+  const act = rutinaActual();
+  const carta = r => `<button class="rutina marc${rutinaTeva(r) ? "" : " bloq"}" data-accion="rut-ver" data-id="${r.id}">
+      <span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span>${r.id === act.id ? '<span class="toca">En uso</span>' : ""}</span>
+      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span>
+      ${rutinaTeva(r) ? "" : `<span class="preu">${MONEDA}${r.precio}</span>`}</button>`;
+  return `${capcalera("Rutinas")}
+    <section class="seccio"><h2>Tus rutinas</h2>${[RUTINA_BASE, ...PLANTILLAS.filter(rutinaTeva), ...(S.rutinas || [])].map(carta).join("")}
+      <button class="btn clar marc" style="width:100%;margin-top:4px" data-accion="rut-nova">Crear una rutina nueva</button></section>
+    ${PLANTILLAS.some(r => !rutinaTeva(r)) ? `<section class="seccio"><h2>Más rutinas</h2>${PLANTILLAS.filter(r => !rutinaTeva(r)).map(carta).join("")}</section>` : ""}
+    ${bloc("Por qué funcionan", CIENCIA.map(([t, d, f]) => `<div class="ciencia"><b>${esc(t)}</b><p>${esc(d)}</p><small>${esc(f)}</small></div>`).join(""), "graf")}`;
+}
+function vistaRutina() {
+  const r = totesRutinas().find(x => x.id === S.ui.rutVer) || rutinaActual(), teva = rutinaTeva(r), act = rutinaActual().id === r.id;
+  const oro = oroTotal();
+  const accions = !teva
+    ? (oro >= r.precio ? botoForja(`data-accion="rut-comprar" data-id="${r.id}"`, `DESBLOQUEAR POR ${r.precio}`, "de oro") : `<p class="falta">Te faltan ${r.precio - oro} de oro. Un entreno completo da unos 70.</p>`)
+    : `${act ? "" : botoForja(`data-accion="rut-usar" data-id="${r.id}"`, "USAR ESTA RUTINA", "")}
+       <div class="fila envolta" style="justify-content:center;margin-top:12px">
+         ${rutinaPropia(r.id) ? `<button class="btn marc" data-accion="rut-editar" data-id="${r.id}">Editar</button>` : ""}
+         <button class="btn marc" data-accion="rut-copiar" data-id="${r.id}">${rutinaPropia(r.id) ? "Duplicar" : "Copiar y editar"}</button>
+         ${rutinaPropia(r.id) && !act ? `<button class="btn marc" data-accion="rut-borrar" data-id="${r.id}">Borrar</button>` : ""}</div>`;
+  return `${capcalera("")}<h1 class="titol-pag or">${esc(r.nombre)}</h1>
+    <div class="panel pad rutina-fitxa">${htmlEstrellas(r)}<p>${esc(r.resumen || "Tu rutina.")}</p><p class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana${act ? ". Es la que usas." : "."}</p></div>
+    ${r.dias.map((d, i) => `<section class="panel pad dia-rut"><div class="fila entre"><b>Día ${i + 1}: ${esc(d.t)}</b><span class="suau petit">${d.ej.length} ejercicios</span></div>
+      <div class="ej-llista">${d.ej.map(e => `<span class="ej-mini">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="36" height="36">` : ""}${esc(e[0])}</span>`).join("")}</div></section>`).join("")}
+    <div style="margin-top:16px">${accions}</div>`;
+}
+// L'editor treballa sobre una còpia (S.ui.edit) i només es desa amb «GUARDAR».
+function vistaEditor() {
+  const r = S.ui.edit; if (!r) return vistaRutinas();
+  return `${capcalera("")}<h1 class="titol-pag or">${rutinaPropia(r.id) ? "Editar rutina" : "Nueva rutina"}</h1>
+    <form class="form" data-form="rut-nom" onsubmit="return false"><label>Nombre<input id="rut-nom" maxlength="40" autocomplete="off" value="${esc(r.nombre)}"></label></form>
+    ${r.dias.map((d, i) => `<section class="panel pad dia-ed">
+      <div class="fila entre"><label class="form" style="flex:1"><span class="suau petit">Día ${i + 1}</span><input data-dia-t="${i}" maxlength="40" autocomplete="off" value="${esc(d.t)}"></label>
+        <button class="tanca" data-accion="ed-treu-dia" data-i="${i}" aria-label="Quitar el día ${i + 1}">${I_X}</button></div>
+      ${d.ej.map((e, j) => `<div class="ej-ed">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
+        <span class="nom">${esc(e[0])}</span>
+        <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span></div>`).join("")}
+      <button class="btn marc" style="margin-top:8px" data-accion="ed-afegeix" data-i="${i}">Añadir ejercicio</button></section>`).join("")}
+    <p style="text-align:center"><button class="btn marc" data-accion="ed-dia">Añadir un día</button></p>
+    <div class="panel pad" style="margin-top:6px"><div class="fila entre">${htmlEstrellas(r)}<span class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></div>
+      <p class="suau petit" style="margin:8px 0 0">Para crecer: cada músculo dos veces por semana y unas 10 a 20 series por músculo.</p></div>
+    <div style="margin-top:16px">${botoForja('data-accion="ed-desa"', "GUARDAR", "")}</div>
+    <p style="text-align:center"><button class="enllac" data-accion="vista" data-v="rutinas">Salir sin guardar</button></p>`;
+}
+// El selector d'exercicis de l'editor: el catàleg per grup muscular, i un d'inventat.
+function fullTriaEj(i) {
+  const grups = {};
+  CATALOGO.forEach(e => { const g = Stats.GRUPO[e[0]] || "Otros"; (grups[g] = grups[g] || []).push(e); });
+  return Object.entries(grups).map(([g, ll]) => `<h3 class="grup-tria">${esc(g)}</h3>${ll.map(e => `<button class="ej-tria" data-accion="ed-posa" data-i="${i}" data-n="${esc(e[0])}">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="48" height="48">` : ""}<span>${esc(e[0])}</span></button>`).join("")}`).join("")
+    + `<form class="form" data-form="ed-propi" data-i="${i}" style="margin-top:16px"><label>Otro ejercicio<input id="ed-propi-nom" maxlength="50" autocomplete="off" placeholder="Nombre del ejercicio"></label>
+      <label>Tipo<select id="ed-propi-t"><option value="c">Grande, varias articulaciones (6 a 10 repeticiones)</option><option value="a">Aislado, un músculo (10 a 15 repeticiones)</option></select></label>
+      <button class="btn clar marc" type="submit">Añadir</button></form>`;
+}
+
+/* ---------------------------------------------------------------- els gestos */
+const nouId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+const copia = r => ({ id: nouId(), nombre: r.nombre, resumen: r.resumen || "", dias: r.dias.map(d => ({ t: d.t, ej: d.ej.map(e => [...e]) })) });
+function accioRutina(acc, b) {
+  switch (acc) {
+    case "rut-ver": S.ui.rutVer = b.dataset.id; veure("rutina"); return true;
+    case "rut-usar": {
+      const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r || !rutinaTeva(r)) return true;
+      if (S.activa) { avis("Termina o descarta el entreno en marcha antes de cambiar de rutina.", true); return true; }
+      S.rutinaActiva = r.id; guardar(); veure("entreno"); Efectos.suena("triar"); avis(`Ahora entrenas con «${r.nombre}».`); return true;
+    }
+    case "rut-comprar": {
+      const r = PLANTILLAS.find(x => x.id === b.dataset.id); if (!r || rutinaTeva(r) || oroTotal() < r.precio) return true;
+      S.oroGastado = (S.oroGastado || 0) + r.precio; S.rutinasDesbloq = [...(S.rutinasDesbloq || []), r.id]; guardarYa();
+      Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
+      Efectos.lluvia(1.2); Efectos.vibra([30, 40, 60]); render(); avis(`«${r.nombre}» es tuya.`); return true;
+    }
+    case "rut-nova": S.ui.edit = { id: nouId(), nombre: "Mi rutina", dias: [{ t: "Día 1", ej: [] }] }; guardar(); veure("editor"); return true;
+    case "rut-copiar": { const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r) return true; S.ui.edit = copia(r); S.ui.edit.nombre = r.nombre + " (mía)"; guardar(); veure("editor"); return true; }
+    case "rut-editar": { const r = rutinaPropia(b.dataset.id); if (!r) return true; S.ui.edit = JSON.parse(JSON.stringify(r)); guardar(); veure("editor"); return true; }
+    case "rut-borrar": { S.rutinas = (S.rutinas || []).filter(x => x.id !== b.dataset.id); guardar(); veure("rutinas"); Efectos.suena("apaga"); return true; }
+    case "ed-dia": llegeixEditor(); S.ui.edit.dias.push({ t: "Día " + (S.ui.edit.dias.length + 1), ej: [] }); guardar(); render(); return true;
+    case "ed-treu-dia": llegeixEditor(); if (S.ui.edit.dias.length > 1) S.ui.edit.dias.splice(+b.dataset.i, 1); guardar(); render(); return true;
+    case "ed-afegeix": llegeixEditor(); obreFull(fullTriaEj(+b.dataset.i), "Añadir ejercicio"); return true;
+    case "ed-posa": { const e = catalogo(b.dataset.n); S.ui.edit.dias[+b.dataset.i].ej.push([...e]); guardar(); tancaFull(); render(); Efectos.suena("yunque"); return true; }
+    case "ed-treu": llegeixEditor(); S.ui.edit.dias[+b.dataset.i].ej.splice(+b.dataset.j, 1); guardar(); render(); return true;
+    case "ed-puja": { llegeixEditor(); const ll = S.ui.edit.dias[+b.dataset.i].ej, j = +b.dataset.j; if (j > 0) [ll[j - 1], ll[j]] = [ll[j], ll[j - 1]]; guardar(); render(); return true; }
+    case "ed-desa": {
+      llegeixEditor();
+      const r = S.ui.edit, dies = r.dias.filter(d => d.ej.length);
+      if (!dies.length) { avis("Añade al menos un ejercicio.", true); return true; }
+      r.dias = dies; r.nombre = r.nombre.trim() || "Mi rutina";
+      S.rutinas = [...(S.rutinas || []).filter(x => x.id !== r.id), r];
+      if (!S.activa) S.rutinaActiva = r.id;
+      S.ui.edit = null; S.ui.rutVer = r.id; guardarYa();
+      Efectos.suena("fanfarria"); Efectos.lluvia(1); veure("rutina"); avis("Rutina guardada.");
+      return true;
+    }
+  }
+  return false;
+}
+// Els camps de text de l'editor es llegeixen abans de repintar, perquè no es perdi el que s'ha escrit.
+function llegeixEditor() {
+  const r = S.ui.edit; if (!r) return;
+  const nom = $("#rut-nom"); if (nom) r.nombre = nom.value;
+  document.querySelectorAll("[data-dia-t]").forEach(inp => { const d = r.dias[+inp.dataset.diaT]; if (d) d.t = inp.value.trim() || d.t; });
+}
+function afegeixPropi(i) {
+  const n = ($("#ed-propi-nom").value || "").trim().slice(0, 50);
+  if (!n) { avis("Escribe el nombre del ejercicio.", true); return; }
+  S.ui.edit.dias[i].ej.push([n, $("#ed-propi-t").value]); guardar(); tancaFull(); render(); Efectos.suena("yunque");
+}
+
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
    El motor (rutina, menjar, entreno) és src/motor.js; les estadístiques, stats.js; la dopamina,
    src/efectos.js; el personatge en 3D, src/escena3d.js (mòdul a part). Aquí només es pinta i s'escolta.
@@ -1594,7 +1851,7 @@ const botoForja = (attrs, titol, sub, cls = "") => `<div class="forja ${cls}"><b
 /* ---------------------------------------------------------------- l'entrada */
 function vistaInicio() {
   const p = S.personaje, xp = Stats.experiencia(S), racha = Stats.racha(S), foc = Stats.fuego(S);
-  const act = activa(), dia = act ? act.dia : siguienteDia(), d = RUTINA[dia - 1];
+  const act = activa(), dia = act ? act.dia : siguienteDia(), d = act ? { t: act.dt || (RUTINA[act.dia - 1] || {}).t || "" } : (diaRutina(dia) || { t: "" });
   const k = hoy(), obj = objetivoProt(), prot = totalDia(k).p;
   const sf = serieFuerza(), fz = Stats.fuerza(S);
   const vol = Stats.volumenSemanal(S).map(x => x.kg);
@@ -1631,7 +1888,7 @@ function vistaInicio() {
   </section>
   ${botoForja(`data-accion="${act ? "vista" : "empezar"}" data-v="entreno" data-dia="${dia}"`, act ? "SEGUIR ENTRENO" : "EMPEZAR DÍA " + dia, d.t, "inici-forja")}
   <nav class="eines" aria-label="Herramientas">
-    ${[["entreno", "Entreno"], ["comer", "Comer"], ["registro", "Registro"], ["estadisticas", "Estadísticas"], ["personaje", "Personaje"], ["ajustes", "Ajustes"]]
+    ${[["entreno", "Entreno"], ["comer", "Comer"], ["tienda", "Tienda"], ["estadisticas", "Estadísticas"], ["personaje", "Personaje"], ["ajustes", "Ajustes"]]
       .map(([v, t]) => `<button class="eina marc" data-accion="vista" data-v="${v}"><img src="${ACTIUS}icones/${v}.webp" alt="">${t}</button>`).join("")}
   </nav>`;
 }
@@ -1667,6 +1924,9 @@ function vistaDatos() {
   <form class="form panel pad" data-form="datos">
     <div class="dos"><label>Tu peso, en kg<input id="d-peso" inputmode="decimal" autocomplete="off" required value="${fmt(S.perfil.peso)}"></label>
       <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura)}"></label></div>
+    <div><span class="suau petit" style="font-weight:700">¿Cuántos días a la semana puedes entrenar?</span>
+      <div class="dies-tria" style="margin-top:8px">${[[3, "iniciacion"], [4, "torso-pierna"], [6, "seis-dias"]].map(([n, id]) => `<button type="button" class="chip" data-accion="dies" data-id="${id}" aria-pressed="${(S.rutinaActiva || "iniciacion") === id}">${n} días</button>`).join("")}</div>
+      <p class="suau petit" style="margin:6px 0 0">Te ponemos una rutina de partida. Luego la cambias o creas la tuya en Entreno.</p></div>
     ${botoForja('type="submit"', "ENCENDER LA FRAGUA", "")}
   </form>`;
 }
@@ -1677,15 +1937,18 @@ function vistaEntreno() {
   if (!s) {
     const toca = siguienteDia();
     const fetes = S.ses.filter(x => x.fin).slice(-4).reverse();
+    const r = rutinaActual();
     return `${capcalera("Entreno")}
-    ${RUTINA.map(d => { const ult = [...S.ses].reverse().find(x => x.dia === d.n && x.fin);
+    <button class="rutina-act marc" data-accion="vista" data-v="rutinas"><span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span><span class="toca">Cambiar o editar</span></span>
+      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button>
+    ${r.dias.map((dd, i) => ({ n: i + 1, t: dd.t, ej: dd.ej })).map(d => { const ult = [...S.ses].reverse().find(x => x.dia === d.n && x.fin && (x.rut || "seis-dias") === r.id);
       return `<button class="dia marc" data-accion="empezar" data-dia="${d.n}"><span class="n or">${d.n}</span><span><span class="t">${esc(d.t)}</span><br><span class="s">${d.ej.length} ejercicios${ult ? ", la última vez el " + fechaCorta(ult.fecha) : ""}</span></span>${d.n === toca ? '<span class="toca">Toca hoy</span>' : ""}</button>`; }).join("")}
-    ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<div class="reg"><div><div>Día ${x.dia}, ${esc(RUTINA[x.dia - 1].t.toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div><span></span></div>`).join("")}</div></section>` : ""}`;
+    ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<div class="reg"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div><span></span></div>`).join("")}</div></section>` : ""}`;
   }
-  const d = RUTINA[s.dia - 1];
+  const d = { t: s.dt || (RUTINA[s.dia - 1] || {}).t || "" };
   const fetsEj = s.ej.filter(e => e.sets.length && e.sets.every(z => z.ok)).length;
   let h = `${capcalera("")}<div class="panel sessio-cap">${botoMusica()}${heroi(S.personaje.tipo)}
-    <div><div class="dia-n or">Día ${s.dia}</div><div class="dia-t">${esc(d.t)}</div>
+    <div><div class="dia-n or">Día ${s.dia}</div><div class="dia-t">${esc(d.t)}</div><div class="sessio-estrelles">${htmlEstrellas(rutinaActual())}</div>
     <div class="barra"><i style="width:${(fetsEj / s.ej.length * 100).toFixed(1)}%"></i></div><div class="xp num">${fetsEj} de ${s.ej.length} ejercicios</div></div></div>`;
   s.ej.forEach((e, i) => {
     const c = cfgEj(e.n, e.t), sug = sugerencia(e.n, e.t, e.x, s.id), lastre = e.x === "lastre";
@@ -1746,7 +2009,8 @@ function vistaPropuesta(slot, k, p) {
 function vistaComer() {
   const k = hoy(), t = totalDia(k), obj = objetivoProt(), entreno = esEntreno(k), ara = slotAhora();
   const pr = obj ? Math.min(1, t.p / obj.lo) : 0;
-  let h = `${capcalera("Comer")}
+  if (S.ui.comerTab === "registro") return `${capcalera("Comer")}${tabsComer()}${cosRegistre()}`;
+  let h = `${capcalera("Comer")}${tabsComer()}
   <div class="panel macros">${heroi(S.personaje.tipo)}
     <div class="macro"><img class="ico" src="${ACTIUS}icones/comer.webp" alt=""><div><div class="et"><span>Proteína</span><span class="num">${n0(t.p)}${obj ? " / " + obj.lo : ""} g</span></div><div class="barra"><i style="width:${(pr * 100).toFixed(1)}%"></i></div></div></div>
     <div class="linia-macros"><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span><span>unas ${n0(t.k)} kcal</span></div>
@@ -1773,10 +2037,13 @@ function vistaComer() {
   return h;
 }
 
+const tabsComer = () => `<div class="tabs-t"><button class="chip" data-accion="comer-tab" data-t="hoy" aria-pressed="${S.ui.comerTab !== "registro"}">Hoy</button><button class="chip" data-accion="comer-tab" data-t="registro" aria-pressed="${S.ui.comerTab === "registro"}">Registro</button></div>`;
 let diaReg = null;
-function vistaRegistro() {
+// El registre ja no és una eina a part: és la segona pestanya de «Comer» (26/09).
+function vistaRegistro() { S.ui.comerTab = "registro"; return vistaComer(); }
+function cosRegistre() {
   const k = diaReg || hoy(), llista = S.reg[k] || [], t = totalDia(k), obj = objetivoProt();
-  let h = `${capcalera("Registro")}
+  let h = `
   <div class="fila entre panel pad"><button class="tanca" data-accion="dia-reg" data-d="-1" aria-label="Día anterior">${I_ENRERE}</button>
     <div style="font-weight:700;font-size:18px">${k === hoy() ? "Hoy" : fechaLarga(k)}</div>
     <button class="tanca" data-accion="dia-reg" data-d="1" aria-label="Día siguiente"${k >= hoy() ? " disabled" : ""}><span style="display:inline-block;transform:scaleX(-1)">${I_ENRERE}</span></button></div>
@@ -1965,6 +2232,43 @@ function celebra(html, boto = "SEGUIR") {
   $("#celebra").innerHTML = `<div class="celebra" role="dialog" aria-modal="true"><div class="caixa">${html}<div style="margin-top:22px">${botoForja('data-accion="tanca-celebra"', boto, "")}</div></div></div>`;
   Efectos.lluvia(1.8); Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 30, 40, 60]);
 }
+// EL RESUM DE L'ENTRENO, com un joc (Albert, 26/09: «al resum final les stats que surtin animades, i
+// l'experiència guanyada, igual que un joc, amb sons»). Cada peça entra per torn, amb el seu so i vibració.
+function resumFinal(o) {
+  const T0 = 520, PAS = 320;
+  const peces = [[o.series, o.series === 1 ? "serie" : "series"], [o.kg, "kg movidos"], [o.min, "minutos"], [o.rec, o.rec === 1 ? "récord" : "récords"]];
+  const tXp = T0 + 4 * PAS, tOr = tXp + 900, tR = tOr + 700;
+  celebra(`<div class="gran or entra-gran">¡ENTRENO FORJADO!</div>
+    <div class="stats-fi">${peces.map(([v, et], i) => `<div class="st" style="animation-delay:${T0 + i * PAS}ms"><b class="or num" data-compta="${v}" data-quan="${T0 + i * PAS}">0</b><span>${et}</span></div>`).join("")}</div>
+    <div class="xp-fila" style="animation-delay:${tXp}ms"><div class="xp-guanyat" id="xp-guanyat">+0 XP</div>
+      <div class="barra" style="margin-top:6px"><i id="barra-nivell" style="width:${(o.abans.enNivel / o.abans.paraSubir * 100).toFixed(1)}%"></i></div><div class="sub num">NV ${o.abans.nivel}</div></div>
+    <div class="oro-guanyat" style="animation-delay:${tOr}ms">${MONEDA}<b class="or num" data-compta="${o.oro}" data-quan="${tOr}" data-signe="+">+0</b> de oro</div>
+    <div class="fila-ratxa" style="animation-delay:${tR}ms;--t:${tR}ms">${o.salvada ? `<span class="ratxa-gel">${flama(true)}<i class="gel-bloc"></i><i class="gel-tros t1"></i><i class="gel-tros t2"></i><i class="gel-tros t3"></i><i class="gel-tros t4"></i></span>` : flama(true)}<div style="font-weight:700;font-size:21px">${o.rDes} ${o.rDes === 1 ? "día" : "días"} de racha</div></div>
+    ${o.salvada ? `<div class="sub gel-text" style="animation-delay:${tR + 1000}ms">Tu día de descanso no apagó el fuego: racha salvada</div>` : ""}`,
+    o.des.nivel > o.abans.nivel ? "¡SUBES DE NIVEL!" : "SEGUIR");
+  document.querySelectorAll("#celebra [data-compta]").forEach(el => {
+    const fins = +el.dataset.compta, quan = +el.dataset.quan, signe = el.dataset.signe || "";
+    setTimeout(() => { if (signe) Efectos.suena("or"); else Efectos.suena("tic"); Efectos.vibra(10); comptaNum(el, fins, signe); }, quan);
+  });
+  setTimeout(() => { compta($("#xp-guanyat"), o.des.xp - o.abans.xp); const bi = $("#barra-nivell"); if (bi) bi.style.width = (o.des.nivel > o.abans.nivel ? 100 : o.des.enNivel / o.des.paraSubir * 100).toFixed(1) + "%"; }, tXp);
+  if (o.salvada) { setTimeout(() => Efectos.suena("gel-destral"), tR + 250); setTimeout(() => { Efectos.suena("gel-trenca"); Efectos.vibra([40, 30, 60]); }, tR + 550); }
+  else if (o.puja) setTimeout(() => Efectos.suena("ratxa"), tR + 100);
+}
+function comptaNum(el, fins, signe = "", ms = 700) {
+  if (!el) return;
+  const t0 = performance.now();
+  const pas = t => { const f = Math.min(1, (t - t0) / ms); el.textContent = signe + n0(fins * (1 - Math.pow(1 - f, 3))); if (f < 1) requestAnimationFrame(pas); };
+  requestAnimationFrame(pas);
+}
+// El rècord: salta al mig de la pantalla uns segons, sense aturar l'entreno.
+function popRecord(nom, abans, ara) {
+  const el = document.createElement("div");
+  el.className = "pop-record"; el.setAttribute("role", "status");
+  el.innerHTML = `<div class="pr-raig"></div><div class="pr-cos"><div class="pr-t or">¡NUEVO RÉCORD!</div><div class="pr-ej">${esc(nom)}</div>
+    <div class="pr-n">${abans ? `${n0(abans)} → ` : ""}<b class="or">${n0(ara)} kg</b></div><div class="pr-peu">tu 1RM estimado</div></div>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.classList.add("surt"), 2300); setTimeout(() => el.remove(), 2800);
+}
 function compta(el, fins, ms = 900) {
   if (!el) return;
   const t0 = performance.now();
@@ -1980,7 +2284,7 @@ function render() {
   if (!S.personaje) vista = "eleccion";
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
-  const f = { inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda }[vista] || vistaInicio;
+  const f = { inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
   v.innerHTML = f();
   const h = $("#personatge");
   if (S.personaje) {
@@ -2038,12 +2342,12 @@ document.addEventListener("click", ev => {
       }
       z.ok = !z.ok;
       const r = b.getBoundingClientRect();
-      let record = false;
+      let record = false, prAbans = 0;
       if (z.ok) {
         // ¿rècord? el millor 1RM d'aquest exercici en entrenos anteriors
         let millor = 0;
         S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(q => { if (q.ok && q.reps) millor = Math.max(millor, Stats.e1rm(q.kg || 0, q.reps)); }); });
-        record = millor > 0 && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre";
+        record = millor > 0 && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre"; prAbans = millor;
         empezarDescanso(DESCANSO[e.t]);
       }
       guardar(); render();
@@ -2051,7 +2355,7 @@ document.addEventListener("click", ev => {
         Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); Efectos.vibra(14);
         Efectos.flota("+10 XP", r.left + r.width / 2, r.top - 6);
         setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
-        if (record) setTimeout(() => { Efectos.flota("¡Récord!", innerWidth / 2, r.top - 30, "record"); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra([30, 50, 30, 50, 60]); }, 350);
+        if (record) setTimeout(() => { popRecord(e.n, prAbans, Stats.e1rm(z.kg || 0, z.reps)); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra([30, 50, 30, 50, 60]); Efectos.lluvia(0.8); }, 350);
         reacciona("serie");
       }
       break;
@@ -2072,22 +2376,11 @@ document.addEventListener("click", ev => {
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
       if (!series) { avis("Aún no has hecho ninguna serie."); break; }
       terminar(); S.ui.vista = "inicio"; musica();
-      const des = Stats.experiencia(S), rDes = Stats.racha(S);
+      const des = Stats.experiencia(S), rDes = Stats.racha(S), res = S.ultimoResumen || {};
       render();
-      const rec = S.ultimoResumen?.records?.length || 0;
       // com el gel del Duolingo: ahir no va entrenar i la ratxa segueix gràcies al dia de descans
-      const salvada = !jaAvui && !entrenatAhir && rDes >= 2;
-      if (salvada) { setTimeout(() => Efectos.suena("gel-destral"), 900); setTimeout(() => Efectos.suena("gel-trenca"), 1180); }
-      else if (!jaAvui && rDes > rAbans) setTimeout(() => Efectos.suena("ratxa"), 1100);
-      celebra(`<div class="gran or">¡ENTRENO FORJADO!</div><div class="xp-guanyat" id="xp-guanyat">+0 XP</div><div class="sub">${series} ${series === 1 ? "serie" : "series"} en ${S.ultimoResumen?.min || 0} min${rec ? `, ${rec} ${rec === 1 ? "récord" : "récords"}` : ""}</div>
-        <div class="fila-ratxa">${flama(true)}<div style="font-weight:700;font-size:21px">${rDes} ${rDes === 1 ? "día" : "días"} de racha</div></div>
-        ${salvada ? '<div class="sub" style="color:#9fd8ff">Tu día de descanso no apagó el fuego: racha salvada</div>' : ""}
-        <div class="oro-guanyat">${MONEDA}<b class="or num">+${oroGanado() - oroAbans}</b> de oro</div>
-        <div class="barra" style="margin-top:6px"><i id="barra-nivell" style="width:${(abans.enNivel / abans.paraSubir * 100).toFixed(1)}%"></i></div>
-        <div class="sub num">NV ${abans.nivel}</div>`, des.nivel > abans.nivel ? "¡SUBES DE NIVEL!" : "SEGUIR");
-      compta($("#xp-guanyat"), des.xp - abans.xp);
-      setTimeout(() => Efectos.suena("or"), 1500);
-      setTimeout(() => { const bi = $("#barra-nivell"); if (bi) bi.style.width = (des.nivel > abans.nivel ? 100 : des.enNivel / des.paraSubir * 100).toFixed(1) + "%"; }, 350);
+      resumFinal({ series, kg: Math.round(res.volumen || 0), min: res.min || 0, rec: (res.records || []).length, abans, des, rDes,
+        oro: oroGanado() - oroAbans, salvada: !jaAvui && !entrenatAhir && rDes >= 2, puja: !jaAvui && rDes > rAbans });
       S.pendentNivell = des.nivel > abans.nivel ? des.nivel : null;
       guardar(); break;
     }
@@ -2122,6 +2415,8 @@ document.addEventListener("click", ev => {
     }
     case "rebost": obreFull(fullRebost(), "No tengo…"); break;
     case "tienda-tab": S.ui.tiendaTab = b.dataset.t; guardar(); render(); break;
+    case "comer-tab": S.ui.comerTab = b.dataset.t; diaReg = null; guardar(); render(); break;
+    case "dies": { S.rutinaActiva = b.dataset.id; guardar(); b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); break; }
     case "carta": obreFull(fullCarta(b.dataset.t), PERSONAJES[b.dataset.t].nombre); break;
     case "comprar": {
       const t = b.dataset.t, P = PERSONAJES[t];
@@ -2170,6 +2465,7 @@ document.addEventListener("click", ev => {
     case "restaura-veure": $("#restaura").innerHTML = `<form class="form" data-form="restaura" style="margin-top:12px"><label>Pega aquí tus datos<textarea id="r-txt"></textarea></label><label>O elige el archivo<input id="r-fit" type="file" accept=".json,.txt,application/json,text/plain"></label><button class="btn marc" type="submit">Recuperar mis datos</button></form>`; break;
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
+    default: accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -2201,8 +2497,11 @@ document.addEventListener("submit", async ev => {
     const pes = num($(`#${pre}-peso`).value);
     if (!(pes > 0)) { avis("Pon tu peso para calcular la proteína.", true); return; }
     S.perfil = { ...S.perfil, peso: pes, altura: num($(`#${pre}-altura`).value) || null };
+    if (tipus === "datos" && !S.rutinaActiva) S.rutinaActiva = "iniciacion";
     S.ui.vista = "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
     if (tipus === "datos") { Efectos.suena("fuego"); Efectos.lluvia(1.4); avis("La fragua está encendida."); } else avis("Ajustes guardados.");
+  } else if (tipus === "ed-propi") {
+    afegeixPropi(+f.dataset.i);
   } else if (tipus === "productes") {
     S.perfil = { ...S.perfil, yogur: $("#p-yogur").value, leche: $("#p-leche").value, horaEntreno: $("#p-hora").value || "18:00" };
     guardar(); tancaFull(); render(); avis("Guardado. Las comidas ya usan tus números.");
