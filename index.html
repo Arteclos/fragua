@@ -100,6 +100,85 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .boto-seg{--x:6px;--v:1.5px;position:absolute;right:9px;top:calc(54px + env(safe-area-inset-top,0px));z-index:5;width:30px;height:30px;display:grid;place-items:center;color:var(--flama)}
 .boto-seg[hidden]{display:none}
 .sessio-cap .boto-seg{top:54px;right:13px}
+/* ---- la càrrega: la progressió i l'esquema dels discos (26/09) ---- */
+.grup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prog{display:inline-flex;align-items:center;gap:4px;min-height:26px;padding:3px 10px;border-radius:999px;border:1px solid var(--bronze-fil);background:rgba(20,17,15,.9);color:var(--crema);font:700 12.5px/1 var(--text);font-variant-numeric:tabular-nums}
+.prog.sube{color:#ffd27a;border-color:#e0892c;background:linear-gradient(180deg,rgba(150,40,8,.6),rgba(70,20,6,.6));box-shadow:0 0 10px rgba(255,120,30,.25)}
+.prog.reps{color:#ffcf8a}
+.prog.baja{color:#bfe3ff;border-color:#4d7fa6}
+.prog.nova{color:var(--fum)}
+.carga-lloc:empty{display:none}
+.carga{margin:12px 0 4px}
+.carga-vis{position:relative;height:112px;overflow:hidden}
+.carga-barra{position:absolute;left:-4%;top:47px;width:108%;height:34px;transform:translateY(-50%);mix-blend-mode:screen;pointer-events:none}
+.carga-discos{position:absolute;left:25.5%;top:0;height:94px;display:flex;align-items:center;gap:0}
+.dl{position:relative;display:grid;place-items:center;min-width:27px;height:94px}
+.dl img{height:calc(92px * var(--m));width:auto;filter:drop-shadow(2px 0 3px rgba(0,0,0,.7))}
+.dl b{position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);font:900 11px/1 var(--display);color:#ffe2a8;white-space:nowrap}
+.carga-peu{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px;color:var(--fum);margin-top:2px}
+.carga-on{font-weight:700;color:#ffb55e;font-size:12.5px}
+.carga-aprox{color:#ffcf8a}
+.carga.buida,.carga.lastre{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.carga-cares{display:flex;align-items:center;gap:6px}
+.dc{position:relative;display:grid;place-items:center;width:calc(30px + 34px * var(--m));aspect-ratio:1}
+.dc img{width:100%;height:100%;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+.dc b{position:absolute;inset:0;display:grid;place-items:center;font:900 calc(12px + 5px * var(--m))/1 var(--display);color:#fff3d6;text-shadow:0 0 3px #000,0 1px 2px #000,0 0 8px rgba(0,0,0,.9)}
+.cargues{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
+.cargues legend{font-weight:700;margin-bottom:8px;padding:0}
+.chip-r{position:relative}
+.chip-r input{position:absolute;opacity:0;pointer-events:none}
+.chip-r span{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border-radius:999px;border:1px solid var(--bronze-fil);background:rgba(20,17,15,.92);color:var(--crema);font-size:14px;font-weight:700}
+.chip-r input:checked+span{background:linear-gradient(180deg,#b3200a,#7c0e03);border-color:#f0a050;color:#fff0cf}
+.chip-r input:focus-visible+span{outline:2px solid #ffb030;outline-offset:2px}
+/* ---- Ajustes per seccions (26/09) ---- */
+.ajustes{display:grid;gap:10px}
+.aj{--x:8px;--v:1.5px}
+.aj-cap{position:relative;z-index:1;width:100%;display:grid;grid-template-columns:1fr auto 18px;align-items:center;gap:10px;min-height:56px;padding:12px 14px;background:none;border:0;color:var(--crema);text-align:left}
+.aj-t{font-weight:700;font-size:16.5px}
+.aj-r{color:var(--fum);font-size:13px;text-align:right}
+.aj-cap svg{width:18px;height:18px;transition:transform .2s}
+.aj.oberta .aj-cap svg{transform:rotate(180deg)}
+.aj-cos{position:relative;z-index:1;padding:0 14px 16px}
+.aj-fila{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(197,123,55,.15)}
+.aj-fila>span:first-child{display:grid;gap:3px;font-weight:700;font-size:15px}
+.aj-fila small{font-weight:400;color:var(--fum);font-size:12.5px;line-height:1.35}
+.aj-sub{font-size:14.5px;margin:16px 0 8px;color:#ffb55e}
+.camp.curt{width:96px;flex:none}
+.camp.curt input{height:44px}
+.aj-fila select{max-width:130px}
+.pas{display:inline-flex;align-items:center;gap:6px;flex:none}
+.pas button{width:38px;height:38px;border-radius:8px;border:1px solid var(--bronze-fil);background:#15110f;color:var(--crema);font-size:20px;line-height:1}
+.pas b{min-width:62px;text-align:center;font-family:var(--display);font-size:16px;color:#ffd27a}
+.aj-discos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 4px;align-items:center;justify-items:center}
+.aj-disc{background:none;border:0;padding:2px;display:grid;place-items:center;min-height:62px;border-radius:50%}
+.aj-disc .dc{width:calc(60px * var(--m))}
+.aj-disc[aria-pressed="false"] .dc img{filter:grayscale(.95) brightness(.4)}
+.aj-disc[aria-pressed="false"] .dc b{color:var(--fum-2)}
+.font{font-size:12.5px;color:var(--fum);line-height:1.5;margin:12px 0 0}
+.aj-avis{margin:20px 6px 8px;font-size:13px;color:var(--fum);line-height:1.55;text-align:center}
+.banda-demo{--x:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;margin:10px 0 14px;font-size:14px;position:relative;z-index:2}
+.banda-demo .btn{min-height:40px;padding:0 12px;font-size:14px}
+/* ---- el cos (26/09) ---- */
+.mesures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mesura{--x:8px;display:grid;gap:3px;justify-items:start;padding:12px 12px 10px;text-align:left;color:var(--crema)}
+.mesura>*{position:relative;z-index:1}
+.mesura.sel{background:linear-gradient(180deg,#ffd27a,#d9731f);--fons:linear-gradient(180deg,#2e1c12,#1a1412)}
+.m-nom{font-size:13.5px;color:var(--fum);font-weight:700}
+.m-val{font-family:var(--display);font-weight:900;font-size:26px;line-height:1.05;min-height:27px}
+.m-val small{font-size:13px;color:var(--fum);font-family:var(--text);font-weight:700}
+.m-dif{font-size:12px;color:var(--fum)}
+.spark{margin-top:2px}
+.comp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.comp span{display:block;font-family:var(--display);font-weight:900;font-size:22px}
+.comp small{font-size:11.5px;color:var(--fum);line-height:1.3;display:block}
+.cos-buit{display:grid;justify-items:center;text-align:center;gap:8px;margin-bottom:12px}
+.cos-buit img{border-radius:12px}
+.camp-mesura{display:grid;grid-template-columns:64px minmax(0,1fr) 96px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(197,123,55,.15)}
+.camp-mesura:not(:has(img)){grid-template-columns:minmax(0,1fr) 96px}
+.camp-mesura img{width:64px;height:64px;border-radius:8px;object-fit:cover}
+.cm-t{display:grid;gap:2px;font-weight:700}
+.cm-t small{font-weight:400;font-size:12px;color:var(--fum);line-height:1.3}
+.cm-grup{font-size:14.5px;color:#ffb55e;margin:14px 0 2px}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -815,7 +894,7 @@ function totalDia(k) {
 }
 
 /* ---------- entreno ---------- */
-const cfgEj = (nombre, tipo) => { const c = S.cfg[nombre] || {}; const r = RANGO[tipo]; return { series: c.series ?? 3, min: c.min ?? r[0], max: c.max ?? r[1] }; };
+const cfgEj = (nombre, tipo) => { const c = S.cfg[nombre] || {}; const r = rangoDe(tipo); return { series: c.series ?? 3, min: c.min ?? r[0], max: c.max ?? r[1] }; };
 function ultimaVez(nombre, excepto) {
   for (let i = S.ses.length - 1; i >= 0; i--) {
     const s = S.ses[i];
@@ -832,26 +911,15 @@ function resumenSets(sets, lastre) {
   if (iguales) return sets.map(s => s.reps).join(", ") + " reps con " + pesoTxt(kgs[0]);
   return sets.map(s => pesoTxt(s.kg ?? 0) + " × " + s.reps).join(", ");
 }
-function sugerencia(nombre, tipo, extra, excepto) {
-  const c = cfgEj(nombre, tipo);
-  const u = ultimaVez(nombre, excepto);
-  const lastre = extra === "lastre";
-  if (!u) return { kg: lastre ? 0 : null, reps: null, texto: "Primera vez: busca un peso con el que llegues a " + c.max + " repeticiones dejando 1 o 2 en la recámara." };
-  const top = Math.max(...u.sets.map(s => s.kg ?? 0));
-  const todas = u.sets.length >= c.series && u.sets.every(s => (s.reps || 0) >= c.max);
-  const inc = extra === "fino" ? 1 : 2.5;
-  const base = "El " + fechaCorta(u.fecha) + ": " + resumenSets(u.sets, lastre) + ". ";
-  if (todas) return { kg: top + inc, reps: c.min, texto: base + "Llegaste al máximo en todas: hoy " + (lastre ? "+" + n1(top + inc) + " kg de lastre" : n1(top + inc) + " kg") + "." };
-  return { kg: top, reps: null, texto: base + "Repite el peso y busca una repetición más." };
-}
 function empezar(dia) {
   const d = diaRutina(dia) || diaRutina(1);
   const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [] };
+  // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
   s.ej = d.ej.map(([n, t, x]) => {
-    const c = cfgEj(n, t);
-    const sug = sugerencia(n, t, x, s.id);
-    const u = ultimaVez(n, s.id);
-    return { n, t, x, sets: Array.from({ length: c.series }, (_, i) => ({ kg: sug.kg, reps: sug.reps ?? (u ? u.sets[Math.min(i, u.sets.length - 1)].reps : null), ok: false })) };
+    const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
+    const sets = p.sets ? p.sets.map(z => ({ kg: z.kg, reps: z.reps, ok: false }))
+      : Array.from({ length: c.series }, () => ({ kg: x === "lastre" ? 0 : null, reps: null, ok: false }));
+    return { n, t, x, sets };
   });
   S.ses.push(s); S.activa = s.id; S.tipo[hoy()] = "entreno"; S.ui.tab = "entreno";
   guardar(); pedirPantalla(); render();
@@ -1769,6 +1837,506 @@ function afegeixPropi(i) {
   S.ui.edit.dias[i].ej.push([n, $("#ed-propi-t").value]); guardar(); tancaFull(); render(); Efectos.suena("yunque");
 }
 
+/* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
+   L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
+   que necessites a cada exercici, per no haver de comptar si són 2 de 10 o 2 de 20 i 1,25... a Ajustes
+   s'hauria de poder posar quins discos té disponibles el teu gimnàs» i «que automàticament la propera
+   vegada que facis l'exercici ja tinguis guardat el que vas fer i l'app et millori el pes i les repes».
+   La regla és la doble progressió de LVDVS (primer repeticions, després pes). El salt de pes, en %, surt
+   de l'ACSM (2009): «un 2-10 % més de càrrega quan pots fer una o dues repeticions més de les que
+   busques». Aquí, un 5 % als exercicis grans i un 2,5 % als petits (dins del 2-10), redondejat al que hi
+   ha al gimnàs: discos, mancuernes o plaques. Tot es canvia a Ajustes.
+   Va al mateix <script> que motor.js i app.js, entre tots dos. */
+"use strict";
+
+const GIM_BASE = { barra: 20, multipower: 20, discos: [25, 20, 15, 10, 5, 2.5, 1.25], mancuernas: 2, placas: 5 };
+const PROGRES_BASE = { c: 5, a: 2.5, dos: false };
+const DISCOS_TOTS = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5];
+// L'alçada de cada disc respecte al de 25 (diàmetres de discos calibrats: 450, 400, 325, 230, 190 i 160 mm).
+const MIDA_DISC = { 25: 1, 20: 1, 15: .89, 10: .72, 5: .51, 2.5: .42, 2: .42, 1.25: .36, 1: .36, 0.5: .3 };
+const gim = () => ({ ...GIM_BASE, ...(S.gym || {}) });
+const progres = () => ({ ...PROGRES_BASE, ...(S.progres || {}) });
+
+// Com es carrega cada exercici. Amb discos: quants costats i què pesa el que no és disc (la barra).
+// Amb mancuernes o plaques (polea, màquina de pila): de quant en quant va.
+const CARGAS = {
+  barra: { nom: "Barra", lados: 2, base: () => gim().barra, on: "Por lado" },
+  multipower: { nom: "Multipower", lados: 2, base: () => gim().multipower, on: "Por lado" },
+  discos: { nom: "Máquina de discos", lados: 2, base: () => 0, on: "Por lado" },
+  "un-lado": { nom: "Discos en un lado", lados: 1, base: () => 0, on: "En un lado" },
+  lastre: { nom: "Lastre", lados: 1, base: () => 0, on: "En el cinturón" },
+  mancuernas: { nom: "Mancuernas", paso: () => gim().mancuernas },
+  placas: { nom: "Placas o polea", paso: () => gim().placas },
+};
+const ORDRE_CARGAS = ["barra", "multipower", "discos", "un-lado", "lastre", "mancuernas", "placas"];
+// El que és més habitual en un gimnàs; cadascú ho canvia a la fitxa de l'exercici.
+const CARGA_DEF = {
+  "Press de pecho en máquina": "placas", "Press plano en máquina": "placas", "Press inclinado": "mancuernas",
+  "Press inclinado en Smith": "multipower", "Fondos": "lastre", "Peck Deck": "placas", "Press militar": "barra",
+  "Elevaciones laterales en polea": "placas", "Elevaciones laterales en polea baja": "placas", "Elevaciones posteriores en polea": "placas",
+  "Dominadas": "lastre", "Dominadas lastradas": "lastre", "Jalón al pecho": "placas", "Remo Gironda": "placas",
+  "Remo unilateral": "mancuernas", "Remo en T": "un-lado", "Extensión lumbar": "placas",
+  "Curl de bíceps en banco": "mancuernas", "Curl de bíceps en banco con soporte": "mancuernas",
+  "Curl de bíceps unilateral en banco": "mancuernas", "Curl martillo": "mancuernas",
+  "Extensión de tríceps": "placas", "Extensión de tríceps tipo katana en polea": "placas",
+  "Hack Squat": "discos", "Prensa de piernas": "discos", "Extensión de cuádriceps": "placas",
+  "Curl femoral tumbado": "placas", "Curl femoral sentado": "placas",
+  "Abducción de cadera en máquina": "placas", "Aducción de cadera en máquina": "placas", "Elevación de gemelos": "placas",
+};
+function cargaDe(nombre, extra) {
+  const c = (S.cfg[nombre] || {}).carga;
+  if (c && CARGAS[c]) return c;
+  return CARGA_DEF[nombre] || (extra === "lastre" ? "lastre" : "placas");
+}
+// El salt d'un exercici de mancuernes o de plaques: el seu, si en té; si no, el del gimnàs. Els «fins»
+// (elevacions laterals i posteriors) pugen de 2,5 com a molt: 5 kg d'un cop en una elevació és massa.
+function pasoDe(nombre, extra, carga) {
+  const p = (S.cfg[nombre] || {}).paso;
+  if (p > 0) return p;
+  const base = CARGAS[carga].paso();
+  return extra === "fino" && carga === "placas" ? Math.min(2.5, base) : base;
+}
+
+/* ---- els discos: amb quins es fa cada pes ----
+   Es treballa en quarts de quilo (1,25 = 5) i es busca la combinació de MENYS discos; entre dues igual de
+   curtes, la dels discos grans primer. Val per a qualsevol joc de discos, també els rars (2 kg, 0,5 kg). */
+const QK = 4, MAX_Q = 300 * QK;
+let taula = null, taulaDe = "";
+function taulaDiscos() {
+  const ds = [...new Set(gim().discos)].map(d => Math.round(d * QK)).filter(d => d > 0).sort((a, b) => b - a);
+  const clau = ds.join(",");
+  if (taula && taulaDe === clau) return taula;
+  const min = new Int16Array(MAX_Q + 1).fill(32767), tria = new Int16Array(MAX_Q + 1);
+  min[0] = 0;
+  for (let u = 1; u <= MAX_Q; u++) for (const d of ds) if (d <= u && min[u - d] + 1 < min[u]) { min[u] = min[u - d] + 1; tria[u] = d; }
+  taula = { min, tria }; taulaDe = clau;
+  return taula;
+}
+// Els discos d'un costat, del més gran al més petit; null si amb aquests discos no surt exacte.
+function discosLado(kgLado) {
+  const u = Math.round(kgLado * QK);
+  if (u < 0 || u > MAX_Q) return null;
+  const t = taulaDiscos();
+  if (t.min[u] >= 32767) return null;
+  const out = []; let r = u;
+  while (r > 0) { out.push(t.tria[r] / QK); r -= t.tria[r]; }
+  return out.sort((a, b) => b - a);
+}
+const potLado = u => u >= 0 && u <= MAX_Q && taulaDiscos().min[u] < 32767;
+// El pes total que es pot fer més a prop per dalt (dir 1) o per baix (dir -1) d'un pes; null si no n'hi ha.
+function veiDe(kg, carga, dir) {
+  const C = CARGAS[carga];
+  if (C.paso) {
+    const p = C.paso(), k = kg / p;
+    const n = dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1;
+    return n >= (carga === "lastre" ? 0 : 1) ? +(n * p).toFixed(2) : null;
+  }
+  const base = C.base(), lado = (kg - base) / C.lados;
+  let u = dir > 0 ? Math.floor(lado * QK + 1e-6) + 1 : Math.ceil(lado * QK - 1e-6) - 1;
+  for (; u >= 0 && u <= MAX_Q; u += dir) if (potLado(u)) return +(base + C.lados * u / QK).toFixed(2);
+  return null;
+}
+function esPot(kg, carga) {
+  const C = CARGAS[carga];
+  if (C.paso) { const k = kg / C.paso(); return Math.abs(k - Math.round(k)) < 1e-6 && kg > 0; }
+  const lado = (kg - C.base()) / C.lados, u = lado * QK;
+  return Math.abs(u - Math.round(u)) < 1e-6 && potLado(Math.round(u));
+}
+// El més a prop d'un pes; si n'hi ha dos a la mateixa distància, el de sota.
+function mesAprop(kg, carga) {
+  if (esPot(kg, carga)) return kg;
+  const a = veiDe(kg, carga, -1), b = veiDe(kg, carga, 1);
+  if (a == null) return b; if (b == null) return a;
+  return kg - a <= b - kg ? a : b;
+}
+// Pujar un % (la progressió): el pes que es pot fer més a prop del que toca, i com a mínim un esglaó.
+function pujaKg(kg, pct, carga, lastre) {
+  const pes = S.perfil && S.perfil.peso;
+  // amb llast, el % és del que mous de debò: tu més el llast
+  const objectiu = lastre && pes ? (pes + kg) * (1 + pct / 100) - pes : kg * (1 + pct / 100);
+  let n = mesAprop(objectiu, carga);
+  if (n == null || n <= kg + 1e-6) n = veiDe(kg, carga, 1);
+  return n == null ? kg : n;
+}
+function baixaKg(kg, pct, carga, lastre) {
+  const pes = S.perfil && S.perfil.peso;
+  const objectiu = lastre && pes ? (pes + kg) * (1 - pct / 100) - pes : kg * (1 - pct / 100);
+  let n = mesAprop(Math.max(0, objectiu), carga);
+  if (n == null || n >= kg - 1e-6) n = veiDe(kg, carga, -1);
+  return n == null ? kg : n;
+}
+
+/* ---- la progressió ----
+   «Que ja et surti el kg i el número de reps predefinit si ho has fet alguna altra vegada. I el número
+   de reps augmentat o bé kg: quan arribis al màxim de reps en les 3 sèries ja et puja el pes un %».
+   - Totes les sèries al màxim del rang: puja el pes (el % d'Ajustes) i les repeticions tornen a baix.
+   - Si no: el mateix pes i una repetició més a cada sèrie que no era al màxim.
+   - Totes per sota del mínim: el pes era massa, baixa el mateix %. */
+function vegades(nombre, excepto, n) {
+  const out = [];
+  for (let i = S.ses.length - 1; i >= 0 && out.length < n; i--) {
+    const s = S.ses[i];
+    if (s.id === excepto || !s.fin) continue;
+    const e = s.ej.find(x => x.n === nombre);
+    if (e && e.sets.some(z => z.ok)) out.push({ fecha: s.fecha, sets: e.sets.filter(z => z.ok) });
+  }
+  return out;
+}
+function progresion(nombre, tipo, extra, excepto) {
+  const c = cfgEj(nombre, tipo), carga = cargaDe(nombre, extra), lastre = extra === "lastre";
+  const [u, abans] = vegades(nombre, excepto, 2);
+  if (!u) return { modo: "primera", c, carga };
+  const P = progres(), pct = tipo === "c" ? P.c : P.a;
+  const alMax = v => v && v.sets.length >= c.series && v.sets.every(z => (z.reps || 0) >= c.max);
+  const plantilla = j => u.sets[Math.min(j, u.sets.length - 1)];
+  const sets = Array.from({ length: c.series }, (_, j) => ({ ...plantilla(j) }));
+  if (alMax(u) && (!P.dos || alMax(abans))) {
+    const fora = sets.map(z => ({ kg: pujaKg(z.kg ?? 0, pct, carga, lastre), reps: c.min }));
+    return { modo: "sube", c, carga, u, pct, sets: fora, de: Math.max(...u.sets.map(z => z.kg ?? 0)), a: Math.max(...fora.map(z => z.kg)) };
+  }
+  if (alMax(u) && P.dos) return { modo: "confirma", c, carga, u, pct, sets: sets.map(z => ({ kg: z.kg ?? (lastre ? 0 : null), reps: c.max })) };
+  const top = Math.max(...u.sets.map(z => z.kg ?? 0));
+  if (u.sets.every(z => (z.reps || 0) < c.min) && top > 0) {
+    const fora = sets.map(z => ({ kg: baixaKg(z.kg ?? 0, pct, carga, lastre), reps: c.min }));
+    return { modo: "baja", c, carga, u, pct, sets: fora, de: top, a: Math.max(...fora.map(z => z.kg)) };
+  }
+  return { modo: "reps", c, carga, u, sets: sets.map(z => ({ kg: z.kg ?? (lastre ? 0 : null), reps: Math.min((z.reps || 0) + 1, c.max) })) };
+}
+
+/* ---- el que es veu ---- */
+const I_PUJA = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 4l7 9h-4.5v7h-5v-7H5z" fill="currentColor"/></svg>';
+const I_BAIXA_P = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 20l7-9h-4.5V4h-5v7H5z" fill="currentColor"/></svg>';
+const kgTxt = v => fmt(Math.round(v * 100) / 100);
+function chipProg(p, i) {
+  const [cls, ico, txt] = {
+    sube: ["sube", I_PUJA, `${kgTxt(p.a)} kg`],
+    baja: ["baja", I_BAIXA_P, `${kgTxt(p.a)} kg`],
+    reps: ["reps", I_PUJA, "1 rep"],
+    confirma: ["reps", I_PUJA, "Confirma"],
+    primera: ["nova", "", "Primera vez"],
+  }[p.modo];
+  return `<button class="prog ${cls}" data-accion="ej-prog" data-i="${i}" aria-label="Tu progresión en este ejercicio">${ico}${txt}</button>`;
+}
+// L'esquema: la barra (o la banya de la màquina) amb els discos d'un costat, del gran al petit, cadascun
+// amb el seu número. Amb llast, els discos de cara, que és com es veuen penjats del cinturó.
+function htmlCarga(kg, carga) {
+  const C = CARGAS[carga];
+  if (!C || C.paso || !(kg > 0)) return "";
+  const base = C.base(), lado = (kg - base) / C.lados;
+  if (lado < -1e-6) return `<div class="carga buida"><span class="carga-on">Menos que la barra (${kgTxt(base)} kg)</span></div>`;
+  let d = discosLado(lado), aprox = null;
+  if (!d) { aprox = mesAprop(kg, carga); d = discosLado((aprox - base) / C.lados) || []; }
+  const nota = aprox != null ? `<span class="carga-aprox">No sale exacto: ${kgTxt(aprox)} kg</span>` : "";
+  if (!d.length) return `<div class="carga buida"><span class="carga-on">${carga === "barra" || carga === "multipower" ? "Solo la barra" : "Sin discos"}</span>${nota}</div>`;
+  if (carga === "lastre")
+    return `<div class="carga lastre"><span class="carga-on">${C.on}</span><div class="carga-cares">${d.map(p => `<span class="dc" style="--m:${MIDA_DISC[p] || .4}"><img src="${ACTIUS}discos/cara-${p}.webp" alt=""><b>${kgTxt(p)}</b></span>`).join("")}</div>${nota}</div>`;
+  const barra = carga === "barra" || carga === "multipower" ? `<span class="carga-base">${carga === "barra" ? "Barra" : "Multipower"} de ${kgTxt(base)} kg</span>` : "";
+  return `<div class="carga"><div class="carga-vis"><img class="carga-barra" src="${ACTIUS}discos/barra.webp" alt=""><div class="carga-discos">${d.map(p => `<span class="dl" style="--m:${MIDA_DISC[p] || .4}"><img src="${ACTIUS}discos/lado-${p}.webp" alt=""><b>${kgTxt(p)}</b></span>`).join("")}</div></div>
+    <div class="carga-peu"><span class="carga-on">${C.on}</span>${barra}${nota}</div></div>`;
+}
+// El pes que es veu a l'esquema: el de la primera sèrie que queda per fer.
+const kgEsquema = e => { const z = e.sets.find(q => !q.ok) || e.sets[e.sets.length - 1]; return z ? z.kg : null; };
+
+/* FRAGUA · el cos: les mesures (26/09/2026).
+   L'Albert: «que la gent pugui posar la mida de la cintura, pit, i allò que a LVDVS em feies calcular. I
+   si vols posaria també altres mesures extres que es poden mostrar si vol l'usuari, com el % de massa
+   muscular, si tenen bàscula o nutricionista que els fa la mesura. Ha de ser molt personalitzable».
+   Cadascú tria a Ajustes què apunta. Del que feia LVDVS: el % de greix amb la cinta (mètode de la Marina
+   dels EUA), amb la seva franja d'error, i la massa magra i el seu índex per l'alçada (FFMI). Sense
+   franges de «bé» o «malament»: aquí es mira cap on es mou cadascú, no es compara amb ningú. */
+"use strict";
+
+// [clau, nom, unitat, [mínim, màxim], com es pren]
+const MEDIDAS = [
+  ["cintura", "Cintura", "cm", [40, 200], "A la altura del ombligo, relajado y al soltar el aire."],
+  ["pecho", "Pecho", "cm", [50, 200], "Bajo las axilas, a la altura de los pezones."],
+  ["cuello", "Cuello", "cm", [20, 80], "Justo debajo de la nuez, sin apretar."],
+  ["cadera", "Cadera", "cm", [50, 200], "Por la parte más ancha de los glúteos, con los pies juntos."],
+  ["brazo", "Brazo", "cm", [15, 70], "A mitad del brazo, relajado y colgando."],
+  ["muslo", "Muslo", "cm", [30, 110], "A medio camino entre la cadera y la rodilla."],
+  ["gemelo", "Gemelo", "cm", [20, 70], "Por la parte más ancha."],
+];
+// Les de bàscula o nutricionista: el número que doni la màquina, sense fórmula pel mig.
+const BASCULA = [
+  ["grasa", "Grasa", "%", [2, 60]],
+  ["musculo", "Masa muscular", "kg", [10, 150]],
+  ["agua", "Agua", "%", [20, 80]],
+  ["visceral", "Grasa visceral", "nivel", [1, 59]],
+];
+const MEDIR_BASE = { cintura: true, pecho: true };
+const medir = () => ({ ...MEDIR_BASE, ...(S.medir || {}) });
+const medidasActivas = () => MEDIDAS.filter(([k]) => medir()[k]);
+const basculaActiva = () => BASCULA.filter(([k]) => medir()[k]);
+const nomMesura = k => k === "peso" ? "Peso" : ([...MEDIDAS, ...BASCULA].find(m => m[0] === k) || [k, k])[1];
+const unitatMesura = k => k === "peso" ? "kg" : ([...MEDIDAS, ...BASCULA].find(m => m[0] === k) || [0, 0, ""])[2];
+const mesures = () => (S.medidas || []).slice().sort((a, b) => a.f < b.f ? -1 : 1);
+
+/* ---- el % de greix amb la cinta: Marina dels EUA, versió mètrica (com a LVDVS) ----
+   Error típic contra una DEXA: uns 3,4 punts (Foulis et al., Front Physiol 2023, n = 926). */
+const GREIX_ERROR = 3;
+function greixCinta(sexo, altura, cintura, cuello, cadera) {
+  if (!(altura && cintura && cuello)) return null;
+  let v;
+  if (sexo === "m") {
+    if (!cadera) return null;
+    const d = cintura + cadera - cuello; if (d <= 0) return null;
+    v = 495 / (1.29579 - 0.35004 * Math.log10(d) + 0.22100 * Math.log10(altura)) - 450;
+  } else if (sexo === "h") {
+    const d = cintura - cuello; if (d <= 0) return null;
+    v = 495 / (1.0324 - 0.19077 * Math.log10(d) + 0.15456 * Math.log10(altura)) - 450;
+  } else return null;
+  return v >= 2 && v <= 60 ? Math.round(v * 10) / 10 : null;
+}
+// L'últim valor conegut de cada mesura (cada dia pot portar-ne només unes quantes).
+function ultimes() {
+  const u = {};
+  mesures().forEach(m => Object.keys(m).forEach(k => { if (k !== "f" && m[k] != null) u[k] = { v: m[k], f: m.f }; }));
+  return u;
+}
+function composicion() {
+  const u = ultimes(), pr = S.perfil;
+  if (!medir().cinta || !pr.altura) return null;
+  const peso = (u.peso && u.peso.v) || pr.peso;
+  const g = greixCinta(pr.sexo, pr.altura, u.cintura && u.cintura.v, u.cuello && u.cuello.v, u.cadera && u.cadera.v);
+  if (g == null || !peso) return { falta: true };
+  const h = pr.altura / 100, magra = peso * (1 - g / 100);
+  return { grasa: g, banda: [Math.max(2, g - GREIX_ERROR), g + GREIX_ERROR], magra, grasaKg: peso - magra,
+    ffmi: magra / (h * h) + 6.3 * (1.8 - h) };
+}
+
+/* ---- la pantalla: la pestanya «Cuerpo» d'Estadísticas ---- */
+function sparkline(vals, w = 88, h = 26) {
+  if (vals.length < 2) return "";
+  const mn = Math.min(...vals), mx = Math.max(...vals), r = mx - mn || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * w).toFixed(1)},${(h - 3 - (v - mn) / r * (h - 6)).toFixed(1)}`).join(" ");
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#ff9a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function tarjaMesura(k) {
+  const serie = mesures().filter(m => m[k] != null);
+  const ult = serie[serie.length - 1], pri = serie[0];
+  const sel = (S.ui.cosSel || "peso") === k;
+  const d = ult && pri && serie.length > 1 ? Math.round((ult[k] - pri[k]) * 10) / 10 : null;
+  return `<button class="mesura marc${sel ? " sel" : ""}" data-accion="cos-sel" data-k="${k}" aria-pressed="${sel}"><span class="m-nom">${nomMesura(k)}</span>
+    <span class="m-val or num">${ult ? fmt(ult[k]) : ""}<small>${ult ? " " + unitatMesura(k) : ""}</small></span>
+    <span class="m-dif">${d == null ? (ult ? fechaCorta(ult.f) : "Sin datos") : `${d > 0 ? "+" : ""}${fmt(d)} desde el ${fechaCorta(pri.f)}`}</span>${sparkline(serie.map(m => m[k]))}</button>`;
+}
+function vistaCuerpo() {
+  const act = ["peso", ...medidasActivas().map(m => m[0]), ...basculaActiva().map(m => m[0])];
+  const ms = mesures();
+  if (!act.includes(S.ui.cosSel)) S.ui.cosSel = "peso";
+  const sel = S.ui.cosSel, serie = ms.filter(m => m[sel] != null);
+  const graf = serie.length >= 2 ? grafLinia(serie.map(m => m[sel]), 300, 120) : null;
+  const comp = composicion();
+  let h = `<div style="margin:6px 0 14px">${botoForja('data-accion="cos-apunta"', "APUNTAR MEDIDAS", ms.length ? "Una vez por semana, a la misma hora" : "Empieza hoy: peso y cintura")}</div>`;
+  if (!ms.length) h += `<div class="panel pad cos-buit"><img src="${ACTIUS}medidas/cintura.webp" alt="" width="120" height="120"><p>Apunta tu peso y tus medidas una vez por semana, en ayunas y siempre igual. Aquí verás cómo cambias.</p></div>`;
+  h += `<div class="mesures">${act.map(tarjaMesura).join("")}</div>`;
+  if (graf) h += bloc(nomMesura(sel), `${graf}<p class="llegenda">De ${fmt(serie[0][sel])} a ${fmt(serie[serie.length - 1][sel])} ${unitatMesura(sel)}, en ${serie.length} medidas.</p>`, "graf");
+  if (comp && !comp.falta) h += bloc("Tu composición", `<div class="comp">
+      <div><span class="or num">${fmt(comp.grasa)} %</span><small>grasa (entre ${fmt(Math.round(comp.banda[0]))} y ${fmt(Math.round(comp.banda[1]))})</small></div>
+      <div><span class="or num">${fmt(Math.round(comp.magra * 10) / 10)}</span><small>kg de masa magra</small></div>
+      <div><span class="or num">${fmt(Math.round(comp.ffmi * 10) / 10)}</span><small>masa magra para tu altura (FFMI)</small></div></div>
+    <p class="llegenda">Con la cinta, por el método de la Marina de EE. UU. Se equivoca unos 3 puntos: fíjate en hacia dónde va, no en el decimal. Si la cintura baja, vas bien.</p>`);
+  else if (comp && comp.falta) h += `<p class="suau petit">Para estimar tu grasa con la cinta faltan ${S.perfil.sexo ? "" : "tu sexo (en Ajustes), "}la cintura y el cuello${S.perfil.sexo === "m" ? " y la cadera" : ""}.</p>`;
+  if (ms.length) h += bloc("Tus medidas", ms.slice(-8).reverse().map(m => `<div class="reg"><div><div>${fechaLarga(m.f)}</div><div class="d">${Object.keys(m).filter(k => k !== "f" && m[k] != null).map(k => `${nomMesura(k)} ${fmt(m[k])}`).join(", ")}</div></div><span></span><button class="treu" data-accion="cos-treu" data-f="${m.f}" aria-label="Borrar las medidas del ${fechaCorta(m.f)}">${I_X}</button></div>`).join(""));
+  return h;
+}
+// El full per apuntar: el pes i les mesures triades, cadascuna amb el maniquí que ensenya on va la cinta.
+function fullMedidas() {
+  const u = ultimes(), avui = (S.medidas || []).find(m => m.f === hoy()) || {};
+  const camp = (k, nom, uni, ajuda, img) => `<label class="camp-mesura">${img ? `<img src="${ACTIUS}medidas/${img}.webp" alt="" width="64" height="64" loading="lazy">` : ""}
+    <span class="cm-t"><span>${nom}</span>${ajuda ? `<small>${ajuda}</small>` : ""}</span>
+    <span class="camp"><input inputmode="decimal" autocomplete="off" data-mesura="${k}" value="${fmt(avui[k])}" placeholder="${u[k] ? fmt(u[k].v) : ""}"><span class="u">${uni}</span></span></label>`;
+  return `<form class="form" data-form="medidas">
+    ${camp("peso", "Peso", "kg", "Por la mañana, en ayunas.", "bascula")}
+    ${medidasActivas().map(([k, n, uni, , ajuda]) => camp(k, n, uni, ajuda, k)).join("")}
+    ${basculaActiva().length ? `<h3 class="cm-grup">De tu báscula o tu nutricionista</h3>${basculaActiva().map(([k, n, uni]) => camp(k, n, uni === "nivel" ? "" : uni, "", null)).join("")}` : ""}
+    <p class="suau petit" style="margin:0">¿Quieres apuntar otras medidas? Elígelas en Ajustes, en «Medidas».</p>
+    <button class="btn clar marc" type="submit">GUARDAR</button></form>`;
+}
+function desaMedidas(form) {
+  const fila = { f: hoy() };
+  let alguna = false;
+  form.querySelectorAll("[data-mesura]").forEach(inp => {
+    const k = inp.dataset.mesura, v = num(inp.value);
+    if (inp.value.trim() !== "" && Number.isFinite(v) && v > 0) { fila[k] = v; alguna = true; }
+  });
+  if (!alguna) return false;
+  S.medidas = (S.medidas || []).filter(m => m.f !== fila.f).concat([{ ...((S.medidas || []).find(m => m.f === fila.f) || {}), ...fila }]);
+  if (fila.peso) S.perfil = { ...S.perfil, peso: fila.peso };
+  return true;
+}
+
+/* FRAGUA · Ajustes (26/09/2026).
+   L'Albert: «jo modificaria la part d'Ajustes... ha de ser molt personalitzable perquè cadascú té el seu
+   llibret». Una llista de seccions plegades (revelació progressiva): el perfil, el gimnàs (barres, discos,
+   mancuernes, plaques), la progressió (el % de pujada, les repeticions i els descansos), les mesures,
+   el so i les dades. Cada canvi es desa a l'acte, sense botó (menys el pes i l'alçada, que es validen).
+   I el mode demostració: l'app plena d'entrenos d'exemple per ensenyar-la, amb les dades de debò a part. */
+"use strict";
+
+const RANGS = [[5, 8], [6, 8], [6, 10], [8, 10], [8, 12], [10, 12], [10, 15], [12, 15], [15, 20]];
+const rangoDe = t => (S.rangos && S.rangos[t]) || RANGO[t];
+const descansoDe = t => (S.descansos && S.descansos[t]) || DESCANSO[t];
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const pct = v => `+${fmt(v)} %`;
+const interruptor = (acc, on, label, extra = "") => `<button class="interruptor" role="switch" aria-checked="${!!on}" data-accion="${acc}" aria-label="${esc(label)}"${extra}></button>`;
+const pas = (acc, k, val, menys, mes) => `<span class="pas"><button data-accion="${acc}" data-k="${k}" data-d="${menys}" aria-label="Menos">−</button><b class="num">${val}</b><button data-accion="${acc}" data-k="${k}" data-d="${mes}" aria-label="Más">+</button></span>`;
+
+const AJ_SECC = [["perfil", "Tu perfil"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"]];
+function resumAj(k) {
+  const G = gim(), P = progres(), pr = S.perfil;
+  return {
+    perfil: [pr.peso && `${fmt(pr.peso)} kg`, pr.altura && `${fmt(pr.altura)} cm`].filter(Boolean).join(", "),
+    gimnasio: `Barra de ${fmt(G.barra)}, ${G.discos.length} discos`,
+    progreso: `${pct(P.c)} y ${pct(P.a)}`,
+    medidas: `${1 + medidasActivas().length + basculaActiva().length} datos`,
+    sonido: S.musica === false ? "Sin música" : "Con música",
+    datos: S.demo ? "Ejemplo" : "En este móvil",
+    calcula: "",
+  }[k] || "";
+}
+function vistaAjustes() {
+  const ob = S.ui.ajOberta || null;
+  return `${capcalera("Ajustes")}${S.demo ? bandaDemo() : ""}
+  <div class="ajustes">${AJ_SECC.map(([k, t]) => `<section class="aj marc${ob === k ? " oberta" : ""}"><button class="aj-cap" data-accion="aj-obre" data-k="${k}" aria-expanded="${ob === k}"><span class="aj-t">${t}</span><span class="aj-r">${esc(resumAj(k))}</span>${I_BAIXA}</button>${ob === k ? `<div class="aj-cos">${cosAj(k)}</div>` : ""}</section>`).join("")}</div>
+  <p class="aj-avis">FRAGUA es para entrenar mejor, no para obsesionarse. Lo que más cuenta es hacerlo bien: buena técnica, descansar y comer suficiente. Los números son estimaciones: si algo no va bien, habla con un profesional.</p>`;
+}
+function cosAj(k) {
+  const G = gim(), P = progres(), pr = S.perfil, M = medir();
+  if (k === "perfil") return `<form class="form" data-form="ajustes"><div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
+      <p class="suau petit" style="margin:0">Tu peso de cada semana, mejor en Estadísticas, en «Cuerpo»: así ves cómo cambia.</p><button class="btn clar marc" type="submit">GUARDAR</button></form>`;
+  if (k === "gimnasio") return `
+    <div class="aj-fila"><span>Barra olímpica</span><span class="camp curt"><input inputmode="decimal" autocomplete="off" data-aj="barra" value="${fmt(G.barra)}" aria-label="Peso de la barra olímpica"><span class="u">kg</span></span></div>
+    <div class="aj-fila"><span>Barra de la multipower<small>Cada una pesa distinto: pregunta en tu gimnasio o mira la etiqueta.</small></span><span class="camp curt"><input inputmode="decimal" autocomplete="off" data-aj="multipower" value="${fmt(G.multipower)}" aria-label="Peso de la barra de la multipower"><span class="u">kg</span></span></div>
+    <h3 class="aj-sub">Los discos que hay</h3>
+    <div class="aj-discos">${DISCOS_TOTS.map(d => `<button class="aj-disc" data-accion="aj-disc" data-d="${d}" aria-pressed="${G.discos.includes(d)}" aria-label="Disco de ${kgTxt(d)} kg"><span class="dc" style="--m:${.55 + MIDA_DISC[d] * .45}"><img src="${ACTIUS}discos/cara-${d}.webp" alt=""><b>${kgTxt(d)}</b></span></button>`).join("")}</div>
+    <p class="suau petit">Toca los que tiene tu gimnasio. Con ellos se calcula cómo cargar cada peso, con los menos discos posibles.</p>
+    <h3 class="aj-sub">Mancuernas</h3>
+    <div class="fila envolta">${[1, 2, 2.5].map(v => `<button class="chip" data-accion="aj-mancu" data-v="${v}" aria-pressed="${G.mancuernas === v}">de ${fmt(v)} en ${fmt(v)} kg</button>`).join("")}</div>
+    <h3 class="aj-sub">Poleas y máquinas de placas</h3>
+    <div class="fila envolta">${[2.5, 5, 10].map(v => `<button class="chip" data-accion="aj-placas" data-v="${v}" aria-pressed="${G.placas === v}">de ${fmt(v)} en ${fmt(v)} kg</button>`).join("")}</div>
+    <p class="suau petit">Si una máquina va distinta, cámbialo en su ejercicio, tocando las series.</p>`;
+  if (k === "progreso") return `
+    <p class="suau petit" style="margin-top:0">Cuando haces todas las series al máximo de repeticiones, la vez siguiente la app te sube el peso:</p>
+    <div class="aj-fila"><span>Ejercicios grandes<small>Los de varias articulaciones: press, remo, prensa.</small></span>${pas("aj-pct", "c", pct(P.c), -0.5, 0.5)}</div>
+    <div class="aj-fila"><span>Ejercicios pequeños<small>Los de un músculo: curl, extensiones, elevaciones.</small></span>${pas("aj-pct", "a", pct(P.a), -0.5, 0.5)}</div>
+    <div class="aj-fila"><span>Esperar a conseguirlo dos entrenos seguidos</span>${interruptor("aj-dos", P.dos, "Esperar a conseguirlo dos entrenos seguidos")}</div>
+    <p class="suau petit">Se redondea a lo que se puede cargar con tus discos. Si no llegas al mínimo en ninguna serie, te baja lo mismo.</p>
+    <h3 class="aj-sub">Repeticiones</h3>
+    ${[["c", "Grandes"], ["a", "Pequeños"]].map(([t, n]) => `<div class="aj-fila"><span>${n}</span><select data-aj-rang="${t}" aria-label="Repeticiones de los ejercicios ${n.toLowerCase()}">${RANGS.map(([a, b]) => `<option value="${a}-${b}"${rangoDe(t)[0] === a && rangoDe(t)[1] === b ? " selected" : ""}>${a} a ${b}</option>`).join("")}</select></div>`).join("")}
+    <h3 class="aj-sub">Descanso entre series</h3>
+    ${[["c", "Grandes"], ["a", "Pequeños"]].map(([t, n]) => `<div class="aj-fila"><span>${n}</span>${pas("aj-desc", t, mmss(descansoDe(t)), -15, 15)}</div>`).join("")}
+    <p class="font">El Colegio Americano de Medicina del Deporte recomienda subir entre un 2 y un 10 % cuando haces una o dos repeticiones más de las que buscas (ACSM, 2009). Aquí, lo menos en los ejercicios pequeños.</p>`;
+  if (k === "medidas") return `
+    <p class="suau petit" style="margin-top:0">Elige qué quieres apuntar. Lo verás en Estadísticas, en «Cuerpo». El peso va siempre.</p>
+    <div class="fila envolta">${MEDIDAS.map(([m, n]) => `<button class="chip" data-accion="aj-med" data-k="${m}" aria-pressed="${!!M[m]}">${n}</button>`).join("")}</div>
+    <h3 class="aj-sub">De tu báscula o tu nutricionista</h3>
+    <div class="fila envolta">${BASCULA.map(([m, n, u]) => `<button class="chip" data-accion="aj-med" data-k="${m}" aria-pressed="${!!M[m]}">${n}${u === "%" ? " (%)" : ""}</button>`).join("")}</div>
+    <div class="aj-fila" style="margin-top:14px"><span>Calcular mi grasa con la cinta<small>Con la cintura, el cuello y la altura (y la cadera, en mujeres).</small></span>${interruptor("aj-cinta", M.cinta, "Calcular mi grasa con la cinta")}</div>
+    ${M.cinta ? `<div class="aj-fila"><span>La fórmula es distinta en</span><span class="fila"><button class="chip" data-accion="aj-sexo" data-s="h" aria-pressed="${pr.sexo === "h"}">Hombres</button><button class="chip" data-accion="aj-sexo" data-s="m" aria-pressed="${pr.sexo === "m"}">Mujeres</button></span></div>` : ""}`;
+  if (k === "sonido") return `
+    <div class="aj-fila"><span>Sonidos</span>${interruptor("so", S.sonido !== false, "Sonidos")}</div>
+    <div class="aj-fila"><span>Música</span>${interruptor("musica", S.musica !== false, "Música")}</div>
+    <div class="aj-fila"><span>Vibración</span>${interruptor("haptica", S.haptica !== false, "Vibración")}</div>`;
+  if (k === "datos") return `
+    <div class="aj-fila"><span>Modo demostración<small>La app llena de entrenos y medidas de ejemplo, para enseñarla. Tus datos se guardan aparte y vuelven al apagarlo.</small></span>${interruptor("aj-demo", S.demo, "Modo demostración")}</div>
+    <p class="suau petit">Hasta que tengamos servidor, tus datos viven solo en este móvil. De vez en cuando, cópialos y guárdalos en tus notas.</p>
+    <div class="fila envolta"><button class="btn marc" data-accion="copia">Copiar mis datos</button><button class="btn marc" data-accion="restaura-veure">Pegar una copia</button></div><div id="restaura"></div>
+    <div style="margin-top:14px"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div>`;
+  if (k === "calcula") return `<div class="text-llarg">
+    <p><b>Proteína</b>: entre 1,6 y 2 g por kilo de peso. Los alimentos, de la base del USDA; el yogur, la leche y el pavo en lonchas, de etiquetas de supermercado en España.</p>
+    <p><b>Progresión</b>: primero repeticiones y después peso. Cuando haces todas las series al máximo, sube el % que elijas (el ACSM recomienda entre un 2 y un 10 %).</p>
+    <p><b>Discos</b>: la combinación con menos discos que da el peso exacto con los discos de tu gimnasio. Si no sale exacto, la más cercana.</p>
+    <p><b>Fuerza</b>: tu máximo estimado para una repetición, con la fórmula de Epley.</p>
+    <p><b>Grasa con la cinta</b>: el método de la Marina de EE. UU. Se equivoca unos 3 puntos arriba o abajo (Foulis y otros, 2023): sirve para ver hacia dónde vas.</p></div>`;
+  return "";
+}
+function bandaDemo() {
+  return `<div class="banda-demo panel"><span>Estás viendo datos de ejemplo.</span><button class="btn marc" data-accion="aj-demo">Volver a mis datos</button></div>`;
+}
+
+/* ---- el mode demostració ---- */
+const CLAU_REAL = "fragua.v1.real";
+function estatDemo() {
+  const dia = 864e5, ara = Date.now(), r = rutinaActual();
+  const st = Object.assign(BASE(), { personaje: S.personaje, perfil: { ...S.perfil, peso: S.perfil.peso || 68, altura: S.perfil.altura || 172 },
+    rutinaActiva: S.rutinaActiva, rutinas: S.rutinas, rutinasDesbloq: S.rutinasDesbloq, musica: S.musica, sonido: S.sonido, haptica: S.haptica,
+    gym: S.gym, progres: S.progres, medir: { ...medir(), cuello: true, brazo: true }, demo: true, xpVisto: 1e9, nivelVisto: 99,
+    ui: { tab: "hoy", abiertas: {}, vista: "inicio" } });
+  const k = d => clave(d);
+  const dies = [];
+  for (let w = 9; w >= 1; w--) for (const d of [6, 4, 2]) dies.push(w * 7 + d);
+  dies.push(5, 3, 1);
+  const base = {};
+  dies.forEach((fa, idx) => {
+    const t = new Date(ara - fa * dia); t.setHours(18, 30, 0, 0);
+    const n = idx % r.dias.length, d = r.dias[n], prog = idx / dies.length;
+    const ej = d.ej.map(([nom, tipo, x]) => {
+      if (base[nom] == null) base[nom] = (tipo === "c" ? 40 : 12) + (nom.length % 7) * 3;
+      const kg = x === "lastre" ? Math.round(prog * 8 / 1.25) * 1.25 : Math.round(base[nom] * (1 + prog * 0.18) / 2.5) * 2.5;
+      const [mn, mx] = rangoDe(tipo);
+      return { n: nom, t: tipo, x, sets: [0, 1, 2].map(i => ({ kg, reps: Math.max(mn, Math.min(mx, mx - 1 - i + (idx % 3 === 0 ? 1 : 0))), ok: true })) };
+    });
+    st.ses.push({ id: "demo" + idx, dia: n + 1, rut: r.id, dt: d.t, fecha: k(t), inicio: t.getTime(), fin: t.getTime() + 64 * 60000, ej });
+  });
+  st.medidas = [];
+  for (let w = 9; w >= 0; w--) {
+    const t = new Date(ara - (w * 7 + 1) * dia), p = (9 - w) / 9;
+    st.medidas.push({ f: k(t), peso: Math.round((st.perfil.peso - 1.6 + p * 2.2) * 10) / 10, cintura: Math.round((81.5 - p * 2.4) * 10) / 10,
+      pecho: Math.round((95 + p * 3.1) * 10) / 10, cuello: 37 + Math.round(p * 5) / 10, brazo: Math.round((32.5 + p * 1.8) * 10) / 10 });
+  }
+  st.perfil.peso = st.medidas[st.medidas.length - 1].peso;
+  return st;
+}
+function demo(on) {
+  try {
+    if (on) { localStorage.setItem(CLAU_REAL, JSON.stringify(S)); S = estatDemo(); }
+    else { const t = localStorage.getItem(CLAU_REAL); S = t ? Object.assign(BASE(), JSON.parse(t)) : BASE(); localStorage.removeItem(CLAU_REAL); }
+  } catch (e) { avis("No se ha podido cambiar: este navegador no deja guardar.", true); return; }
+  guardarYa(); render(); window.scrollTo({ top: 0 });
+  avis(on ? "Datos de ejemplo. Tus datos están guardados aparte." : "Vuelven tus datos.");
+}
+
+/* ---- els gestos d'Ajustes; torna true si era seu ---- */
+function accioAjustes(acc, b) {
+  const G = gim(), P = progres();
+  const desa = () => { guardar(); render(); };
+  switch (acc) {
+    case "aj-obre": S.ui.ajOberta = S.ui.ajOberta === b.dataset.k ? null : b.dataset.k; desa(); return true;
+    case "aj-disc": {
+      const d = Number(b.dataset.d), hi = G.discos.includes(d);
+      if (hi && G.discos.length === 1) { avis("Deja al menos un disco.", true); return true; }
+      S.gym = { ...G, discos: hi ? G.discos.filter(x => x !== d) : [...G.discos, d].sort((x, y) => y - x) }; desa(); return true;
+    }
+    case "aj-mancu": S.gym = { ...G, mancuernas: Number(b.dataset.v) }; desa(); return true;
+    case "aj-placas": S.gym = { ...G, placas: Number(b.dataset.v) }; desa(); return true;
+    case "aj-pct": { const v = Math.min(10, Math.max(1, P[b.dataset.k] + Number(b.dataset.d))); S.progres = { ...P, [b.dataset.k]: v }; desa(); return true; }
+    case "aj-dos": S.progres = { ...P, dos: !P.dos }; desa(); return true;
+    case "aj-desc": { const t = b.dataset.k, v = Math.min(300, Math.max(30, descansoDe(t) + Number(b.dataset.d))); S.descansos = { ...DESCANSO, ...(S.descansos || {}), [t]: v }; desa(); return true; }
+    case "aj-med": S.medir = { ...medir(), [b.dataset.k]: !medir()[b.dataset.k] }; desa(); return true;
+    case "aj-cinta": {
+      const on = !medir().cinta;
+      S.medir = { ...medir(), cinta: on, ...(on ? { cintura: true, cuello: true } : {}), ...(on && S.perfil.sexo === "m" ? { cadera: true } : {}) }; desa(); return true;
+    }
+    case "aj-sexo": S.perfil = { ...S.perfil, sexo: b.dataset.s }; if (b.dataset.s === "m") S.medir = { ...medir(), cadera: true }; desa(); return true;
+    case "aj-demo": demo(!S.demo); return true;
+  }
+  return false;
+}
+// Els camps que es desen en canviar (no a cada tecla): el pes de les barres i els rangs de repeticions.
+function canviAjustes(t) {
+  if (t.dataset.aj) {
+    const v = num(t.value);
+    if (!(v >= 0 && v <= 60)) { avis("Pon un peso entre 0 y 60 kg.", true); t.value = fmt(gim()[t.dataset.aj]); return true; }
+    S.gym = { ...gim(), [t.dataset.aj]: v }; guardar(); avis("Guardado."); return true;
+  }
+  if (t.dataset.ajRang) {
+    const [a, b] = t.value.split("-").map(Number);
+    S.rangos = { ...RANGO, ...(S.rangos || {}), [t.dataset.ajRang]: [a, b] }; guardar(); avis("Guardado."); return true;
+  }
+  return false;
+}
+
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
    El motor (rutina, menjar, entreno) és src/motor.js; les estadístiques, stats.js; la dopamina,
    src/efectos.js; el personatge en 3D, src/escena3d.js (mòdul a part). Aquí només es pinta i s'escolta.
@@ -1975,7 +2543,7 @@ function vistaInicio() {
     : `<div class="fantasma">${grafLinia(FANTASMA_L, 102, 74, true)}<div class="pista">Entrena dos semanas y verás tu línea</div></div>`;
   const volumen = vol.some(x => x > 0) ? grafBarres(vol) : `<div class="fantasma">${grafBarres(FANTASMA_B, 102, 74, null, true)}<div class="pista">Tu primer entreno enciende la barra</div></div>`;
   const proteina = obj ? grafAnell(prot / obj.lo, `${n0(prot)} / ${obj.lo} g`) : '<div class="buit">Pon tu peso en Ajustes</div>';
-  return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">
+  return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">${S.demo ? bandaDemo() : ""}
   <div class="heroe">
     ${heroi(p.tipo, "", VISTA_INICI)}
     <div class="placa marc">
@@ -2064,11 +2632,11 @@ function vistaEntreno() {
     <div><div class="dia-n or">Día ${s.dia}</div><div class="dia-t">${esc(d.t)}</div><div class="sessio-estrelles">${htmlEstrellas(rutinaActual())}</div>
     <div class="barra"><i style="width:${(fetsEj / s.ej.length * 100).toFixed(1)}%"></i></div><div class="xp num">${fetsEj} de ${s.ej.length} ejercicios</div></div></div>`;
   s.ej.forEach((e, i) => {
-    const c = cfgEj(e.n, e.t), sug = sugerencia(e.n, e.t, e.x, s.id), lastre = e.x === "lastre";
+    const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre";
     const foto = fotoEj(e.n);
-    h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup">${esc(Stats.GRUPO[e.n] || "")}</div></div>
-      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Cambiar series y repeticiones">${e.sets.length} × ${c.min}-${c.max}</button></div>
-      <p class="consell">${esc(sug.texto)}</p><div class="series">
+    h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div></div>
+      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min}-${c.max}</button></div>
+      <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
       ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}"><span class="i">${j + 1}</span>
         <label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>
         <span class="x">×</span>
@@ -2082,7 +2650,9 @@ function vistaEntreno() {
 }
 
 /* ---------------------------------------------------------------- estadístiques */
+const tabsStats = () => `<div class="tabs-t">${[["fuerza", "Fuerza"], ["cuerpo", "Cuerpo"]].map(([t, n]) => `<button class="chip" data-accion="stats-tab" data-t="${t}" aria-pressed="${(S.ui.statsTab || "fuerza") === t}">${n}</button>`).join("")}</div>`;
 function vistaEstadisticas() {
+  if (S.ui.statsTab === "cuerpo") return `${capcalera("Estadísticas")}${tabsStats()}${vistaCuerpo()}`;
   const arm = Stats.armadura(S), vol = Stats.volumenSemanal(S), rec = Stats.records(S), xp = Stats.experiencia(S);
   const ejs = {}; S.ses.filter(s => s.fin).forEach(s => s.ej.forEach(e => { if (e.sets.some(z => z.ok)) ejs[e.n] = (ejs[e.n] || 0) + 1; }));
   const nombres = Object.keys(ejs).sort((a, b) => ejs[b] - ejs[a]);
@@ -2092,7 +2662,7 @@ function vistaEstadisticas() {
   const hiHaVol = vol.some(x => x.kg > 0);
   const gV = hiHaVol ? grafBarres(vol.map(x => x.kg), 300, 110, vol.map((x, i) => i === vol.length - 1 ? "esta" : "")) : null;
   const sesiones = S.ses.filter(s => s.fin).length;
-  return `${capcalera("Estadísticas")}
+  return `${capcalera("Estadísticas")}${tabsStats()}
   <div class="tres">
     <div class="mini marc"><h3>Racha</h3><div class="gran or num">${Stats.racha(S)}</div><div class="dada">días</div></div>
     <div class="mini marc"><h3>Récords</h3><div class="gran or num">${rec}</div><div class="dada">este mes</div></div>
@@ -2215,24 +2785,6 @@ function fullCarta(t) {
     <div style="margin-top:14px">${accio}</div>`;
 }
 
-function vistaAjustes() {
-  const pr = S.perfil;
-  return `${capcalera("Ajustes")}
-  <form class="form panel pad" data-form="ajustes">
-    <div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
-    <p class="suau petit" style="margin:0">Tu yogur, tu leche y la hora a la que entrenas están en «Comer».</p>
-    <button class="btn clar marc" type="submit">GUARDAR</button></form>
-  <div class="panel pad" style="margin-top:14px">
-    <div class="fila entre"><span style="font-weight:700">Sonidos</span><button class="interruptor" role="switch" aria-checked="${S.sonido !== false}" data-accion="so" aria-label="Sonidos"></button></div>
-    <div class="fila entre" style="margin-top:12px"><span style="font-weight:700">Música</span><button class="interruptor" role="switch" aria-checked="${S.musica !== false}" data-accion="musica" aria-label="Música"></button></div>
-    <div class="fila entre" style="margin-top:12px"><span style="font-weight:700">Vibración</span><button class="interruptor" role="switch" aria-checked="${S.haptica !== false}" data-accion="haptica" aria-label="Vibración"></button></div></div>
-  <section class="seccio"><h2>Copia de seguridad</h2><div class="panel pad"><p class="suau petit" style="margin-top:0">Tus datos viven solo en este navegador. De vez en cuando, cópialos y pégalos en tus notas.</p>
-    <div class="fila envolta"><button class="btn marc" data-accion="copia">Copiar mis datos</button><button class="btn marc" data-accion="restaura-veure">Pegar una copia</button></div><div id="restaura"></div></div></section>
-  <section class="seccio"><h2>Cómo calcula</h2><div class="panel pad text-llarg"><p class="suau petit">Proteína: entre 1,6 y 2 g por kilo de peso. Los alimentos, de la base del USDA; el yogur, la leche y el pavo en lonchas, de etiquetas de supermercado en España. Todo son estimaciones, no cifras médicas.</p>
-    <div class="avis-salut">Si notas cambios grandes de peso, cansancio que no se va, mareos o molestias digestivas, cuéntaselo a tu madre, a tu padre o a tu tutor y a un profesional sanitario.</div></div></section>
-  <section class="seccio"><h2>Empezar de cero</h2><div class="panel pad"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div></section>`;
-}
-
 /* ---------------------------------------------------------------- fulls */
 function obreFull(html, titol) {
   $("#capa").innerHTML = `<div class="vel" data-accion="tanca-full"></div><div class="full" tabindex="-1" role="dialog" aria-modal="true" aria-label="${esc(titol)}"><div class="dins"><div class="ansa"></div><div class="full-cap"><h2>${esc(titol)}</h2><button class="tanca" data-accion="tanca-full" aria-label="Cerrar">${I_X}</button></div>${html}</div></div>`;
@@ -2271,12 +2823,29 @@ function refrescaAfegeix() {
   $("#n-e").textContent = "Pésalo " + x.e + (x.coc ? " (antes de cocinarlo)" : "") + ".";
 }
 function fullCfgEj(i) {
-  const e = activa().ej[i], c = cfgEj(e.n, e.t);
-  const rangs = [[6, 8], [6, 10], [8, 10], [8, 12], [10, 12], [10, 15], [12, 15], [15, 20]];
-  return `<form class="form" data-form="cfg-ej" data-i="${i}"><p class="suau">${esc(e.n)}</p>
-    <label>Series<select id="c-s">${[2, 3, 4, 5].map(n => `<option${n === c.series ? " selected" : ""}>${n}</option>`).join("")}</select></label>
-    <label>Repeticiones<select id="c-r">${rangs.map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a}-${b}</option>`).join("")}</select></label>
+  const e = activa().ej[i], c = cfgEj(e.n, e.t), carga = cargaDe(e.n, e.x), cf = S.cfg[e.n] || {};
+  const pasGim = k => CARGAS[k].paso ? CARGAS[k].paso() : 0;
+  return `<form class="form" data-form="cfg-ej" data-i="${i}"><p class="suau" style="margin:0">${esc(e.n)}</p>
+    <div class="dos"><label>Series<select id="c-s">${[2, 3, 4, 5, 6].map(n => `<option${n === c.series ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label>Repeticiones<select id="c-r">${RANGS.map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a} a ${b}</option>`).join("")}</select></label></div>
+    <fieldset class="cargues"><legend>Cómo se carga</legend>${ORDRE_CARGAS.map(k => `<label class="chip-r"><input type="radio" name="c-c" value="${k}"${k === carga ? " checked" : ""}><span>${CARGAS[k].nom}</span></label>`).join("")}</fieldset>
+    <label id="c-p-l"${CARGAS[carga].paso ? "" : " hidden"}>Va de<select id="c-p"><option value="">lo de tu gimnasio (${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} en ${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} kg)</option>${[1, 2, 2.5, 5, 10].map(v => `<option value="${v}"${cf.paso === v ? " selected" : ""}>${fmt(v)} en ${fmt(v)} kg</option>`).join("")}</select></label>
     <button class="btn clar marc" type="submit">GUARDAR PARA ESTE EJERCICIO</button></form>`;
+}
+// Per què avui toca aquest pes: el que va fer l'última vegada i la regla, amb l'esquema dels discos.
+function fullProg(i) {
+  const s = activa(), e = s.ej[i], p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre";
+  const kgT = v => lastre ? (v ? "+" + kgTxt(v) + " kg" : "tu peso") : kgTxt(v) + " kg";
+  if (p.modo === "primera") return `<p style="margin-top:0">Es la primera vez. Busca un peso con el que llegues a ${p.c.max} repeticiones dejando una o dos en la recámara. La próxima vez, la app ya te propondrá el peso y las repeticiones.</p>`;
+  const que = {
+    sube: `Llegaste a ${p.c.max} en todas las series: hoy sube un ${fmt(p.pct)} %, redondeado a lo que se puede cargar, y vuelves a ${p.c.min} repeticiones.`,
+    confirma: `Llegaste a ${p.c.max} en todas. Tienes activado esperar a dos entrenos seguidos: repítelo hoy y la próxima vez sube.`,
+    baja: `No llegaste a ${p.c.min} en ninguna serie: hoy baja un ${fmt(p.pct)} % para hacerlo bien.`,
+    reps: `El mismo peso y una repetición más en cada serie, hasta ${p.c.max}. Cuando las hagas todas, sube el peso.`,
+  }[p.modo];
+  return `<p class="suau petit" style="margin:0">La última vez, el ${fechaLarga(p.u.fecha).toLowerCase()}:</p>
+    <div class="panel pad" style="margin:8px 0">${p.u.sets.map((z, j) => `<div class="reg"><div>Serie ${j + 1}</div><div class="num">${kgT(z.kg ?? 0)} × ${z.reps}</div><span></span></div>`).join("")}</div>
+    <p>${que}</p>${p.sets[0].kg > 0 ? htmlCarga(p.sets[0].kg, p.carga) : ""}<p class="suau petit">El porcentaje se cambia en Ajustes, en «Progresión».</p>`;
 }
 function fullQueMenjar() {
   const k = hoy(), slot = slotAhora(), vistos = new Set();
@@ -2464,7 +3033,7 @@ document.addEventListener("click", ev => {
         let millor = 0;
         S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(q => { if (q.ok && q.reps) millor = Math.max(millor, Stats.e1rm(q.kg || 0, q.reps)); }); });
         record = millor > 0 && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre"; prAbans = millor;
-        empezarDescanso(DESCANSO[e.t]);
+        empezarDescanso(descansoDe(e.t));
       }
       guardar(); render();
       if (z.ok) {
@@ -2478,7 +3047,12 @@ document.addEventListener("click", ev => {
     }
     case "mes-serie": { const e = activa().ej[+b.dataset.i]; const u = e.sets[e.sets.length - 1] || {}; e.sets.push({ kg: u.kg ?? null, reps: u.reps ?? null, ok: false }); guardar(); render(); break; }
     case "menys-serie": { const e = activa().ej[+b.dataset.i]; if (e.sets.length > 1) e.sets.pop(); guardar(); render(); break; }
-    case "cfg-ej": obreFull(fullCfgEj(+b.dataset.i), "Series y repeticiones"); break;
+    case "cfg-ej": obreFull(fullCfgEj(+b.dataset.i), "Este ejercicio"); break;
+    case "ej-prog": obreFull(fullProg(+b.dataset.i), "Tu progresión"); break;
+    case "stats-tab": S.ui.statsTab = b.dataset.t; guardar(); render(); break;
+    case "cos-sel": S.ui.cosSel = b.dataset.k; guardar(); render(); break;
+    case "cos-apunta": obreFull(fullMedidas(), "Tus medidas de hoy"); break;
+    case "cos-treu": S.medidas = (S.medidas || []).filter(m => m.f !== b.dataset.f); guardar(); render(); avis("Borrado."); break;
     case "ej-foto": {
       const e = activa()?.ej[+b.dataset.i]; if (!e || !EJERCICIOS[e.n]) break;
       obreFull(`<img class="ej-gran" src="${fotoEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480"><p class="ej-com">${esc(EJERCICIOS[e.n][1])}</p>`, e.n);
@@ -2588,7 +3162,7 @@ document.addEventListener("click", ev => {
     case "restaura-veure": $("#restaura").innerHTML = `<form class="form" data-form="restaura" style="margin-top:12px"><label>Pega aquí tus datos<textarea id="r-txt"></textarea></label><label>O elige el archivo<input id="r-fit" type="file" accept=".json,.txt,application/json,text/plain"></label><button class="btn marc" type="submit">Recuperar mis datos</button></form>`; break;
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
-    default: accioRutina(acc, b);
+    default: if (!accioAjustes(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -2599,9 +3173,12 @@ document.addEventListener("input", ev => {
     const v = t.value.trim() === "" ? null : num(t.value);
     z[t.dataset.camp] = Number.isFinite(v) ? v : null;
     guardar();
+    if (t.dataset.camp === "kg") { const e = s.ej[+t.dataset.i], l = document.getElementById("carga-" + t.dataset.i); if (l) l.innerHTML = htmlCarga(kgEsquema(e), cargaDe(e.n, e.x)); }
   }
 });
 document.addEventListener("change", ev => {
+  if (canviAjustes(ev.target)) return;
+  if (ev.target.name === "c-c") { const l = $("#c-p-l"); if (l) l.hidden = !CARGAS[ev.target.value].paso; }
   if (ev.target.id === "n-a") refrescaAfegeix();
   if (ev.target.id === "s-ej") { S.ui.ejStats = ev.target.value; guardar(); render(); }
 });
@@ -2633,9 +3210,13 @@ document.addEventListener("submit", async ev => {
     if (!(q > 0)) { avis("Pon la cantidad."); return; }
     registrar([{ a, q, modo: x.ud && x.gr !== "fruta" ? "ud" : "g" }], $("#n-c").value, diaReg || hoy());
     guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); avis("Apuntado.");
+  } else if (tipus === "medidas") {
+    if (!desaMedidas(f)) { avis("Apunta al menos una medida.", true); return; }
+    guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); Efectos.vibra(14); avis("Medidas guardadas.");
   } else if (tipus === "cfg-ej") {
     const e = activa().ej[+f.dataset.i], series = Number($("#c-s").value), [mn, mx] = $("#c-r").value.split("-").map(Number);
-    S.cfg[e.n] = { series, min: mn, max: mx };
+    const carga = (f.querySelector('input[name="c-c"]:checked') || {}).value, paso = num($("#c-p") ? $("#c-p").value : "");
+    S.cfg[e.n] = { series, min: mn, max: mx, ...(carga ? { carga } : {}), ...(paso > 0 ? { paso } : {}) };
     while (e.sets.length < series) { const u = e.sets[e.sets.length - 1] || {}; e.sets.push({ kg: u.kg ?? null, reps: null, ok: false }); }
     while (e.sets.length > series && !e.sets[e.sets.length - 1].ok) e.sets.pop();
     guardar(); tancaFull(); render();
