@@ -3549,7 +3549,7 @@ async function carregaRanking() {
 const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span class="av-img"><img src="${imgPersonaje(PERSONAJES[tipo] ? tipo : "herrero")}" alt="" loading="lazy"></span><b class="num">${nivell || 1}</b></span>`;
 function filaRanking(f, so) {
   const v = f.valor;
-  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${avatar(f.personatge, f.nivell)}
+  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
     <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
@@ -4866,7 +4866,7 @@ function vistaEleccion() {
     <button class="fletxa dre marc" data-accion="tria" data-d="1" aria-label="Siguiente">${I_ENRERE}</button>
   </div>
   <div class="fitxa panel pad"><div class="nom or">${esc(P.nombre)}</div><div class="lema">${esc(P.lema)}</div>
-    <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div></div>
+    </div>
   <form class="form" data-form="personaje" style="margin-top:14px">
     <label>Tu nickname<input id="f-nom" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.personaje?.nombre || (typeof sessio !== "undefined" && sessio && sessio.nick) || "")}" placeholder="Así te verán en KLONK"></label>
     <p class="suau petit" style="margin:-4px 0 0">Es el nombre de tu personaje. Único: nadie más puede tenerlo. De 3 a 20 letras o números, sin espacios.</p>
@@ -5134,7 +5134,7 @@ function fullCarta(t) {
     : `<p class="falta">Te faltan ${P.precio - oro} de oro. Un entreno completo da unos 70.</p>`;
   return `<div class="carta-gran${teu ? "" : " bloq"}" id="carta-gran"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}"></div>
     <p class="lema-c">${esc(P.lema)}</p>${teu ? "" : `<p style="text-align:center;margin:0 0 6px"><span class="nv-req${nivelOk(t) ? "" : " falta-nv"}">NV ${P.nivel || 1}</span> <span class="preu">${MONEDA}${P.precio}</span></p>`}
-    <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div>
+    
     <div style="margin-top:14px">${accio}</div>`;
 }
 
@@ -5539,6 +5539,8 @@ document.addEventListener("click", ev => {
       const t = b.dataset.t; if (!esTeu(t)) break;
       S.personaje = { ...S.personaje, tipo: t }; guardar(); tancaFull(); veure(b.dataset.v || "inicio");
       Efectos.suena("triar"); avis(`${PERSONAJES[t].nombre} es tu personaje.`);
+      // que als rànquings es vegi el personatge nou ara, i no a l'entreno següent (l'Albert, 27-09-2026)
+      if (soc().participa) sincronitza().then(() => { S.social = { ...soc(), rank: {} }; guardar(); });
       break;
     }
     case "productes": obreFull(fullProductes(), "Mi yogur y mi leche"); break;
@@ -5712,7 +5714,9 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 // els té curts i la «Breathing Idle» li porta les mans a la panxa; la Forjadora, amb braços de proporció humana,
 // en necessita molt menys.
 const MODELS = { herrero: { json: "3d/herrero.json", martell: true },
-  forjadora: { json: "3d/forjadora.json", martell: false, obre: 0.48, gest: 0.12, avant: 0.2 } };
+  // la Forjadora (27-09-2026, l'Albert: «surt amb els braços MOLT junts i en l'animació es jode»): els braços més oberts
+  // en repòs, i celebra amb el braç enlaire en lloc de l'ajupida de culturista, que en ella es veia trencada
+  forjadora: { json: "3d/forjadora.json", martell: false, obre: 0.75, gest: 0.12, avant: 0.5, gestos: { celebra: ["tria"] } } };
 const ARREL = typeof ACTIUS === "string" ? ACTIUS : "assets/";
 // Quina animació fa cada gest de l'app. Si el model no la té, la primera de la llista que tingui.
 const GESTOS = { tria: ["tria", "celebra"], celebra: ["celebra", "tria"], menjar: ["menjar", "celebra"], serie: ["serie", "tria"] };
@@ -6001,7 +6005,7 @@ async function posa(heroi) {
 // L'app demana un gest. Torna true si l'ha fet en 3D; si no, l'app fa saltar la il·lustració.
 function reacciona(gest) {
   if (!actiu || !caixa || !caixa.isConnected || !caixa.classList.contains("amb3d")) return false;
-  const nom = (GESTOS[gest] || [gest]).find(n => actiu.accions[n]);
+  const nom = (((MODELS[actiu.tipo] || {}).gestos || {})[gest] || GESTOS[gest] || [gest]).find(n => actiu.accions[n]);
   if (!nom) return false;
   const nova = actiu.accions[nom];
   if (nova === actiu.ara) { nova.reset().play(); return true; }
