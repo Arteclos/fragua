@@ -600,6 +600,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .dia-ed.desti-dia{outline:2px dashed #f0a050;outline-offset:-4px}
 .dia-ed.enfocat{box-shadow:0 0 0 2px #f0a050}
 .ed-buit{margin:8px 0}
+.comer-propi{margin-top:12px}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -1072,7 +1073,7 @@ const COMP = {
 };
 const VERD = [I("ensalada", 150, 300, 25), I("verduras", 150, 300, 25)];
 const COMIDAS = [
-  ["desayuno", "Desayuno"], ["cole", "Almuerzo del cole"], ["comida", "Comida"], ["merienda", "Merienda"], ["cena", "Cena"], ["snack", "Snack"],
+  ["desayuno", "Desayuno"], ["cole", "Almuerzo"], ["comida", "Comida"], ["merienda", "Merienda"], ["cena", "Cena"], ["snack", "Snack"],
 ];
 const NOMBRE_COMIDA = Object.fromEntries(COMIDAS);
 const soloAbierta = sl => Object.fromEntries(COMIDAS.map(([s]) => [s, s === sl]));
@@ -3562,6 +3563,14 @@ function refrescaSocial(so, t) {
   const cl = so.clan;
   if ((!cl || ara - (cl.at || 0) > (t === "clan" ? 20000 : 120000)) && ara - (intent.clan || 0) > 15000) { intent.clan = ara; setTimeout(() => carregaClan(false), 0); }
 }
+// En obrir l'app: /v1/yo diu el pla de menjar del compte (el de l'Eric, o cap) i el gimnàs de Social.
+async function carregaPla() {
+  try {
+    const yo = await api("GET", "/yo"), pla = yo.pla_dieta || null;
+    S.social = { ...soc(), yo }; guardar();
+    if (((sessio && sessio.pla) || null) !== pla) { desaSessio({ ...sessio, pla }); if (S.ui.vista === "comer") render(); }
+  } catch (e) {}
+}
 // El gimnàs de /v1/yo, per a qui ja el va triar en un altre mòbil.
 function carregaYo() {
   const ara = Date.now();
@@ -4267,10 +4276,16 @@ const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte
 
 const DIES_SET = [[1, "L", "Lunes"], [2, "M", "Martes"], [3, "X", "Miércoles"], [4, "J", "Jueves"], [5, "V", "Viernes"], [6, "S", "Sábado"], [0, "D", "Domingo"]];
 const menuDe = (k, slot) => { const d = deClave(k).getDay(); return ((S.menu || {})[d] || {})[slot] || null; };
-// La proposta del dia: la del menú si n'hi ha, i si no, la del generador.
+// El pla de propostes (el generador, fet amb el pla del nutricionista de l'Eric) només per a qui el té: ho diu el
+// servidor a /v1/yo (l'Albert, 26-09-2026: «lo del menjar jo ho deixaria a 0 sense info pels usuaris; només a l'Eric
+// mantingue-li la seva configuració; i la gent ha de poder fer-se lo seu»). Sense pla, cada àpat comença buit.
+const ambPla = () => !!(typeof sessio !== "undefined" && sessio && sessio.pla);
+const AMB_ARTICLE = { desayuno: "el desayuno", cole: "el almuerzo", comida: "la comida", merienda: "la merienda", cena: "la cena", snack: "el snack" };
+const apatBuit = slot => ({ vacia: true, buit: true, titulo: "", items: [], nota: `Aún no has puesto nada para ${AMB_ARTICLE[slot] || "esta comida"}.` });
+// La proposta del dia: la del menú si n'hi ha; si no, la del generador (amb pla) o res.
 function propuestaDia(slot, k) {
   const m = menuDe(k, slot);
-  if (!m) return propuestaActual(slot, k);
+  if (!m) return ambPla() ? propuestaActual(slot, k) : apatBuit(slot);
   return { titulo: m.t || "Tu menú", items: m.it.map(x => ({ ...x })), fix: true, unica: true };
 }
 const modoDe = a => { const x = val(a); return x.ud && x.gr !== "fruta" ? "ud" : "g"; };
@@ -4317,7 +4332,7 @@ function accioMenu(acc, b) {
     }
     case "ap-dia": b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); return true;
     case "menu-dia": S.ui.menuDia = +b.dataset.d; guardar(); render(); return true;
-    case "menu-edita": obreFull(fullApat(b.dataset.slot, diaDeSetmana(S.ui.menuDia), "menu"), "Tu menú"); return true;
+    case "menu-edita": if (b.dataset.hoy) S.ui.menuDia = new Date().getDay(); obreFull(fullApat(b.dataset.slot, diaDeSetmana(S.ui.menuDia ?? new Date().getDay()), "menu"), "Tu menú"); return true;
     case "menu-auto": { const d = S.ui.menuDia, m = { ...(S.menu || {}) }; if (m[d]) { m[d] = { ...m[d] }; delete m[d][b.dataset.slot]; } S.menu = m; guardar(); render(); avis("Vuelve a ser automático."); return true; }
     case "menu-productes": obreFull(fullProductes(), "Tus productos"); return true;
     case "apunta-apat": obreFull(fullApat(b.dataset.slot, diaReg || hoy(), "apunta"), NOMBRE_COMIDA[b.dataset.slot]); return true;
@@ -4350,10 +4365,10 @@ function vistaMenu() {
   const dow = S.ui.menuDia, k = diaDeSetmana(dow);
   let h = `<div class="fila envolta" style="justify-content:center;margin-bottom:10px">${DIES_SET.map(([n, l, nom]) => `<button class="chip dia-s" data-accion="menu-dia" data-d="${n}" aria-pressed="${dow === n}" aria-label="${nom}">${l}</button>`).join("")}</div>`;
   COMIDAS.forEach(([slot, nom]) => {
-    const m = ((S.menu || {})[dow] || {})[slot], p = m ? { titulo: m.t, items: m.it } : propuesta(slot, k, 0);
-    h += `<section class="panel pad menu-apat"><div class="menu-cap"><b>${nom}</b><span class="${m ? "fix" : "auto"}">${m ? "Tu menú" : "Automático"}</span></div>
+    const m = ((S.menu || {})[dow] || {})[slot], p = m ? { titulo: m.t, items: m.it } : ambPla() ? propuesta(slot, k, 0) : { vacia: true, nota: "Nada todavía." };
+    h += `<section class="panel pad menu-apat"><div class="menu-cap"><b>${nom}</b><span class="${m ? "fix" : "auto"}">${m ? "Tu menú" : ambPla() ? "Automático" : "Vacío"}</span></div>
       <div class="menu-items">${p.vacia ? `<span class="suau petit">${esc(p.nota || "")}</span>` : p.items.filter(it => !it.op).map(it => `<span>${esc(val(it.a).n)} <small>${cantidadTxt(it)}</small></span>`).join("")}</div>
-      <div class="fila envolta" style="margin-top:8px"><button class="btn marc" data-accion="menu-edita" data-slot="${slot}">${m ? "Cambiar" : "Poner el mío"}</button>${m ? `<button class="enllac" data-accion="menu-auto" data-slot="${slot}">Volver a automático</button>` : ""}</div></section>`;
+      <div class="fila envolta" style="margin-top:8px"><button class="btn marc" data-accion="menu-edita" data-slot="${slot}">${m ? "Cambiar" : ambPla() ? "Poner el mío" : "Añadir"}</button>${m ? `<button class="enllac" data-accion="menu-auto" data-slot="${slot}">${ambPla() ? "Volver a automático" : "Vaciar"}</button>` : ""}</div></section>`;
   });
   h += `<p style="text-align:center;margin-top:14px"><button class="btn marc" data-accion="menu-productes">Tu yogur, tu leche y tu hora de entreno</button></p>`;
   return h;
@@ -4752,6 +4767,8 @@ function vistaEstadisticas() {
 
 /* ---------------------------------------------------------------- menjar */
 function vistaPropuesta(slot, k, p) {
+  if (p.buit) return `<p class="suau" style="margin-top:0">${esc(p.nota)}</p>
+    <div class="fila envolta"><button class="btn clar marc" data-accion="apunta-apat" data-slot="${slot}">APUNTAR LO QUE HE COMIDO</button><button class="btn marc" data-accion="menu-edita" data-slot="${slot}" data-hoy="1">Ponerlo en mi menú</button></div>`;
   if (p.vacia) return `<p class="suau">${esc(p.nota)}</p>`;
   const t = totales(p.items);
   const files = p.items.map(it => {
@@ -4775,7 +4792,8 @@ function vistaComer() {
     <div class="macro"><img class="ico" src="${ACTIUS}icones/comer.webp" alt=""><div><div class="et"><span>Proteína</span><span class="num">${n0(t.p)}${obj ? " / " + obj.lo : ""} g</span></div><div class="barra"><i style="width:${(pr * 100).toFixed(1)}%"></i></div></div></div>
     <div class="linia-macros"><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span><span>unas ${n0(t.k)} kcal</span></div>
   </div>
-  <div class="fila envolta" style="margin-top:12px;justify-content:center">
+  ${ambPla() ? "" : `<div class="panel pad comer-propi"><b class="or">Tu comida, a tu manera</b><p class="suau petit" style="margin:6px 0 0">Apunta lo que comes y KLONK te suma la proteína, los hidratos y las grasas. Si pones tu menú de la semana en «Mi semana», cada día lo apuntas de un toque.</p></div>`}
+  <div class="fila envolta" style="margin-top:12px;justify-content:center${ambPla() ? "" : ";display:none"}">
     <button class="chip" data-accion="tipus" data-t="entreno" aria-pressed="${entreno}">Día de entreno</button>
     <button class="chip" data-accion="tipus" data-t="descanso" aria-pressed="${!entreno}">Descanso</button>
     <button class="chip" data-accion="gana" aria-pressed="${!!S.hambre[k]}">Tengo más hambre</button>
@@ -4785,15 +4803,15 @@ function vistaComer() {
     const oberta = S.ui.abiertas[slot] ?? (slot === ara);
     const fetes = (S.reg[k] || []).filter(r => r.comida === slot);
     const p = propuestaDia(slot, k);
-    const res = fetes.length ? `Apuntada, ${n0(fetes.reduce((a, r) => a + r.p, 0))} g de proteína` : (p.fix ? "Tu menú: " : "") + p.titulo;
+    const res = fetes.length ? `Apuntada, ${n0(fetes.reduce((a, r) => a + r.p, 0))} g de proteína` : p.buit ? "Nada puesto todavía" : (p.fix ? "Tu menú: " : "") + p.titulo;
     h += `<section class="panel apat"><button class="apat-cap" data-accion="plega" data-slot="${slot}" aria-expanded="${oberta}"><span><span class="t">${nom}</span><br><span class="r">${esc(res)}</span></span>${I_BAIXA}</button>
       ${oberta ? `<div class="apat-cos">${vistaPropuesta(slot, k, p)}</div>` : ""}</section>`;
   });
-  h += `<section class="seccio"><h2>¿Qué necesitas?</h2><div class="chips">
+  if (ambPla()) h += `<section class="seccio"><h2>¿Qué necesitas?</h2><div class="chips">
     <button class="chip" data-accion="que-comer">¿Qué puedo comer?</button><button class="chip" data-accion="falta-prot">Me falta proteína</button>
     <button class="chip" data-accion="mucho">He comido mucho</button><button class="chip" data-accion="hinchado">Me noto hinchado</button></div></section>
-    <p class="frase"><img src="${ACTIUS}icones/comer.webp" alt="">Proteína, el combustible de la fragua.</p>${avisComer}`;
-  return h;
+    <p class="frase"><img src="${ACTIUS}icones/comer.webp" alt="">Proteína, el combustible de la fragua.</p>`;
+  return h + avisComer;
 }
 
 const tabsComer = () => `<div class="tabs-t">${[["hoy", "Hoy"], ["menu", "Mi semana"], ["registro", "Registro"]].map(([t, n]) => `<button class="chip" data-accion="comer-tab" data-t="${t}" aria-pressed="${(S.ui.comerTab || "hoy") === t}">${n}</button>`).join("")}</div>`;
@@ -5394,6 +5412,7 @@ mirarEnllacAmic();
 render();
 if (S.activa) pedirPantalla();
 if (teCompte()) baixaEstat(false);
+if (teCompte()) carregaPla();
 confirmaPagament();
 mirarEnllacRutina();
 
