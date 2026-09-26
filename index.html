@@ -509,6 +509,20 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .o-separador::before,.o-separador::after{content:"";flex:1;height:1px;background:rgba(197,123,55,.35)}
 .avis-correu{display:flex;gap:12px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;line-height:1.45;font-size:14.5px}
 .avis-correu .tanca-x{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid rgba(197,123,55,.5);background:rgba(0,0,0,.3);color:var(--crema);font-size:20px;line-height:1}
+.form.dades{gap:24px}
+.dades-t{font-weight:700;display:block}
+.dies-7{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
+.chip.dia{min-width:0;padding:10px 0;justify-content:center;text-align:center;font-size:17px;font-weight:700}
+.casella b{display:block;font-weight:700;color:var(--crema)}
+.casella small{display:block;margin-top:3px;color:var(--fum);font-size:13.5px;line-height:1.45}
+.casella input{margin-top:3px}
+/* les caselles dins d'un formulari: .form label és una graella i .form input fa 50 px d'alt i tot l'ample,
+   i la casella ho heretava (un quadre gris enorme damunt del text, 26-09-2026) */
+.form .casella{display:flex;align-items:flex-start;gap:12px;font-size:14.5px;font-weight:400;color:var(--crema)}
+.form .casella input{width:22px;height:22px;min-width:22px;padding:0;margin:2px 0 0;border-radius:4px;accent-color:#f0a050;flex:none}
+.form .dies-7 .chip.dia{display:flex;align-items:center;justify-content:center;height:46px;padding:0}
+.edat-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.edat-3 .chip{display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 4px;font-size:14.5px;white-space:nowrap}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -768,8 +782,8 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
   text-shadow:0 0 12px rgba(255,120,30,.9);animation:puja 1.2s ease-out forwards}
 .flota.record{color:#ffd08a;font-size:24px}
 @keyframes puja{0%{opacity:0;transform:translate(-50%,-30%) scale(.8)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-240%) scale(1)}}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:62;max-width:calc(100% - 32px);
-  padding:10px 16px;border-radius:999px;background:#1a1512;border:1px solid #f0a050;color:#ffe6b6;font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.toast{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:62;max-width:calc(100% - 32px);
+  padding:10px 16px;border-radius:14px;text-align:center;background:#1a1512;border:1px solid #f0a050;color:#ffe6b6;font-size:15px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.6)}
 .descansant .toast{bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .lector{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* ---- les rutines ---- */
@@ -3577,7 +3591,7 @@ function vistaCompte() {
       ${google ? `<p class="suau petit" style="margin:0">Entras con Google como ${esc(c.googleEmail || "")}. Solo nos falta esto:</p>` : `
       <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
       <label>Contraseña<input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>`}
-      <div><div style="font-weight:700;margin-bottom:8px">¿Cuántos años tienes?</div><div class="fila envolta">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="compte-edat" data-v="${k}" aria-pressed="${c.edat === k}">${t}</button>`).join("")}</div></div>
+      <div><div style="font-weight:700;margin-bottom:8px">¿Cuántos años tienes?</div><div class="edat-3">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="compte-edat" data-v="${k}" aria-pressed="${c.edat === k}">${t}</button>`).join("")}</div></div>
       <label class="casella"><input type="checkbox" id="c-termes"><span>He leído y acepto las <a href="condiciones/" target="_blank" rel="noopener">condiciones de uso</a> y la <a href="privacidad/" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
       ${botoForja('type="submit"', google ? "ENTRAR" : "CREAR CUENTA", "")}
     </form>
@@ -3722,7 +3736,7 @@ async function despresEntrar(r, nou) {
   S.cuenta = null;
   try {
     const [cpt, yo] = await Promise.all([apiCompte("GET", "/compte"), apiCompte("GET", "/yo").catch(() => null)]);
-    desaSessio({ ...sessio, email: cpt.email || sessio.email, email_ok: !!cpt.email_ok, salut: !!cpt.consent_salut, franja: cpt.franja, nick: yo && yo.nick || null });
+    desaSessio({ ...sessio, email: cpt.email || sessio.email, email_ok: !!cpt.email_ok, salut: !!cpt.consent_salut, comercial: !!cpt.consent_comercial, franja: cpt.franja, nick: yo && yo.nick || null });
   } catch (e) {}
   S.ui.compte = null;
   await baixaEstat(true);
@@ -3835,6 +3849,9 @@ function mirarEnllacCompte() {
   const h = location.hash;
   if (h === "#correu-ok") { avis("Correo confirmado. ¡Bienvenido a Klonk!"); if (sessio) desaSessio({ ...sessio, email_ok: true }); S.ui.avisCorreu = null; history.replaceState(null, "", location.pathname); }
   else if (h === "#correu-caducat") { avis("El enlace ha caducado o ya se ha usado.", true); history.replaceState(null, "", location.pathname); }
+  // la baixa d'un sol toc dels correus comercials (servidor/comptes.py, GET /v1/compte/baixa)
+  else if (h === "#baixa-ok") { avis("Hecho: ya no te enviaremos novedades ni ofertas."); if (sessio) desaSessio({ ...sessio, comercial: false }); history.replaceState(null, "", location.pathname); }
+  else if (h === "#baixa-caducat") { avis("Ese enlace de baja no es válido. Puedes darte de baja en Ajustes, en Tu cuenta.", true); history.replaceState(null, "", location.pathname); }
   else if (h.startsWith("#restableix=")) { S.ui.compte = { mode: "restableix", codi: decodeURIComponent(h.slice(12)) }; history.replaceState(null, "", location.pathname); }
 }
 
@@ -3842,13 +3859,15 @@ function mirarEnllacCompte() {
 // ENLLAÇ, no un codi: l'Albert hi va buscar on escriure el codi (26-09-2026).
 function bannerCorreu() {
   if (!teCompte() || !S.ui.avisCorreu || sessio.email_ok) return "";
-  return `<div class="avis-correu panel marc" role="status"><span><b class="or">Revisa tu correo.</b> Te hemos enviado un enlace a ${esc(S.ui.avisCorreu)}: ábrelo para confirmar tu dirección. No hace falta ningún código, y mientras tanto ya puedes usar KLONK.</span><button class="tanca-x" data-accion="tanca-avis-correu" aria-label="Cerrar el aviso">×</button></div>`;
+  return `<div class="avis-correu panel marc" role="status"><span><b class="or">Revisa tu correo.</b> Te hemos enviado a ${esc(S.ui.avisCorreu)} un correo con un botón para confirmar tu dirección. No hace falta ningún código, y mientras tanto ya puedes usar KLONK. <button class="enllac" data-accion="compte-reenvia">Reenviar</button></span><button class="tanca-x" data-accion="tanca-avis-correu" aria-label="Cerrar el aviso">×</button></div>`;
 }
 
 /* ---------------------------------------------------------------- el compte a Ajustes */
 function blocCompte() {
   if (!teCompte()) return "";
   return `<div class="aj-fila"><span>Tu cuenta<small>${esc(sessio.email || "")}${sessio.email_ok === false ? ", sin confirmar: abre el enlace del correo" : ""}${sessio.nick ? `, ${esc(sessio.nick)}` : ""}</small></span><button class="btn marc" data-accion="compte-surt">Cerrar sesión</button></div>
+    ${sessio.email && sessio.email_ok === false ? `<div class="aj-fila"><span>Confirmar tu correo<small>Te llegó un correo con un botón. Si no lo encuentras, te lo enviamos otra vez.</small></span><button class="btn marc" data-accion="compte-reenvia">Reenviar</button></div>` : ""}
+    <div class="aj-fila"><span>Novedades y ofertas por correo<small>De vez en cuando. Te das de baja cuando quieras.</small></span>${interruptor("compte-comercial", !!sessio.comercial, "Recibir novedades y ofertas por correo")}</div>
     <div class="aj-fila"><span>Guardar tu peso y tus medidas en tu cuenta<small>Son datos de salud: sin tu permiso se quedan solo en este móvil, y sin tu peso no sales en el ranking de fuerza.</small></span>${interruptor("compte-salut", !!sessio.salut, "Guardar peso y medidas en tu cuenta")}</div>
     <p style="margin:12px 0 0"><button class="enllac" data-accion="compte-esborra">Borrar mi cuenta y todos mis datos</button></p>`;
 }
@@ -3861,6 +3880,16 @@ async function accioCompte(acc, b) {
       else { avis("Cargando Google: vuelve a tocar en un momento.", true); preparaGoogle(); }
       return true;
     case "tanca-avis-correu": S.ui.avisCorreu = null; guardar(); render(); return true;
+    case "compte-reenvia":
+      try { const r = await apiCompte("POST", "/compte/reenvia"); if (r.confirmat) { desaSessio({ ...sessio, email_ok: true }); render(); avis("Tu correo ya está confirmado."); } else avis("Te lo hemos enviado otra vez. Toca el botón del correo."); }
+      catch (e) { avis(e.message, true); }
+      return true;
+    case "compte-comercial": {
+      const on = !sessio.comercial;
+      try { const r = await apiCompte("POST", "/compte/consentiment", { comercial: on }); desaSessio({ ...sessio, comercial: !!r.consent_comercial }); render(); avis(on ? "Te enviaremos novedades y ofertas de vez en cuando." : "Ya no te enviaremos novedades ni ofertas."); }
+      catch (e) { avis(e.message, true); }
+      return true;
+    }
     case "compte-surt": await surtCompte(); return true;
     case "compte-esborra":
       if (!S.ui.segurEsborra) { S.ui.segurEsborra = true; avis("Toca otra vez para borrar tu cuenta. No se puede deshacer.", true); setTimeout(() => { S.ui.segurEsborra = false; }, 6000); return true; }
@@ -3880,7 +3909,7 @@ async function accioCompte(acc, b) {
   }
   return false;
 }
-const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut", "compte-google", "tanca-avis-correu"]);
+const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut", "compte-google", "tanca-avis-correu", "compte-reenvia", "compte-comercial"]);
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
    L'Albert (amb el seu germà): «el menjar és la part més difícil, perquè cadascú fa lo seu. Com a molt ha de
@@ -4266,17 +4295,23 @@ function vistaEleccion() {
        : `<p class="falta">Bloqueado: se forja con ${P.precio} de oro en la tienda.</p>${nou ? "" : botoForja('type="button" data-accion="vista" data-v="tienda"', "IR A LA TIENDA", "")}`}
   </form>`;
 }
+// «Tus datos» (l'Albert, 26-09-2026): sense el subtítol; l'altura ja amb 170 («perquè la gent entengui que ha de
+// posar 170 i no 70»); els dies d'1 a 7; les caselles amb títol i una línia; «puedes cambiar tus datos más adelante».
+const rutinaPerDies = d => d <= 3 ? "iniciacion" : d <= 5 ? "torso-pierna" : "seis-dias";
 function vistaDatos() {
+  const n = S.perfil.diasSemana || { iniciacion: 3, "torso-pierna": 4, "seis-dias": 6 }[S.rutinaActiva || "iniciacion"] || 3;
+  const s = typeof sessio !== "undefined" && sessio ? sessio : null;
   return `<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK"><h1 class="titol-pag or">Tus datos</h1>
-  <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, KLONK calcula tu proteína.</p>
-  <form class="form panel pad" data-form="datos">
+  <form class="form panel pad dades" data-form="datos">
     <div class="dos"><label>Tu peso, en kg<input id="d-peso" inputmode="decimal" autocomplete="off" required value="${fmt(S.perfil.peso)}"></label>
-      <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura)}"></label></div>
-    <div><span class="suau petit" style="font-weight:700">¿Cuántos días a la semana puedes entrenar?</span>
-      <div class="dies-tria" style="margin-top:8px">${[[3, "iniciacion"], [4, "torso-pierna"], [6, "seis-dias"]].map(([n, id]) => `<button type="button" class="chip" data-accion="dies" data-id="${id}" aria-pressed="${(S.rutinaActiva || "iniciacion") === id}">${n} días</button>`).join("")}</div>
-      <p class="suau petit" style="margin:6px 0 0">Te ponemos una rutina de partida. Luego la cambias o creas la tuya en Entreno.</p></div>
-    ${typeof sessio !== "undefined" && sessio && !sessio.salut ? `<label class="casella"><input type="checkbox" id="d-salut"><span>Guardar mi peso y mis medidas en mi cuenta. Son datos de salud: sin esto se quedan solo en este móvil y no sales en el ranking de fuerza.</span></label>` : ""}
+      <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura || 170)}"></label></div>
+    <div><span class="dades-t">¿Cuántos días a la semana puedes entrenar?</span>
+      <div class="dies-7">${[1, 2, 3, 4, 5, 6, 7].map(d => `<button type="button" class="chip dia" data-accion="dies" data-n="${d}" data-id="${rutinaPerDies(d)}" aria-pressed="${n === d}">${d}</button>`).join("")}</div>
+      <p class="suau petit" style="margin:8px 0 0">Te ponemos una rutina para empezar. La cambias cuando quieras en Entreno.</p></div>
+    ${s && !s.salut ? `<label class="casella"><input type="checkbox" id="d-salut"><span><b>Guardar mi peso y mis medidas en mi cuenta</b><small>Así no se pierden si cambias de móvil y sales en el ranking de fuerza. Son datos de salud: solo con tu permiso.</small></span></label>` : ""}
+    ${s && !s.comercial ? `<label class="casella"><input type="checkbox" id="d-comercial"><span><b>Quiero recibir novedades y ofertas de KLONK</b><small>Por correo, de vez en cuando. Te das de baja cuando quieras.</small></span></label>` : ""}
     ${botoForja('type="submit"', "ENCENDER LA FRAGUA", "")}
+    <p class="suau petit" style="text-align:center;margin:0">Puedes cambiar tus datos más adelante en Ajustes.</p>
   </form>
   <p style="text-align:center;margin-top:14px"><button class="enllac" data-accion="vista" data-v="eleccion">Volver a tu personaje</button></p>`;
 }
@@ -4836,7 +4871,7 @@ document.addEventListener("click", ev => {
     case "rebost": obreFull(fullRebost(), "No tengo…"); break;
     case "tienda-tab": S.ui.tiendaTab = b.dataset.t; guardar(); render(); break;
     case "comer-tab": S.ui.comerTab = b.dataset.t; diaReg = null; guardar(); render(); break;
-    case "dies": { S.rutinaActiva = b.dataset.id; guardar(); b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); break; }
+    case "dies": { S.rutinaActiva = b.dataset.id; if (b.dataset.n) S.perfil = { ...S.perfil, diasSemana: Number(b.dataset.n) }; guardar(); b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); break; }
     case "carta": obreFull(fullCarta(b.dataset.t), PERSONAJES[b.dataset.t].nombre); break;
     case "comprar": {
       const t = b.dataset.t, P = PERSONAJES[t];
@@ -4923,10 +4958,16 @@ document.addEventListener("submit", async ev => {
     const pre = tipus === "datos" ? "d" : "a";
     const pes = num($(`#${pre}-peso`).value);
     if (!(pes > 0)) { avis("Pon tu peso para calcular la proteína.", true); return; }
-    S.perfil = { ...S.perfil, peso: pes, altura: num($(`#${pre}-altura`).value) || null, ...($("#a-hora") ? { horaEntreno: $("#a-hora").value || "18:00" } : {}) };
+    if (pes < 30 || pes > 250) { avis("Revisa tu peso: en kilos, por ejemplo 68.", true); $(`#${pre}-peso`).focus(); return; }
+    let alt = num($(`#${pre}-altura`).value);
+    if (alt >= 1.2 && alt <= 2.5) alt = Math.round(alt * 100);          // «1,70» vol dir 170
+    if (alt && (alt < 120 || alt > 230)) { avis("Tu altura en centímetros: por ejemplo, 170.", true); $(`#${pre}-altura`).focus(); return; }
+    S.perfil = { ...S.perfil, peso: pes, altura: alt || null, ...($("#a-hora") ? { horaEntreno: $("#a-hora").value || "18:00" } : {}) };
     if (tipus === "datos" && !S.rutinaActiva) S.rutinaActiva = "iniciacion";
     if (tipus === "datos" && $("#d-salut") && $("#d-salut").checked && teCompte())
       apiCompte("POST", "/compte/consentiment", { salut: true }).then(r => { desaSessio({ ...sessio, salut: !!r.consent_salut }); programaPuja(); }).catch(e => avis(e.message, true));
+    if (tipus === "datos" && $("#d-comercial") && $("#d-comercial").checked && teCompte())
+      apiCompte("POST", "/compte/consentiment", { comercial: true }).then(r => desaSessio({ ...sessio, comercial: !!r.consent_comercial })).catch(e => avis(e.message, true));
     S.ui.vista = "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
     if (tipus === "datos") { Efectos.suena("fuego"); Efectos.lluvia(1.4); avis("La fragua está encendida."); } else avis("Ajustes guardados.");
   } else if (tipus === "ed-propi") {
