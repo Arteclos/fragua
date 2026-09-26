@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Fragua"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icono-180.png"><link rel="icon" type="image/png" sizes="192x192" href="icono-192.png"><link rel="manifest" href="manifest.webmanifest"></head><body><title>Fragua</title>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Fragua"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="icono-180.png"><link rel="icon" type="image/png" sizes="192x192" href="icono-192.png"><link rel="manifest" href="manifest.webmanifest"></head><body><title>Fragua</title>
 <meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,7 +42,9 @@ h1,h2,h3{margin:0;font-weight:700}
   linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.18) 55%,rgba(0,0,0,.38) 100%),
   linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.2) 40%,rgba(0,0,0,.55) 72%,rgba(0,0,0,.82) 100%)}
 .ambient{position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen}
-.app{position:relative;z-index:1;max-width:460px;margin:0 auto;padding:0 12px calc(26px + env(safe-area-inset-bottom,0px))}
+.app{position:relative;z-index:1;max-width:460px;margin:0 auto;padding:env(safe-area-inset-top,0px) 12px calc(26px + env(safe-area-inset-bottom,0px));overflow-x:clip}
+/* sense zoom: ni pessic ni doble toc (el pessic de Safari es talla també per JS, a app.js) */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .chispas{position:fixed;inset:0;z-index:60;pointer-events:none}
 
 /* ---- la lletra ---- */
@@ -91,9 +93,44 @@ h1,h2,h3{margin:0;font-weight:700}
 .envolta{flex-wrap:wrap}
 
 /* ---- l'entrada: logo, personatge i placa ---- */
-.boto-musica{--x:7px;--v:1.5px;position:absolute;right:4px;top:8px;z-index:5;width:40px;height:40px;display:grid;place-items:center;color:var(--flama)}
+.boto-musica{--x:7px;--v:1.5px;position:absolute;right:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;width:40px;height:40px;display:grid;place-items:center;color:var(--flama)}
 .sessio-cap .boto-musica{top:8px;right:8px}
 .boto-musica[aria-pressed="false"]{color:var(--fum-2)}
+/* ---- l'or i la botiga ---- */
+/* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
+.boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
+  color:#ffe6a6;font-family:var(--display);font-weight:900;font-size:12.5px;line-height:1}
+.boto-or svg{width:20px;height:20px;flex:none;filter:drop-shadow(0 0 4px rgba(255,190,60,.55))}
+.saldo{display:flex;justify-content:space-between;align-items:center}
+.saldo-n{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:900;font-size:28px}
+.saldo-n svg{width:30px;height:30px}
+.tabs-t{display:flex;gap:8px;justify-content:center;margin:14px 0 14px}
+.botiga{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.carta{--x:10px;display:grid;justify-items:center;gap:4px;padding:12px 8px 12px;color:var(--crema);text-align:center}
+.carta img{height:150px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+.carta.bloq img,.carta-gran.bloq img,.carrusel img.bloq{filter:brightness(0) drop-shadow(0 0 4px rgba(255,120,30,.9)) drop-shadow(0 0 10px rgba(255,90,20,.35))}
+.carta-nom{font-weight:700;font-size:15px;line-height:1.2}
+.carta-estat{font-size:13px;color:var(--verd);font-weight:700}
+.preu{display:inline-flex;align-items:center;gap:4px;font-family:var(--display);font-weight:900;font-size:16px;color:#ffd780}
+.preu svg{width:17px;height:17px}
+.preu-c{position:absolute;left:50%;bottom:14px;z-index:3;transform:translateX(-50%);padding:4px 12px;border-radius:999px;background:rgba(10,8,7,.85);border:1px solid #f0a050;font-size:18px}
+.carta-gran{display:flex;justify-content:center;height:300px}
+.carta-gran img{display:block;height:300px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 10px 16px rgba(0,0,0,.7))}
+.carta-gran.revela img{animation:revela 1.2s ease-out}
+@keyframes revela{0%{filter:brightness(0) drop-shadow(0 0 5px #ff7a1a)}35%{filter:brightness(2.4) drop-shadow(0 0 26px #ffb040)}100%{filter:brightness(1) drop-shadow(0 10px 16px rgba(0,0,0,.7))}}
+.lema-c{text-align:center;color:var(--fum);margin:10px 0 6px}
+.falta{text-align:center;color:#ffb070;font-weight:700;margin:10px 0}
+.paquet{--x:10px;display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 14px;margin-bottom:10px}
+.paquet > svg{width:40px;height:40px}
+.paquet .n{font-family:var(--display);font-weight:900;font-size:20px}
+.paquet .preu-e{font-weight:700;font-size:17px}
+.paquet .aviat{font-size:12.5px;color:var(--fum-2)}
+.oro-guanyat{display:flex;justify-content:center;align-items:center;gap:8px;margin:4px 0 10px;font-size:18px;font-weight:700;color:var(--fum)}
+.oro-guanyat svg{width:30px;height:30px}
+.oro-guanyat b{font-family:var(--display);font-weight:900;font-size:28px}
+.flota.oro{color:#ffd24a;font-size:18px}
+.personatge.aura .brillo{background:radial-gradient(ellipse at 50% 62%,rgba(255,150,40,.55),rgba(255,90,20,.18) 45%,transparent 70%);animation:aura 2.6s ease-in-out infinite}
+@keyframes aura{0%,100%{opacity:.75}50%{opacity:1}}
 .sessio-cap{margin-top:4px}
 .logo{position:relative;z-index:1;display:block;width:72%;max-width:330px;margin:10px auto 0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}
 .heroe{position:relative;display:grid;grid-template-columns:48% 1fr;gap:4px;align-items:start;margin-top:-30px}
@@ -305,7 +342,7 @@ h1,h2,h3{margin:0;font-weight:700}
 .text-llarg p{margin:0 0 10px}
 
 /* ---- celebracions ---- */
-.celebra{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 40%,rgba(70,20,6,.94),rgba(0,0,0,.97) 70%)}
+.celebra{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at 50% 40%,rgba(70,20,6,.94),rgba(0,0,0,.97) 70%)}
 .celebra .caixa{width:min(100%,400px);text-align:center;animation:entra .5s cubic-bezier(.2,.8,.2,1)}
 .celebra .gran{font-family:var(--display);font-weight:900;font-size:34px;line-height:1.05}
 .celebra .xp-guanyat{font-family:var(--display);font-weight:900;font-size:54px;color:#ffe6b6;margin:10px 0 0;text-shadow:0 0 18px rgba(255,120,30,.8)}
@@ -472,7 +509,7 @@ const EQUIV = { hc: "c", prot: "p", grasa: "g", fruta: "c", dulce: "c" };
 
 /* ---------- estado (solo en este móvil) ---------- */
 const LLAVE = "fragua.v1";
-const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVisto: 1, perfil: { peso: null, altura: null, yogur: "natural", leche: "semi", horaEntreno: "18:00" }, sinStock: [],
+const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVisto: 1, desbloq: ["herrero", "forjadora", "genio"], oroGastado: 0, oroComprado: 0, perfil: { peso: null, altura: null, yogur: "natural", leche: "semi", horaEntreno: "18:00" }, sinStock: [],
   ses: [], activa: null, cfg: {}, reg: {}, tipo: {}, hambre: {}, prop: {}, menus: [], ui: { tab: "hoy", abiertas: {} } });
 let guardable = true;
 let S = cargar();
@@ -1369,10 +1406,19 @@ void main(){
 "use strict";
 
 /* ---------------------------------------------------------------- personatges */
+// Els tres primers són de franc; la resta (els arquetips de l'Alex, 26/09) es forgen amb or a la botiga.
 const PERSONAJES = {
-  herrero: { nombre: "Herrero", lema: "Fuerte como el yunque.", rasgos: [["Fuerza", 0.82], ["Aguante", 0.6], ["Constancia", 0.66]] },
-  forjadora: { nombre: "Forjadora", lema: "Templa el acero y la voluntad.", rasgos: [["Fuerza", 0.66], ["Aguante", 0.82], ["Constancia", 0.7]] },
-  genio: { nombre: "Genio de la forja", lema: "Nació del fuego de la fragua.", rasgos: [["Fuerza", 0.7], ["Aguante", 0.64], ["Constancia", 0.86]] },
+  herrero: { nombre: "Herrero", lema: "Fuerte como el yunque.", precio: 0, rasgos: [["Fuerza", 0.82], ["Aguante", 0.6], ["Constancia", 0.66]] },
+  forjadora: { nombre: "Forjadora", lema: "Templa el acero y la voluntad.", precio: 0, rasgos: [["Fuerza", 0.66], ["Aguante", 0.82], ["Constancia", 0.7]] },
+  genio: { nombre: "Genio de la forja", lema: "Nació del fuego de la fragua.", precio: 0, rasgos: [["Fuerza", 0.7], ["Aguante", 0.64], ["Constancia", 0.86]] },
+  estoico: { nombre: "Guerrero estoico", lema: "Aguanta. Sigue. No se queja.", precio: 400, rasgos: [["Fuerza", 0.76], ["Aguante", 0.88], ["Constancia", 0.8]] },
+  cazadora: { nombre: "Cazadora", lema: "Precisión en cada repetición.", precio: 500, rasgos: [["Fuerza", 0.66], ["Aguante", 0.82], ["Constancia", 0.86]] },
+  amazona: { nombre: "Amazona", lema: "Fuerza libre, sin pedir permiso.", precio: 600, rasgos: [["Fuerza", 0.84], ["Aguante", 0.8], ["Constancia", 0.72]] },
+  barbaro: { nombre: "Bárbaro", lema: "Levanta primero, pregunta después.", precio: 700, rasgos: [["Fuerza", 0.94], ["Aguante", 0.7], ["Constancia", 0.58]] },
+  powerlifter: { nombre: "Powerlifter", lema: "El peso no miente.", precio: 800, rasgos: [["Fuerza", 0.96], ["Aguante", 0.66], ["Constancia", 0.78]] },
+  espartano: { nombre: "Espartano", lema: "Disciplina hoy, gloria mañana.", precio: 900, rasgos: [["Fuerza", 0.84], ["Aguante", 0.84], ["Constancia", 0.9]] },
+  valquiria: { nombre: "Valquiria", lema: "Cae el peso, sube el alma.", precio: 1000, rasgos: [["Fuerza", 0.86], ["Aguante", 0.86], ["Constancia", 0.84]] },
+  titan: { nombre: "Gólem de hierro", lema: "Forjado placa a placa.", precio: 1500, rasgos: [["Fuerza", 1], ["Aguante", 0.9], ["Constancia", 0.7]] },
 };
 const TIPOS = Object.keys(PERSONAJES);
 // Cada exercici de la rutina: la seva il·lustració (el nan fent-lo, ChatGPT, lot 6) i com es fa, en una frase.
@@ -1411,6 +1457,26 @@ const EJERCICIOS = {
 };
 const fotoEj = n => EJERCICIOS[n] ? `${ACTIUS}ejercicios/${EJERCICIOS[n][0]}.webp` : null;
 const imgPersonaje = t => `${ACTIUS}personatges/${t}.webp`;
+const esTeu = t => (S.desbloq || []).includes(t) || !PERSONAJES[t].precio;
+
+/* ---------------------------------------------------------------- l'or */
+// L'or que has guanyat surt del que has fet (com l'XP): 25 per entreno, 2 per sèrie, 10 per rècord, 3 per
+// cada àpat apuntat (6 al dia com a molt) i 40 per nivell pujat. Així no es pot inflar marcant i
+// desmarcant; al total s'hi suma el comprat i se li resta el gastat.
+const ORO = { entreno: 25, serie: 2, record: 10, comida: 3, nivel: 40 };
+function oroGanado() {
+  const fetes = S.ses.filter(s => s.fin);
+  const series = fetes.reduce((a, s) => a + s.ej.reduce((b, e) => b + e.sets.filter(z => z.ok && z.reps).length, 0), 0);
+  const xp = Stats.experiencia(S);
+  const records = Math.max(0, Math.round((xp.xp - 50 * fetes.length - 10 * series) / 25));
+  let menjars = 0;
+  Object.values(S.reg).forEach(ll => { menjars += Math.min(6, new Set(ll.map(r => r.comida)).size); });
+  return ORO.entreno * fetes.length + ORO.serie * series + ORO.record * records + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1);
+}
+const oroTotal = () => Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0));
+// La força del personatge (0 fluix, 1 fort): puja amb el nivell fins al 20.
+const fuerzaDe = nivel => Math.max(0, Math.min(1, (nivel - 1) / 19));
+const MARTILLOS = [[1, "Martillo de aprendiz"], [5, "Martillo de hierro"], [10, "Martillo de acero y oro"], [15, "Martillo de metal fundido"]];
 if (!S.ui.vista) S.ui.vista = "inicio";
 
 /* ---------------------------------------------------------------- icones i degradats */
@@ -1423,6 +1489,7 @@ document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style=
   <linearGradient id="gFoc" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c81c01"/><stop offset=".5" stop-color="#f25a06"/><stop offset="1" stop-color="#fcb505"/></linearGradient>
   <linearGradient id="gLin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fd3601"/><stop offset="1" stop-color="#ff8a17"/></linearGradient>
   <linearGradient id="gAnell" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff6a0a"/><stop offset="1" stop-color="#ffb82a"/></linearGradient>
+  <linearGradient id="gOr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset=".45" stop-color="#f2b640"/><stop offset="1" stop-color="#b87414"/></linearGradient>
   <linearGradient id="gBrac" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e2600e"/><stop offset="1" stop-color="#ffb13a"/></linearGradient>
   <linearGradient id="fo1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e02c02"/><stop offset=".45" stop-color="#ff7a0e"/><stop offset="1" stop-color="#ffd34a"/></linearGradient>
   <linearGradient id="fo0" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4c433d"/><stop offset="1" stop-color="#6f645c"/></linearGradient>
@@ -1431,6 +1498,7 @@ document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style=
 const flama = (encesa, cls = "") => `<svg class="${encesa ? "encesa" : ""} ${cls}" viewBox="0 0 24 30" aria-hidden="true">
   <path d="M12 1.5c.7 3.7 3.5 5.8 5.5 8.8 1.8 2.7 2.5 5.2 2.5 7.9a8 8 0 0 1-16 0c0-3 1.3-5.3 2.9-7.1.3 2 1.2 3.4 2.4 4-.9-3.8.2-9.1 2.7-13.6z" fill="url(#fo${encesa ? 1 : 0})"/>
   <path d="M12.2 13.5c.4 2.2 2.7 3.6 2.7 6.4a3 3 0 0 1-5.9 0c0-1.7.9-2.8 1.6-3.6.2 1.1.8 1.7 1.3 1.9-.3-1.5-.2-3.1.3-4.7z" fill="${encesa ? "#fff1b8" : "#8b7f75"}" opacity="${encesa ? ".95" : ".6"}"/></svg>`;
+const MONEDA = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="url(#gOr)" stroke="#7a4a12" stroke-width="1.3"/><circle cx="12" cy="12" r="7" fill="none" stroke="#fff3c0" stroke-opacity=".55"/><path d="M9.2 7.8h5.8v1.7h-3.9v1.8h3.2v1.7h-3.2v3.2H9.2z" fill="#7a4a12"/></svg>';
 const BRAC = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="url(#gBrac)" d="M4 21c-1-3.6 0-7.4 3.6-8.6l2.5-.8c-.7-2-1-4.3.3-6.2 1-1.5 3-1.8 4.1-.5l.7.9c.6.8.3 2-.7 2.3l-1.4.4c.6 1.1 1 2.3 1.2 3.6 2.9-.9 5.9.5 6.5 3.4.6 3-1.6 5.3-4.6 5.6z"/></svg>';
 
 /* ---------------------------------------------------------------- gràfiques (SVG propi) */
@@ -1537,7 +1605,7 @@ function vistaInicio() {
     : `<div class="fantasma">${grafLinia(FANTASMA_L, 102, 74, true)}<div class="pista">Entrena dos semanas y verás tu línea</div></div>`;
   const volumen = vol.some(x => x > 0) ? grafBarres(vol) : `<div class="fantasma">${grafBarres(FANTASMA_B, 102, 74, null, true)}<div class="pista">Tu primer entreno enciende la barra</div></div>`;
   const proteina = obj ? grafAnell(prot / obj.lo, `${n0(prot)} / ${obj.lo} g`) : '<div class="buit">Pon tu peso en Ajustes</div>';
-  return `${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">
+  return `<button class="boto-or marc" data-accion="vista" data-v="tienda" aria-label="Oro: ${oroTotal()}. Abrir la tienda">${MONEDA}<b class="num">${oroTotal()}</b></button>${botoMusica()}<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">
   <div class="heroe">
     ${heroi(p.tipo, "", VISTA_INICI)}
     <div class="placa marc">
@@ -1577,10 +1645,11 @@ function vistaEleccion() {
   return `${nou ? `<img class="logo" src="${ACTIUS}logo.webp" alt="Fragua">` : capcalera("")}
   <h1 class="titol-pag or">Elige tu personaje</h1>
   <div class="carrusel" id="carrusel">
-    <figure class="costat esq"><img src="${imgPersonaje(esq)}" alt=""></figure>
+    <figure class="costat esq"><img src="${imgPersonaje(esq)}" alt=""${esTeu(esq) ? "" : ' class="bloq"'}></figure>
     <div class="pedestal"></div>
-    <figure class="actiu"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}"></figure>
-    <figure class="costat dre"><img src="${imgPersonaje(dre)}" alt=""></figure>
+    <figure class="actiu"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}"${esTeu(t) ? "" : ' class="bloq"'}></figure>
+    <figure class="costat dre"><img src="${imgPersonaje(dre)}" alt=""${esTeu(dre) ? "" : ' class="bloq"'}></figure>
+    ${esTeu(t) ? "" : `<span class="preu preu-c">${MONEDA}${P.precio}</span>`}
     <button class="fletxa esq marc" data-accion="tria" data-d="-1" aria-label="Anterior">${I_ENRERE}</button>
     <button class="fletxa dre marc" data-accion="tria" data-d="1" aria-label="Siguiente">${I_ENRERE}</button>
   </div>
@@ -1588,7 +1657,8 @@ function vistaEleccion() {
     <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div></div>
   <form class="form" data-form="personaje" style="margin-top:14px">
     <label>Tu nombre<input id="f-nom" maxlength="18" autocomplete="off" value="${esc(S.personaje?.nombre || "")}" placeholder="Cómo te llamará la fragua"></label>
-    ${botoForja('type="submit"', nou ? "FORJAR PERSONAJE" : "ELEGIR ESTE", "")}
+    ${esTeu(t) ? botoForja('type="submit"', nou ? "FORJAR PERSONAJE" : "ELEGIR ESTE", "")
+       : `<p class="falta">Bloqueado: se forja con ${P.precio} de oro en la tienda.</p>${nou ? "" : botoForja('type="button" data-accion="vista" data-v="tienda"', "IR A LA TIENDA", "")}`}
   </form>`;
 }
 function vistaDatos() {
@@ -1729,9 +1799,40 @@ function vistaPersonaje() {
   ${heroi(p.tipo, "height:340px;margin-top:4px")}
   <div class="panel pad fitxa"><div class="nom or">${esc(p.nombre || PERSONAJES[p.tipo].nombre)}</div><div class="lema">${esc(PERSONAJES[p.tipo].nombre)}, ${esc(xp.titulo.toLowerCase())}</div>
     <div class="placa-nivell" style="padding:12px 0 0">${hexagon(xp.nivel)}<div><div class="barra"><i style="width:${(xp.enNivel / xp.paraSubir * 100).toFixed(1)}%"></i></div><div class="xp num">${xp.enNivel} / ${xp.paraSubir} XP, ${xp.xp} en total</div></div></div></div>
+  ${(() => { const f = fuerzaDe(xp.nivel), m = [...MARTILLOS].reverse().find(([n]) => xp.nivel >= n), seg = MARTILLOS.find(([n]) => n > xp.nivel);
+    return bloc("Tu fuerza", `<div class="tret"><span>Músculo</span><div class="barra"><i style="width:${(20 + f * 80).toFixed(0)}%"></i></div></div>
+      <p class="llegenda" style="text-align:left">Empiezas flojo y cada nivel te hace más fuerte, hasta el nivel 20. Ahora llevas <b>${esc(m[1].toLowerCase())}</b>${seg ? `; en el nivel ${seg[0]}, ${esc(seg[1].toLowerCase())}` : ""}.</p>`, "graf"); })()}
   ${bloc("El camino de la forja", `${Stats.TITULOS.map(([n, t]) => `<div class="reg"><div><div style="font-weight:700;font-size:15.5px;${xp.nivel >= n ? "color:#ffd08a" : ""}">${esc(t)}</div><div class="d">Nivel ${n}</div></div><div class="flames">${flama(xp.nivel >= n)}</div><span></span></div>`).join("")}
     <p class="llegenda">Cada serie da 10 XP, cada entreno terminado 50 y cada récord 25.</p>`, "graf")}
-  <p style="text-align:center;margin-top:16px"><button class="btn marc" data-accion="vista" data-v="eleccion">Cambiar de personaje</button></p>`;
+  <p style="text-align:center;margin-top:16px" class="fila envolta" ><span style="flex:1"></span><button class="btn marc" data-accion="vista" data-v="eleccion">Cambiar de personaje</button><button class="btn clar marc" data-accion="vista" data-v="tienda">${MONEDA.replace("<svg", '<svg width="18" height="18"')} Tienda</button><span style="flex:1"></span></p>`;
+}
+
+function vistaTienda() {
+  const oro = oroTotal(), tab = S.ui.tiendaTab || "personajes";
+  let h = `${capcalera("Tienda")}
+  <div class="panel pad saldo"><span class="suau">Tu oro</span><span class="saldo-n">${MONEDA}<b class="or num">${oro}</b></span></div>
+  <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="personajes" aria-pressed="${tab === "personajes"}">Personajes</button><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Conseguir oro</button></div>`;
+  if (tab === "personajes") {
+    h += `<div class="botiga">${TIPOS.map(t => { const P = PERSONAJES[t], teu = esTeu(t), meu = S.personaje?.tipo === t;
+      return `<button class="carta marc${teu ? "" : " bloq"}" data-accion="carta" data-t="${t}"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}" loading="lazy"><span class="carta-nom">${esc(P.nombre)}</span>${teu ? `<span class="carta-estat">${meu ? "Es el tuyo" : "Desbloqueado"}</span>` : `<span class="preu">${MONEDA}${P.precio}</span>`}</button>`; }).join("")}</div>`;
+  } else {
+    h += `${[["Bolsa de oro", 500, "0,99 €"], ["Cofre de oro", 1200, "1,99 €"], ["Tesoro del rey", 3000, "4,99 €"]].map(([n, q, e]) =>
+      `<div class="paquet marc">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Próximamente</div></div></div>`).join("")}
+    <p class="suau petit" style="text-align:center">El pago con tarjeta y PayPal llega pronto. Mientras, el oro se gana entrenando.</p>
+    ${bloc("Cómo se gana", `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div><div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
+  }
+  return h;
+}
+function fullCarta(t) {
+  const P = PERSONAJES[t], teu = esTeu(t), oro = oroTotal();
+  const accio = teu
+    ? (S.personaje?.tipo === t ? '<p class="suau" style="text-align:center">Es tu personaje.</p>' : botoForja(`data-accion="elegir" data-t="${t}"`, "ELEGIR", ""))
+    : oro >= P.precio ? botoForja(`data-accion="comprar" data-t="${t}"`, `FORJAR POR ${P.precio}`, "de oro")
+    : `<p class="falta">Te faltan ${P.precio - oro} de oro. Un entreno completo da unos 70.</p>`;
+  return `<div class="carta-gran${teu ? "" : " bloq"}" id="carta-gran"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}"></div>
+    <p class="lema-c">${esc(P.lema)}</p>${teu ? "" : `<p style="text-align:center;margin:0 0 6px"><span class="preu">${MONEDA}${P.precio}</span></p>`}
+    <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div>
+    <div style="margin-top:14px">${accio}</div>`;
 }
 
 function vistaAjustes() {
@@ -1879,9 +1980,15 @@ function render() {
   if (!S.personaje) vista = "eleccion";
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
-  const f = { inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes }[vista] || vistaInicio;
+  const f = { inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda }[vista] || vistaInicio;
   v.innerHTML = f();
   const h = $("#personatge");
+  if (S.personaje) {
+    const nv = Stats.experiencia(S).nivel;
+    if (h && nv >= 12) h.classList.add("aura");
+    window.FRAGUA_NIVEL = nv;
+    if (window.Escena3D && window.Escena3D.fuerza) window.Escena3D.fuerza(nv);
+  }
   window.FRAGUA_HEROE = h || null;
   document.dispatchEvent(new CustomEvent("fragua:heroe", { detail: h || null }));
   if (!guardable && !avisatDesa) { avisatDesa = true; avis("Este navegador no deja guardar: copia tus datos en Ajustes."); }
@@ -1943,6 +2050,7 @@ document.addEventListener("click", ev => {
       if (z.ok) {
         Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); Efectos.vibra(14);
         Efectos.flota("+10 XP", r.left + r.width / 2, r.top - 6);
+        setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
         if (record) setTimeout(() => { Efectos.flota("¡Récord!", innerWidth / 2, r.top - 30, "record"); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra([30, 50, 30, 50, 60]); }, 350);
         reacciona("serie");
       }
@@ -1958,7 +2066,7 @@ document.addEventListener("click", ev => {
     }
     case "terminar": {
       const s = activa(); if (!s) break;
-      const abans = Stats.experiencia(S), rAbans = Stats.racha(S);
+      const abans = Stats.experiencia(S), rAbans = Stats.racha(S), oroAbans = oroGanado();
       const ahir = clave(new Date(Date.now() - 864e5));
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
@@ -1974,9 +2082,11 @@ document.addEventListener("click", ev => {
       celebra(`<div class="gran or">¡ENTRENO FORJADO!</div><div class="xp-guanyat" id="xp-guanyat">+0 XP</div><div class="sub">${series} ${series === 1 ? "serie" : "series"} en ${S.ultimoResumen?.min || 0} min${rec ? `, ${rec} ${rec === 1 ? "récord" : "récords"}` : ""}</div>
         <div class="fila-ratxa">${flama(true)}<div style="font-weight:700;font-size:21px">${rDes} ${rDes === 1 ? "día" : "días"} de racha</div></div>
         ${salvada ? '<div class="sub" style="color:#9fd8ff">Tu día de descanso no apagó el fuego: racha salvada</div>' : ""}
+        <div class="oro-guanyat">${MONEDA}<b class="or num">+${oroGanado() - oroAbans}</b> de oro</div>
         <div class="barra" style="margin-top:6px"><i id="barra-nivell" style="width:${(abans.enNivel / abans.paraSubir * 100).toFixed(1)}%"></i></div>
         <div class="sub num">NV ${abans.nivel}</div>`, des.nivel > abans.nivel ? "¡SUBES DE NIVEL!" : "SEGUIR");
       compta($("#xp-guanyat"), des.xp - abans.xp);
+      setTimeout(() => Efectos.suena("or"), 1500);
       setTimeout(() => { const bi = $("#barra-nivell"); if (bi) bi.style.width = (des.nivel > abans.nivel ? 100 : des.enNivel / des.paraSubir * 100).toFixed(1) + "%"; }, 350);
       S.pendentNivell = des.nivel > abans.nivel ? des.nivel : null;
       guardar(); break;
@@ -1999,17 +2109,37 @@ document.addEventListener("click", ev => {
     case "plega": { const sl = b.dataset.slot; S.ui.abiertas[sl] = b.getAttribute("aria-expanded") !== "true"; guardar(); render(); break; }
     case "otra": otraOpcion(b.dataset.slot, k); render(); Efectos.suena("carta"); break;
     case "registrar": {
-      const sl = b.dataset.slot, p = propuestaActual(sl, k), obj = objetivoProt(), abans = totalDia(k).p;
+      const sl = b.dataset.slot, p = propuestaActual(sl, k), obj = objetivoProt(), abans = totalDia(k).p, oroA = oroGanado();
       const r = b.getBoundingClientRect();
       registrar(p.items, sl, k); if (p.combo) S.menus.push(p.combo); S.menus = S.menus.slice(-30);
       guardar(); render();
       Efectos.lanza(r.left + r.width / 2, r.top, 24, 1); Efectos.suena("chisporroteo");
+      if (oroGanado() > oroA) setTimeout(() => { Efectos.flota(`+${oroGanado() - oroA} oro`, r.left + r.width / 2, r.top - 10, "oro"); Efectos.suena("or"); }, 300);
       reacciona("menjar");
       if (obj && abans < obj.lo && totalDia(k).p >= obj.lo) { Efectos.lluvia(1); if (!Efectos.suena("proteina")) Efectos.suena("fanfarria"); avis("¡Proteína del día completa!"); }
       else avis(NOMBRE_COMIDA[sl] + " apuntada.");
       break;
     }
     case "rebost": obreFull(fullRebost(), "No tengo…"); break;
+    case "tienda-tab": S.ui.tiendaTab = b.dataset.t; guardar(); render(); break;
+    case "carta": obreFull(fullCarta(b.dataset.t), PERSONAJES[b.dataset.t].nombre); break;
+    case "comprar": {
+      const t = b.dataset.t, P = PERSONAJES[t];
+      if (esTeu(t) || oroTotal() < P.precio) break;
+      S.oroGastado = (S.oroGastado || 0) + P.precio; S.desbloq = [...(S.desbloq || []), t]; guardarYa();
+      const g = $("#carta-gran"); if (g) { g.classList.remove("bloq"); g.classList.add("revela"); }
+      Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
+      Efectos.vibra([30, 40, 30, 40, 80]); Efectos.lluvia(1.3);
+      render();
+      setTimeout(() => { if ($("#capa").innerHTML) obreFull(fullCarta(t), P.nombre); }, 1200);
+      break;
+    }
+    case "elegir": {
+      const t = b.dataset.t; if (!esTeu(t)) break;
+      S.personaje = { ...S.personaje, tipo: t }; guardar(); tancaFull(); veure("inicio");
+      Efectos.suena("triar"); avis(`${PERSONAJES[t].nombre} es tu personaje.`);
+      break;
+    }
     case "productes": obreFull(fullProductes(), "Mi yogur y mi leche"); break;
     case "estoc": { const a = b.dataset.a; if (falta(a)) S.sinStock = S.sinStock.filter(x => x !== a); else S.sinStock.push(a); b.setAttribute("aria-checked", String(!falta(a))); guardar(); render(); break; }
     case "que-comer": obreFull(fullQueMenjar(), "¿Qué puedo comer?"); break;
@@ -2061,6 +2191,7 @@ document.addEventListener("submit", async ev => {
   ev.preventDefault();
   const tipus = f.dataset.form;
   if (tipus === "personaje") {
+    if (!esTeu(TIPOS[triaIdx])) { avis("Ese personaje aún está bloqueado.", true); return; }
     const nom = $("#f-nom").value.trim().slice(0, 18);
     S.personaje = { tipo: TIPOS[triaIdx], nombre: nom || PERSONAJES[TIPOS[triaIdx]].nombre };
     S.ui.vista = S.perfil.peso ? "inicio" : "datos"; S.ui.triaIniciada = false; guardar();
@@ -2094,6 +2225,9 @@ document.addEventListener("submit", async ev => {
     catch (e) { avis("Ese texto no es una copia de Fragua: pega el texto entero, empieza por {"); }
   }
 });
+// Sense zoom de pessic: Safari no fa cas de user-scalable=no des de l'iOS 10, però sí de gesturestart.
+["gesturestart", "gesturechange"].forEach(t => document.addEventListener(t, ev => ev.preventDefault(), { passive: false }));
+document.addEventListener("touchmove", ev => { if (ev.touches.length > 1) ev.preventDefault(); }, { passive: false });
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") { if ($("#capa").innerHTML) tancaFull(); else if ($("#celebra").innerHTML) $("#celebra").innerHTML = ""; } });
 // lliscar al carrusel de personatges
 let x0 = null;
@@ -2132,6 +2266,10 @@ const ALT = 1.6;   // el model es porta a aquesta alçada, sigui quina sigui la 
 // OBRE sencer en repòs, i OBRE_GEST durant els gestos, que ja mouen els braços ells sols.
 const OBRE = 0.63, OBRE_GEST = 0.2, OBRE_AVANTBRAC = 0.24;
 let envMetall = null;
+// LA FORÇA (26/09/2026, l'Albert: «que comenci fluix i es vagi fent fort»): el nivell, de 1 a 20, fa
+// més gruixuts els braços, les cames i el pit (escala dels ossos, de través), millora el martell i, del
+// 12 en amunt, encén una aura de foc darrere seu.
+let nivell = window.FRAGUA_NIVEL || 1;
 
 let rend = null, escena = null, cam = null, rellotge = null, caixa = null, obs = null, corrent = false;
 let actiu = null;           // { tipo, arrel, mixer, accions, repos, ample }
@@ -2205,14 +2343,16 @@ function munta(gltf, tipo) {
   bb = mesura(arrel);
   const c = bb.getCenter(new THREE.Vector3());
   cos.position.set(-c.x, -bb.min.y, -c.z);
-  if (MODELS[tipo].martell) posaMartell(cos, arrel);
+  const martell = MODELS[tipo].martell ? posaMartell(cos, arrel) : null;
   arrel.rotation.y = 0.32;   // una mica girat cap a la placa del nom
   escena.add(arrel);
   // només torna a respirar quan acaba el gest que es veu; un de trepitjat per un altre no compta
   // el canvi de tornada es fa al fotograma següent, no a dins de l'actualització del mixer (si s'hi fa,
   // aquell fotograma hi barreja la postura de repòs de l'esquelet, amb els braços amunt)
   mixer.addEventListener("finished", e => { if (actiu && e.action === actiu.ara) actiu.pendent = true; });
-  return { tipo, arrel, mixer, accions, repos, bracos, ample: Math.max(bb.max.x - bb.min.x, 0.5), ara: repos };
+  const m = { tipo, arrel, mixer, accions, repos, bracos, martell, ample: Math.max(bb.max.x - bb.min.x, 0.5), ara: repos };
+  preparaForca(m);
+  return m;
 }
 
 // Un martell de nan de poques cares: cap de ferro amb dues bandes de bronze i mànec de fusta amb cuir.
@@ -2245,6 +2385,57 @@ function posaMartell(cos, arrel) {
   arrel.add(m);
   arrel.updateMatrixWorld(true);
   esquena.attach(m);
+  return { grup: m, ferro, bronze, escala: m.scale.x };
+}
+
+// Els ossos que es fan gruixuts. L'eix Y d'un os de Mixamo va al llarg de l'os: el gruix és X i Z. Els
+// fills hereten l'escala, i per això l'avantbraç, la mà i el coll la compensen (la mà no creix).
+function preparaForca(m) {
+  const os = re => { let t = null; m.arrel.traverse(o => { if (o.isBone && re.test(o.name)) t = o; }); return t; };
+  m.musc = {
+    bracos: [os(/LeftArm$/), os(/RightArm$/)], avant: [os(/LeftForeArm$/), os(/RightForeArm$/)], mans: [os(/LeftHand$/), os(/RightHand$/)],
+    cuixes: [os(/LeftUpLeg$/), os(/RightUpLeg$/)], cames: [os(/LeftLeg$/), os(/RightLeg$/)],
+    pit: os(/Spine2$/), coll: os(/Neck$/),
+  };
+  // l'aura: un resplendor de foc darrere seu, dibuixat en un canvas
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d"), r = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+  r.addColorStop(0, "rgba(255,210,120,.95)"); r.addColorStop(0.35, "rgba(255,120,30,.55)"); r.addColorStop(1, "rgba(255,60,10,0)");
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  m.aura = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+  m.aura.position.set(0, ALT * 0.55, -0.45); m.aura.scale.set(ALT * 1.5, ALT * 1.7, 1);
+  m.arrel.add(m.aura);
+  aplicaNivell(m);
+}
+function aplicaNivell(m) {
+  const f = Math.max(0, Math.min(1, (nivell - 1) / 19));
+  m.forca = f;
+  if (m.martell) {
+    const { grup, ferro, bronze, escala } = m.martell;
+    const tier = nivell >= 15 ? 3 : nivell >= 10 ? 2 : nivell >= 5 ? 1 : 0;
+    grup.scale.setScalar(escala * [0.85, 1, 1.08, 1.15][tier]);
+    ferro.color.setHex([0x6b5646, 0x5e5a56, 0x9aa1a8, 0x3a2a22][tier]);
+    ferro.roughness = [0.7, 0.46, 0.3, 0.4][tier];
+    bronze.color.setHex([0x6b5646, 0xb8773a, 0xe2b448, 0xf0c050][tier]);
+    ferro.emissive.setHex(tier === 3 ? 0xff4a10 : 0x000000); ferro.emissiveIntensity = tier === 3 ? 0.75 : 0;
+  }
+  if (m.aura) m.aura.material.opacity = nivell >= 12 ? 0.5 : 0;
+}
+function musculs(m) {
+  const M = m.musc; if (!M) return;
+  const f = m.forca || 0;
+  const b = 0.84 + 0.36 * f, ab = (0.9 + 0.26 * f) / b, cu = 0.9 + 0.22 * f, ca = (0.94 + 0.14 * f) / cu, px = 0.95 + 0.13 * f, pz = 0.95 + 0.1 * f;
+  const gruix = (o, x, z) => { if (o) o.scale.set(x, 1, z); };
+  M.bracos.forEach(o => gruix(o, b, b)); M.avant.forEach(o => gruix(o, ab, ab)); M.mans.forEach(o => gruix(o, 1 / (b * ab), 1 / (b * ab)));
+  M.cuixes.forEach(o => gruix(o, cu, cu)); M.cames.forEach(o => gruix(o, ca, ca));
+  gruix(M.pit, px, pz); gruix(M.coll, 1 / px, 1 / pz);
+  if (m.aura && m.aura.material.opacity > 0) m.aura.material.opacity = 0.42 + 0.12 * Math.sin(performance.now() / 420);
+}
+function fuerza(n) {
+  if (!n || n === nivell) return;
+  nivell = n;
+  if (actiu) aplicaNivell(actiu);
 }
 
 function torna() {
@@ -2310,6 +2501,7 @@ function pas(dt) {
   const objectiu = pesRepos(actiu);
   actiu.pes = actiu.pes == null ? objectiu : actiu.pes + (objectiu - actiu.pes) * Math.min(1, dt * 7);
   postura(actiu, actiu.pes);
+  musculs(actiu);
 }
 function tic() {
   const dt = Math.min(0.05, rellotge.getDelta());
@@ -2373,6 +2565,7 @@ function prova(nom, frac, ambPostura = true) {
   a.time = frac * a.getClip().duration;
   actiu.mixer.update(0);
   if (ambPostura) postura(actiu, nom === "repos" ? 1 : 0);
+  musculs(actiu);
   rend.render(escena, cam);
   return rend.domElement.toDataURL("image/png");
 }
@@ -2399,7 +2592,7 @@ function diag(seg = 16, gests = [], bucle = null) {
   return out;
 }
 
-window.Escena3D = { reacciona, foto, prova, diag, clip: nom => (actiu && actiu.accions[nom] ? actiu.accions[nom].getClip() : null) };
+window.Escena3D = { reacciona, foto, prova, diag, fuerza, clip: nom => (actiu && actiu.accions[nom] ? actiu.accions[nom].getClip() : null) };
 document.addEventListener("fragua:heroe", ev => { posa(ev.detail); });
 posa(window.FRAGUA_HEROE || null);
 
