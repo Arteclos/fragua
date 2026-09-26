@@ -489,6 +489,17 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .casella input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:#f0a050}
 .aj-legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin:14px 0 0;font-size:14.5px}
 .aj-legal a,.panel a,.suau a{color:var(--flama)}
+/* ---- el compte (26-09-2026): la porta amb Kragg, els formularis i l'avís sense xarxa ---- */
+.kragg{position:relative;display:flex;flex-direction:column;align-items:center;margin:4px 0 10px}
+.kragg img{width:min(220px,58vw);height:auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))}
+.kragg-bafarada{margin-top:-10px;max-width:420px;padding:12px 16px;border-radius:14px;background:rgba(18,15,13,.92);border:1px solid rgba(197,123,55,.5);display:grid;gap:4px;text-align:center;line-height:1.45}
+.compte-botons{display:grid;gap:12px;max-width:420px;margin:14px auto 6px}
+.btn.gran{min-height:54px;font-size:16px;letter-spacing:.04em}
+.g-boto{display:flex;justify-content:center;min-height:44px}
+.compte-legal{display:flex;justify-content:center;gap:18px;margin-top:14px}
+.compte-legal a,.casella a{color:var(--flama)}
+.compte-enllacos{justify-content:center;gap:6px 18px}
+.sense-xarxa{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:60;max-width:calc(100% - 32px);padding:6px 14px;border-radius:999px;text-align:center;font-size:13px;line-height:1.3;background:rgba(90,46,23,.95);color:var(--crema);border:1px solid rgba(240,160,80,.55);box-shadow:0 4px 14px rgba(0,0,0,.5)}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -825,6 +836,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 </style>
 
 <div class="fons" aria-hidden="true"></div>
+<div class="sense-xarxa" id="sense-xarxa" role="status" hidden>Sin red: tu progreso se guarda en el móvil y se sube al volver.</div>
 <div class="app" id="app"><main id="vista"></main></div>
 <div class="descans" id="descans" hidden aria-live="polite"></div>
 <div id="capa"></div>
@@ -995,7 +1007,7 @@ function guardarYa() {
   clearTimeout(temporizadorGuardar); temporizadorGuardar = null;
   try { localStorage.setItem(LLAVE, JSON.stringify(S)); guardable = true; } catch (e) { guardable = false; }
 }
-function guardar() { clearTimeout(temporizadorGuardar); temporizadorGuardar = setTimeout(guardarYa, 120); }
+function guardar() { clearTimeout(temporizadorGuardar); temporizadorGuardar = setTimeout(guardarYa, 120); if (typeof programaPuja === "function") programaPuja(); }
 window.addEventListener("pagehide", guardarYa);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardarYa(); });
 // En el móvil se escribe «22,5»: se lee con coma o con punto y se enseña con coma.
@@ -2135,7 +2147,7 @@ function vistaRutinas() {
   const carta = r => `<button class="rutina marc" data-accion="rut-ver" data-id="${r.id}">
       <span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span>${r.id === act.id ? '<span class="toca">En uso</span>' : ""}</span>
       <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button>`;
-  if (S.cuenta && !S.demo && Date.now() - (S.ui.rebudesAt || 0) > 60000) { S.ui.rebudesAt = Date.now(); setTimeout(carregaRebudes, 0); }
+  if (teCompte() && !S.demo && Date.now() - (S.ui.rebudesAt || 0) > 60000) { S.ui.rebudesAt = Date.now(); setTimeout(carregaRebudes, 0); }
   return `${capcalera("Rutinas")}
     <section class="seccio"><h2>Tus rutinas</h2>${teves.length ? teves.map(carta).join("") : '<p class="suau petit">Aún no tienes ninguna tuya: crea una o copia una plantilla y cámbiala a tu gusto.</p>'}
       <button class="btn clar marc" style="width:100%;margin-top:4px" data-accion="rut-nova">Crear una rutina nueva</button></section>
@@ -2282,11 +2294,11 @@ function rutinaValida(x) {
 }
 function fullCompartir(r) {
   const amics = (S.ui.amicsLlista || []);
-  if (S.cuenta && !S.demo) setTimeout(carregaAmics, 0);
+  if (teCompte() && !S.demo) setTimeout(carregaAmics, 0);
   return `<p class="suau petit" style="margin:0">${esc(r.nombre)}: ${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana.</p>
     ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre KLONK")}
     <h3 class="grup-tria">A un amigo de tu clan</h3>
-    <div id="amics-comparteix">${S.cuenta ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
+    <div id="amics-comparteix">${teCompte() && soc().participa ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
 }
 async function carregaAmics() {
   try { S.ui.amicsLlista = await api("GET", "/amigos"); } catch (e) { S.ui.amicsLlista = []; }
@@ -2706,7 +2718,7 @@ const pct = v => `+${fmt(v)} %`;
 const interruptor = (acc, on, label, extra = "") => `<button class="interruptor" role="switch" aria-checked="${!!on}" data-accion="${acc}" aria-label="${esc(label)}"${extra}></button>`;
 const pas = (acc, k, val, menys, mes) => `<span class="pas"><button data-accion="${acc}" data-k="${k}" data-d="${menys}" aria-label="Menos">−</button><b class="num">${val}</b><button data-accion="${acc}" data-k="${k}" data-d="${mes}" aria-label="Más">+</button></span>`;
 
-const AJ_SECC = [["perfil", "Tu perfil"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"]];
+const AJ_SECC = [["cuenta", "Tu cuenta"], ["perfil", "Tu perfil"], ["gimnasio", "Tu gimnasio"], ["progreso", "Progresión"], ["medidas", "Medidas"], ["sonido", "Sonido y vibración"], ["datos", "Tus datos"], ["calcula", "Cómo calcula"]];
 function resumAj(k) {
   const G = gim(), P = progres(), pr = S.perfil;
   return {
@@ -2715,7 +2727,8 @@ function resumAj(k) {
     progreso: P.modo === "minimo" ? "Lo mínimo posible" : `${pct(P.c)} y ${pct(P.a)}`,
     medidas: `${1 + medidasActivas().length + basculaActiva().length} datos`,
     sonido: S.musica === false ? "Sin música" : "Con música",
-    datos: S.demo ? "Ejemplo" : "En este móvil",
+    datos: S.demo ? "Ejemplo" : "En tu cuenta",
+    cuenta: typeof sessio !== "undefined" && sessio ? sessio.email || "" : "",
     calcula: "",
   }[k] || "";
 }
@@ -2769,9 +2782,10 @@ function cosAj(k) {
     <div class="aj-fila"><span>Sonidos</span>${interruptor("so", S.sonido !== false, "Sonidos")}</div>
     <div class="aj-fila"><span>Música</span>${interruptor("musica", S.musica !== false, "Música")}</div>
     <div class="aj-fila"><span>Vibración</span>${interruptor("haptica", S.haptica !== false, "Vibración")}</div>`;
+  if (k === "cuenta") return blocCompte();
   if (k === "datos") return `
     <div class="aj-fila"><span>Modo demostración<small>La app llena de entrenos y medidas de ejemplo, para enseñarla. Tus datos se guardan aparte y vuelven al apagarlo.</small></span>${interruptor("aj-demo", S.demo, "Modo demostración")}</div>
-    <p class="suau petit">Hasta que tengamos servidor, tus datos viven solo en este móvil. De vez en cuando, cópialos y guárdalos en tus notas.</p>
+    <p class="suau petit">Tus datos se guardan en tu cuenta, y este móvil tiene una copia para cuando no hay red. También puedes copiarlos y guardarlos donde quieras.</p>
     <div class="fila envolta"><button class="btn marc" data-accion="copia">Copiar mis datos</button><button class="btn marc" data-accion="restaura-veure">Pegar una copia</button></div><div id="restaura"></div>
     <p class="aj-legal"><a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     <div style="margin-top:14px"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div>`;
@@ -3194,7 +3208,7 @@ const nomZona = k => (ZONAS.find(z => z[0] === k) || [0, ""])[1];
 const soc = () => ({ visible: "anonimo", participa: false, menor: null, rank: {}, metrica: "rango", ambit: "amigos", grupo: "general", ...(S.social || {}) });
 
 async function api(met, ruta, cos) {
-  const c = S.cuenta;
+  const c = clauApi();
   let r;
   try {
     r = await fetch(API + ruta, { method: met, headers: { "Content-Type": "application/json", ...(c ? { Authorization: `Bearer ${c.id}.${c.token}` } : {}) }, body: cos ? JSON.stringify(cos) : undefined });
@@ -3205,10 +3219,9 @@ async function api(met, ruta, cos) {
 }
 // El compte, un de sol encara que el demanin dues peticions alhora.
 let pCuenta = null;
+// Des del 26-09-2026 el compte és el de la porta d'entrada (src/compte.js): ja no es crea cap usuari anònim.
 function cuenta() {
-  if (S.cuenta) return Promise.resolve(S.cuenta);
-  if (!pCuenta) pCuenta = api("POST", "/alta").then(j => { S.cuenta = { id: j.id, token: j.token }; guardarYa(); return S.cuenta; }).finally(() => { pCuenta = null; });
-  return pCuenta;
+  return teCompte() ? Promise.resolve(sessio) : Promise.reject(new Error("Entra en tu cuenta para esto."));
 }
 // El millor màxim estimat de cada exercici de les últimes 8 setmanes. Amb llast, tu més el llast.
 function marquesLocals() {
@@ -3229,12 +3242,12 @@ function diesGym() {
 }
 function sincronitza() {
   const so = soc();
-  if (!so.participa || S.demo) return (sincro = Promise.resolve(null));
-  const ambPes = !!(so.consentPes && S.perfil.peso);
+  if (!so.participa || S.demo || !teCompte()) return (sincro = Promise.resolve(null));
+  const ambPes = !!(sessio.salut && S.perfil.peso);
   const dg = diesGym(), xp = Stats.experiencia(S);
   sincro = (async () => {
     await cuenta();
-    const yo = await api("POST", "/marcas", { nick: so.nick || null, publico: so.visible === "publico", menor: so.menor !== false, sexe: S.perfil.sexo || null,
+    const yo = await api("POST", "/marcas", { nick: sessio.nick || null, publico: so.visible === "publico", menor: sessio.franja !== "major", franja: sessio.franja || null, sexe: ambPes ? S.perfil.sexo || null : null,
       pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
@@ -3283,7 +3296,7 @@ function vistaSocial() {
     h += `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "gran")}
       <div class="perfil-dades"><b class="perfil-nick">${esc(so.nick || nomHeroi())}</b><small>${so.visible === "publico" ? (so.menor !== false ? "Perfil público, solo para tus amigos" : "Perfil público") : "Anónimo: nadie ve tu nick"}</small>
         <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> días de gym</span><span>${flama(Stats.diasAno(S) > 0)}<b class="num">${Stats.diasAno(S)}</b> este año</span></div></div>
-      <div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small>` : so.consentPes ? `<small>Termina un entreno para tener rango</small>` : `<small>Sin permiso para usar tu peso no hay rango de fuerza</small><button class="enllac" data-accion="social-alta">Dar permiso</button>`}</div></div>
+      <div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small>` : sessio && sessio.salut ? `<small>Termina un entreno para tener rango</small>` : `<small>Sin permiso para guardar tu peso no hay rango de fuerza</small><button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button>`}</div></div>
       ${!yo || !yo.gimnas ? `<button class="avis-gim marc" data-accion="vista" data-v="gimnasios"><img src="${ACTIUS}icones/entreno.webp" alt="" width="40" height="40"><span><b>Elige tu gimnasio</b><small>Para ver los rankings de tu gimnasio, tu ciudad, tu provincia y más allá.</small></span></button>` : ""}
       <div class="tabs-t"><button class="chip" data-accion="social-metrica" data-m="rango" aria-pressed="${so.metrica === "rango"}">Rango</button><button class="chip" data-accion="social-metrica" data-m="dias" aria-pressed="${so.metrica === "dias"}">Días de gym</button></div>
       <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
@@ -3296,7 +3309,7 @@ function vistaSocial() {
         <form class="form fila" data-form="amic" style="margin-top:12px;align-items:end"><label style="flex:1">Código de un amigo<input id="s-codi" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC234"></label><button class="btn clar marc" type="submit">AÑADIR</button></form>`)}
       ${bloc("Tu perfil", `<div class="aj-fila"><span>Tu gimnasio<small>${yo && yo.gimnas ? esc([yo.gimnas.nom, yo.gimnas.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="vista" data-v="gimnasios">${yo && yo.gimnas ? "Cambiar" : "Elegir"}</button></div>
         <div class="aj-fila"><span>Nickname y cómo apareces<small>${esc(so.nick || "")}, ${so.visible === "publico" ? "perfil público" : "anónimo"}</small></span><button class="btn marc" data-accion="social-alta">Cambiar</button></div>
-        <p style="margin:14px 0 0"><button class="enllac" data-accion="social-surt">Salir de los rankings y borrar mis datos del servidor</button></p>`)}`;
+        <p style="margin:14px 0 0"><button class="enllac" data-accion="social-surt">Salir de los rankings</button></p>`)}`;
   }
   h += bloc("Gimnasios", `<p class="suau petit" style="margin-top:0">Los gimnasios de tu zona en el mapa, con el precio y las estrellas que pone la gente de KLONK.</p>${botoForja('data-accion="vista" data-v="gimnasios"', "VER EL MAPA", "")}`);
   h += bloc("Quiénes somos", `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
@@ -3311,26 +3324,18 @@ function vistaSocial() {
 }
 // L'alta i els canvis: el nickname, l'edat i si et veuen. Si és menor, el perfil públic només el veuen els amics.
 function fullAlta() {
-  const so = soc(), nick = so.nick || nomHeroi().replace(/[^A-Za-z0-9_.ÑñÁÉÍÓÚáéíóú]/g, "").slice(0, 20);
+  const so = soc();
   return `<form class="form" data-form="social-alta">
-    <label>Tu nickname<input id="so-nick" maxlength="20" autocomplete="off" value="${esc(nick)}" placeholder="torvald_forja"></label>
-    <p class="suau petit" style="margin:-4px 0 0">De 3 a 20 letras o números, sin espacios. Es único.</p>
-    <div><div style="font-weight:700;margin-bottom:8px">¿Cuántos años tienes?</div><div class="fila envolta">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="so-edat" data-v="${k}" aria-pressed="${edatDe(so) === k}">${t}</button>`).join("")}</div></div>
+    <div class="aj-fila"><span>Tu nickname<small>${esc((sessio && sessio.nick) || "")}: es el nombre de tu personaje en KLONK.</small></span></div>
     <div><div style="font-weight:700;margin-bottom:8px">Cómo apareces en los rankings</div><div class="fila envolta"><button type="button" class="chip" data-accion="so-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button><button type="button" class="chip" data-accion="so-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Perfil público</button></div>
       <p class="suau petit" style="margin:8px 0 0">Anónimo: nadie ve tu nick, solo tu personaje. Público: la gente puede ver tu personaje, tu rango y tus días. Si tienes menos de 18, solo tus amigos.</p></div>
-    <label class="casella"><input type="checkbox" id="so-pes"${so.consentPes ? " checked" : ""}><span>Acepto que KLONK use mi peso, redondeado, para calcular mi fuerza relativa y compararla con la de otras personas. Sin esto sales en el ranking de días de gym, pero no en el de fuerza.</span></label>
-    <div class="panel pad" style="margin:0"><p class="suau petit" style="margin:0">A nuestro servidor va: tu nick, tu personaje y su nivel, tus días de gym, tu mejor marca de cada ejercicio, tu peso redondeado si lo aceptas y el gimnasio que elijas. Nunca dónde estás ni tus medidas. Lo borras todo cuando quieras. <a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a></p></div>
+    ${sessio && sessio.salut ? "" : `<p class="suau petit" style="margin:0">Sin permiso para guardar tu peso sales en el ranking de días de gym, pero no en el de fuerza. Se cambia en Ajustes, en Tu cuenta.</p>`}
+    <div class="panel pad" style="margin:0"><p class="suau petit" style="margin:0">Para los rankings se usa tu mejor marca de cada ejercicio y el gimnasio que elijas. Nunca dónde estás. <a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a></p></div>
     <button class="btn clar marc" type="submit">${so.participa ? "GUARDAR" : "PARTICIPAR"}</button></form>`;
 }
-// L'edat en tres franges (26-09-2026): a Espanya es consent des dels 14 (LOPDGDD art. 7). Per sota, l'app funciona igual però res surt del mòbil.
-const edatDe = so => so.edatTria || so.edat || (so.menor === false ? "major" : null);
 async function desaAlta() {
-  const nick = $("#so-nick").value.trim(), so = soc(), edat = edatDe(so), pes = $("#so-pes").checked;
-  if (!/^[A-Za-z0-9_.ÑñÁÉÍÓÚáéíóú]{3,20}$/.test(nick)) { avis("El nickname: de 3 a 20 letras o números, sin espacios.", true); return; }
-  if (!edat) { avis("Dinos cuántos años tienes.", true); return; }
-  if (edat === "nen") { avis("Para entrar en Social hay que tener 14 años. Puedes seguir usando KLONK igual: tus datos no salen de tu móvil.", true); return; }
-  const abans = { ...so };
-  S.social = { ...so, nick, participa: true, edat, menor: edat !== "major", visible: so.visTria || so.visible, consentPes: pes ? (so.consentPes || new Date().toISOString()) : null };
+  const so = soc(), abans = { ...so };
+  S.social = { ...so, participa: true, visible: so.visTria || so.visible };
   const yo = await sincronitza();
   if (!yo) { S.social = abans; guardar(); avis(S.ui.errSocial || "No se ha podido guardar.", true); return; }
   tancaFull(); Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); render();
@@ -3370,8 +3375,9 @@ async function accioSocial(acc, b) {
       return true;
     }
     case "social-surt": {
-      try { if (S.cuenta) await api("DELETE", "/yo"); } catch (e) { avis(e.message, true); return true; }
-      S.cuenta = null; S.social = {}; guardar(); render(); avis("Borrado. Ya no estás en los rankings.");
+      // Sortir dels rànquings ja no esborra res més: el compte i les dades es queden (per esborrar-ho tot, Ajustes).
+      try { await api("POST", "/rankings/surt"); } catch (e) { avis(e.message, true); return true; }
+      S.social = { participa: false }; guardar(); render(); avis("Ya no estás en los rankings.");
       return true;
     }
   }
@@ -3403,8 +3409,8 @@ let mapa = null, capaGims = null, gims = [];
 function carregaLeaflet() {
   if (window.L) return Promise.resolve();
   return new Promise((ok, ko) => {
-    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(css);
-    const js = document.createElement("script"); js.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"; js.onload = ok; js.onerror = () => ko(new Error("No se ha podido cargar el mapa.")); document.head.appendChild(js);
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = ACTIUS + "lib/leaflet/leaflet.css"; document.head.appendChild(css);
+    const js = document.createElement("script"); js.src = ACTIUS + "lib/leaflet/leaflet.js"; js.onload = ok; js.onerror = () => ko(new Error("No se ha podido cargar el mapa.")); document.head.appendChild(js);
   });
 }
 function vistaGimnasios() {
@@ -3517,7 +3523,7 @@ async function confirmaPagament() {
   const q = new URLSearchParams(location.search);
   if (q.has("pago")) history.replaceState(null, "", location.pathname);
   if (q.get("pago") === "no") { avis("Pago cancelado: no se ha cobrado nada."); return; }
-  if (!S.cuenta || S.demo) return;
+  if (!teCompte() || S.demo) return;
   try {
     const j = await api("POST", "/pago/confirmar", q.get("sid") ? { sid: q.get("sid") } : {});
     const abans = S.oroComprado || 0;
@@ -3525,6 +3531,309 @@ async function confirmaPagament() {
     if (j.oro_comprat > abans) { Efectos.lluvia(1.5); if (!Efectos.suena("compra")) Efectos.suena("or"); avis(`+${j.oro_comprat - abans} de oro. ¡Gracias!`); }
   } catch (e) { if (q.get("pago") === "ok") avis("No hemos podido comprobar el pago: lo miramos al volver a abrir.", true); }
 }
+
+/* KLONK · el compte i la sincronització (26-09-2026). El contracte amb el servidor és servidor/SINCRO.md.
+   Dues decisions de l'Albert el manen: les dades viuen al nostre servidor («ha d'anar al nostre servidor!! no al
+   navegador») i sense compte l'app no es fa servir, amb 14 anys com a mínim. El mòbil n'és la còpia: sense
+   cobertura es desa aquí i es puja quan torna la xarxa, amb un avís («m'agrada el mode offline... amb l'avís»). */
+"use strict";
+
+const SESSIO = "klonk.sessio";           // {id, token, email, salut}: fora de S, que és el que puja
+const VERSIO = "klonk.versio";           // la versió de l'estat que el servidor ja té
+const TERMES = "2026-09-26";             // la versió de /privacidad i /condiciones que s'accepta
+const GOOGLE_CLIENT_ID = "621371601709-e2a34mg3uuj6cnt15v8praki8pp8pfnj.apps.googleusercontent.com";
+// Les dades de salut: sense consentiment no surten del mòbil (el servidor també les treu, SINCRO.md §2).
+const SALUT = [["perfil", "peso"], ["perfil", "altura"], ["perfil", "sexo"], ["medidas"]];
+const NOMES_AQUI = ["ui", "cuenta", "or_srv", "demo"];
+
+let sessio = (() => { try { return JSON.parse(localStorage.getItem(SESSIO)) || null; } catch (e) { return null; } })();
+let versio = (() => { try { return Number(localStorage.getItem(VERSIO)) || 0; } catch (e) { return 0; } })();
+function desaSessio(x) { sessio = x; try { x ? localStorage.setItem(SESSIO, JSON.stringify(x)) : localStorage.removeItem(SESSIO); } catch (e) {} }
+function desaVersio(v) { versio = v; try { localStorage.setItem(VERSIO, String(v)); } catch (e) {} }
+const teCompte = () => !!(sessio && sessio.token);
+// La clau per a l'API: la sessió del compte; si no n'hi ha, l'usuari anònim de Social d'abans (perquè en registrar-se
+// el servidor l'ampliï i no en faci un de nou, SINCRO.md §1).
+const clauApi = () => sessio && sessio.token ? sessio : (S.cuenta || null);
+
+/* ---------------------------------------------------------------- la porta: entrar o crear compte */
+const cmp = () => ({ mode: "inici", edat: null, ...(S.ui.compte || {}) });
+function vistaCompte() {
+  const c = cmp(), legal = `<p class="llegenda compte-legal"><a href="privacidad/" target="_blank" rel="noopener">Privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones</a></p>`;
+  const cap = `<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK">`;
+  if (c.mode === "nou" || c.mode === "falta") {
+    const google = c.mode === "falta";
+    return `${cap}<h1 class="titol-pag or">${google ? "Un paso más" : "Crear cuenta"}</h1>
+    <form class="form panel pad" data-form="${google ? "compte-falta" : "compte-nou"}">
+      ${google ? `<p class="suau petit" style="margin:0">Entras con Google como ${esc(c.googleEmail || "")}. Solo nos falta esto:</p>` : `
+      <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
+      <label>Contraseña<input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>`}
+      <div><div style="font-weight:700;margin-bottom:8px">¿Cuántos años tienes?</div><div class="fila envolta">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="compte-edat" data-v="${k}" aria-pressed="${c.edat === k}">${t}</button>`).join("")}</div></div>
+      <label class="casella"><input type="checkbox" id="c-termes"><span>He leído y acepto las <a href="condiciones/" target="_blank" rel="noopener">condiciones de uso</a> y la <a href="privacidad/" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+      ${botoForja('type="submit"', google ? "ENTRAR" : "CREAR CUENTA", "")}
+    </form>
+    <p style="text-align:center"><button class="enllac" data-accion="compte-mode" data-m="${google ? "inici" : "entra"}">${google ? "Volver" : "¿Ya tienes cuenta? Entra"}</button></p>${legal}`;
+  }
+  if (c.mode === "entra") return `${cap}<h1 class="titol-pag or">Entrar</h1>
+    <form class="form panel pad" data-form="compte-entra">
+      <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
+      <label>Contraseña<input id="c-pass" type="password" autocomplete="current-password" required></label>
+      ${botoForja('type="submit"', "ENTRAR", "")}
+    </form>
+    <p style="text-align:center" class="fila envolta compte-enllacos"><button class="enllac" data-accion="compte-mode" data-m="oblit">He olvidado la contraseña</button><button class="enllac" data-accion="compte-mode" data-m="nou">¿No tienes cuenta? Créala</button></p>${legal}`;
+  if (c.mode === "oblit") return `${cap}<h1 class="titol-pag or">Nueva contraseña</h1>
+    <form class="form panel pad" data-form="compte-oblit">
+      <p class="suau petit" style="margin:0">Te enviamos un enlace para poner una contraseña nueva. Caduca en una hora.</p>
+      <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
+      ${botoForja('type="submit"', "ENVIAR ENLACE", "")}
+    </form>
+    <p style="text-align:center"><button class="enllac" data-accion="compte-mode" data-m="entra">Volver</button></p>${legal}`;
+  if (c.mode === "restableix") return `${cap}<h1 class="titol-pag or">Nueva contraseña</h1>
+    <form class="form panel pad" data-form="compte-restableix">
+      <label>Contraseña nueva<input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>
+      ${botoForja('type="submit"', "GUARDAR Y ENTRAR", "")}
+    </form>${legal}`;
+  // la portada: Kragg et rep (la capitana, 26-09: «el nan que et rep al login pot dir-se KRAGG»)
+  return `${cap}
+    <div class="kragg"><img src="${ACTIUS}personatges/herrero.webp" alt="" width="220"><div class="kragg-bafarada marc"><b class="or">Soy Kragg, el herrero de Klonk.</b><span>Para entrar en la fragua necesitas tu cuenta: así tu progreso no se pierde nunca, cambies de móvil o no.</span></div></div>
+    <div class="compte-botons">
+      ${botoForja('type="button" data-accion="compte-mode" data-m="nou"', "CREAR CUENTA", "")}
+      <button class="btn clar marc gran" data-accion="compte-mode" data-m="entra">YA TENGO CUENTA</button>
+      <div id="g-boto" class="g-boto"></div>
+    </div>
+    <p class="llegenda" style="text-align:center">KLONK es a partir de 14 años.</p>${legal}`;
+}
+// El botó de Google només on el Client ID ho permet (a la consola de Google: klonk.fit, www i arteclos.github.io).
+// A la versió de la wifi de casa (http) Google no deixa entrar: allà, correu i contrasenya.
+const ORIGENS_GOOGLE = ["https://klonk.fit", "https://www.klonk.fit", "https://arteclos.github.io"];
+function despresPintarCompte() {
+  if (cmp().mode === "inici" && document.getElementById("g-boto") && ORIGENS_GOOGLE.includes(location.origin)) carregaGoogle();
+}
+
+/* ---------------------------------------------------------------- Google (Google Identity Services) */
+let gPromesa = null;
+function carregaGoogle() {
+  if (!gPromesa) gPromesa = new Promise((ok, ko) => {
+    if (window.google && google.accounts && google.accounts.id) return ok();
+    const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = ok; s.onerror = () => ko(new Error("No se ha podido cargar Google."));
+    document.head.appendChild(s);
+  });
+  gPromesa.then(() => {
+    const el = document.getElementById("g-boto"); if (!el) return;
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: r => entraGoogle(r.credential), ux_mode: "popup" });
+    google.accounts.id.renderButton(el, { theme: "filled_black", size: "large", shape: "pill", text: "continue_with", locale: "es", width: Math.min(360, el.clientWidth || 320) });
+  }).catch(e => { gPromesa = null; const el = document.getElementById("g-boto"); if (el) el.innerHTML = `<p class="suau petit">${esc(e.message)}</p>`; });
+}
+async function entraGoogle(credential, extra) {
+  const c = cmp();
+  try {
+    const r = await apiCompte("POST", "/compte/google", { credential, aparell: aparell(), ...(extra || {}) });
+    await despresEntrar(r, r.nou);
+  } catch (e) {
+    if (e.status === 428) {    // és nou i falten l'edat i les condicions: les demanem i tornem a enviar el mateix token
+      let mail = ""; try { mail = JSON.parse(atob(credential.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).email || ""; } catch (x) {}
+      S.ui.compte = { ...c, mode: "falta", credential, googleEmail: mail, edat: null }; render(); return;
+    }
+    avis(e.message, true);
+  }
+}
+
+/* ---------------------------------------------------------------- entrar, crear, oblidar */
+const aparell = () => (/iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Navegador").slice(0, 60);
+// Com api(), però amb l'estat i el cos a l'error (el 409 i el 428 en porten dades).
+async function apiCompte(met, ruta, cos) {
+  const c = clauApi();
+  let r;
+  try {
+    r = await fetch(API + ruta, { method: met, headers: { "Content-Type": "application/json", ...(c ? { Authorization: `Bearer ${c.id}.${c.token}` } : {}) }, body: cos ? JSON.stringify(cos) : undefined });
+  } catch (e) { const er = new Error("Sin conexión con KLONK. Prueba en un rato."); er.status = 0; throw er; }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const er = new Error(typeof j.detail === "string" ? j.detail : "KLONK no ha podido hacerlo."); er.status = r.status; er.body = j; throw er; }
+  return j;
+}
+async function formCompte(tipus) {
+  const c = cmp(), mail = ($("#c-mail") || {}).value, pass = ($("#c-pass") || {}).value;
+  try {
+    if (tipus === "compte-nou" || tipus === "compte-falta") {
+      if (!c.edat) { avis("Dinos cuántos años tienes.", true); return; }
+      if (c.edat === "nen") { avis("KLONK es a partir de 14 años. Cuando los tengas, aquí te esperamos.", true); return; }
+      if (!$("#c-termes").checked) { avis("Para crear la cuenta tienes que aceptar las condiciones y la política de privacidad.", true); return; }
+      if (tipus === "compte-falta") { await entraGoogle(c.credential, { franja: c.edat, termes: TERMES }); return; }
+      if (!pass || pass.length < 8) { avis("La contraseña: 8 caracteres o más.", true); return; }
+      S.ui.compte = { ...c, mail };
+      const r = await apiCompte("POST", "/compte/registre", { email: mail, contrasenya: pass, franja: c.edat, termes: TERMES, aparell: aparell() });
+      await despresEntrar({ ...r, email: mail }, true);
+      avis("Te hemos enviado un correo para confirmar tu dirección.");
+    } else if (tipus === "compte-entra") {
+      S.ui.compte = { ...c, mail };
+      const r = await apiCompte("POST", "/compte/entra", { email: mail, contrasenya: pass, aparell: aparell() });
+      await despresEntrar({ ...r, email: mail }, false);
+    } else if (tipus === "compte-oblit") {
+      await apiCompte("POST", "/compte/oblit", { email: mail });
+      S.ui.compte = { ...c, mode: "entra", mail }; render();
+      avis("Si hay una cuenta con ese correo, te hemos enviado el enlace.");
+    } else if (tipus === "compte-restableix") {
+      if (!pass || pass.length < 8) { avis("La contraseña: 8 caracteres o más.", true); return; }
+      const r = await apiCompte("POST", "/compte/restableix", { codi: c.codi, contrasenya: pass, aparell: aparell() });
+      await despresEntrar(r, false);
+      avis("Contraseña cambiada. Las demás sesiones se han cerrado.");
+    }
+  } catch (e) { avis(e.message, true); }
+}
+// Amb la sessió: fora l'usuari anònim d'abans (el token vell ja no val, SINCRO-FORATS «Lliurat»), el consentiment
+// i el nickname del compte, i la primera sincronització.
+async function despresEntrar(r, nou) {
+  desaSessio({ id: r.id, token: r.token, email: r.email || (sessio && sessio.email) || null, salut: false });
+  S.cuenta = null;
+  try {
+    const [cpt, yo] = await Promise.all([apiCompte("GET", "/compte"), apiCompte("GET", "/yo").catch(() => null)]);
+    desaSessio({ ...sessio, email: cpt.email || sessio.email, salut: !!cpt.consent_salut, franja: cpt.franja, nick: yo && yo.nick || null });
+  } catch (e) {}
+  S.ui.compte = null;
+  await baixaEstat(true);
+  // el nickname: si el personatge ja tenia nom i el compte encara no en té, s'hi prova de posar
+  if (S.personaje && !sessio.nick) { try { const n = await apiCompte("POST", "/nick", { nick: S.personaje.nombre }); desaSessio({ ...sessio, nick: n.nick }); } catch (e) { S.ui.nickPendent = true; } }
+  guardarYa(); render(); window.scrollTo({ top: 0 });
+  Efectos.suena("triar");
+}
+async function surtCompte() {
+  try { await puja(); } catch (e) {}
+  try { await apiCompte("POST", "/compte/surt"); } catch (e) {}
+  desaSessio(null); desaVersio(0);
+  S = BASE(); guardarYa(); render(); window.scrollTo({ top: 0 });
+}
+async function esborraCompte() {
+  await apiCompte("DELETE", "/yo");
+  desaSessio(null); desaVersio(0);
+  try { localStorage.removeItem(LLAVE); } catch (e) {}
+  S = BASE(); guardarYa(); render(); window.scrollTo({ top: 0 });
+  avis("Tu cuenta y todos tus datos se han borrado.");
+}
+
+/* ---------------------------------------------------------------- la sincronització */
+function perPujar() {
+  const o = JSON.parse(JSON.stringify(S));
+  NOMES_AQUI.forEach(k => delete o[k]);
+  delete o.modificat;
+  if (o.social) delete o.social.rank;
+  if (!sessio || !sessio.salut) SALUT.forEach(([a, b]) => { if (b) { if (o[a]) delete o[a][b]; } else delete o[a]; });
+  return o;
+}
+// Unió per id de les llistes que només creixen (sessions, àpats, mesures), i la resta, la del costat més nou.
+// Els esborrats es recorden a S.esborrats perquè una còpia vella no els faci tornar.
+function fusiona(local, remot) {
+  if (!remot) return local;
+  const nou = (local.modificat || 0) >= (remot.modificat || 0) ? { ...remot, ...local } : { ...local, ...remot };
+  const esb = new Set([...(local.esborrats || []), ...(remot.esborrats || [])]);
+  const unio = (a, b, k = "id") => { const m = new Map(); (a || []).concat(b || []).forEach(x => { if (x && !esb.has(x[k]) && !m.has(x[k])) m.set(x[k], x); }); return [...m.values()]; };
+  nou.ses = unio(local.ses, remot.ses).sort((x, y) => (x.inicio || 0) - (y.inicio || 0));
+  nou.reg = {};
+  new Set([...Object.keys(local.reg || {}), ...Object.keys(remot.reg || {})]).forEach(d => { const l = unio((local.reg || {})[d], (remot.reg || {})[d]); if (l.length) nou.reg[d] = l; });
+  if (local.medidas || remot.medidas) nou.medidas = unio(local.medidas, remot.medidas, "f");
+  nou.desbloq = [...new Set([...(local.desbloq || []), ...(remot.desbloq || [])])];
+  nou.esborrats = [...esb].slice(-500);
+  NOMES_AQUI.forEach(k => { if (k in local) nou[k] = local[k]; else delete nou[k]; });
+  // les dades de salut: si el servidor no les té (sense consentiment), es queden les del mòbil
+  SALUT.forEach(([a, b]) => { if (b) { if (local[a] && local[a][b] != null && (!nou[a] || nou[a][b] == null)) nou[a] = { ...nou[a], [b]: local[a][b] }; } else if (local[a] && !nou[a]) nou[a] = local[a]; });
+  return nou;
+}
+let pujaTimer = null, pujant = null, pendent = false, darrerPujat = null;
+function programaPuja() {
+  if (!teCompte() || S.demo) return;
+  pendent = true; clearTimeout(pujaTimer); pujaTimer = setTimeout(puja, 5000);
+}
+async function puja(intents = 0) {
+  if (!teCompte() || S.demo || !pendent) return;
+  if (pujant) return pujant;
+  pujant = (async () => {
+    try {
+      // cada toc de la pantalla crida guardar(): si el contingut no ha canviat, no es puja res
+      const cos = perPujar(), txt = JSON.stringify(cos);
+      if (txt === darrerPujat && versio > 0) { pendent = false; return; }
+      S.modificat = Date.now(); cos.modificat = S.modificat;
+      const r = await apiCompte("PUT", "/estat", { versio_base: versio, estat: cos });
+      darrerPujat = txt; desaVersio(r.versio); aplicaOr(r.or, r.desbloq); pendent = false; senseXarxa(false);
+    } catch (e) {
+      if (e.status === 409 && e.body && intents < 3) {        // l'altre aparell (o el servidor) en té una de més nova
+        S = fusiona(S, e.body.estat); desaVersio(e.body.versio); guardarYa(); pujant = null; return puja(intents + 1);
+      }
+      if (e.status === 401) { desaSessio(null); render(); return; }
+      if (e.status === 0) senseXarxa(true); else avis(e.message, true);
+    } finally { pujant = null; }
+  })();
+  return pujant;
+}
+// En obrir l'app i en entrar: el que té el servidor, fusionat amb el que hi ha al mòbil.
+async function baixaEstat(primer) {
+  if (!teCompte() || S.demo) return;
+  try {
+    const r = await apiCompte("GET", "/estat");
+    const abans = JSON.stringify(perPujar());
+    if (r.estat && r.versio !== versio) { S = fusiona(S, r.estat); desaVersio(r.versio); guardarYa(); }
+    else if (!r.estat) desaVersio(0);
+    aplicaOr(r.or, r.desbloq);
+    senseXarxa(false);
+    if (primer || JSON.stringify(perPujar()) !== abans || !r.estat) { pendent = true; await puja(); }
+  } catch (e) {
+    if (e.status === 401) { desaSessio(null); render(); }
+    else if (e.status === 0) senseXarxa(true);
+  }
+}
+// L'or el mana el servidor: saldo del servidor, més el que s'ha guanyat al mòbil des de l'última pujada.
+function aplicaOr(o, desbloq) {
+  if (o) S.or_srv = { ...o, guanyatAqui: oroGanado() };
+  if (desbloq) S.desbloq = desbloq;
+}
+const oroServidor = () => S.or_srv && teCompte() ? Math.max(0, S.or_srv.saldo + (oroGanado() - S.or_srv.guanyatAqui)) : null;
+// Sense cobertura: es desa al mòbil i es puja en tornar la xarxa. L'avís, a dalt de tot.
+// (sense retorn anticipat: S.ui sobreviu a una recàrrega i l'element comença amagat; sempre es posa al dia)
+function senseXarxa(on) {
+  S.ui.senseXarxa = on; const b = document.getElementById("sense-xarxa");
+  if (b) b.hidden = !on;
+}
+window.addEventListener("online", () => { if (pendent) puja(); else baixaEstat(false); });
+setInterval(() => { if (pendent && navigator.onLine !== false) puja(); }, 60000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && pendent) puja(); else if (document.visibilityState === "visible") baixaEstat(false); });
+
+/* ---------------------------------------------------------------- els enllaços dels correus */
+function mirarEnllacCompte() {
+  const h = location.hash;
+  if (h === "#correu-ok") { avis("Correo confirmado. ¡Bienvenido a Klonk!"); history.replaceState(null, "", location.pathname); }
+  else if (h === "#correu-caducat") { avis("El enlace ha caducado o ya se ha usado.", true); history.replaceState(null, "", location.pathname); }
+  else if (h.startsWith("#restableix=")) { S.ui.compte = { mode: "restableix", codi: decodeURIComponent(h.slice(12)) }; history.replaceState(null, "", location.pathname); }
+}
+
+/* ---------------------------------------------------------------- el compte a Ajustes */
+function blocCompte() {
+  if (!teCompte()) return "";
+  return `<div class="aj-fila"><span>Tu cuenta<small>${esc(sessio.email || "")}${sessio.nick ? `, ${esc(sessio.nick)}` : ""}</small></span><button class="btn marc" data-accion="compte-surt">Cerrar sesión</button></div>
+    <div class="aj-fila"><span>Guardar tu peso y tus medidas en tu cuenta<small>Son datos de salud: sin tu permiso se quedan solo en este móvil, y sin tu peso no sales en el ranking de fuerza.</small></span>${interruptor("compte-salut", !!sessio.salut, "Guardar peso y medidas en tu cuenta")}</div>
+    <p style="margin:12px 0 0"><button class="enllac" data-accion="compte-esborra">Borrar mi cuenta y todos mis datos</button></p>`;
+}
+async function accioCompte(acc, b) {
+  switch (acc) {
+    case "compte-mode": S.ui.compte = { ...cmp(), mode: b.dataset.m, edat: null }; render(); window.scrollTo({ top: 0 }); return true;
+    case "compte-edat": S.ui.compte = { ...cmp(), edat: b.dataset.v }; b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); return true;
+    case "compte-surt": await surtCompte(); return true;
+    case "compte-esborra":
+      if (!S.ui.segurEsborra) { S.ui.segurEsborra = true; avis("Toca otra vez para borrar tu cuenta. No se puede deshacer.", true); setTimeout(() => { S.ui.segurEsborra = false; }, 6000); return true; }
+      S.ui.segurEsborra = false;
+      try { await esborraCompte(); } catch (e) { avis(e.message, true); }
+      return true;
+    case "compte-salut": {
+      const on = !sessio.salut;
+      try {
+        const r = await apiCompte("POST", "/compte/consentiment", { salut: on });
+        desaSessio({ ...sessio, salut: !!r.consent_salut });
+        pendent = true; await puja(); render();
+        avis(on ? "Tu peso y tus medidas se guardan en tu cuenta." : "Tu peso y tus medidas ya no se guardan en tu cuenta: solo en este móvil.");
+      } catch (e) { avis(e.message, true); }
+      return true;
+    }
+  }
+  return false;
+}
+const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut"]);
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
    L'Albert (amb el seu germà): «el menjar és la part més difícil, perquè cadascú fa lo seu. Com a molt ha de
@@ -3719,7 +4028,8 @@ function oroGanado() {
   const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0);
   return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
 }
-const oroTotal = () => Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0));
+// Amb compte, el saldo el mana el servidor (src/compte.js, oroServidor); sense, el càlcul del mòbil.
+const oroTotal = () => { const sv = typeof oroServidor === "function" ? oroServidor() : null; return sv != null ? sv : Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0)); };
 // La força del personatge (0 fluix, 1 fort): puja amb el nivell fins al 20.
 const fuerzaDe = nivel => Math.max(0, Math.min(1, (nivel - 1) / 19));
 const MARTILLOS = [[1, "Martillo de aprendiz"], [5, "Martillo de hierro"], [10, "Martillo de acero y oro"], [15, "Martillo de metal fundido"]];
@@ -3903,20 +4213,22 @@ function vistaEleccion() {
   <div class="fitxa panel pad"><div class="nom or">${esc(P.nombre)}</div><div class="lema">${esc(P.lema)}</div>
     <div class="trets">${P.rasgos.map(([n, v]) => `<div class="tret"><span>${n}</span><div class="barra"><i style="width:${v * 100}%"></i></div></div>`).join("")}</div></div>
   <form class="form" data-form="personaje" style="margin-top:14px">
-    <label>El nombre de tu personaje<input id="f-nom" maxlength="18" autocomplete="off" value="${esc(S.personaje?.nombre || "")}" placeholder="Escribe su nombre"></label>
+    <label>Tu nickname<input id="f-nom" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.personaje?.nombre || (typeof sessio !== "undefined" && sessio && sessio.nick) || "")}" placeholder="Así te verán en KLONK"></label>
+    <p class="suau petit" style="margin:-4px 0 0">Es el nombre de tu personaje. Único: nadie más puede tenerlo. De 3 a 20 letras o números, sin espacios.</p>
     ${esTeu(t) ? botoForja('type="submit"', nou ? "FORJAR PERSONAJE" : "ELEGIR ESTE", "")
        : `<p class="falta">Bloqueado: se forja con ${P.precio} de oro en la tienda.</p>${nou ? "" : botoForja('type="button" data-accion="vista" data-v="tienda"', "IR A LA TIENDA", "")}`}
   </form>`;
 }
 function vistaDatos() {
   return `<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK"><h1 class="titol-pag or">Tus datos</h1>
-  <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, KLONK calcula tu proteína. Todo se queda en este móvil.</p>
+  <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, KLONK calcula tu proteína.</p>
   <form class="form panel pad" data-form="datos">
     <div class="dos"><label>Tu peso, en kg<input id="d-peso" inputmode="decimal" autocomplete="off" required value="${fmt(S.perfil.peso)}"></label>
       <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura)}"></label></div>
     <div><span class="suau petit" style="font-weight:700">¿Cuántos días a la semana puedes entrenar?</span>
       <div class="dies-tria" style="margin-top:8px">${[[3, "iniciacion"], [4, "torso-pierna"], [6, "seis-dias"]].map(([n, id]) => `<button type="button" class="chip" data-accion="dies" data-id="${id}" aria-pressed="${(S.rutinaActiva || "iniciacion") === id}">${n} días</button>`).join("")}</div>
       <p class="suau petit" style="margin:6px 0 0">Te ponemos una rutina de partida. Luego la cambias o creas la tuya en Entreno.</p></div>
+    ${typeof sessio !== "undefined" && sessio && !sessio.salut ? `<label class="casella"><input type="checkbox" id="d-salut"><span>Guardar mi peso y mis medidas en mi cuenta. Son datos de salud: sin esto se quedan solo en este móvil y no sales en el ranking de fuerza.</span></label>` : ""}
     ${botoForja('type="submit"', "ENCENDER LA FRAGUA", "")}
   </form>
   <p style="text-align:center;margin-top:14px"><button class="enllac" data-accion="vista" data-v="eleccion">Volver a tu personaje</button></p>`;
@@ -4294,16 +4606,41 @@ function compta(el, fins, ms = 900) {
   requestAnimationFrame(pas);
 }
 
+function efecteDesbloqueig(t) {
+  const P = PERSONAJES[t], g = $("#carta-gran"); if (g) { g.classList.remove("bloq"); g.classList.add("revela"); }
+  Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
+  Efectos.vibra([30, 40, 30, 40, 80]); Efectos.lluvia(1.3);
+  render();
+  setTimeout(() => { if ($("#capa").innerHTML) obreFull(fullCarta(t), P.nombre); }, 1200);
+}
+// Forjar: el nom del personatge és el nickname, únic a tot KLONK (l'Albert, 26-09-2026).
+async function forjaPersonatge() {
+  if (!esTeu(TIPOS[triaIdx])) { avis("Ese personaje aún está bloqueado.", true); return; }
+  const nom = $("#f-nom").value.trim().slice(0, 20);
+  if (!/^[A-Za-z0-9_.ÑñÁÉÍÓÚáéíóú]{3,20}$/.test(nom)) { avis("Tu nickname: de 3 a 20 letras o números, sin espacios.", true); $("#f-nom").focus(); return; }
+  if (teCompte() && nom !== sessio.nick) {
+    try { const r = await apiCompte("POST", "/nick", { nick: nom }); desaSessio({ ...sessio, nick: r.nick }); }
+    catch (e) { avis(e.status === 0 ? "Sin conexión: para elegir tu nickname hace falta red." : e.message, true); $("#f-nom").focus(); return; }
+  }
+  S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom };
+  const tornar = S.ui.nickPendent; S.ui.nickPendent = false;
+  S.ui.vista = !S.perfil.peso ? "datos" : tornar ? (S.ui.vistaAbansNick || "inicio") : "inicio"; S.ui.triaIniciada = false; guardar();
+  Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 60]); render(); window.scrollTo({ top: 0 });
+}
+
 /* ---------------------------------------------------------------- pintar */
 let avisatDesa = false;
 function render() {
   const v = $("#vista");
   let vista = S.ui.vista || "inicio";
-  if (!S.personaje) vista = "eleccion";
+  if (!teCompte()) vista = "compte";                       // l'Albert, 26-09-2026: sense compte, l'app no es fa servir
+  else if (S.ui.nickPendent && S.personaje) vista = "eleccion";
+  else if (!S.personaje) vista = "eleccion";
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
-  const f = { inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
+  const f = { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
   v.innerHTML = f();
+  if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
   if (S.personaje) {
     const nv = Stats.experiencia(S).nivel;
@@ -4457,12 +4794,11 @@ document.addEventListener("click", ev => {
     case "comprar": {
       const t = b.dataset.t, P = PERSONAJES[t];
       if (esTeu(t) || oroTotal() < P.precio || !nivelOk(t)) break;
-      S.oroGastado = (S.oroGastado || 0) + P.precio; S.desbloq = [...(S.desbloq || []), t]; guardarYa();
-      const g = $("#carta-gran"); if (g) { g.classList.remove("bloq"); g.classList.add("revela"); }
-      Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
-      Efectos.vibra([30, 40, 30, 40, 80]); Efectos.lluvia(1.3);
-      render();
-      setTimeout(() => { if ($("#capa").innerHTML) obreFull(fullCarta(t), P.nombre); }, 1200);
+      // amb compte, el servidor comprova el nivell i l'or i apunta el desbloqueig (servidor/SINCRO.md §3)
+      if (teCompte()) {
+        apiCompte("POST", "/or/desbloqueja", { personatge: t }).then(r => { aplicaOr(r.or, r.desbloq); guardarYa(); efecteDesbloqueig(t); })
+          .catch(e => avis(e.status === 0 ? "Sin conexión: para desbloquear hace falta red." : e.message, true));
+      } else { S.oroGastado = (S.oroGastado || 0) + P.precio; S.desbloq = [...(S.desbloq || []), t]; guardarYa(); efecteDesbloqueig(t); }
       break;
     }
     case "elegir": {
@@ -4508,7 +4844,8 @@ document.addEventListener("click", ev => {
     case "restaura-veure": $("#restaura").innerHTML = `<form class="form" data-form="restaura" style="margin-top:12px"><label>Pega aquí tus datos<textarea id="r-txt"></textarea></label><label>O elige el archivo<input id="r-fit" type="file" accept=".json,.txt,application/json,text/plain"></label><button class="btn marc" type="submit">Recuperar mis datos</button></form>`; break;
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
-    default: if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b)) accioRutina(acc, b);
+    default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -4533,19 +4870,16 @@ document.addEventListener("submit", async ev => {
   const f = ev.target; if (!f.dataset.form) return;
   ev.preventDefault();
   const tipus = f.dataset.form;
-  if (tipus === "personaje") {
-    if (!esTeu(TIPOS[triaIdx])) { avis("Ese personaje aún está bloqueado.", true); return; }
-    const nom = $("#f-nom").value.trim().slice(0, 18);
-    if (nom.length < 2) { avis("Ponle un nombre a tu personaje.", true); $("#f-nom").focus(); return; }
-    S.personaje = { tipo: TIPOS[triaIdx], nombre: nom };
-    S.ui.vista = S.perfil.peso ? "inicio" : "datos"; S.ui.triaIniciada = false; guardar();
-    Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 60]); render(); window.scrollTo({ top: 0 });
-  } else if (tipus === "datos" || tipus === "ajustes") {
+  if (tipus.startsWith("compte-")) { formCompte(tipus); return; }
+  if (tipus === "personaje") { forjaPersonatge(); return; }
+  if (tipus === "datos" || tipus === "ajustes") {
     const pre = tipus === "datos" ? "d" : "a";
     const pes = num($(`#${pre}-peso`).value);
     if (!(pes > 0)) { avis("Pon tu peso para calcular la proteína.", true); return; }
     S.perfil = { ...S.perfil, peso: pes, altura: num($(`#${pre}-altura`).value) || null, ...($("#a-hora") ? { horaEntreno: $("#a-hora").value || "18:00" } : {}) };
     if (tipus === "datos" && !S.rutinaActiva) S.rutinaActiva = "iniciacion";
+    if (tipus === "datos" && $("#d-salut") && $("#d-salut").checked && teCompte())
+      apiCompte("POST", "/compte/consentiment", { salut: true }).then(r => { desaSessio({ ...sessio, salut: !!r.consent_salut }); programaPuja(); }).catch(e => avis(e.message, true));
     S.ui.vista = "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
     if (tipus === "datos") { Efectos.suena("fuego"); Efectos.lluvia(1.4); avis("La fragua está encendida."); } else avis("Ajustes guardados.");
   } else if (tipus === "ed-propi") {
@@ -4600,13 +4934,15 @@ let x0 = null;
 document.addEventListener("touchstart", ev => { if (ev.target.closest("#carrusel")) x0 = ev.touches[0].clientX; }, { passive: true });
 document.addEventListener("touchend", ev => { if (x0 == null) return; const dx = ev.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 40) { triaIdx = (triaIdx + (dx < 0 ? 1 : -1) + TIPOS.length) % TIPOS.length; Efectos.suena("tap"); render(); } });
 
+mirarEnllacCompte();
 render();
 if (S.activa) pedirPantalla();
+if (teCompte()) baixaEstat(false);
 confirmaPagament();
 mirarEnllacRutina();
 
 </script>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+<script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
 <script type="module">
 /* FRAGUA · el personatge en 3D (26/09/2026).
    El nan és el model de Tripo amb l'esquelet de Mixamo i els pesos refets a Blender
@@ -4614,7 +4950,8 @@ mirarEnllacRutina();
    el menjar apuntat, l'entreno acabat, un toc amb el dit. Hi ha un sol renderer i un sol canvas: cada
    vegada que l'app repinta una pantalla amb personatge (#personatge), el canvas s'hi muda.
    Si el navegador no té WebGL o el model no arriba, es queda la il·lustració, que ja respira sola amb
-   CSS; i els personatges que encara no tenen rig (la forjadora i el geni) van sempre amb la il·lustració. */
+   CSS; i els personatges que encara no tenen rig van sempre amb la il·lustració.
+   26-09-2026: la Forjadora ja és en 3D (3d/forjadora/, el mateix camí que el nan). */
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -4623,7 +4960,11 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 // El martell: la A el porta a l'espatlla i el model de Tripo va sense, perquè Mixamo vol el cos sol.
 // Es fa aquí amb peces de three.js i va enganxat a l'os de l'esquena, que el porta amb ell.
 // El model viatja dins d'un .json (el GLB en base64): els artifacts de claude.ai no serveixen .glb.
-const MODELS = { herrero: { json: "3d/herrero.json", martell: true } };
+// obre / gest / avant: quant s'obren els braços en repòs, en un gest i l'avantbraç (vegeu LA POSTURA). El nan
+// els té curts i la «Breathing Idle» li porta les mans a la panxa; la Forjadora, amb braços de proporció humana,
+// en necessita molt menys.
+const MODELS = { herrero: { json: "3d/herrero.json", martell: true },
+  forjadora: { json: "3d/forjadora.json", martell: false, obre: 0.48, gest: 0.12, avant: 0.2 } };
 const ARREL = typeof ACTIUS === "string" ? ACTIUS : "assets/";
 // Quina animació fa cada gest de l'app. Si el model no la té, la primera de la llista que tingui.
 const GESTOS = { tria: ["tria", "celebra"], celebra: ["celebra", "tria"], menjar: ["menjar", "celebra"], serie: ["serie", "tria"] };
@@ -4703,7 +5044,8 @@ function munta(gltf, tipo) {
   mixer.update(0);
   const os = re => { let t = null; cos.traverse(o => { if (o.isBone && re.test(o.name)) t = o; }); return t; };
   // [os, signe]: el braç esquerre del nan és a +X (mira cap a +Z), i s'obre girant cap a +Z
-  const bracos = [[os(/LeftArm$/), 1, OBRE], [os(/RightArm$/), -1, OBRE], [os(/LeftForeArm$/), 1, OBRE_AVANTBRAC], [os(/RightForeArm$/), -1, OBRE_AVANTBRAC]].filter(b => b[0]);
+  const cfg = { obre: OBRE, gest: OBRE_GEST, avant: OBRE_AVANTBRAC, ...MODELS[tipo] };
+  const bracos = [[os(/LeftArm$/), 1, cfg.obre, cfg.gest], [os(/RightArm$/), -1, cfg.obre, cfg.gest], [os(/LeftForeArm$/), 1, cfg.avant, 0], [os(/RightForeArm$/), -1, cfg.avant, 0]].filter(b => b[0]);
   postura({ arrel, bracos, repos }, 1);
   // A l'escala d'origen (Mixamo surt en centímetres) i amb els peus a terra, centrat.
   let bb = mesura(arrel);
@@ -4842,13 +5184,13 @@ function postura(m, pes) {
   if (!m.bracos || !m.bracos.length) return;
   m.arrel.updateMatrixWorld(true);
   _eix.set(0, 0, 1).applyQuaternion(m.arrel.quaternion);   // cap on mira el nan
-  for (const [os, signe, max] of m.bracos) {
+  for (const [os, signe, max, gest] of m.bracos) {
     const u = os.userData;
     if (!u.neta) { u.neta = new THREE.Quaternion(); u.feta = new THREE.Quaternion(); u.te = false; }
     // si el mixer no ha escrit l'os aquest fotograma, encara hi ha el gir d'abans: la neta és la guardada
     if (!u.te || !os.quaternion.equals(u.feta)) u.neta.copy(os.quaternion);
     os.quaternion.copy(u.neta);
-    const angle = signe * (max === OBRE ? OBRE_GEST + (OBRE - OBRE_GEST) * pes : max * pes);
+    const angle = signe * (gest ? gest + (max - gest) * pes : max * pes);
     if (angle) {
       os.parent.getWorldQuaternion(_qp);
       _qm.setFromAxisAngle(_eix, angle);
