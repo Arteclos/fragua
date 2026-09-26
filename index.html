@@ -4164,8 +4164,12 @@ async function treuAvisosAqui() {
 }
 // Un cop al dia, si els avisos són actius: que el servidor encara tingui aquest mòbil (el navegador la pot haver canviat, o el
 // servei d'avisos esborrada) i la zona horària d'avui. Si no es pot refer sense cap toc, la pantalla diu la veritat: desactivats.
-async function revisaSubscripcio() {
-  if (!teCompte() || S.demo || !potAvisos() || Notification.permission !== "granted" || !S.ui.avisosSub || S.ui.avisosRevisat === hoy()) return;
+// En entrar al compte es fa sempre (forca): canviar la contrasenya esborra els avisos de TOTS els mòbils (un mòbil robat ha de
+// callar), i el mòbil on s'ha fet els ha de tornar a donar d'alta. Però només si eren d'aquest compte: en un mòbil compartit,
+// qui entra després no hereta els avisos d'un altre sense haver-los demanat.
+async function revisaSubscripcio(forca) {
+  if (!teCompte() || S.demo || !potAvisos() || Notification.permission !== "granted" || !S.ui.avisosSub || (!forca && S.ui.avisosRevisat === hoy())) return;
+  if (S.ui.avisosDe && sessio && S.ui.avisosDe !== sessio.id) { S.ui.avisosSub = null; guardar(); return; }
   try {
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
@@ -4176,7 +4180,7 @@ async function revisaSubscripcio() {
     if (!sub) throw new Error("sense subscripció");
     const j = sub.toJSON(), p = prefsAvisos();
     await api("POST", "/avisos", { endpoint: j.endpoint, keys: j.keys, hora: p.hora, dies: p.dies, entreno: p.entreno, clan: p.clan, tz: zonaHoraria() });
-    S.ui.avisosSub = j.endpoint; S.ui.avisosRevisat = hoy(); guardar();
+    S.ui.avisosSub = j.endpoint; S.ui.avisosDe = sessio && sessio.id; S.ui.avisosRevisat = hoy(); guardar();
   } catch (e) { if (!navigator.onLine) return; S.ui.avisosSub = null; guardar(); render(); }
 }
 // El dia d'entreno al servidor, perquè el recordatori no avisi qui entrena o ja ha entrenat: en començar i en acabar. Si no hi
@@ -4208,7 +4212,7 @@ async function activaAvisos() {
     const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(clau) }));
     const j = sub.toJSON(), p = prefsAvisos();
     await api("POST", "/avisos", { endpoint: j.endpoint, keys: j.keys, hora: p.hora, dies: p.dies, entreno: p.entreno, clan: p.clan, tz: zonaHoraria() });
-    S.avisos = p; S.ui.avisosSub = j.endpoint; S.ui.avisosNo = null; guardar(); tancaFull(); render();
+    S.avisos = p; S.ui.avisosSub = j.endpoint; S.ui.avisosDe = sessio && sessio.id; S.ui.avisosNo = null; guardar(); tancaFull(); render();
     Efectos.suena("triar"); avis("Avisos activados. Te avisaremos a tu hora si aún no has entrenado.");
   } catch (e) { avis("No se han podido activar los avisos: " + e.message, true); }
 }
@@ -4588,7 +4592,9 @@ async function despresEntrar(r, nou) {
   if (S.personaje && !sessio.nick) { try { const n = await apiCompte("POST", "/nick", { nick: S.personaje.nombre }); desaSessio({ ...sessio, nick: n.nick }); } catch (e) { S.ui.nickPendent = true; } }
   guardarYa(); render(); window.scrollTo({ top: 0 });
   Efectos.suena("triar");
-  setTimeout(() => preguntaAvisos(false), 1500);     // en entrar (també a l'app acabada d'instal·lar a l'iPhone, que torna a demanar el compte)
+  // Els avisos d'aquest mòbil: si ja hi eren, es tornen a donar d'alta (restablir la contrasenya els esborra de tots); si no,
+  // la pregunta (també a l'app acabada d'instal·lar a l'iPhone, que torna a demanar el compte).
+  revisaSubscripcio(true).finally(() => setTimeout(() => preguntaAvisos(false), 1200));
 }
 async function surtCompte() {
   try { await puja(); } catch (e) {}
