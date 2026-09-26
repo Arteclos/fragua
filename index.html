@@ -490,9 +490,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .aj-legal{display:flex;flex-wrap:wrap;gap:8px 20px;margin:14px 0 0;font-size:14.5px}
 .aj-legal a,.panel a,.suau a{color:var(--flama)}
 /* ---- el compte (26-09-2026): la porta amb Kragg, els formularis i l'avís sense xarxa ---- */
-.kragg{position:relative;display:flex;flex-direction:column;align-items:center;margin:4px 0 10px}
-.kragg img{width:min(220px,58vw);height:auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))}
-.kragg-bafarada{margin-top:-10px;max-width:420px;padding:12px 16px;border-radius:14px;background:rgba(18,15,13,.92);border:1px solid rgba(197,123,55,.5);display:grid;gap:4px;text-align:center;line-height:1.45}
+.kragg-3d{height:min(360px,46vh);margin:0 auto 6px;max-width:420px}
 .compte-botons{display:grid;gap:12px;max-width:420px;margin:14px auto 6px}
 .btn.gran{min-height:54px;font-size:16px;letter-spacing:.04em}
 .g-boto{display:flex;justify-content:center;min-height:44px}
@@ -502,6 +500,15 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .compte-legal a,.casella a{color:var(--flama)}
 .compte-enllacos{justify-content:center;gap:6px 18px}
 .sense-xarxa{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:60;max-width:calc(100% - 32px);padding:6px 14px;border-radius:999px;text-align:center;font-size:13px;line-height:1.3;background:rgba(90,46,23,.95);color:var(--crema);border:1px solid rgba(240,160,80,.55);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:54px;padding:8px 18px;border-radius:10px;
+  background:linear-gradient(180deg,#221e1c,#171514);color:var(--crema);font:700 16px var(--text);border:1px solid rgba(197,123,55,.6)}
+.btn-google:active{transform:translateY(1px)}
+.g-cercle{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#fff;flex:none}
+.compte-google{max-width:420px;margin:0 auto 10px}
+.o-separador{display:flex;align-items:center;gap:12px;margin:14px 0 6px;color:var(--fum);font-size:14px}
+.o-separador::before,.o-separador::after{content:"";flex:1;height:1px;background:rgba(197,123,55,.35)}
+.avis-correu{display:flex;gap:12px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;line-height:1.45;font-size:14.5px}
+.avis-correu .tanca-x{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid rgba(197,123,55,.5);background:rgba(0,0,0,.3);color:var(--crema);font-size:20px;line-height:1}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -3565,6 +3572,7 @@ function vistaCompte() {
   if (c.mode === "nou" || c.mode === "falta") {
     const google = c.mode === "falta";
     return `${cap}<h1 class="titol-pag or">${google ? "Un paso más" : "Crear cuenta"}</h1>
+    ${!google && botoGoogle() ? `<div class="compte-google">${botoGoogle()}<p class="o-separador"><span>o con tu correo</span></p></div>` : ""}
     <form class="form panel pad" data-form="${google ? "compte-falta" : "compte-nou"}">
       ${google ? `<p class="suau petit" style="margin:0">Entras con Google como ${esc(c.googleEmail || "")}. Solo nos falta esto:</p>` : `
       <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
@@ -3576,6 +3584,7 @@ function vistaCompte() {
     <p style="text-align:center"><button class="enllac" data-accion="compte-mode" data-m="${google ? "inici" : "entra"}">${google ? "Volver" : "¿Ya tienes cuenta? Entra"}</button></p>${legal}`;
   }
   if (c.mode === "entra") return `${cap}<h1 class="titol-pag or">Entrar</h1>
+    ${botoGoogle() ? `<div class="compte-google">${botoGoogle()}<p class="o-separador"><span>o con tu correo</span></p></div>` : ""}
     <form class="form panel pad" data-form="compte-entra">
       <label>Correo electrónico<input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
       <label>Contraseña<input id="c-pass" type="password" autocomplete="current-password" required></label>
@@ -3594,13 +3603,14 @@ function vistaCompte() {
       <label>Contraseña nueva<input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>
       ${botoForja('type="submit"', "GUARDAR Y ENTRAR", "")}
     </form>${legal}`;
-  // la portada: Kragg et rep (la capitana, 26-09: «el nan que et rep al login pot dir-se KRAGG»)
+  // la portada: Kragg et rep, en 3D i sense dir res (l'Albert, 26-09: «que aparegués en 3D com idle i fes una acció
+  // com a molt»). És el mateix contenidor que el personatge de l'inici; mentre el 3D arriba, la foto del 3D.
   return `${cap}
-    <div class="kragg"><img src="${ACTIUS}personatges/herrero.webp" alt="" width="220"><div class="kragg-bafarada marc"><b class="or">Soy Kragg, el herrero de Klonk.</b><span>Para entrar en la fragua necesitas tu cuenta: así tu progreso no se pierde nunca, cambies de móvil o no.</span></div></div>
+    <div class="personatge kragg-3d" id="personatge" data-tipo="herrero" data-accion="heroi"><div class="brillo"></div><img class="foto3d" src="${ACTIUS}personatges/herrero-3d.webp" alt="Kragg, el herrero de Klonk"></div>
     <div class="compte-botons">
       ${botoForja('type="button" data-accion="compte-mode" data-m="nou"', "CREAR CUENTA", "")}
       <button class="btn clar marc gran" data-accion="compte-mode" data-m="entra">YA TENGO CUENTA</button>
-      <div id="g-boto" class="g-boto"></div>
+      ${botoGoogle()}
     </div>
     <p class="llegenda" style="text-align:center">KLONK es a partir de 14 años.</p>${legal}`;
 }
@@ -3608,33 +3618,56 @@ function vistaCompte() {
 // A la versió de la wifi de casa (http) Google no deixa entrar: allà, correu i contrasenya.
 const ORIGENS_GOOGLE = ["https://klonk.fit", "https://www.klonk.fit", "https://arteclos.github.io"];
 function despresPintarCompte() {
-  if (cmp().mode === "inici" && document.getElementById("g-boto") && ORIGENS_GOOGLE.includes(location.origin)) carregaGoogle();
+  if (["inici", "nou", "entra"].includes(cmp().mode)) preparaGoogle();
+  if (cmp().mode === "inici" && !kraggSaluda) saludaKragg(0);
+}
+// En entrar a la porta, Kragg fa un sol gest (es flexiona) quan el 3D ja és a punt; després respira.
+let kraggSaluda = false;
+function saludaKragg(intents) {
+  if (kraggSaluda || cmp().mode !== "inici" || !document.getElementById("personatge")) return;
+  if (window.Escena3D && Escena3D.reacciona && Escena3D.reacciona("celebra")) { kraggSaluda = true; return; }
+  if (intents < 40) setTimeout(() => saludaKragg(intents + 1), 300);
 }
 
 /* ---------------------------------------------------------------- Google (Google Identity Services) */
-let gPromesa = null;
-function carregaGoogle() {
+// El botó és nostre (l'oficial desentonava, l'Albert, 26-09-2026) i porta el logo G de Google tal com és, damunt de
+// blanc, com demanen les seves normes de marca. Fa servir el TOKEN CLIENT (initTokenClient), el camí de Google per als
+// botons propis: dona un access_token que el servidor verifica a tokeninfo i userinfo (servidor/comptes.py).
+const G_LOGO = `<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
+const botoGoogle = () => ORIGENS_GOOGLE.includes(location.origin)
+  ? `<button type="button" class="btn-google marc" data-accion="compte-google"><span class="g-cercle">${G_LOGO}</span><span>Continuar con Google</span></button>` : "";
+let gPromesa = null, gClient = null;
+function preparaGoogle() {
+  if (!ORIGENS_GOOGLE.includes(location.origin)) return;
   if (!gPromesa) gPromesa = new Promise((ok, ko) => {
-    if (window.google && google.accounts && google.accounts.id) return ok();
+    if (window.google && google.accounts && google.accounts.oauth2) return ok();
     const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
     s.onload = ok; s.onerror = () => ko(new Error("No se ha podido cargar Google."));
     document.head.appendChild(s);
   });
   gPromesa.then(() => {
-    const el = document.getElementById("g-boto"); if (!el) return;
-    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: r => entraGoogle(r.credential), ux_mode: "popup" });
-    google.accounts.id.renderButton(el, { theme: "filled_black", size: "large", shape: "pill", text: "continue_with", locale: "es", width: Math.min(360, el.clientWidth || 320) });
-  }).catch(e => { gPromesa = null; const el = document.getElementById("g-boto"); if (el) el.innerHTML = `<p class="suau petit">${esc(e.message)}</p>`; });
+    if (gClient) return;
+    gClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID, scope: "openid email profile",
+      callback: r => { if (r && r.access_token) entraGoogle({ access_token: r.access_token }); else if (r && r.error) avis("Google no ha dejado entrar.", true); },
+      error_callback: e => { if (e && e.type !== "popup_closed") avis("No se ha podido abrir Google. Si estás dentro de WhatsApp o Instagram, abre klonk.fit en Chrome o Safari.", true); },
+    });
+  }).catch(() => { gPromesa = null; });
 }
-async function entraGoogle(credential, extra) {
+// tok és {access_token} o {credential} (el JWT del botó oficial, que el servidor encara accepta)
+async function entraGoogle(tok, extra) {
   const c = cmp();
   try {
-    const r = await apiCompte("POST", "/compte/google", { credential, aparell: aparell(), ...(extra || {}) });
+    const r = await apiCompte("POST", "/compte/google", { ...tok, aparell: aparell(), ...(extra || {}) });
     await despresEntrar(r, r.nou);
   } catch (e) {
     if (e.status === 428) {    // és nou i falten l'edat i les condicions: les demanem i tornem a enviar el mateix token
-      let mail = ""; try { mail = JSON.parse(atob(credential.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).email || ""; } catch (x) {}
-      S.ui.compte = { ...c, mode: "falta", credential, googleEmail: mail, edat: null }; render(); return;
+      let mail = "";
+      try {
+        if (tok.credential) mail = JSON.parse(atob(tok.credential.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).email || "";
+        else mail = (await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + tok.access_token } })).json()).email || "";
+      } catch (x) {}
+      S.ui.compte = { ...c, mode: "falta", gtok: tok, googleEmail: mail, edat: null }; render(); return;
     }
     avis(e.message, true);
   }
@@ -3660,12 +3693,12 @@ async function formCompte(tipus) {
       if (!c.edat) { avis("Dinos cuántos años tienes.", true); return; }
       if (c.edat === "nen") { avis("KLONK es a partir de 14 años. Cuando los tengas, aquí te esperamos.", true); return; }
       if (!$("#c-termes").checked) { avis("Para crear la cuenta tienes que aceptar las condiciones y la política de privacidad.", true); return; }
-      if (tipus === "compte-falta") { await entraGoogle(c.credential, { franja: c.edat, termes: TERMES }); return; }
+      if (tipus === "compte-falta") { await entraGoogle(c.gtok, { franja: c.edat, termes: TERMES }); return; }
       if (!pass || pass.length < 8) { avis("La contraseña: 8 caracteres o más.", true); return; }
       S.ui.compte = { ...c, mail };
       const r = await apiCompte("POST", "/compte/registre", { email: mail, contrasenya: pass, franja: c.edat, termes: TERMES, aparell: aparell() });
+      S.ui.avisCorreu = mail;
       await despresEntrar({ ...r, email: mail }, true);
-      avis("Te hemos enviado un correo para confirmar tu dirección.");
     } else if (tipus === "compte-entra") {
       S.ui.compte = { ...c, mail };
       const r = await apiCompte("POST", "/compte/entra", { email: mail, contrasenya: pass, aparell: aparell() });
@@ -3689,7 +3722,7 @@ async function despresEntrar(r, nou) {
   S.cuenta = null;
   try {
     const [cpt, yo] = await Promise.all([apiCompte("GET", "/compte"), apiCompte("GET", "/yo").catch(() => null)]);
-    desaSessio({ ...sessio, email: cpt.email || sessio.email, salut: !!cpt.consent_salut, franja: cpt.franja, nick: yo && yo.nick || null });
+    desaSessio({ ...sessio, email: cpt.email || sessio.email, email_ok: !!cpt.email_ok, salut: !!cpt.consent_salut, franja: cpt.franja, nick: yo && yo.nick || null });
   } catch (e) {}
   S.ui.compte = null;
   await baixaEstat(true);
@@ -3800,15 +3833,22 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 /* ---------------------------------------------------------------- els enllaços dels correus */
 function mirarEnllacCompte() {
   const h = location.hash;
-  if (h === "#correu-ok") { avis("Correo confirmado. ¡Bienvenido a Klonk!"); history.replaceState(null, "", location.pathname); }
+  if (h === "#correu-ok") { avis("Correo confirmado. ¡Bienvenido a Klonk!"); if (sessio) desaSessio({ ...sessio, email_ok: true }); S.ui.avisCorreu = null; history.replaceState(null, "", location.pathname); }
   else if (h === "#correu-caducat") { avis("El enlace ha caducado o ya se ha usado.", true); history.replaceState(null, "", location.pathname); }
   else if (h.startsWith("#restableix=")) { S.ui.compte = { mode: "restableix", codi: decodeURIComponent(h.slice(12)) }; history.replaceState(null, "", location.pathname); }
+}
+
+// Després de crear el compte amb correu: l'avís es queda fins que es tanca o es confirma. El correu porta un
+// ENLLAÇ, no un codi: l'Albert hi va buscar on escriure el codi (26-09-2026).
+function bannerCorreu() {
+  if (!teCompte() || !S.ui.avisCorreu || sessio.email_ok) return "";
+  return `<div class="avis-correu panel marc" role="status"><span><b class="or">Revisa tu correo.</b> Te hemos enviado un enlace a ${esc(S.ui.avisCorreu)}: ábrelo para confirmar tu dirección. No hace falta ningún código, y mientras tanto ya puedes usar KLONK.</span><button class="tanca-x" data-accion="tanca-avis-correu" aria-label="Cerrar el aviso">×</button></div>`;
 }
 
 /* ---------------------------------------------------------------- el compte a Ajustes */
 function blocCompte() {
   if (!teCompte()) return "";
-  return `<div class="aj-fila"><span>Tu cuenta<small>${esc(sessio.email || "")}${sessio.nick ? `, ${esc(sessio.nick)}` : ""}</small></span><button class="btn marc" data-accion="compte-surt">Cerrar sesión</button></div>
+  return `<div class="aj-fila"><span>Tu cuenta<small>${esc(sessio.email || "")}${sessio.email_ok === false ? ", sin confirmar: abre el enlace del correo" : ""}${sessio.nick ? `, ${esc(sessio.nick)}` : ""}</small></span><button class="btn marc" data-accion="compte-surt">Cerrar sesión</button></div>
     <div class="aj-fila"><span>Guardar tu peso y tus medidas en tu cuenta<small>Son datos de salud: sin tu permiso se quedan solo en este móvil, y sin tu peso no sales en el ranking de fuerza.</small></span>${interruptor("compte-salut", !!sessio.salut, "Guardar peso y medidas en tu cuenta")}</div>
     <p style="margin:12px 0 0"><button class="enllac" data-accion="compte-esborra">Borrar mi cuenta y todos mis datos</button></p>`;
 }
@@ -3816,6 +3856,11 @@ async function accioCompte(acc, b) {
   switch (acc) {
     case "compte-mode": S.ui.compte = { ...cmp(), mode: b.dataset.m, edat: null }; render(); window.scrollTo({ top: 0 }); return true;
     case "compte-edat": S.ui.compte = { ...cmp(), edat: b.dataset.v }; b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b))); return true;
+    case "compte-google":    // síncron fins a requestAccessToken: el navegador només obre la finestra de Google dins del toc
+      if (gClient) gClient.requestAccessToken();
+      else { avis("Cargando Google: vuelve a tocar en un momento.", true); preparaGoogle(); }
+      return true;
+    case "tanca-avis-correu": S.ui.avisCorreu = null; guardar(); render(); return true;
     case "compte-surt": await surtCompte(); return true;
     case "compte-esborra":
       if (!S.ui.segurEsborra) { S.ui.segurEsborra = true; avis("Toca otra vez para borrar tu cuenta. No se puede deshacer.", true); setTimeout(() => { S.ui.segurEsborra = false; }, 6000); return true; }
@@ -3835,7 +3880,7 @@ async function accioCompte(acc, b) {
   }
   return false;
 }
-const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut"]);
+const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut", "compte-google", "tanca-avis-correu"]);
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
    L'Albert (amb el seu germà): «el menjar és la part més difícil, perquè cadascú fa lo seu. Com a molt ha de
@@ -4641,7 +4686,7 @@ function render() {
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
   const f = { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
-  v.innerHTML = f();
+  v.innerHTML = (vista !== "compte" ? bannerCorreu() : "") + f();
   if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
   if (S.personaje) {
@@ -4684,7 +4729,7 @@ document.addEventListener("click", ev => {
       Efectos.lanza(ev.clientX || r.left + r.width / 2, ev.clientY || r.top + r.height / 2, 22, 1.1); if (!Efectos.suena("crit")) Efectos.suena("yunque"); Efectos.vibra([20, 40, 30]);
       reacciona("tria");
       // a l'entrada, tocar el personatge l'obre (Albert, 26/09: «per guanyar una casella»)
-      if ((S.ui.vista || "inicio") === "inicio") setTimeout(() => veure("personaje"), 420);
+      if (teCompte() && (S.ui.vista || "inicio") === "inicio") setTimeout(() => veure("personaje"), 420);
       break;
     }
     case "tria": triaIdx = (triaIdx + Number(b.dataset.d) + TIPOS.length) % TIPOS.length; render(); break;
