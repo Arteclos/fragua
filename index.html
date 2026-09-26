@@ -3909,7 +3909,7 @@ function vistaEleccion() {
   </form>`;
 }
 function vistaDatos() {
-  return `<div class="cap"><button class="enrere marc" data-accion="vista" data-v="eleccion">${I_ENRERE}<span>Tu personaje</span></button><img src="${ACTIUS}logo.webp" alt="KLONK"></div><h1 class="titol-pag or">Tus datos</h1>
+  return `<img class="logo" src="${ACTIUS}logo.webp" alt="KLONK"><h1 class="titol-pag or">Tus datos</h1>
   <p class="suau" style="text-align:center;margin-top:-6px">Con tu peso, KLONK calcula tu proteína. Todo se queda en este móvil.</p>
   <form class="form panel pad" data-form="datos">
     <div class="dos"><label>Tu peso, en kg<input id="d-peso" inputmode="decimal" autocomplete="off" required value="${fmt(S.perfil.peso)}"></label>
@@ -3918,7 +3918,8 @@ function vistaDatos() {
       <div class="dies-tria" style="margin-top:8px">${[[3, "iniciacion"], [4, "torso-pierna"], [6, "seis-dias"]].map(([n, id]) => `<button type="button" class="chip" data-accion="dies" data-id="${id}" aria-pressed="${(S.rutinaActiva || "iniciacion") === id}">${n} días</button>`).join("")}</div>
       <p class="suau petit" style="margin:6px 0 0">Te ponemos una rutina de partida. Luego la cambias o creas la tuya en Entreno.</p></div>
     ${botoForja('type="submit"', "ENCENDER LA FRAGUA", "")}
-  </form>`;
+  </form>
+  <p style="text-align:center;margin-top:14px"><button class="enllac" data-accion="vista" data-v="eleccion">Volver a tu personaje</button></p>`;
 }
 
 /* ---------------------------------------------------------------- entreno */
