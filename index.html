@@ -561,6 +561,45 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .form .dies-7 .chip.dia{display:flex;align-items:center;justify-content:center;height:46px;padding:0}
 .edat-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .edat-3 .chip{display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 4px;font-size:14.5px;white-space:nowrap}
+/* ---- l'Entreno: la rutina com a bloc, i els dies amb ▶ i ✎ (26-09-2026) ---- */
+.rut-bloc{display:grid;gap:8px;margin-bottom:14px}
+.rut-bloc-nom{font-family:var(--display);font-size:24px;line-height:1.15}
+.rut-dif{display:inline-flex;align-items:center;gap:8px;justify-self:start;min-height:36px;padding:0;border:0;background:none;color:var(--crema);font:700 14.5px var(--text)}
+.rut-dif i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid var(--bronze-fil);font-style:normal;font-size:13px;color:#ffdca6}
+.rut-bloc-meta{margin:0;color:var(--fum);font-size:14px;line-height:1.4}
+.rut-bloc-acc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.rut-bloc-acc .btn{flex-direction:column;min-height:60px;padding:6px 4px;gap:3px;font-size:14.5px}
+.rut-bloc-acc .btn svg{flex:none;color:#ffd27a}
+.dies-t{margin:4px 0 10px;font-size:16px;color:var(--fum);text-align:center;font-weight:700}
+.dia-fila{--x:10px;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;margin-bottom:10px;padding:8px 10px 8px 4px;color:var(--crema)}
+.dia-fila>*{position:relative}
+.dia-fila.toca-hoy{box-shadow:0 0 0 2px #f0a050,0 0 18px rgba(240,160,80,.35)}
+.dia-info{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;min-height:56px;padding:4px 0;border:0;background:none;color:inherit;text-align:left}
+.dia-info .n{font-family:var(--display);font-weight:900;font-size:30px;text-align:center}
+.dia-txt{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
+.dia-txt .t{font-weight:700;font-size:17px;text-decoration:underline;text-decoration-color:rgba(255,181,94,.35);text-underline-offset:4px}
+.dia-txt .s{flex-basis:100%;font-size:13.5px;color:var(--fum)}
+.dia-edita{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;border:1px solid var(--bronze-fil);background:rgba(0,0,0,.35);color:#ffd27a}
+.dia-play{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;border:1px solid #f0a050;background:linear-gradient(180deg,#c42a0e,#7c0e03);color:#fff3d6;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.dia-play:active,.dia-edita:active{transform:translateY(1px)}
+.dia-prev{grid-column:1/-1;display:grid;gap:6px;padding:6px 4px 4px 12px;border-top:1px solid rgba(197,123,55,.2)}
+.ej-prev{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:15px}
+.ej-prev img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#15110e}
+.ej-prev small{color:var(--fum);font-size:13px}
+.dif-taula{display:grid;gap:8px;margin:12px 0}
+.dif-fila{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.dif-fila span{display:grid}
+.dif-fila small{color:var(--fum)}
+/* l'editor: la nansa per arrossegar */
+.dia-ed .ej-ed{grid-template-columns:36px 40px minmax(0,1fr) auto}
+.ej-nansa{display:grid;place-items:center;width:36px;height:44px;border:0;background:none;color:#c9a57a;touch-action:none;cursor:grab}
+.ej-origen{opacity:.35}
+.ej-fantasma{position:fixed;z-index:60;margin:0;pointer-events:none;background:#1d1815;border:1px solid #f0a050;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.ej-ed.desti-dalt{box-shadow:0 -3px 0 #f0a050}
+.ej-ed.desti-baix{box-shadow:0 3px 0 #f0a050}
+.dia-ed.desti-dia{outline:2px dashed #f0a050;outline-offset:-4px}
+.dia-ed.enfocat{box-shadow:0 0 0 2px #f0a050}
+.ed-buit{margin:8px 0}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -2195,6 +2234,15 @@ const CIENCIA = [
 function seriesSemana(r) { return r.dias.reduce((a, d) => a + d.ej.reduce((b, e) => b + cfgEj(e[0], e[1]).series, 0), 0); }
 function estrellas(r) { const s = seriesSemana(r); return s < 40 ? 1 : s < 70 ? 2 : s < 95 ? 3 : s < 120 ? 4 : 5; }
 const I_ESTRELLA = on => `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17.1 6.1 20.3l1.3-6.5L2.5 9.3l6.6-.8z" fill="${on ? "url(#gOr)" : "#3a302a"}" stroke="${on ? "#7a4a12" : "#5a4a3e"}" stroke-width="1"/></svg>`;
+// Les estrelles són la DIFICULTAT (l'Albert, 26-09-2026: «les estrelles què signifiquen?»): ara ho diuen al costat.
+const DIFICULTAT = ["", "suave", "ligera", "media", "alta", "muy alta"];
+const estrellesN = n => `<span class="estrelles" role="img" aria-label="Dificultad ${n} de 5">${[1, 2, 3, 4, 5].map(i => I_ESTRELLA(i <= n)).join("")}</span>`;
+function fullEstrelles() {
+  return `<p style="margin-top:0">Las estrellas miden la <b>dificultad</b> de la rutina: cuántas series haces en toda la semana. Más series es más trabajo, y también más descanso para recuperarte.</p>
+    <div class="dif-taula">${[[1, "Menos de 40 series", "Suave"], [2, "De 40 a 69", "Ligera"], [3, "De 70 a 94", "Media"], [4, "De 95 a 119", "Alta"], [5, "120 o más", "Muy alta"]].map(([n, s, t]) =>
+      `<div class="dif-fila">${estrellesN(n)}<span><b>${t}</b><small>${s} a la semana</small></span></div>`).join("")}</div>
+    <p class="suau petit">No es mejor ni peor: la buena es la que puedes hacer bien y de la que te recuperas. Si empiezas, una o dos estrellas.</p>`;
+}
 const htmlEstrellas = r => `<span class="estrelles" role="img" aria-label="Dificultad ${estrellas(r)} de 5">${[1, 2, 3, 4, 5].map(i => I_ESTRELLA(i <= estrellas(r))).join("")}</span>`;
 
 // Totes les rutines que es veuen: la base, les plantilles i les pròpies.
@@ -2236,13 +2284,15 @@ function vistaEditor() {
   const r = S.ui.edit; if (!r) return vistaRutinas();
   return `${capcalera("")}<h1 class="titol-pag or">${rutinaPropia(r.id) ? "Editar rutina" : "Nueva rutina"}</h1>
     <form class="form" data-form="rut-nom" onsubmit="return false"><label>Nombre<input id="rut-nom" maxlength="40" autocomplete="off" value="${esc(r.nombre)}"></label></form>
-    ${r.dias.map((d, i) => `<section class="panel pad dia-ed">
+    ${r.dias.map((d, i) => `<section class="panel pad dia-ed${S.ui.edDia === i ? " enfocat" : ""}" id="ed-dia-${i}" data-i="${i}">
       <div class="fila entre"><label class="form" style="flex:1"><span class="suau petit">Día ${i + 1}</span><input data-dia-t="${i}" maxlength="40" autocomplete="off" value="${esc(d.t)}"></label>
         <button class="tanca" data-accion="ed-treu-dia" data-i="${i}" aria-label="Quitar el día ${i + 1}">${I_X}</button></div>
-      ${d.ej.map((e, j) => `<div class="ej-ed">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
+      ${d.ej.length ? "" : '<p class="suau petit ed-buit">Sin ejercicios. Añade uno, o arrastra aquí uno de otro día.</p>'}
+      ${d.ej.map((e, j) => `<div class="ej-ed" data-i="${i}" data-j="${j}"><button class="ej-nansa" data-nansa data-i="${i}" data-j="${j}" aria-label="Mover ${esc(e[0])}: mantén y arrastra">${I_NANSA}</button>${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
         <span class="nom">${esc(e[0])}</span>
-        <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span></div>`).join("")}
+        <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir ${esc(e[0])}"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span></div>`).join("")}
       <button class="btn marc" style="margin-top:8px" data-accion="ed-afegeix" data-i="${i}">Añadir ejercicio</button></section>`).join("")}
+    <p class="suau petit" style="text-align:center;margin:10px 0 0">Para cambiar el orden, mantén el dedo en ⠿ y arrastra, también a otro día.</p>
     <p style="text-align:center"><button class="btn marc" data-accion="ed-dia">Añadir un día</button></p>
     <div class="panel pad" style="margin-top:6px"><div class="fila entre">${htmlEstrellas(r)}<span class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></div>
       <p class="suau petit" style="margin:8px 0 0">Para crecer: cada músculo dos veces por semana y unas 10 a 20 series por músculo.</p></div>
@@ -2287,6 +2337,8 @@ const nouId = () => "r" + Date.now().toString(36) + Math.random().toString(36).s
 const copia = r => ({ id: nouId(), nombre: r.nombre, resumen: r.resumen || "", dias: r.dias.map(d => ({ t: d.t, ej: d.ej.map(e => [...e]) })) });
 function accioRutina(acc, b) {
   switch (acc) {
+    case "dia-obre": { const n = +b.dataset.dia; S.ui.diaObert = S.ui.diaObert === n ? null : n; guardar(); render(); return true; }
+    case "rut-estrelles": obreFull(fullEstrelles(), "Las estrellas"); return true;
     case "rut-ver": S.ui.rutVer = b.dataset.id; veure("rutina"); return true;
     case "rut-usar": {
       const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r || !rutinaTeva(r)) return true;
@@ -2328,6 +2380,69 @@ function accioRutina(acc, b) {
   }
   return false;
 }
+/* ---- arrossegar exercicis a l'editor (l'Albert, 26-09-2026: «no pots agafar un exercici i moure'l?»): per la nansa ⠿,
+   dins del mateix dia o a un altre. Amb pointer events, que van igual amb el dit i amb el ratolí; la nansa porta
+   touch-action:none perquè el dit no faci córrer la pàgina mentre arrossega. ---- */
+const I_NANSA = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>';
+let arr = null;
+function netejaDesti() { document.querySelectorAll(".desti-dalt,.desti-baix,.desti-dia").forEach(e => e.classList.remove("desti-dalt", "desti-baix", "desti-dia")); }
+function marcaDesti(x, y) {
+  netejaDesti();
+  arr.fantasma.style.visibility = "hidden";
+  const el = document.elementFromPoint(x, y);
+  arr.fantasma.style.visibility = "";
+  const fila = el && el.closest(".ej-ed"), dia = el && el.closest(".dia-ed");
+  if (fila) {
+    const q = fila.getBoundingClientRect(), dalt = y < q.top + q.height / 2;
+    fila.classList.add(dalt ? "desti-dalt" : "desti-baix");
+    arr.desti = { i: +fila.dataset.i, j: +fila.dataset.j + (dalt ? 0 : 1) };
+  } else if (dia) {
+    dia.classList.add("desti-dia");
+    arr.desti = { i: +dia.dataset.i, j: S.ui.edit.dias[+dia.dataset.i].ej.length };
+  } else arr.desti = null;
+}
+document.addEventListener("pointerdown", ev => {
+  const g = ev.target.closest("[data-nansa]"); if (!g || !S.ui.edit || arr) return;
+  ev.preventDefault(); llegeixEditor();
+  const fila = g.closest(".ej-ed"), q = fila.getBoundingClientRect(), fantasma = fila.cloneNode(true);
+  fantasma.classList.add("ej-fantasma"); Object.assign(fantasma.style, { left: q.left + "px", top: q.top + "px", width: q.width + "px" });
+  document.body.appendChild(fantasma); fila.classList.add("ej-origen");
+  arr = { i: +g.dataset.i, j: +g.dataset.j, fantasma, dy: ev.clientY - q.top, id: ev.pointerId, desti: null, x: ev.clientX, y: ev.clientY };
+  try { g.setPointerCapture(ev.pointerId); } catch (e) {}
+  arr.raf = requestAnimationFrame(voraArr);
+  Efectos.vibra(8);
+});
+// Amb el dit quiet a prop de dalt o de baix, la pàgina corre sola (més de pressa com més a la vora): per portar un
+// exercici a un dia que no es veu.
+function voraArr() {
+  if (!arr) return;
+  const y = arr.y, v = y < 90 ? -Math.ceil((90 - y) / 5) : y > innerHeight - 90 ? Math.ceil((y - innerHeight + 90) / 5) : 0;
+  if (v) { window.scrollBy(0, v); marcaDesti(arr.x, arr.y); }
+  arr.raf = requestAnimationFrame(voraArr);
+}
+document.addEventListener("pointermove", ev => {
+  if (!arr || ev.pointerId !== arr.id) return;
+  ev.preventDefault();
+  arr.x = ev.clientX; arr.y = ev.clientY;
+  arr.fantasma.style.top = (ev.clientY - arr.dy) + "px";
+  marcaDesti(ev.clientX, ev.clientY);
+}, { passive: false });
+function acabaArr(ev, ok) {
+  if (!arr || ev.pointerId !== arr.id) return;
+  const a = arr; arr = null;
+  cancelAnimationFrame(a.raf); a.fantasma.remove(); netejaDesti();
+  document.querySelectorAll(".ej-origen").forEach(e => e.classList.remove("ej-origen"));
+  if (!ok || !a.desti || !S.ui.edit) return;
+  const D = S.ui.edit.dias; let { i, j } = a.desti;
+  if (i === a.i && (j === a.j || j === a.j + 1)) return;        // on ja era
+  const [e] = D[a.i].ej.splice(a.j, 1);
+  if (i === a.i && j > a.j) j--;                                  // en treure'l, els de sota han pujat un lloc
+  D[i].ej.splice(j, 0, e);
+  guardar(); render(); Efectos.suena("tap"); Efectos.vibra(12);
+}
+document.addEventListener("pointerup", ev => acabaArr(ev, true));
+document.addEventListener("pointercancel", ev => acabaArr(ev, false));
+
 // Els camps de text de l'editor es llegeixen abans de repintar, perquè no es perdi el que s'ha escrit.
 function llegeixEditor() {
   const r = S.ui.edit; if (!r) return;
@@ -2383,9 +2498,14 @@ function mirarEnllacRutina() {
     <div style="margin-top:12px">${botoForja('data-accion="rut-guarda-enllac"', "GUARDAR EN MIS RUTINAS", "")}</div>`, "Una rutina para ti");
 }
 async function accioCompartir(acc, b) {
-  const r = totesRutinas().find(x => x.id === b.dataset.id);
+  const r = totesRutinas().find(x => x.id === b.dataset.id) || (S.ui.rutDia && S.ui.rutDia.id === b.dataset.id ? S.ui.rutDia : null);
   switch (acc) {
     case "rut-compartir": if (r) obreFull(fullCompartir(r), "Compartir"); return true;
+    case "rut-compartir-dia": {
+      const d = r && r.dias[+b.dataset.dia - 1]; if (!d) return true;
+      S.ui.rutDia = { id: r.id + "-d" + b.dataset.dia, nombre: `${r.nombre}: ${d.t}`, resumen: "", dias: [d] };
+      obreFull(fullCompartir(S.ui.rutDia), "Compartir este día"); return true;
+    }
     case "rut-enllac": {
       if (!r) return true;
       const url = APP_URL + "#rutina=" + b64u(JSON.stringify(perCompartir(r))), txt = `Te paso mi rutina de KLONK, «${r.nombre}»: ${url}`;
@@ -2409,16 +2529,20 @@ async function accioCompartir(acc, b) {
     }
     case "rut-descarta-rebuda": S.recibidas = (S.recibidas || []).filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); guardar(); render(); return true;
     case "rut-lapiz": {
-      // el llapis de l'Entreno: si la rutina és teva, s'edita; si és una plantilla, se'n fa una còpia teva i s'edita
+      // el llapis de l'Entreno: si la rutina és teva, s'edita; si és una plantilla, se'n fa una còpia teva i s'edita.
+      // El d'un dia porta l'editor a aquell dia, marcat.
       const act = rutinaActual();
       if (rutinaPropia(act.id)) S.ui.edit = JSON.parse(JSON.stringify(act));
       else { S.ui.edit = copia(act); S.ui.edit.nombre = act.nombre + " (mía)"; }
-      guardar(); veure("editor"); return true;
+      S.ui.edDia = b.dataset.dia ? +b.dataset.dia - 1 : null;
+      guardar(); veure("editor");
+      if (S.ui.edDia != null) { const k = S.ui.edDia; S.ui.edDia = null; setTimeout(() => { const el = document.getElementById("ed-dia-" + k); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60); }
+      return true;
     }
   }
   return false;
 }
-const ACC_COMPARTIR = new Set(["rut-compartir", "rut-enllac", "rut-a-amic", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz"]);
+const ACC_COMPARTIR = new Set(["rut-compartir", "rut-compartir-dia", "rut-enllac", "rut-a-amic", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz"]);
 function accioRutinesSync(acc, b) { if (!ACC_COMPARTIR.has(acc)) return false; accioCompartir(acc, b); return true; }
 
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
@@ -4336,6 +4460,9 @@ const I_ENRERE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const I_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const I_BAIXA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
 const I_LLAPIS = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>';
+const I_PLAY = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8.5 5.3v13.4c0 .8.9 1.3 1.6.8l10.2-6.7c.6-.4.6-1.3 0-1.7L10.1 4.5c-.7-.5-1.6 0-1.6.8z" fill="currentColor"/></svg>';
+const I_COMPARTIR = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+const I_CANVI = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h13l-3-3M20 17H7l3 3"/></svg>';
 const I_X = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 // Els degradats es declaren un sol cop per a tota la pàgina (un id repetit a cada gràfica és invàlid).
 document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -4540,14 +4667,28 @@ function vistaDatos() {
 function vistaEntreno() {
   const s = activa();
   if (!s) {
-    const toca = siguienteDia();
+    // L'Albert, 26-09-2026: «s'hauria de diferenciar la rutina com a bloc editable del que et fa entrar dins l'entreno,
+    // perquè si no et penses que obres per revisar la rutina. Jo posaria un botó de play i un d'editar, i faria
+    // highlight del de toca hoy». La rutina, a dalt, amb Editar, Compartir i Cambiar; els dies, amb ▶ i ✎, i el nom
+    // desplega què porta aquell dia.
+    const toca = siguienteDia(), r = rutinaActual(), obert = S.ui.diaObert;
     const fetes = S.ses.filter(x => x.fin).slice(-4).reverse();
-    const r = rutinaActual();
     return `${capcalera("Entreno")}
-    <div class="rutina-act-caixa"><button class="rutina-act marc" data-accion="vista" data-v="rutinas"><span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span><span class="toca">Cambiar</span></span>
-      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button><button class="rut-lapiz marc" data-accion="rut-lapiz" aria-label="Editar tu rutina">${I_LLAPIS}</button></div>
-    ${r.dias.map((dd, i) => ({ n: i + 1, t: dd.t, ej: dd.ej })).map(d => { const ult = [...S.ses].reverse().find(x => x.dia === d.n && x.fin && (x.rut || "seis-dias") === r.id);
-      return `<button class="dia marc" data-accion="empezar" data-dia="${d.n}"><span class="n or">${d.n}</span><span><span class="t">${esc(d.t)}</span><br><span class="s">${d.ej.length} ejercicios${ult ? ", la última vez el " + fechaCorta(ult.fecha) : ""}</span></span>${d.n === toca ? '<span class="toca">Toca hoy</span>' : ""}</button>`; }).join("")}
+    <section class="panel pad rut-bloc">
+      <div class="rut-bloc-nom or">${esc(r.nombre)}</div>
+      <button class="rut-dif" data-accion="rut-estrelles">${htmlEstrellas(r)}<span>Dificultad ${DIFICULTAT[estrellas(r)]}</span><i aria-hidden="true">?</i></button>
+      <p class="rut-bloc-meta">${nDies(r.dias.length)} a la semana y ${seriesSemana(r)} series en total</p>
+      <div class="rut-bloc-acc"><button class="btn marc" data-accion="rut-lapiz">${I_LLAPIS}<span>Editar</span></button><button class="btn marc" data-accion="rut-compartir" data-id="${r.id}">${I_COMPARTIR}<span>Compartir</span></button><button class="btn marc" data-accion="vista" data-v="rutinas">${I_CANVI}<span>Cambiar</span></button></div>
+    </section>
+    <h2 class="dies-t">Elige el día y dale al play</h2>
+    ${r.dias.map((dd, i) => { const n = i + 1, ult = [...S.ses].reverse().find(x => x.dia === n && x.fin && (x.rut || "seis-dias") === r.id), ob = obert === n, hoy = n === toca;
+      return `<div class="dia-fila marc${hoy ? " toca-hoy" : ""}">
+        <button class="dia-info" data-accion="dia-obre" data-dia="${n}" aria-expanded="${ob}"><span class="n or">${n}</span><span class="dia-txt"><span class="t">${esc(dd.t)}</span>${hoy ? '<span class="toca">Toca hoy</span>' : ""}<span class="s">${dd.ej.length} ejercicios${ult ? `, la última vez el ${fechaCorta(ult.fecha)}` : ""}</span></span></button>
+        <button class="dia-edita" data-accion="rut-lapiz" data-dia="${n}" aria-label="Editar el día ${n}, ${esc(dd.t)}">${I_LLAPIS}</button>
+        <button class="dia-play" data-accion="empezar" data-dia="${n}" aria-label="Empezar el día ${n}, ${esc(dd.t)}">${I_PLAY}</button>
+        ${ob ? `<div class="dia-prev">${dd.ej.map(e => { const c = cfgEj(e[0], e[1]); return `<div class="ej-prev">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${esc(e[0])}</span><small class="num">${c.series} × ${c.min}-${c.max}</small></div>`; }).join("")}
+          <p style="margin:10px 0 0"><button class="enllac" data-accion="rut-compartir-dia" data-id="${r.id}" data-dia="${n}">Compartir solo este día</button></p></div>` : ""}
+      </div>`; }).join("")}
     ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<div class="reg"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div><span></span></div>`).join("")}</div></section>` : ""}`;
   }
   const d = { t: s.dt || (RUTINA[s.dia - 1] || {}).t || "" };
