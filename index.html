@@ -96,6 +96,10 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .boto-musica{--x:7px;--v:1.5px;position:absolute;right:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;width:40px;height:40px;display:grid;place-items:center;color:var(--flama)}
 .sessio-cap .boto-musica{top:8px;right:8px}
 .boto-musica[aria-pressed="false"]{color:var(--fum-2)}
+/* passar cançó: petit, just a sota del de la música */
+.boto-seg{--x:6px;--v:1.5px;position:absolute;right:9px;top:calc(54px + env(safe-area-inset-top,0px));z-index:5;width:30px;height:30px;display:grid;place-items:center;color:var(--flama)}
+.boto-seg[hidden]{display:none}
+.sessio-cap .boto-seg{top:54px;right:13px}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -1139,6 +1143,72 @@ const MUSICA = {
   "sons/ambient-2.mp3"
  ]
 };
+const MUSICA_INFO = {
+ "sons/ambient-1.mp3": {
+  "t": "The Sound Catcher - Antique Mills - Wood and Metal Gear Creak and Clank Blacksmith",
+  "s": 45.5
+ },
+ "sons/ambient-2.mp3": {
+  "t": "Vadi Sound - Metal Games - Blacksmith Ambience Hammering Iron Fire Crackling",
+  "s": 54.4
+ },
+ "sons/musica-entrada-1.mp3": {
+  "t": "Blackbard - Stjarnornas Valsignelse",
+  "s": 178.6
+ },
+ "sons/musica-entrada-2.mp3": {
+  "t": "Damon Power - The Last Dawn",
+  "s": 136.4
+ },
+ "sons/musica-entreno-1.mp3": {
+  "t": "BNOIR - Brand New",
+  "s": 136.0
+ },
+ "sons/musica-entreno-2.mp3": {
+  "t": "BXRDVJA - Bang Bang",
+  "s": 132.6
+ },
+ "sons/musica-entreno-3.mp3": {
+  "t": "BXRDVJA - Bonker Balls",
+  "s": 122.4
+ },
+ "sons/musica-entreno-4.mp3": {
+  "t": "Captain Joz - Hit the Gas",
+  "s": 164.6
+ },
+ "sons/musica-entreno-5.mp3": {
+  "t": "Captain Joz - Now Move",
+  "s": 143.2
+ },
+ "sons/musica-entreno-6.mp3": {
+  "t": "dannyminus - Voidwalker",
+  "s": 126.0
+ },
+ "sons/musica-entreno-7.mp3": {
+  "t": "Derek Minor - We Up",
+  "s": 160.9
+ },
+ "sons/musica-entreno-8.mp3": {
+  "t": "Just for Kicks - Spicy",
+  "s": 70.3
+ },
+ "sons/musica-entreno-9.mp3": {
+  "t": "Nate Rose - Bad Moves",
+  "s": 165.0
+ },
+ "sons/musica-entreno-10.mp3": {
+  "t": "NUEQ - GOLD",
+  "s": 193.8
+ },
+ "sons/musica-entreno-11.mp3": {
+  "t": "PlayerZero - FASTBOI",
+  "s": 105.3
+ },
+ "sons/musica-entreno-12.mp3": {
+  "t": "Yarin Primak - Buss It - Sped Up",
+  "s": 96.8
+ }
+};
 
 /* FRAGUA · la dopamina: espurnes, foc, so i vibració (26/09/2026).
    Albert: «cada botó que apretis que surti foc i hi hagi un so»; «animacions de dopamina com el
@@ -1303,27 +1373,57 @@ const Efectos = (() => {
       }, 40);
       return t;
     }
+    // L'ORDRE (26/09, l'Albert): les cançons ja no es barregen. Sonen sempre en el mateix ordre i l'entreno
+    // comença per la primera (BNOIR, «Brand New», que lliga amb el so d'encendre la fragua): així qui entrena
+    // sap quanta estona porta per la cançó que sona. Si l'app es tanca a mig entreno, en tornar sona la
+    // cançó que toca per l'hora (des de l'inici de l'entreno), no la primera.
+    const dur = src => (typeof MUSICA_INFO !== "undefined" && MUSICA_INFO[src] && MUSICA_INFO[src].s) || 0;
+    const titol = src => (typeof MUSICA_INFO !== "undefined" && MUSICA_INFO[src] && MUSICA_INFO[src].t) || "";
     function prepara() {
       if (el) return el;
       el = new Audio(); el.preload = "none";
-      el.addEventListener("ended", () => { i = (i + 1) % ordre.length; toca(); });
+      el.addEventListener("ended", () => { i = (i + 1) % ordre.length; toca(0); });
       return el;
     }
-    function toca() {
+    function toca(t) {
       if (!ordre.length) return;
       clearInterval(fos);
       el.src = base() + ordre[i];
       volum(el, mode === "entreno" ? 0.55 : 0.32);
+      if (t > 0) {
+        const salta = () => { try { el.currentTime = t; } catch (e) {} el.removeEventListener("loadedmetadata", salta); };
+        el.addEventListener("loadedmetadata", salta);
+      }
       const p = el.play(); if (p && p.catch) p.catch(() => {});
     }
-    function posa(nou) {
+    // On cau el rellotge dins la llista: [cançó, segon]. Sense durades, la primera des del principi.
+    function perHora(seg) {
+      const ds = ordre.map(dur);
+      const total = ds.reduce((a, b) => a + b, 0);
+      if (!total || ds.some(d => !d)) return [0, 0];
+      let x = ((seg % total) + total) % total;
+      for (let k = 0; k < ds.length; k++) { if (x < ds[k]) return [k, x]; x -= ds[k]; }
+      return [0, 0];
+    }
+    function posa(nou, des) {
       if (!on()) { para(); return; }
-      if (nou === mode && el && !el.paused) return;
       const ll = llista(nou);
       if (!ll.length) return;   // sense cançons per a aquest moment: segueix la que sonava
       prepara();
-      mode = nou; ordre = [...ll].sort(() => Math.random() - 0.5); i = 0;
-      toca();
+      if (nou === mode && el.src) {   // la mateixa llista: si estava aturada, continua on era
+        if (el.paused) { volum(el, mode === "entreno" ? 0.55 : 0.32); const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+        return;
+      }
+      mode = nou; ordre = [...ll];
+      const seg = nou === "entreno" && des ? (Date.now() - des) / 1000 : 0;
+      const [k, t] = seg > 8 ? perHora(seg) : [0, 0];
+      i = k; toca(t);
+    }
+    function seguent() {
+      if (!ordre.length || !on()) return "";
+      prepara();
+      i = (i + 1) % ordre.length; toca(0);
+      return titol(ordre[i]);
     }
     function para() { clearInterval(fos); fos = apaga(el); }
     const sona = () => !!el && !el.paused;
@@ -1338,7 +1438,8 @@ const Efectos = (() => {
       volum(amb, 0.22);
       if (amb.paused) { const p = amb.play(); if (p && p.catch) p.catch(() => {}); }
     }
-    return { posa: m => { posa(m); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, sona, ambient, hiHa: m => llista(m).length > 0 };
+    return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, seguent, sona, ambient,
+      hiHa: m => llista(m).length > 0, titol: () => (ordre.length && el && el.src ? titol(ordre[i]) : "") };
   })();
   // L'hàptica. A l'Android, navigator.vibrate. A l'iPhone Safari no en té: des de l'iOS 17.4 un
   // <input type="checkbox" switch> fa un toc quan canvia, i n'hi ha prou de clicar-ne l'etiqueta
@@ -2314,10 +2415,13 @@ function veure(v) {
   if (!Efectos.suena("obrir-" + v)) Efectos.suena("pantalla");
 }
 // La música segons on ets: la llista «warrior» mentre hi ha un entreno en marcha, la de l'entrada si no.
-function musica() { Efectos.Musica.posa(S.activa ? "entreno" : "entrada"); }
+function musica() { const a = activa(); Efectos.Musica.posa(a ? "entreno" : "entrada", a ? a.inicio : null); }
 const I_MUSICA = on => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>${on ? "" : '<path d="M3 3l18 18"/>'}</svg>`;
+// Passar cançó (26/09, l'Albert: «un botó per passar la música, petit al costat del símbol de música»).
+const I_SEGUENT = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M5 5.6v12.8c0 .8.9 1.3 1.6.8l9-6.4c.6-.4.6-1.2 0-1.6l-9-6.4C5.9 4.3 5 4.8 5 5.6z"/><rect x="17" y="5" width="2.6" height="14" rx="1.1"/></svg>`;
 const botoMusica = () => (Efectos.Musica.hiHa("entrada") || Efectos.Musica.hiHa("entreno"))
-  ? `<button class="boto-musica marc" data-accion="musica" aria-pressed="${S.musica !== false}" aria-label="Música">${I_MUSICA(S.musica !== false)}</button>` : "";
+  ? `<button class="boto-musica marc" data-accion="musica" aria-pressed="${S.musica !== false}" aria-label="Música">${I_MUSICA(S.musica !== false)}</button>`
+    + `<button class="boto-seg marc" data-accion="musica-seg" aria-label="Siguiente canción"${S.musica === false ? " hidden" : ""}>${I_SEGUENT}</button>` : "";
 
 /* ---------------------------------------------------------------- gestos */
 let musicaEngegada = false;
@@ -2465,6 +2569,13 @@ document.addEventListener("click", ev => {
       if (S.musica) musica(); else Efectos.Musica.para();
       if (b.classList.contains("boto-musica")) { b.setAttribute("aria-pressed", String(S.musica)); b.innerHTML = I_MUSICA(S.musica); }
       else b.setAttribute("aria-checked", String(S.musica));
+      document.querySelectorAll(".boto-seg").forEach(x => { x.hidden = !S.musica; });
+      break;
+    }
+    case "musica-seg": {
+      if (!Efectos.Musica.sona()) musica();
+      const t = Efectos.Musica.seguent();
+      if (t) avis(t.replace(/ - /, ": "));
       break;
     }
     case "haptica": S.haptica = S.haptica === false; b.setAttribute("aria-checked", String(S.haptica !== false)); guardar(); Efectos.vibra(20); break;
