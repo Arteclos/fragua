@@ -413,6 +413,14 @@ button.rk-fila .rk-nom{text-decoration:underline;text-decoration-color:rgba(255,
 .ej-sense{width:48px;height:48px;border-radius:8px;background:#1b1918;flex:none}
 .pasos{margin:12px 0 4px;padding-left:22px;display:grid;gap:8px;line-height:1.5;font-size:15px}
 button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
+.r-meta{margin:12px 0;padding:12px;border-radius:12px;border:1px solid #c57b37;background:rgba(0,0,0,.35);text-align:center}
+.r-meta small{display:block;color:var(--fum);margin-top:8px;font-size:12.5px}
+.rutina-act-caixa{position:relative}
+.rutina-act-caixa .rutina-act{padding-right:64px}
+.rut-lapiz{--x:7px;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:46px;height:46px;display:grid;place-items:center;color:#ffd27a;z-index:2}
+.rut-lapiz svg{position:relative}
+.rutina.rebuda{display:grid;gap:4px;padding:12px}
+.rutina.rebuda>*{position:relative}
 /* ---- l'or i la botiga ---- */
 /* el comptador d'or, dret: la moneda a dalt i el número a sota, perquè càpiga al racó sense tocar el logo */
 .boto-or{--x:7px;--v:1.5px;position:absolute;left:4px;top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:grid;justify-items:center;gap:1px;min-width:44px;padding:5px 4px 4px;
@@ -1404,6 +1412,15 @@ function mejorRacha(S, ahora = new Date(), descansos = descansosSemana()) {
   }
   return Math.max(mejor, hasta, racha(S, ahora, descansos));
 }
+/* ---- ELS DIES DE GIMNÀS (Albert, 26/09 nit): «la ratxa mai es trenca... és de quants dies has anat des que tens
+   l'app... hòstia, aquest any tinc una ratxa de 20 dies». El número gran és el de l'any; les fites, les de sempre. ---- */
+const diasDe = S => new Set(finSesiones(S).map(s => s.fecha));
+const diasTotal = S => diasDe(S).size;
+function diasAno(S, any = new Date().getFullYear()) { let n = 0; diasDe(S).forEach(f => { if (f.startsWith(any + "-")) n++; }); return n; }
+function mediaSemanaAno(S, ahora = new Date()) {
+  const ini = new Date(ahora.getFullYear(), 0, 1), setm = Math.max(1, (ahora - ini) / (7 * DIA_MS));
+  return diasAno(S, ahora.getFullYear()) / setm;
+}
 // Les fites de la ratxa: números rodons, que són els que agraden (Albert: «bosses de diners en funció dels
 // reptes amb números rodons»). Cada fita paga una bossa d'or una sola vegada a la vida.
 const HITOS = [5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 250, 300, 365, 500, 730, 1000];
@@ -1420,7 +1437,7 @@ function semana(S, ahora = new Date()) {
   });
 }
 
-return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, semana, setmanesDe, diasPorSemana, tendenciaGrupos };
+return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
 })();
 
 /* Generat per prepara_sons.py: quins sons d'Artlist hi ha a assets/sons/. No s'edita a mà. */
@@ -2012,12 +2029,12 @@ const PLANTILLAS = [
       P("Pierna A", "Hack Squat", "Curl femoral tumbado", "Extensión de cuádriceps", "Elevación de gemelos", "Extensión lumbar"),
       P("Torso B", "Press de pecho en máquina", "Remo en T", "Dominadas", "Elevaciones laterales en polea", "Curl martillo", "Extensión de tríceps tipo katana en polea"),
       P("Pierna B", "Prensa de piernas", "Curl femoral sentado", "Abducción de cadera en máquina", "Aducción de cadera en máquina", "Elevación de gemelos")] },
-  { id: "gluteo-pierna", nombre: "Glúteo y pierna", precio: 300, resumen: "Cuatro días con la pierna y el glúteo de protagonistas y el torso para equilibrar.",
+  { id: "gluteo-pierna", nombre: "Glúteo y pierna", precio: 0, resumen: "Cuatro días con la pierna y el glúteo de protagonistas y el torso para equilibrar.",
     dias: [P("Pierna y glúteo A", "Hack Squat", "Prensa de piernas", "Abducción de cadera en máquina", "Curl femoral tumbado", "Elevación de gemelos"),
       P("Torso A", "Press de pecho en máquina", "Jalón al pecho", "Remo Gironda", "Elevaciones laterales en polea", "Extensión de tríceps"),
       P("Pierna y glúteo B", "Prensa de piernas", "Curl femoral sentado", "Aducción de cadera en máquina", "Extensión de cuádriceps", "Extensión lumbar"),
       P("Torso B", "Press inclinado", "Remo unilateral", "Press militar", "Curl martillo", "Elevaciones posteriores en polea")] },
-  { id: "ppl", nombre: "Empuje, tirón y pierna", precio: 450, resumen: "Seis días: empujar, tirar y pierna, dos vueltas por semana. Para quien ya entrena.",
+  { id: "ppl", nombre: "Empuje, tirón y pierna", precio: 0, resumen: "Seis días: empujar, tirar y pierna, dos vueltas por semana. Para quien ya entrena.",
     dias: [P("Empuje A", "Press inclinado en Smith", "Press de pecho en máquina", "Press militar", "Elevaciones laterales en polea", "Extensión de tríceps", "Fondos"),
       P("Tirón A", "Dominadas", "Remo Gironda", "Remo unilateral", "Elevaciones posteriores en polea", "Curl de bíceps en banco con soporte", "Curl martillo"),
       P("Pierna A", "Hack Squat", "Curl femoral tumbado", "Extensión de cuádriceps", "Elevación de gemelos", "Abducción de cadera en máquina"),
@@ -2046,25 +2063,25 @@ const rutinaTeva = r => !r.precio || (S.rutinasDesbloq || []).includes(r.id) || 
 
 /* ---------------------------------------------------------------- les pantalles */
 function vistaRutinas() {
-  const act = rutinaActual();
-  const carta = r => `<button class="rutina marc${rutinaTeva(r) ? "" : " bloq"}" data-accion="rut-ver" data-id="${r.id}">
+  const act = rutinaActual(), teves = S.rutinas || [], rebudes = S.recibidas || [];
+  const carta = r => `<button class="rutina marc" data-accion="rut-ver" data-id="${r.id}">
       <span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span>${r.id === act.id ? '<span class="toca">En uso</span>' : ""}</span>
-      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span>
-      ${rutinaTeva(r) ? "" : `<span class="preu">${MONEDA}${r.precio}</span>`}</button>`;
+      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button>`;
+  if (S.cuenta && !S.demo && Date.now() - (S.ui.rebudesAt || 0) > 60000) { S.ui.rebudesAt = Date.now(); setTimeout(carregaRebudes, 0); }
   return `${capcalera("Rutinas")}
-    <section class="seccio"><h2>Tus rutinas</h2>${[RUTINA_BASE, ...PLANTILLAS.filter(rutinaTeva), ...(S.rutinas || [])].map(carta).join("")}
+    <section class="seccio"><h2>Tus rutinas</h2>${teves.length ? teves.map(carta).join("") : '<p class="suau petit">Aún no tienes ninguna tuya: crea una o copia una plantilla y cámbiala a tu gusto.</p>'}
       <button class="btn clar marc" style="width:100%;margin-top:4px" data-accion="rut-nova">Crear una rutina nueva</button></section>
-    ${PLANTILLAS.some(r => !rutinaTeva(r)) ? `<section class="seccio"><h2>Más rutinas</h2>${PLANTILLAS.filter(r => !rutinaTeva(r)).map(carta).join("")}</section>` : ""}
+    ${rebudes.length ? `<section class="seccio"><h2>Te han compartido</h2>${rebudes.map(x => `<div class="rutina marc rebuda"><span class="rutina-cap"><span class="rutina-nom">${esc(x.rutina.nombre)}</span><span class="toca">de ${esc(x.de)}</span></span>
+      <span class="rutina-dades"><span>${nDies(x.rutina.dias.length)}</span></span><span class="fila envolta" style="margin-top:8px"><button class="btn clar marc" data-accion="rut-guarda-rebuda" data-id="${x.id}">GUARDAR</button><button class="btn marc" data-accion="rut-descarta-rebuda" data-id="${x.id}">Descartar</button></span></div>`).join("")}</section>` : ""}
+    <section class="seccio"><h2>Plantillas de la Fragua</h2>${[RUTINA_BASE, ...PLANTILLAS].map(carta).join("")}</section>
     ${bloc("Por qué funcionan", CIENCIA.map(([t, d, f]) => `<div class="ciencia"><b>${esc(t)}</b><p>${esc(d)}</p><small>${esc(f)}</small></div>`).join(""), "graf")}`;
 }
 function vistaRutina() {
   const r = totesRutinas().find(x => x.id === S.ui.rutVer) || rutinaActual(), teva = rutinaTeva(r), act = rutinaActual().id === r.id;
-  const oro = oroTotal();
-  const accions = !teva
-    ? (oro >= r.precio ? botoForja(`data-accion="rut-comprar" data-id="${r.id}"`, `DESBLOQUEAR POR ${r.precio}`, "de oro") : `<p class="falta">Te faltan ${r.precio - oro} de oro. Un entreno completo da unos 70.</p>`)
-    : `${act ? "" : botoForja(`data-accion="rut-usar" data-id="${r.id}"`, "USAR ESTA RUTINA", "")}
+  const accions = `${act ? "" : botoForja(`data-accion="rut-usar" data-id="${r.id}"`, "USAR ESTA RUTINA", "")}
        <div class="fila envolta" style="justify-content:center;margin-top:12px">
          ${rutinaPropia(r.id) ? `<button class="btn marc" data-accion="rut-editar" data-id="${r.id}">Editar</button>` : ""}
+         <button class="btn marc" data-accion="rut-compartir" data-id="${r.id}">Compartir</button>
          <button class="btn marc" data-accion="rut-copiar" data-id="${r.id}">${rutinaPropia(r.id) ? "Duplicar" : "Copiar y editar"}</button>
          ${rutinaPropia(r.id) && !act ? `<button class="btn marc" data-accion="rut-borrar" data-id="${r.id}">Borrar</button>` : ""}</div>`;
   return `${capcalera("")}<h1 class="titol-pag or">${esc(r.nombre)}</h1>
@@ -2181,6 +2198,87 @@ function afegeixPropi(i) {
   if (!n) { avis("Escribe el nombre del ejercicio.", true); return; }
   S.ui.edit.dias[i].ej.push([n, $("#ed-propi-t").value]); guardar(); tancaFull(); render(); Efectos.suena("yunque");
 }
+
+/* ---- compartir rutines (Albert, 26/09 nit: «compartir-la per WhatsApp o dins de l'app seleccionar l'amic, i que a l'amic
+   ja li aparegui: t'han compartit una rutina») ---- */
+const APP_URL = "https://arteclos.github.io/fragua/";
+const b64u = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => { bin += String.fromCharCode(x); }); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const deb64u = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)));
+const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 3)) })) });
+// Una rutina que ve de fora (un enllaç o un amic) es mira abans de fer-la servir: noms curts, poques coses.
+function rutinaValida(x) {
+  if (!x || typeof x.nombre !== "string" || !Array.isArray(x.dias) || !x.dias.length || x.dias.length > 14) return null;
+  const dias = x.dias.map(d => ({ t: String(d.t || "Día").slice(0, 40), ej: (Array.isArray(d.ej) ? d.ej : []).slice(0, 25)
+    .filter(e => Array.isArray(e) && typeof e[0] === "string").map(e => [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", ...(["lastre", "fino"].includes(e[2]) ? [e[2]] : [])]) }));
+  return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias };
+}
+function fullCompartir(r) {
+  const amics = (S.ui.amicsLlista || []);
+  if (S.cuenta && !S.demo) setTimeout(carregaAmics, 0);
+  return `<p class="suau petit" style="margin:0">${esc(r.nombre)}: ${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana.</p>
+    ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre la Fragua")}
+    <h3 class="grup-tria">A un amigo de tu clan</h3>
+    <div id="amics-comparteix">${S.cuenta ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
+}
+async function carregaAmics() {
+  try { S.ui.amicsLlista = await api("GET", "/amigos"); } catch (e) { S.ui.amicsLlista = []; }
+  const el = $("#amics-comparteix"), id = (document.querySelector('[data-accion="rut-enllac"]') || {}).dataset;
+  if (el && id) el.innerHTML = S.ui.amicsLlista.length ? S.ui.amicsLlista.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${id.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Aún no tienes amigos en tu clan: pásales tu código desde Social.</p>';
+}
+async function carregaRebudes() {
+  try { S.recibidas = (await api("GET", "/rutinas/recibidas")).map(x => ({ ...x, rutina: rutinaValida(x.rutina) })).filter(x => x.rutina); guardar(); if (S.ui.vista === "rutinas") render(); } catch (e) {}
+}
+// L'enllaç: https://arteclos.github.io/fragua/#rutina=<la rutina en base64>. En obrir-lo, la Fragua pregunta si la guardes.
+function mirarEnllacRutina() {
+  const m = location.hash.match(/^#rutina=([A-Za-z0-9_-]+)$/);
+  if (!m) return;
+  history.replaceState(null, "", location.pathname + location.search);
+  let x = null;
+  try { x = rutinaValida(JSON.parse(deb64u(m[1]))); } catch (e) {}
+  if (!x) { avis("Ese enlace de rutina no se puede leer.", true); return; }
+  S.ui.rutEnllac = x;
+  obreFull(`<p style="margin-top:0">Te han pasado una rutina: <b>${esc(x.nombre)}</b>, ${nDies(x.dias.length)}.</p>
+    ${x.dias.map((d, i) => `<p class="suau petit" style="margin:4px 0">Día ${i + 1}, ${esc(d.t)}: ${d.ej.map(e => esc(e[0])).join(", ")}</p>`).join("")}
+    <div style="margin-top:12px">${botoForja('data-accion="rut-guarda-enllac"', "GUARDAR EN MIS RUTINAS", "")}</div>`, "Una rutina para ti");
+}
+async function accioCompartir(acc, b) {
+  const r = totesRutinas().find(x => x.id === b.dataset.id);
+  switch (acc) {
+    case "rut-compartir": if (r) obreFull(fullCompartir(r), "Compartir"); return true;
+    case "rut-enllac": {
+      if (!r) return true;
+      const url = APP_URL + "#rutina=" + b64u(JSON.stringify(perCompartir(r))), txt = `Te paso mi rutina de la Fragua, «${r.nombre}»: ${url}`;
+      if (navigator.share) navigator.share({ text: txt }).catch(() => {});
+      else { try { await navigator.clipboard.writeText(txt); avis("Enlace copiado: pégalo en WhatsApp."); } catch (e) { avis("No se ha podido copiar el enlace.", true); } }
+      return true;
+    }
+    case "rut-a-amic": {
+      if (!r) return true;
+      try { await api("POST", "/rutinas/compartir", { per: b.dataset.p, rutina: perCompartir(r) }); Efectos.suena("triar"); avis("Enviada. Le aparecerá en sus rutinas."); tancaFull(); }
+      catch (e) { avis(e.message, true); }
+      return true;
+    }
+    case "rut-guarda-enllac": case "rut-guarda-rebuda": {
+      const x = acc === "rut-guarda-enllac" ? S.ui.rutEnllac : ((S.recibidas || []).find(y => String(y.id) === b.dataset.id) || {}).rutina;
+      if (!x) return true;
+      S.rutinas = [...(S.rutinas || []), { ...x, id: nouId() }];
+      if (acc === "rut-guarda-rebuda") { S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); }
+      S.ui.rutEnllac = null; guardar(); tancaFull(); Efectos.suena("yunque"); avis("Guardada en tus rutinas."); veure("rutinas");
+      return true;
+    }
+    case "rut-descarta-rebuda": S.recibidas = (S.recibidas || []).filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); guardar(); render(); return true;
+    case "rut-lapiz": {
+      // el llapis de l'Entreno: si la rutina és teva, s'edita; si és una plantilla, se'n fa una còpia teva i s'edita
+      const act = rutinaActual();
+      if (rutinaPropia(act.id)) S.ui.edit = JSON.parse(JSON.stringify(act));
+      else { S.ui.edit = copia(act); S.ui.edit.nombre = act.nombre + " (mía)"; }
+      guardar(); veure("editor"); return true;
+    }
+  }
+  return false;
+}
+const ACC_COMPARTIR = new Set(["rut-compartir", "rut-enllac", "rut-a-amic", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz"]);
+function accioRutinesSync(acc, b) { if (!ACC_COMPARTIR.has(acc)) return false; accioCompartir(acc, b); return true; }
 
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
    L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
@@ -2777,17 +2875,27 @@ function pagMejoras(d) {
     ${amb.map((m, i) => `<div class="r-graf panel entra" style="--d:${(0.35 + i * 0.22).toFixed(2)}s"><div class="r-graf-cap"><b>${esc(m.n)}</b><span class="${m.canvi >= 0 ? "puja" : "baixa"} num">${m.canvi >= 0 ? "+" : ""}${n0(m.canvi * 100)} %</span></div>${grafTendencia(m.vals)}<small>${m.vals.length} entrenos: de ${n0(m.vals[0])} a ${n0(m.vals[m.vals.length - 1])} kg</small></div>`).join("")}
     ${sense.length ? `<p class="r-nota entra" style="--d:${(0.4 + amb.length * 0.22).toFixed(2)}s">${sense.length === 1 ? "Un ejercicio" : sense.length + " ejercicios"} por primera vez: la próxima vez ya tendrás línea.</p>` : ""}`;
 }
+// Els dies de gimnàs: el de l'any compta, el de sempre dona les bosses, i la meta de l'any es tria aquí, en acabar
+// l'entreno (com el Duolingo), amb el compte enrere.
+const METAS_ANY = [50, 80, 100, 150, 200, 250];
+function htmlMeta(dies) {
+  const any = String(new Date().getFullYear()), m = (S.metaAny || {})[any];
+  if (!m) return `<div class="r-meta"><b>¿Cuántos días vas a ir al gimnasio este año?</b><div class="fila envolta" style="justify-content:center;margin-top:8px">${METAS_ANY.map(x => `<button class="chip" data-accion="meta-any" data-m="${x}">${x}</button>`).join("")}</div><small>Comprométete. Al llegar, una bolsa de ${Stats.bolsa(80)} a ${Stats.bolsa(250)} de oro.</small></div>`;
+  const falten = Math.max(0, m - dies);
+  return `<div class="r-hito"><div class="r-hito-t"><span>Tu meta de ${any}</span><b class="num">${dies} / ${m}</b></div><div class="barra"><i style="width:${(Math.min(1, dies / m) * 100).toFixed(1)}%"></i></div><small>${falten ? `Te ${falten === 1 ? "falta 1 día" : `faltan ${falten} días`}. Al llegar, ${Stats.bolsa(m)} de oro.` : "¡Meta cumplida este año!"}</small></div>`;
+}
 function pagRacha(d) {
-  const set = Stats.semana(S), prox = Stats.proximoHito(d.rDes), antHito = [...Stats.HITOS].reverse().find(h => h <= d.rDes) || 0;
-  const frac = prox ? (d.rDes - antHito) / (prox - antHito) : 1;
+  const set = Stats.semana(S), tot = d.mrDes, prox = Stats.proximoHito(tot), antHito = [...Stats.HITOS].reverse().find(h => h <= tot) || 0;
+  const frac = prox ? (tot - antHito) / (prox - antHito) : 1;
   const bossa = d.hitos.length || d.metaNova;
-  return `<div class="gran or entra" style="--d:.05s">TU RACHA</div>
+  return `<div class="gran or entra" style="--d:.05s">DÍAS DE GYM</div>
     <div class="r-flama entra" style="--d:.25s">${flama(true, "r-flama-svg")}<b class="or num" data-compta="${d.rDes}" data-de="${d.rAbans}" data-quan="500">${d.rAbans}</b></div>
-    <div class="r-sub entra" style="--d:.5s">${d.rDes === 1 ? "día" : "días"} siguiendo tu plan</div>
-    <div class="r-setmana entra" style="--d:.8s">${set.map(x => `<span class="${x.entreno ? "foc" : x.futuro ? "futur" : x.hoy ? "avui" : "desc"}">${x.entreno ? flama(true) : x.futuro || x.hoy ? "" : I_GEL}<i>${x.letra}</i></span>`).join("")}</div>
+    <div class="r-sub entra" style="--d:.5s">${d.rDes === 1 ? "día" : "días"} este año; ${tot} desde que empezaste</div>
+    <div class="r-setmana entra" style="--d:.8s">${set.map(x => `<span class="${x.entreno ? "foc" : x.futuro ? "futur" : x.hoy ? "avui" : "desc"}">${x.entreno ? flama(true) : ""}<i>${x.letra}</i></span>`).join("")}</div>
     ${bossa ? `<div class="r-bossa entra" style="--d:1.3s" data-so="cofre" data-quan="1300"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="150" height="150"><div><b class="or">${d.hitos.length ? `¡${d.hitos[d.hitos.length - 1]} días!` : "¡Meta cumplida!"}</b><span>+${d.hitos.reduce((a, h) => a + Stats.bolsa(h), 0) + (d.metaNova ? Stats.bolsa(d.metaNova) : 0)} de oro</span></div></div>` : ""}
-    ${prox ? `<div class="r-hito entra" style="--d:${bossa ? 2.1 : 1.3}s"><div class="r-hito-t"><span>Próxima bolsa de oro</span><b class="num">${d.rDes} / ${prox}</b></div><div class="barra"><i style="width:0" data-ample="${(frac * 100).toFixed(1)}"></i></div><small>A los ${prox} días: ${Stats.bolsa(prox)} de oro.${S.metaRacha ? ` Tu meta: ${S.metaRacha} días.` : ""}</small></div>` : ""}
-    <p class="r-nota entra" style="--d:${bossa ? 2.4 : 1.6}s">Tus días de descanso no la rompen: tu rutina deja ${Stats.descansosSemana()} a la semana.</p>`;
+    <div class="entra" id="r-meta" style="--d:${bossa ? 2 : 1.2}s">${htmlMeta(d.rDes)}</div>
+    ${prox ? `<div class="r-hito entra" style="--d:${bossa ? 2.3 : 1.5}s"><div class="r-hito-t"><span>Próxima bolsa de oro</span><b class="num">${tot} / ${prox}</b></div><div class="barra"><i style="width:0" data-ample="${(frac * 100).toFixed(1)}"></i></div><small>A los ${prox} días de gimnasio: ${Stats.bolsa(prox)} de oro.</small></div>` : ""}
+    <p class="r-nota entra" style="--d:${bossa ? 2.6 : 1.8}s">Los días no se pierden nunca: si descansas, siguen ahí.</p>`;
 }
 function pagFuerza(d) {
   const fz = Stats.fuerza(S), millors = d.mejoras.filter(m => m.vals.length >= 2 && m.vals[m.vals.length - 1] > m.vals[m.vals.length - 2]).length;
@@ -2850,8 +2958,7 @@ function despertaPag(i) {
   });
   pag.querySelectorAll("[data-so]").forEach(el => setTimeout(() => { Efectos.suena(el.dataset.so); Efectos.vibra([20, 30, 40]); if (el.classList.contains("r-bossa")) { const r = el.getBoundingClientRect(); Efectos.lanza(r.left + 75, r.top + 60, 36, 1.3); } if (el.classList.contains("r-puja")) Efectos.lluvia(1.6); }, +el.dataset.quan));
   pag.querySelectorAll("[data-ample]").forEach(el => setTimeout(() => { el.style.width = el.dataset.ample + "%"; }, 1500));
-  if (i === 2 && R.d.salvada) { setTimeout(() => Efectos.suena("gel-destral"), 700); setTimeout(() => { Efectos.suena("gel-trenca"); Efectos.vibra([40, 30, 60]); }, 1000); }
-  else if (i === 2 && R.d.rDes > R.d.rAbans) setTimeout(() => Efectos.suena("ratxa"), 600);
+  if (i === 2 && R.d.rDes > R.d.rAbans) setTimeout(() => Efectos.suena("ratxa"), 600);
   // el percentil de cada rècord, quan el servidor ha rebut l'entreno d'avui
   if (i === 0 && soc().participa && !S.demo) sincro.then(yo => {
     if (!yo || !yo.percentils) return;
@@ -2932,26 +3039,29 @@ function fullEjercicio(n) {
     ${bloc("Últimos entrenos", hist.map(s => { const e = s.ej.find(q => q.n === n); return `<div class="reg"><div><div>${fechaLarga(s.fecha)}</div><div class="d">${e.sets.filter(z => z.ok).map(z => `${lastre ? (z.kg ? "+" + kgTxt(z.kg) : "peso") : kgTxt(z.kg || 0)} × ${z.reps}`).join(", ")}</div></div><span></span><span></span></div>`; }).join(""))}`;
 }
 
-/* ---- Racha ---- */
-const METAS = [7, 14, 30, 60, 100, 365];
+/* ---- Racha: els dies de gimnàs. Primer la constància; després la meta de l'any i les bosses ---- */
 function vistaRachaStats() {
-  const r = Stats.racha(S), mr = Stats.mejorRacha(S), des = Stats.descansosSemana(), prox = Stats.proximoHito(r);
-  return `<div class="panel pad r-racha-cap"><div class="r-flama">${flama(r > 0, "r-flama-svg")}<b class="or num">${r}</b></div>
-      <div><div class="r-sub" style="margin:0">${r === 1 ? "día" : "días"} siguiendo tu plan</div><div class="suau petit">Tu mejor racha: ${mr} ${mr === 1 ? "día" : "días"}. Tu rutina deja ${des} ${des === 1 ? "descanso" : "descansos"} a la semana: no la rompen.</div></div></div>
-    <div class="r-setmana gran-s">${Stats.semana(S).map(x => `<span class="${x.entreno ? "foc" : x.futuro ? "futur" : x.hoy ? "avui" : "desc"}">${x.entreno ? flama(true) : x.futuro || x.hoy ? "" : I_GEL}<i>${x.letra}</i></span>`).join("")}</div>
-    ${bloc("Tu meta", `<p class="suau petit" style="margin-top:0">Comprométete: ¿hasta cuántos días llegas? Al conseguirla, una bolsa de oro extra.</p>
-      <div class="fila envolta">${METAS.map(m => `<button class="chip" data-accion="meta-racha" data-m="${m}" aria-pressed="${S.metaRacha === m}">${m} días</button>`).join("")}</div>
-      ${S.metaRacha ? `<div class="r-hito" style="margin-top:12px"><div class="r-hito-t"><span>${(S.metasOk || []).includes(S.metaRacha) ? "Conseguida" : "Llevas"}</span><b class="num">${Math.min(mr, S.metaRacha)} / ${S.metaRacha}</b></div><div class="barra"><i style="width:${(Math.min(1, mr / S.metaRacha) * 100).toFixed(1)}%"></i></div></div>` : ""}`)}
-    ${bloc("Bolsas de oro", `<div class="bosses">${Stats.HITOS.slice(0, 12).map(h => `<div class="bossa-h${mr >= h ? " feta" : ""}"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="56" height="56" loading="lazy"><b class="num">${h}</b><small>${Stats.bolsa(h)} oro</small></div>`).join("")}</div>
-      <p class="llegenda">${prox ? `Te faltan ${prox - r} ${prox - r === 1 ? "día" : "días"} para la siguiente.` : "Las tienes todas."} Cada bolsa se cobra una vez.</p>`)}
-    ${bloc("Constancia", `${grafConstancia(Stats.constancia(S))}<p class="llegenda">Cada casilla es un día de las últimas 12 semanas. Las encendidas, entrenaste.</p>`, "graf")}`;
+  const any = new Date().getFullYear(), dAny = Stats.diasAno(S), dTot = Stats.diasTotal(S), prox = Stats.proximoHito(dTot);
+  return `<div class="panel pad r-racha-cap"><div class="r-flama">${flama(dAny > 0, "r-flama-svg")}<b class="or num">${dAny}</b></div>
+      <div><div class="r-sub" style="margin:0">${dAny === 1 ? "día" : "días"} de gimnasio en ${any}</div><div class="suau petit">${dTot} desde que empezaste; ${fmt(Math.round(Stats.mediaSemanaAno(S) * 10) / 10)} por semana de media este año. Los días no se pierden nunca.</div></div></div>
+    ${bloc("Constancia", `${grafConstancia(Stats.constancia(S))}<p class="llegenda">Cada casilla es un día de las últimas 12 semanas. Las encendidas, entrenaste.</p>`, "graf")}
+    ${bloc(`Tu meta de ${any}`, htmlMeta(dAny) + ((S.metaAny || {})[String(any)] ? `<p style="margin:10px 0 0;text-align:center"><button class="enllac" data-accion="meta-any" data-m="0">Cambiar la meta</button></p>` : ""))}
+    ${bloc("Bolsas de oro", `<div class="bosses">${Stats.HITOS.slice(0, 12).map(h => `<div class="bossa-h${dTot >= h ? " feta" : ""}"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="56" height="56" loading="lazy"><b class="num">${h}</b><small>${Stats.bolsa(h)} oro</small></div>`).join("")}</div>
+      <p class="llegenda">${prox ? `Te faltan ${prox - dTot} ${prox - dTot === 1 ? "día" : "días"} de gimnasio para la siguiente.` : "Las tienes todas."} Cada bolsa se cobra una vez.</p>`)}`;
 }
 
 /* ---- els gestos d'aquestes pàgines; torna true si era seu ---- */
 function accioPagines(acc, b) {
   switch (acc) {
     case "ej-stats": obreFull(fullEjercicio(b.dataset.n), b.dataset.n); pasosDe(b.dataset.n).then(pp => { const o = $("#pasos"); if (o && pp) o.innerHTML = pp.map(x => `<li>${esc(x)}</li>`).join(""); }); return true;
-    case "meta-racha": S.metaRacha = S.metaRacha === +b.dataset.m ? null : +b.dataset.m; guardar(); render(); if (S.metaRacha) { Efectos.suena("triar"); avis(`Meta: ${S.metaRacha} días. ¡A por ella!`); } return true;
+    case "meta-any": {
+      const any = String(new Date().getFullYear()), m = +b.dataset.m;
+      S.metaAny = { ...(S.metaAny || {}), [any]: m || null }; guardar();
+      const lloc = document.getElementById("r-meta");
+      if (lloc) lloc.innerHTML = htmlMeta(Stats.diasAno(S)); else render();
+      if (m) { Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); avis(`Meta: ${m} días en ${any}. ¡A por ella!`); }
+      return true;
+    }
     case "racha-veure": S.ui.statsTab = "racha"; veure("estadisticas"); return true;
     case "resum-seg": resumSeguent(); return true;
   }
@@ -3017,7 +3127,7 @@ function sincronitza() {
   sincro = (async () => {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: so.nick || null, publico: so.visible === "publico", menor: so.menor !== false, sexe: S.perfil.sexo || null,
-      pes: S.perfil.peso, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.racha(S),
+      pes: S.perfil.peso, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
@@ -3064,7 +3174,7 @@ function vistaSocial() {
     const dif = yo && yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
     h += `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "gran")}
       <div class="perfil-dades"><b class="perfil-nick">${esc(so.nick || nomHeroi())}</b><small>${so.visible === "publico" ? (so.menor !== false ? "Perfil público, solo para tus amigos" : "Perfil público") : "Anónimo: nadie ve tu nick"}</small>
-        <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> días de gym</span><span>${flama(Stats.racha(S) > 0)}<b class="num">${Stats.racha(S)}</b> de racha</span></div></div>
+        <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> días de gym</span><span>${flama(Stats.diasAno(S) > 0)}<b class="num">${Stats.diasAno(S)}</b> este año</span></div></div>
       <div class="perfil-rang">${y ? `${imgYunque(yo.poder, "gran")}<b class="or">${y.nom}</b><small class="num">Poder ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small>` : `<small>Termina un entreno para tener rango</small>`}</div></div>
       ${!yo || !yo.gimnas ? `<button class="avis-gim marc" data-accion="vista" data-v="gimnasios"><img src="${ACTIUS}icones/entreno.webp" alt="" width="40" height="40"><span><b>Elige tu gimnasio</b><small>Para ver los rankings de tu gimnasio, tu ciudad, tu provincia y más allá.</small></span></button>` : ""}
       <div class="tabs-t"><button class="chip" data-accion="social-metrica" data-m="rango" aria-pressed="${so.metrica === "rango"}">Rango</button><button class="chip" data-accion="social-metrica" data-m="dias" aria-pressed="${so.metrica === "dias"}">Días de gym</button></div>
@@ -3130,7 +3240,7 @@ async function accioSocial(acc, b) {
         $("#capa .full-cap h2").textContent = p.nick;
         $("#capa .dins").insertAdjacentHTML("beforeend", "");
         const cos = `<div class="perfil-gran"><img src="${imgPersonaje(PERSONAJES[p.personatge] ? p.personatge : "herrero")}" alt=""><div>${imgYunque(p.poder, "gran")}<b class="or">${y ? y.nom : ""}</b><small>Nivel ${p.nivell}</small></div></div>
-          <div class="r-tiles tres-t"><div class="r-tile marc"><b class="or num">${p.dies}</b><span>días de gym</span></div><div class="r-tile marc"><b class="or num">${p.racha || 0}</b><span>de racha</span></div><div class="r-tile marc"><b class="or num">${p.poder != null ? n0(p.poder) : "·"}</b><span>Poder</span></div></div>
+          <div class="r-tiles tres-t"><div class="r-tile marc"><b class="or num">${p.dies}</b><span>días de gym</span></div><div class="r-tile marc"><b class="or num">${p.racha || 0}</b><span>este año</span></div><div class="r-tile marc"><b class="or num">${p.poder != null ? n0(p.poder) : "·"}</b><span>Poder</span></div></div>
           <div class="grups-perfil">${Object.entries(p.poder_grups || {}).map(([g, v]) => `<div>${imgYunque(v)}<small>${esc(g)}</small></div>`).join("")}</div>`;
         const d = $("#capa .dins"); d.querySelectorAll(":scope > p").forEach(x => x.remove()); d.insertAdjacentHTML("beforeend", cos);
       } catch (e) { tancaFull(); avis(e.message, true); }
@@ -3493,8 +3603,8 @@ function oroGanado() {
   const xp = Stats.experiencia(S);
   let menjars = 0;
   Object.values(S.reg).forEach(ll => { menjars += Math.min(6, new Set(ll.map(r => r.comida)).size); });
-  const mr = Stats.mejorRacha(S);
-  const bosses = Stats.HITOS.filter(h => h <= mr).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasOk || []).reduce((a, m) => a + Stats.bolsa(m), 0);
+  const dt = Stats.diasTotal(S);
+  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0);
   return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
 }
 const oroTotal = () => Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0));
@@ -3507,6 +3617,7 @@ if (!S.ui.vista) S.ui.vista = "inicio";
 const I_ENRERE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
 const I_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const I_BAIXA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+const I_LLAPIS = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></svg>';
 const I_X = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 // Els degradats es declaren un sol cop per a tota la pàgina (un id repetit a cada gràfica és invàlid).
 document.body.insertAdjacentHTML("afterbegin", `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -3617,7 +3728,7 @@ const botoForja = (attrs, titol, sub, cls = "") => `<div class="forja ${cls}"><b
 
 /* ---------------------------------------------------------------- l'entrada */
 function vistaInicio() {
-  const p = S.personaje, xp = Stats.experiencia(S), racha = Stats.racha(S), foc = Stats.fuego(S);
+  const p = S.personaje, xp = Stats.experiencia(S), racha = Stats.diasAno(S), foc = Stats.fuego(S);
   const act = activa(), dia = act ? act.dia : siguienteDia(), d = act ? { t: act.dt || (RUTINA[act.dia - 1] || {}).t || "" } : (diaRutina(dia) || { t: "" });
   const k = hoy(), obj = objetivoProt(), prot = totalDia(k).p;
   const sf = serieFuerza(), fz = Stats.fuerza(S);
@@ -3640,7 +3751,7 @@ function vistaInicio() {
       </div>
       <div class="linia"></div>
       <div class="placa-foc" data-accion="racha-veure" role="button" tabindex="0" aria-label="Ver tu racha">
-        <div class="emblema" role="img" aria-label="${racha} ${racha === 1 ? "día" : "días"} de racha">${flama(racha > 0)}${racha > 0 ? `<b class="num">${racha}</b>` : ""}</div>
+        <div class="emblema" role="img" aria-label="${racha} ${racha === 1 ? "día" : "días"} de gimnasio este año">${flama(racha > 0)}${racha > 0 ? `<b class="num">${racha}</b>` : ""}</div>
         <div><div class="foc-t">Fuego encendido:</div><div class="foc-n num">${foc.dias} de 7 días</div>
           <div class="flames" role="img" aria-label="${foc.dias} de los últimos 7 días entrenados">${Array.from({ length: 7 }, (_, i) => flama(i < foc.dias)).join("")}</div></div>
       </div>
@@ -3706,8 +3817,8 @@ function vistaEntreno() {
     const fetes = S.ses.filter(x => x.fin).slice(-4).reverse();
     const r = rutinaActual();
     return `${capcalera("Entreno")}
-    <button class="rutina-act marc" data-accion="vista" data-v="rutinas"><span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span><span class="toca">Cambiar o editar</span></span>
-      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button>
+    <div class="rutina-act-caixa"><button class="rutina-act marc" data-accion="vista" data-v="rutinas"><span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span><span class="toca">Cambiar</span></span>
+      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button><button class="rut-lapiz marc" data-accion="rut-lapiz" aria-label="Editar tu rutina">${I_LLAPIS}</button></div>
     ${r.dias.map((dd, i) => ({ n: i + 1, t: dd.t, ej: dd.ej })).map(d => { const ult = [...S.ses].reverse().find(x => x.dia === d.n && x.fin && (x.rut || "seis-dias") === r.id);
       return `<button class="dia marc" data-accion="empezar" data-dia="${d.n}"><span class="n or">${d.n}</span><span><span class="t">${esc(d.t)}</span><br><span class="s">${d.ej.length} ejercicios${ult ? ", la última vez el " + fechaCorta(ult.fecha) : ""}</span></span>${d.n === toca ? '<span class="toca">Toca hoy</span>' : ""}</button>`; }).join("")}
     ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<div class="reg"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div><span></span></div>`).join("")}</div></section>` : ""}`;
@@ -3757,7 +3868,7 @@ function vistaEstadisticas() {
   return `${capcalera("Estadísticas")}${tabsStats4()}
   <div class="xips-scroll petits periode">${[["mes", "Mes"], ["trimestre", "Trimestre"], ["anual", "Año"], ["total", "Todo"]].map(([p, n]) => `<button class="chip" data-accion="periode" data-p="${p}" aria-pressed="${per === p}">${n}</button>`).join("")}</div>
   <div class="tres">
-    <div class="mini marc"><h3>Racha</h3><div class="gran or num">${Stats.racha(S)}</div><div class="dada">días</div></div>
+    <div class="mini marc"><h3>Días</h3><div class="gran or num">${Stats.diasAno(S)}</div><div class="dada">este año</div></div>
     <div class="mini marc"><h3>Récords</h3><div class="gran or num">${rec}</div><div class="dada">este mes</div></div>
     <div class="mini marc"><h3>Entrenos</h3><div class="gran or num">${sesiones}</div><div class="dada">NV ${xp.nivel}</div></div>
   </div>
@@ -4175,20 +4286,21 @@ document.addEventListener("click", ev => {
     }
     case "terminar": {
       const s = activa(); if (!s) break;
-      const abans = Stats.experiencia(S), rAbans = Stats.racha(S), oroAbans = oroGanado(), mrAbans = Stats.mejorRacha(S), sid = s.id;
+      const abans = Stats.experiencia(S), rAbans = Stats.diasAno(S), oroAbans = oroGanado(), mrAbans = Stats.diasTotal(S), sid = s.id;
       const ahir = clave(new Date(Date.now() - 864e5));
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
       if (!series) { avis("Aún no has hecho ninguna serie."); break; }
       terminar(); S.ui.vista = "inicio"; musica(); sincronitza();
-      const des = Stats.experiencia(S), rDes = Stats.racha(S), mrDes = Stats.mejorRacha(S);
-      // la meta de ratxa que es va posar: si l'ha feta avui, la seva bossa (una sola vegada)
-      const metaNova = S.metaRacha && mrDes >= S.metaRacha && !(S.metasOk || []).includes(S.metaRacha) ? S.metaRacha : null;
-      if (metaNova) S.metasOk = [...(S.metasOk || []), metaNova];
+      const des = Stats.experiencia(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
+      // la meta de dies de l'any: si l'ha feta avui, la seva bossa (una vegada per any)
+      const any = String(new Date().getFullYear()), meta = (S.metaAny || {})[any];
+      const metaNova = meta && rDes >= meta && !(S.metasAnyOk || []).includes(any) ? meta : null;
+      if (metaNova) S.metasAnyOk = [...(S.metasAnyOk || []), any];
       render();
       // com el gel del Duolingo: ahir no va entrenar i la ratxa segueix gràcies al dia de descans
       resumEntreno({ sid, abans, des, rAbans, rDes, mrAbans, mrDes, metaNova, oro: oroGanado() - oroAbans,
-        salvada: !jaAvui && !entrenatAhir && rDes >= 2 });
+        salvada: false });
       S.pendentNivell = null;
       guardar(); break;
     }
@@ -4280,7 +4392,7 @@ document.addEventListener("click", ev => {
     case "restaura-veure": $("#restaura").innerHTML = `<form class="form" data-form="restaura" style="margin-top:12px"><label>Pega aquí tus datos<textarea id="r-txt"></textarea></label><label>O elige el archivo<input id="r-fit" type="file" accept=".json,.txt,application/json,text/plain"></label><button class="btn marc" type="submit">Recuperar mis datos</button></form>`; break;
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
-    default: if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b)) accioRutina(acc, b);
+    default: if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -4374,6 +4486,7 @@ document.addEventListener("touchend", ev => { if (x0 == null) return; const dx =
 render();
 if (S.activa) pedirPantalla();
 confirmaPagament();
+mirarEnllacRutina();
 
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
