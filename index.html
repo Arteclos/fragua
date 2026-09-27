@@ -433,6 +433,21 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .gim-falta{margin:6px 0 12px;text-align:center;color:var(--fum)}
 .gim-fila.gim-meu{box-shadow:inset 0 0 0 1px #f0a050}
 .gim-fila small.gim-teu{color:#f0a050;font-weight:700}
+/* ---- la germandat dels gimnasos (27-09-2026) ---- */
+.gim-pin-rang{display:grid;place-items:center}
+.gim-pin-rang img{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#3a2a20,#15100d);border:2px solid #f0a050;padding:4px;object-fit:contain;box-shadow:0 0 12px rgba(255,140,40,.55),0 2px 8px rgba(0,0,0,.6)}
+.gim-pin-rang b{position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:#b3200a;border:1.5px solid #f0a050;color:#fff0cf;font:800 12px/17px var(--text);text-align:center}
+.gim-fila small.gim-rang{color:#f0c27a}
+.gim-germandat{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;margin:12px 0 4px}
+.gim-germandat img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.gim-germandat span{display:grid;gap:2px}
+.gim-germandat small{color:var(--fum);font-size:13px}
+.rang-gims{margin:6px 0 20px}
+.rang-gims .seg{margin-bottom:6px}
+.rg-fila .rk-nom{display:grid;gap:1px;white-space:normal}
+.rg-fila .rk-nom b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rg-fila .rk-nom small{color:var(--fum);font-size:12.5px}
+.rg-fila .yunque{width:36px;height:36px}
 .gim-adr{margin:4px 0 2px}
 .gim-adr-f{margin-top:8px}
 .gim-es-teu{margin:0;text-align:center;font-family:var(--display);font-size:17px}
@@ -3718,6 +3733,41 @@ function sincronitza() {
   return sincro;
 }
 
+// La GERMANDAT de cada gimnàs (l'Albert, 26-09-2026 nit: «que els gimnassos tinguin rangos també de hermandad, per saber
+// quin és el gym més dur de la ciutat o Espanya; al mapa, amb el rango que tenen, en funció del total de XP de la gent
+// que hi va, i quantes persones de KLONK hi ha»). Els mateixos materials que els yunques, amb la XP de tot el gimnàs
+// sumada (la gent que el té a Social). Surten el recompte i la suma, mai qui hi va.
+const GERMANDATS = [[0, "madera", "Hermandad de Madera"], [5000, "piedra", "Hermandad de Piedra"], [15000, "cobre", "Hermandad de Cobre"],
+  [40000, "bronce", "Hermandad de Bronce"], [100000, "hierro", "Hermandad de Hierro"], [250000, "acero", "Hermandad de Acero"],
+  [500000, "oro", "Hermandad de Oro"], [1000000, "obsidiana", "Hermandad de Obsidiana"], [2000000, "criselefantino", "Hermandad Criselefantina"],
+  [5000000, "estelar", "Hermandad Estelar"]];
+const germandatDe = g => { if (!g || !g.klonk) return null; const xp = g.xp_gim ?? g.xp ?? 0; let y = GERMANDATS[0]; GERMANDATS.forEach(t => { if (xp >= t[0]) y = t; }); return { id: y[1], nom: y[2] }; };
+const genKlonk = n => `${n0(n)} ${n === 1 ? "persona" : "personas"} de KLONK`;
+const filaRangGim = g => { const t = germandatDe(g);
+  return `<div class="rk-fila rg-fila${g.meu ? " yo" : ""}"><span class="rk-pos num">${g.pos}</span>${t ? `<img class="yunque" src="${ACTIUS}yunques/${t.id}.webp" alt="${esc(t.nom)}" title="${esc(t.nom)}">` : "<span></span>"}<span class="rk-nom"><b>${esc(g.nom)}</b><small>${g.meu ? "Tu gimnasio · " : ""}${genKlonk(g.klonk)}</small></span><span class="rk-val num or">${n0(g.xp)} XP</span></div>`; };
+// El gimnàs més dur, a dalt de la pestanya Gimnasios: la teva ciutat o el teu país (el del teu gimnàs).
+const rgCarrega = {};
+async function carregaRangGims(amb) {
+  if (rgCarrega[amb]) return;
+  rgCarrega[amb] = true;
+  try { const r = await api("GET", "/gimnasios/ranking?ambit=" + amb); S.social = { ...soc(), rangGims: { ...(soc().rangGims || {}), [amb]: { ...r, at: Date.now() } } }; }
+  catch (e) { S.social = { ...soc(), rangGims: { ...(soc().rangGims || {}), [amb]: { llista: [], err: e.message, at: Date.now() } } }; }
+  finally { rgCarrega[amb] = false; }
+  guardar(); if (S.ui.vista === "social" && S.ui.socTab === "gimnasios") render();
+}
+function rangGimnasos(so) {
+  const amb = S.ui.rgAmbit || "ciudad", tots = so.rangGims || {}, r = tots[amb];
+  if (!r || Date.now() - (r.at || 0) > 300000) setTimeout(() => carregaRangGims(amb), 0);
+  const nom = a => (tots[a] && tots[a].on) || (a === "ciudad" ? "Tu ciudad" : "Tu país");
+  const cos = !r ? '<p class="suau petit" style="text-align:center">Cargando…</p>'
+    : r.err ? `<p class="falta">${esc(r.err)}</p>`
+    : !r.llista.length ? '<p class="suau petit" style="text-align:center;margin:10px 0 0">Aún no hay gimnasios con gente de KLONK aquí. El tuyo puede ser el primero.</p>'
+    : r.llista.slice(0, 10).map(filaRangGim).join("") + (r.meu && r.meu.pos > 10 ? `<div class="rk-punts">…</div>${filaRangGim(r.meu)}` : "");
+  return `<section class="bloc rang-gims"><h2 class="pestanya marc">El gimnasio más duro</h2><div class="panel pad">
+    <div class="seg" role="group" aria-label="Dónde">${["ciudad", "pais"].map(a => `<button data-accion="rg-ambit" data-a="${a}" aria-pressed="${amb === a}">${esc(nom(a))}</button>`).join("")}</div>
+    <div class="rk">${cos}</div></div></section>`;
+}
+
 /* ---- el rang: un yunque de cada material, de la fusta a l'estel·lar ----
    Surt del Poder (0-1000: la mitjana dels percentils de força relativa). Els de dalt són escassos a posta. */
 const YUNQUES = [[0, "madera", "Madera"], [100, "piedra", "Piedra"], [250, "cobre", "Cobre"], [400, "bronce", "Bronce"], [550, "hierro", "Hierro"],
@@ -3786,7 +3836,7 @@ function vistaSocial() {
   const t = tabSoc(), n = ((so.clan || {}).rebudes || []).length;
   h += `<div class="tabs-t">${[["rank", "Rankings"], ["clan", "Clan"], ["gimnasios", "Gimnasios"]].map(([k, nom]) =>
     `<button class="chip" data-accion="soc-tab" data-t="${k}" aria-pressed="${t === k}">${nom}${k === "clan" && n ? `<b class="xapa num" aria-label="${n} ${n === 1 ? "solicitud" : "solicitudes"}">${n}</b>` : ""}</button>`).join("")}</div>`;
-  h += t === "clan" ? vistaClan(so) : t === "gimnasios" ? cosGimnasos() : vistaRankings(so);
+  h += t === "clan" ? vistaClan(so) : t === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
   refrescaSocial(so, t);
   return h;
 }
@@ -4018,6 +4068,7 @@ async function accioSocial(acc, b) {
       return true;
     case "soc-yunques": obreFull(fullYunques(), "Los yunques"); return true;
     case "soc-tria": S.ui.socTria = true; guardar(); render(); return true;
+    case "rg-ambit": S.ui.rgAmbit = b.dataset.a; guardar(); render(); return true;
     case "soc-gim-clan": {     // un adult: ensenyar o no el seu gimnàs al seu clan (un menor no el té mai a la vista)
       S.social = { ...soc(), gimClan: soc().gimClan === false }; guardar(); render();
       sincronitza().then(yo => { if (yo) avis(soc().gimClan === false ? "Tu clan ya no ve tu gimnasio." : "Tu clan ve tu gimnasio en tu perfil."); });
@@ -4164,11 +4215,14 @@ function pintaGims(ajusta) {
   if (capaGims && window.L) {
     capaGims.clearLayers();
     const ic = L.divIcon({ className: "gim-pin", html: `<img src="${ACTIUS}icones/entreno.webp" alt="">`, iconSize: [34, 34], iconAnchor: [17, 17] });
-    gims.forEach((g, i) => L.marker([g.lat, g.lon], { icon: ic, title: g.nom }).on("click", () => fitxaGim(i)).addTo(capaGims));
+    // els que tenen gent de KLONK, amb el yunque de la seva germandat i quants són (per damunt dels altres)
+    const icRang = (t, n) => L.divIcon({ className: "gim-pin gim-pin-rang", html: `<img src="${ACTIUS}yunques/${t.id}.webp" alt=""><b>${n}</b>`, iconSize: [44, 44], iconAnchor: [22, 22] });
+    gims.forEach((g, i) => { const t = germandatDe(g);
+      L.marker([g.lat, g.lon], { icon: t ? icRang(t, g.klonk) : ic, title: t ? `${g.nom}: ${t.nom}` : g.nom, zIndexOffset: t ? 500 : 0 }).on("click", () => fitxaGim(i)).addTo(capaGims); });
     if (ajusta && gims.length && mapa) mapa.fitBounds(L.latLngBounds(gims.slice(0, 6).map(g => [g.lat, g.lon])), { maxZoom: 15, padding: [30, 30] });
   }
   const el = $("#gim-llista"); if (!el) return;
-  el.innerHTML = gims.length ? `<div class="gim-llista">${gims.map((g, i) => `<button class="gim-fila marc${g.id === meu ? " gim-meu" : ""}" data-accion="gim-fitxa" data-i="${i}"><span><b>${esc(g.nom)}</b><small>${esc(g.adreca || g.adreca_gent || "Sin dirección")}</small>${g.id === meu ? `<small class="gim-teu">Tu gimnasio</small>` : ""}</span><span class="gim-dades">${g.preu != null ? `<b class="or num">${fmt(Math.round(g.preu))} €</b>` : ""}${g.estrelles ? `<small class="estr">${estrelles(g.estrelles)}</small>` : ""}</span></button>`).join("")}</div>`
+  el.innerHTML = gims.length ? `<div class="gim-llista">${gims.map((g, i) => `<button class="gim-fila marc${g.id === meu ? " gim-meu" : ""}" data-accion="gim-fitxa" data-i="${i}"><span><b>${esc(g.nom)}</b><small>${esc(g.adreca || g.adreca_gent || "Sin dirección")}</small>${germandatDe(g) ? `<small class="gim-rang">${germandatDe(g).nom} · ${genKlonk(g.klonk)}</small>` : ""}${g.id === meu ? `<small class="gim-teu">Tu gimnasio</small>` : ""}</span><span class="gim-dades">${g.preu != null ? `<b class="or num">${fmt(Math.round(g.preu))} €</b>` : ""}${g.estrelles ? `<small class="estr">${estrelles(g.estrelles)}</small>` : ""}</span></button>`).join("")}</div>`
     : '<p class="suau petit" style="text-align:center">No hay gimnasios en el mapa por aquí. Aleja el mapa y vuelve a buscar.</p>';
 }
 function fitxaGim(i) {
@@ -4178,6 +4232,7 @@ function fitxaGim(i) {
   $("#gim-fitxa").innerHTML = `<div class="panel pad gim-fitxa"><b class="or" style="font-size:18px">${esc(g.nom)}</b>
     <div class="gim-adr" id="gim-adr"><span class="suau petit">${esc(adr || "Sin dirección en el mapa.")}</span>${g.adreca ? "" : ` <button class="enllac" data-accion="gim-adreca" data-i="${i}">${adr ? "Corregir" : "Añadir la dirección"}</button>`}</div>
     ${g.hores ? `<div class="suau petit">Horario: ${esc(g.hores)}</div>` : ""}
+    ${germandatDe(g) ? `<div class="gim-germandat"><img src="${ACTIUS}yunques/${germandatDe(g).id}.webp" alt=""><span><b class="or">${germandatDe(g).nom}</b><small>${genKlonk(g.klonk)} · ${n0(g.xp_gim || 0)} XP entre todas</small></span></div>` : ""}
     <div class="gim-num"><div><span class="or num">${g.preu != null ? fmt(Math.round(g.preu * 10) / 10) + " €" : "·"}</span><small>al mes${g.n_preu ? `, de ${g.n_preu} ${g.n_preu === 1 ? "persona" : "personas"}` : ""}</small></div>
       <div><span class="or">${g.estrelles ? estrelles(g.estrelles) : "·"}</span><small>${g.n_estrelles ? `${fmt(g.estrelles)} de ${g.n_estrelles}` : "sin valorar"}</small></div></div>
     <form class="form" data-form="gim-op" data-i="${i}"><div class="dos"><label>¿Cuánto pagas al mes?<span class="camp"><input id="g-preu" inputmode="decimal" autocomplete="off" placeholder="35"><span class="u">€</span></span></label>
@@ -4253,7 +4308,7 @@ async function accioGimnasos(acc, b) {
 
 // Els gestos d'aquí són asíncrons: el despatxador diu que són seus a l'acte i els deixa córrer.
 const ACC_SOCIAL = new Set(["social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
-  "soc-tab", "soc-tria", "soc-tria-no", "soc-gim-clan", "soc-gims", "amic-tanca", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
+  "soc-tab", "soc-tria", "soc-tria-no", "soc-gim-clan", "soc-gims", "amic-tanca", "rg-ambit", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
   "clan-confirma", "clan-envia-conf", "clan-conf-no", "soc-yunques"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
 /* ---- EL PERFIL D'UN AMIC, a pantalla completa (l'Albert, 27-09-2026: «que al inspeccionar et mostri rango, días de gym,
