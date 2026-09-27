@@ -814,6 +814,10 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .emblema::before,.emblema::after{content:"";position:absolute;left:50%;width:9px;height:9px;background:#b8702f;transform:translateX(-50%) rotate(45deg);z-index:-1}
 .emblema::before{top:-7px}.emblema::after{bottom:-7px}
 .emblema svg{width:28px;height:34px;filter:drop-shadow(0 0 5px rgba(255,120,20,.7))}
+/* el foc viu (27-09-2026): surt de l'emblema i hi crema per damunt; el número, sempre al davant */
+.emblema .foc-viu{position:absolute;left:50%;bottom:-6px;width:70px;height:86px;transform:translateX(-50%);pointer-events:none;z-index:1}
+.emblema.viu svg{opacity:.28}
+.emblema.viu b{z-index:2}
 .emblema b{position:absolute;left:0;right:0;bottom:3px;text-align:center;font-family:var(--display);font-weight:900;font-size:13px;color:#fff6da;
   text-shadow:0 1px 2px #5a1200,0 0 5px rgba(0,0,0,.9)}
 .foc-t{font-size:12.5px;font-weight:700;line-height:1.2;text-shadow:0 2px 2px rgba(0,0,0,.85)}
@@ -2148,6 +2152,28 @@ const Efectos = (() => {
     return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, silenci, seguent, sona, ambient,
       hiHa: m => llista(m).length > 0, titol: () => (ordre.length && el && el.src ? titol(ordre[i]) : "") };
   })();
+  // EL VOCABULARI DE LES VIBRACIONS (bloc KLONK, 27-09-2026; l'Albert: «haptics les pots fabricar?»). Cada moment té
+  // el seu nom i el seu ritme, i s'afinen aquí i enlloc més: qui crida diu QUÈ passa (vibra("serie")), no quants
+  // mil·lisegons. A la web, l'Android fa aquestes durades i pauses (sense força: la web no la deixa triar) i l'iPhone
+  // en fa un, dos o tres tocs suaus. A l'app de botiga, el mateix nom tindrà la seva versió forta (Core Haptics amb un
+  // fitxer AHAP per nom a l'iPhone, amplitud a l'Android): el vocabulari ja hi és.
+  const HAPTICA = {
+    toc: 8,                                   // un botó qualsevol
+    tic: 10,                                  // un compte enrere, un número que puja
+    tria: 12,                                 // triar, moure, confirmar una cosa petita
+    serie: 18,                                // la sèrie feta: el martell a l'enclusa, sec i un sol cop
+    klonk: [22, 50, 14],                      // el cop del martell amb el seu rebot (tocar el personatge)
+    encen: [15, 35, 25, 35, 40],              // encendre la farga: començar l'entreno, que creix
+    fet: [20, 40, 30],                        // una cosa bona: un amic, una sol·licitud acceptada, pujar al clan
+    error: [45, 70, 45],                      // no ha anat bé
+    descans: [180, 90, 180],                  // s'ha acabat el descans: fort, perquè es noti a la butxaca
+    record: [30, 45, 30, 45, 70],             // un rècord
+    fanfarria: [30, 40, 30, 40, 30, 40, 90],  // el final de l'entreno, pujar de nivell
+    yunque: [25, 35, 25, 35, 25, 35, 140],    // un yunque nou: el redoble i el cop gros
+    desbloqueig: [30, 40, 30, 40, 80],        // una cosa nova de la botiga
+    forja: [40, 30, 60, 30, 90],              // forjar el personatge
+    gel: [40, 30, 70],                        // el gel de la ratxa que es trenca
+  };
   // L'hàptica. A l'Android, navigator.vibrate. A l'iPhone Safari no en té: des de l'iOS 17.4 un
   // <input type="checkbox" switch> fa un toc quan canvia, i n'hi ha prou de clicar-ne l'etiqueta
   // (dins d'un gest de l'usuari). Un patró de l'Android es tradueix en fins a tres tocs.
@@ -2166,10 +2192,87 @@ const Efectos = (() => {
   }
   function vibra(p) {
     if (typeof S !== "undefined" && S.haptica === false) return;
+    if (typeof p === "string") p = HAPTICA[p] || HAPTICA.toc;
     try { if (navigator.vibrate && navigator.vibrate(p)) return; } catch (e) {}
     const n = Array.isArray(p) ? Math.min(3, Math.ceil(p.length / 2)) : 1;
     tocaIOS();
     for (let i = 1; i < n; i++) setTimeout(tocaIOS, i * 110);
+  }
+
+  // EL FOC DE LA RATXA, VIU (l'Albert, 26-09-2026 nit: «el foc hauríem de fer-li una animació pepiníssima, com un motion
+  // graphics sense fons; és que és molt estàtic i vull com un encanteri piro»). Un canvas transparent que surt de
+  // l'emblema i hi crema un foc de partícules: cada llengua és un sprite de degradat radial pintat UN cop, i se sumen amb
+  // «lighter», que és el que fa que el cor cremi blanc i les vores facin taronja i vermell, com una flama de debò. Hi pugen
+  // guspires, i sota hi batega una brasa. Com més dies de la setmana, més foc. No pinta res si el sistema demana menys
+  // moviment (es queda la flama dibuixada), ni quan la pàgina o l'emblema no es veuen; i es para sol si l'emblema surt
+  // de la pàgina.
+  const SPRITES = (() => {
+    const fes = (r, stops) => {
+      const c = document.createElement("canvas"); c.width = c.height = r * 2;
+      const g = c.getContext("2d"), gr = g.createRadialGradient(r, r, 0, r, r, r);
+      stops.forEach(([o, col]) => gr.addColorStop(o, col)); g.fillStyle = gr; g.fillRect(0, 0, r * 2, r * 2);
+      return c;
+    };
+    return {
+      cor: fes(32, [[0, "rgba(255,236,170,.9)"], [0.3, "rgba(255,190,80,.6)"], [1, "rgba(255,120,30,0)"]]),
+      flama: fes(32, [[0, "rgba(255,160,45,.85)"], [0.45, "rgba(250,85,15,.5)"], [1, "rgba(200,30,5,0)"]]),
+      fum: fes(32, [[0, "rgba(200,40,10,.55)"], [0.5, "rgba(120,20,5,.25)"], [1, "rgba(60,10,2,0)"]]),
+      guspira: fes(8, [[0, "rgba(255,245,200,1)"], [0.4, "rgba(255,170,60,.9)"], [1, "rgba(255,90,10,0)"]]),
+    };
+  })();
+  function focViu(host, forca = 1) {
+    if (!host || host.querySelector("canvas.foc-viu")) return;
+    try { if (matchMedia("(prefers-reduced-motion: reduce)").matches) return; } catch (e) {}
+    const W = 70, H = 86, dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cv = document.createElement("canvas");
+    cv.className = "foc-viu"; cv.width = W * dpr; cv.height = H * dpr; cv.setAttribute("aria-hidden", "true");
+    host.appendChild(cv); host.classList.add("viu");
+    const g = cv.getContext("2d"); g.scale(dpr, dpr);
+    const parts = [], F = Math.max(0.55, Math.min(1.25, forca)), baseX = W / 2, baseY = H - 24;
+    let t0 = 0, acumula = 0, visible = true, viu = true, t = 0;
+    const io = "IntersectionObserver" in window ? new IntersectionObserver(es => { visible = es[0].isIntersecting; }) : null;
+    if (io) io.observe(host);
+    const neix = (tipus) => {
+      const dx = (Math.random() - .5) * 18 * F, dy = (Math.random() - .5) * 5;
+      if (tipus === "guspira") return { tipus, x: baseX + dx * .6, y: baseY - 8, vx: (Math.random() - .5) * 34, vy: -(80 + Math.random() * 70) * F, v: 0, vida: .8 + Math.random() * .8, mida: 1.5 + Math.random() * 1.5, fase: Math.random() * 6 };
+      return { tipus, x: baseX + dx, y: baseY + dy, vx: (Math.random() - .5) * 10, vy: -(46 + Math.random() * 30) * F,
+        v: 0, vida: .55 + Math.random() * .35, mida: (7 + Math.random() * 5) * F, fase: Math.random() * 6 };
+    };
+    function pas(ara) {
+      if (!viu) return;
+      if (!host.isConnected) { viu = false; if (io) io.disconnect(); return; }
+      requestAnimationFrame(pas);
+      if (document.hidden || !visible) { t0 = ara; return; }
+      const dt = Math.min(0.05, t0 ? (ara - t0) / 1000 : 0.016); t0 = ara; t += dt;
+      acumula += dt * 75 * F;                                  // ~75 llengües per segon a força 1
+      while (acumula > 1) { acumula--; parts.push(neix(Math.random() < 0.07 ? "guspira" : "flama")); }
+      g.clearRect(0, 0, W, H);
+      // la brasa: un halo que batega sota el foc
+      g.globalCompositeOperation = "lighter";
+      const pols = 0.55 + 0.25 * Math.sin(t * 5.3) + 0.12 * Math.sin(t * 11.7);
+      g.globalAlpha = pols * 0.45; g.drawImage(SPRITES.flama, baseX - 24 * F, baseY - 10 * F, 48 * F, 28 * F);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.v += dt;
+        const k = p.v / p.vida;
+        if (k >= 1 || p.y < -10) { parts.splice(i, 1); continue; }
+        // la flama s'estreny cap amunt i balla: una ona que puja amb el temps
+        const ona = Math.sin(t * 6 + p.fase + p.y * 0.09) * 22 * k;          // a dalt balla més que a baix
+        p.x += (p.vx + ona + (baseX - p.x) * 1.6 * (p.tipus === "flama" ? 1 : 0)) * dt;
+        p.y += p.vy * dt;
+        if (p.tipus === "guspira") {
+          g.globalAlpha = (1 - k) * (0.6 + 0.4 * Math.sin(t * 30 + p.fase));
+          g.drawImage(SPRITES.guspira, p.x - p.mida * 2, p.y - p.mida * 2, p.mida * 4, p.mida * 4);
+          continue;
+        }
+        const s = p.mida * (1 - k * 0.7);
+        const spr = k < 0.16 ? SPRITES.cor : k < 0.66 ? SPRITES.flama : SPRITES.fum;
+        g.globalAlpha = Math.min(0.9, (1 - k) * 1.2) * (k < 0.1 ? k / 0.1 : 1);
+        g.drawImage(spr, p.x - s * 0.8, p.y - s * 1.6, s * 1.6, s * 3.2);          // llengües altes i estretes
+      }
+      g.globalAlpha = 1;
+    }
+    requestAnimationFrame(pas);
   }
 
   // El text que puja: «+10 XP».
@@ -2185,10 +2288,10 @@ const Efectos = (() => {
   function toque(ev) {
     const x = ev.clientX || (ev.touches && ev.touches[0].clientX) || innerWidth / 2;
     const y = ev.clientY || (ev.touches && ev.touches[0].clientY) || innerHeight / 2;
-    lanza(x, y, 14, 0.9); suena("tap"); vibra(8);
+    lanza(x, y, 14, 0.9); suena("tap"); vibra("toc");
   }
 
-  return { lanza, lluvia, suena, teSo, vibra, flota, toque, poco, Musica };
+  return { lanza, lluvia, suena, teSo, vibra, flota, toque, poco, focViu, Musica };
 })();
 
 /* FRAGUA · l'ambient viu del fons (26/09/2026).
@@ -2487,7 +2590,7 @@ function accioRutina(acc, b) {
       const r = PLANTILLAS.find(x => x.id === b.dataset.id); if (!r || rutinaTeva(r) || oroTotal() < r.precio) return true;
       S.oroGastado = (S.oroGastado || 0) + r.precio; S.rutinasDesbloq = [...(S.rutinasDesbloq || []), r.id]; guardarYa();
       Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
-      Efectos.lluvia(1.2); Efectos.vibra([30, 40, 60]); render(); avis(`«${r.nombre}» es tuya.`); return true;
+      Efectos.lluvia(1.2); Efectos.vibra("forja"); render(); avis(`«${r.nombre}» es tuya.`); return true;
     }
     case "rut-nova": S.ui.edit = { id: nouId(), nombre: "Mi rutina", dias: [{ t: "Día 1", ej: [] }] }; guardar(); veure("editor"); return true;
     case "rut-copiar": { const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r) return true; S.ui.edit = copia(r); S.ui.edit.nombre = r.nombre + " (mía)"; guardar(); veure("editor"); return true; }
@@ -2548,7 +2651,7 @@ document.addEventListener("pointerdown", ev => {
   arr = { i: +g.dataset.i, j: +g.dataset.j, fantasma, dy: ev.clientY - q.top, id: ev.pointerId, desti: null, x: ev.clientX, y: ev.clientY };
   try { g.setPointerCapture(ev.pointerId); } catch (e) {}
   arr.raf = requestAnimationFrame(voraArr);
-  Efectos.vibra(8);
+  Efectos.vibra("toc");
 });
 // Amb el dit quiet a prop de dalt o de baix, la pàgina corre sola (més de pressa com més a la vora): per portar un
 // exercici a un dia que no es veu.
@@ -2576,7 +2679,7 @@ function acabaArr(ev, ok) {
   const [e] = D[a.i].ej.splice(a.j, 1);
   if (i === a.i && j > a.j) j--;                                  // en treure'l, els de sota han pujat un lloc
   D[i].ej.splice(j, 0, e);
-  guardar(); render(); Efectos.suena("tap"); Efectos.vibra(12);
+  guardar(); render(); Efectos.suena("tap"); Efectos.vibra("tria");
 }
 document.addEventListener("pointerup", ev => acabaArr(ev, true));
 document.addEventListener("pointercancel", ev => acabaArr(ev, false));
@@ -3417,7 +3520,7 @@ function resumEntreno(o) {
   const pistes = $("#resum-pistes");
   let t = null;
   pistes.addEventListener("scroll", () => { clearTimeout(t); t = setTimeout(() => despertaPag(Math.round(pistes.scrollLeft / pistes.clientWidth)), 90); }, { passive: true });
-  Efectos.suena("fanfarria"); Efectos.lluvia(1.6); Efectos.vibra([30, 40, 30, 40, 60]);
+  Efectos.suena("fanfarria"); Efectos.lluvia(1.6); Efectos.vibra("fanfarria");
   despertaPag(0);
 }
 function despertaPag(i) {
@@ -3434,9 +3537,9 @@ function despertaPag(i) {
   pag.querySelectorAll("path.dibuixa").forEach((p, k) => { const l = p.getTotalLength(); p.style.setProperty("--len", l.toFixed(0)); p.style.setProperty("--d", (0.4 + k * 0.22).toFixed(2) + "s"); });
   pag.querySelectorAll("[data-compta]").forEach(el => {
     const fins = +el.dataset.compta, de = +(el.dataset.de || 0), quan = +el.dataset.quan, signe = el.dataset.signe || "";
-    setTimeout(() => { Efectos.suena(signe === "+" && el.closest(".oro-guanyat") ? "or" : "tic"); Efectos.vibra(10); comptaDe(el, de, fins, signe); }, quan);
+    setTimeout(() => { Efectos.suena(signe === "+" && el.closest(".oro-guanyat") ? "or" : "tic"); Efectos.vibra("tic"); comptaDe(el, de, fins, signe); }, quan);
   });
-  pag.querySelectorAll("[data-so]").forEach(el => setTimeout(() => { Efectos.suena(el.dataset.so); Efectos.vibra([20, 30, 40]); if (el.classList.contains("r-bossa")) { const r = el.getBoundingClientRect(); Efectos.lanza(r.left + 75, r.top + 60, 36, 1.3); } if (el.classList.contains("r-puja")) Efectos.lluvia(1.6); }, +el.dataset.quan));
+  pag.querySelectorAll("[data-so]").forEach(el => setTimeout(() => { Efectos.suena(el.dataset.so); Efectos.vibra("fet"); if (el.classList.contains("r-bossa")) { const r = el.getBoundingClientRect(); Efectos.lanza(r.left + 75, r.top + 60, 36, 1.3); } if (el.classList.contains("r-puja")) Efectos.lluvia(1.6); }, +el.dataset.quan));
   pag.querySelectorAll("[data-ample]").forEach(el => setTimeout(() => { el.style.width = el.dataset.ample + "%"; }, 1500));
   if (i === 2 && R.d.rDes > R.d.rAbans) setTimeout(() => Efectos.suena("ratxa"), 600);
   // el percentil de cada rècord, quan el servidor ha rebut l'entreno d'avui
@@ -3451,7 +3554,7 @@ function despertaPag(i) {
     try { const rk = await api("GET", "/ranking?metrica=rango&ambit=amigos&grupo=general"); pos = rk.yo && rk.total > 1 ? `${rk.yo.pos}º de ${rk.total} en tu clan` : null; } catch (e) {}
     const y = yunqueDe(yo.poder), dif = yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
     el.innerHTML = `${imgYunque(yo.poder, "gran")}<div><b>${y.nom} <span class="or num">${n0(yo.poder)}</span>${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"} num">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</b><small>${pos || "Añade amigos en Social para competir"}.</small></div>`;
-    Efectos.suena(dif > 0 ? "record" : "tic"); Efectos.vibra(20);
+    Efectos.suena(dif > 0 ? "record" : "tic"); Efectos.vibra(dif > 0 ? "record" : "tic");
   });
   if (i === 4) {
     const d = R.d;
@@ -3539,7 +3642,7 @@ function accioPagines(acc, b) {
       S.metaAny = { ...(S.metaAny || {}), [any]: m || null }; guardar();
       const lloc = document.getElementById("r-meta");
       if (lloc) lloc.innerHTML = htmlMeta(Stats.diasAno(S)); else render();
-      if (m) { Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); avis(`Meta: ${m} días en ${any}. ¡A por ella!`); }
+      if (m) { Efectos.suena("triar"); Efectos.vibra("fet"); avis(`Meta: ${m} días en ${any}. ¡A por ella!`); }
       return true;
     }
     case "racha-veure": S.ui.statsTab = "racha"; veure("estadisticas"); return true;
@@ -3766,11 +3869,11 @@ function mostraPujada() {
   const p = (S.ui.pujades || []).shift(); if (!p) return false;
   guardar();
   if (p.t === "yunque") {
-    setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); Efectos.lluvia(1.3); Efectos.vibra([30, 40, 60]); }, 250);
+    setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); Efectos.lluvia(1.3); Efectos.vibra("yunque"); }, 250);
     celebra(`<div class="gran or entra-gran">¡NUEVO YUNQUE!</div><div class="pujada-yunque"><i class="pujada-llum"></i><img src="${ACTIUS}yunques/${p.y.id}.webp" alt="${p.y.nom}"></div>
       <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Temple ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
   } else {
-    setTimeout(() => { Efectos.suena("triar"); Efectos.lluvia(0.8); Efectos.vibra([20, 30, 40]); }, 250);
+    setTimeout(() => { Efectos.suena("triar"); Efectos.lluvia(0.8); Efectos.vibra("fet"); }, 250);
     celebra(`<div class="gran or entra-gran">¡SUBES EN TU CLAN!</div><div class="pujada-pos"><span class="num de">${p.de}.º</span><svg class="fletxa" viewBox="0 0 40 24" width="40" height="24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num or a">${p.a}.º</span></div>
       <div class="sub">de ${p.total} en fuerza. <button class="enllac" data-accion="inici-clan">Ver el ranking</button></div>`, "A LA FRAGUA");
   }
@@ -3869,7 +3972,7 @@ async function enviaSollicitud(nick) {
   try {
     const j = await api("POST", "/amigos/solicitud", { nick });
     S.ui.clanNick = "";
-    if (j.estat === "amics") { Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); avis(`${j.nom} ya está en tu clan.`); S.social = { ...soc(), rank: {} }; }
+    if (j.estat === "amics") { Efectos.suena("triar"); Efectos.vibra("fet"); avis(`${j.nom} ya está en tu clan.`); S.social = { ...soc(), rank: {} }; }
     else if (j.estat === "rebuda") avis(`${j.nom} ya te envió una solicitud: acéptala arriba, en «Quieren entrar en tu clan».`);
     else { Efectos.suena("chisporroteo"); avis(`Solicitud enviada a ${j.nom}. Entra en tu clan cuando la acepte.`); }
     await carregaClan(true);
@@ -3898,7 +4001,7 @@ async function desaAlta() {
   const yo = await sincronitza();
   if (!yo) { S.social = abans; guardar(); avis(S.ui.errSocial || "No se ha podido guardar.", true); return; }
   S.ui.socTab = "rank"; guardar();
-  tancaFull(); Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); render(); window.scrollTo({ top: 0 });
+  tancaFull(); Efectos.suena("triar"); Efectos.vibra("fet"); render(); window.scrollTo({ top: 0 });
   avis("Ya estás en los rankings. Lo cambias cuando quieras en Ajustes.");
 }
 async function accioSocial(acc, b) {
@@ -3939,7 +4042,7 @@ async function accioSocial(acc, b) {
       return true;
     }
     case "clan-accepta":
-      try { const j = await api("POST", "/amigos/solicitud/acepta", { pid: b.dataset.p }); Efectos.suena("triar"); Efectos.vibra([20, 30, 40]); avis(`${j.nom} ya está en tu clan.`); S.social = { ...soc(), rank: {} }; await carregaClan(true); }
+      try { const j = await api("POST", "/amigos/solicitud/acepta", { pid: b.dataset.p }); Efectos.suena("triar"); Efectos.vibra("fet"); avis(`${j.nom} ya está en tu clan.`); S.social = { ...soc(), rank: {} }; await carregaClan(true); }
       catch (e) { avis(e.message, true); }
       return true;
     case "clan-rebutja": case "clan-cancela":
@@ -5606,8 +5709,8 @@ function empezarDescanso(seg) { $("#toast").hidden = true; desc.total = seg; des
 function pararDescanso() { clearInterval(desc.int); desc.int = null; const b = $("#descans"); b.hidden = true; b.innerHTML = ""; document.body.classList.remove("descansant"); }
 function pintaDescans() {
   const b = $("#descans"), queden = Math.max(0, Math.round((desc.fin - Date.now()) / 1000));
-  if (queden <= 0 && desc.int) { pararDescanso(); if (!Efectos.suena("campana")) Efectos.suena("yunque"); Efectos.vibra([160, 80, 160]); avis("¡A por la siguiente serie!"); return; }
-  if (queden <= 3 && queden > 0 && ticFet !== queden) { ticFet = queden; Efectos.suena("tic"); Efectos.vibra(10); }
+  if (queden <= 0 && desc.int) { pararDescanso(); if (!Efectos.suena("campana")) Efectos.suena("yunque"); Efectos.vibra("descans"); avis("¡A por la siguiente serie!"); return; }
+  if (queden <= 3 && queden > 0 && ticFet !== queden) { ticFet = queden; Efectos.suena("tic"); Efectos.vibra("tic"); }
   if (!desc.int) return;
   b.hidden = false; document.body.classList.add("descansant");
   b.innerHTML = `<div class="caixa panel"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#ffb030" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>
@@ -5629,7 +5732,7 @@ document.addEventListener("visibilitychange", () => {
   else if (musicaEngegada) musica();
 });
 let tToast = null;
-function avis(txt, error = false) { if (error) { Efectos.suena("error"); Efectos.vibra([40, 60, 40]); } const t = $("#toast"); t.textContent = txt; t.hidden = false; clearTimeout(tToast); tToast = setTimeout(() => { t.hidden = true; }, 2600); }
+function avis(txt, error = false) { if (error) { Efectos.suena("error"); Efectos.vibra("error"); } const t = $("#toast"); t.textContent = txt; t.hidden = false; clearTimeout(tToast); tToast = setTimeout(() => { t.hidden = true; }, 2600); }
 const aviso = avis;   // el motor l'anomena així
 
 /* ---------------------------------------------------------------- el personatge reacciona */
@@ -5643,7 +5746,7 @@ function reacciona(gest) {
 /* ---------------------------------------------------------------- celebracions */
 function celebra(html, boto = "SEGUIR") {
   $("#celebra").innerHTML = `<div class="celebra" role="dialog" aria-modal="true"><div class="caixa">${html}<div style="margin-top:22px">${botoForja('data-accion="tanca-celebra"', boto, "")}</div></div></div>`;
-  Efectos.lluvia(1.8); Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 30, 40, 60]);
+  Efectos.lluvia(1.8); Efectos.suena("fanfarria"); Efectos.vibra("fanfarria");
 }
 // EL RESUM DE L'ENTRENO, com un joc (Albert, 26/09: «al resum final les stats que surtin animades, i
 // l'experiència guanyada, igual que un joc, amb sons»). Cada peça entra per torn, amb el seu so i vibració.
@@ -5661,10 +5764,10 @@ function resumFinal(o) {
     o.des.nivel > o.abans.nivel ? "¡SUBES DE NIVEL!" : "SEGUIR");
   document.querySelectorAll("#celebra [data-compta]").forEach(el => {
     const fins = +el.dataset.compta, quan = +el.dataset.quan, signe = el.dataset.signe || "";
-    setTimeout(() => { if (signe) Efectos.suena("or"); else Efectos.suena("tic"); Efectos.vibra(10); comptaNum(el, fins, signe); }, quan);
+    setTimeout(() => { if (signe) Efectos.suena("or"); else Efectos.suena("tic"); Efectos.vibra("tic"); comptaNum(el, fins, signe); }, quan);
   });
   setTimeout(() => { compta($("#xp-guanyat"), o.des.xp - o.abans.xp); const bi = $("#barra-nivell"); if (bi) bi.style.width = (o.des.nivel > o.abans.nivel ? 100 : o.des.enNivel / o.des.paraSubir * 100).toFixed(1) + "%"; }, tXp);
-  if (o.salvada) { setTimeout(() => Efectos.suena("gel-destral"), tR + 250); setTimeout(() => { Efectos.suena("gel-trenca"); Efectos.vibra([40, 30, 60]); }, tR + 550); }
+  if (o.salvada) { setTimeout(() => Efectos.suena("gel-destral"), tR + 250); setTimeout(() => { Efectos.suena("gel-trenca"); Efectos.vibra("gel"); }, tR + 550); }
   else if (o.puja) setTimeout(() => Efectos.suena("ratxa"), tR + 100);
 }
 function comptaNum(el, fins, signe = "", ms = 700) {
@@ -5692,7 +5795,7 @@ function compta(el, fins, ms = 900) {
 function efecteDesbloqueig(t) {
   const P = PERSONAJES[t], g = $("#carta-gran"); if (g) { g.classList.remove("bloq"); g.classList.add("revela"); }
   Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
-  Efectos.vibra([30, 40, 30, 40, 80]); Efectos.lluvia(1.3);
+  Efectos.vibra("desbloqueig"); Efectos.lluvia(1.3);
   render();
   setTimeout(() => { if ($("#capa").innerHTML) obreFull(fullCarta(t), P.nombre); }, 1200);
 }
@@ -5708,7 +5811,7 @@ async function forjaPersonatge() {
   S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom };
   const tornar = S.ui.nickPendent; S.ui.nickPendent = false;
   S.ui.vista = !S.perfil.peso ? "datos" : tornar ? (S.ui.vistaAbansNick || "inicio") : "inicio"; S.ui.triaIniciada = false; guardar();
-  Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra([30, 40, 60]); render(); window.scrollTo({ top: 0 });
+  Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra("forja"); render(); window.scrollTo({ top: 0 });
 }
 
 /* ---------------------------------------------------------------- pintar */
@@ -5732,8 +5835,10 @@ function render() {
     if (window.Escena3D && window.Escena3D.fuerza) window.Escena3D.fuerza(nv);
   }
   window.FRAGUA_HEROE = h || null;
+  // el foc de la ratxa, viu: més dies aquesta setmana, més foc (0 dies: la flama apagada i quieta)
+  if (vista === "inicio") { const em = document.querySelector(".placa-foc .emblema"), fd = Stats.fuego(S).dias; if (em && fd > 0) Efectos.focViu(em, 0.6 + fd * 0.09); }
   document.dispatchEvent(new CustomEvent("fragua:heroe", { detail: h || null }));
-  if (!guardable && !avisatDesa) { avisatDesa = true; avis("Este navegador no deja guardar: copia tus datos en Ajustes."); }
+  if (!guardable && !avisatDesa) { avisatDesa = true; avis("Este navegador no deja guardar en el móvil: tus datos se guardan en tu cuenta cuando hay red."); }
 }
 function veure(v) {
   S.ui.vista = v; S.ui.triaIniciada = false; diaReg = null; guardar(); render(); window.scrollTo({ top: 0 });
@@ -5782,7 +5887,7 @@ document.addEventListener("click", ev => {
     }
     case "heroi": {
       const r = b.getBoundingClientRect();
-      Efectos.lanza(ev.clientX || r.left + r.width / 2, ev.clientY || r.top + r.height / 2, 22, 1.1); if (!Efectos.suena("crit")) Efectos.suena("yunque"); Efectos.vibra([20, 40, 30]);
+      Efectos.lanza(ev.clientX || r.left + r.width / 2, ev.clientY || r.top + r.height / 2, 22, 1.1); if (!Efectos.suena("crit")) Efectos.suena("yunque"); Efectos.vibra("klonk");
       // tocar el personatge fa l'animació i prou; la seva pàgina s'obre des del nom o del nivell (l'Albert, 26-09-2026 nit:
       // «mola que faci l'animació i ja; prefereixo que sigui fent clic a sobre d'Arteclos o el nivell»)
       reacciona("tria");
@@ -5791,7 +5896,7 @@ document.addEventListener("click", ev => {
     case "tria": triaIdx = (triaIdx + Number(b.dataset.d) + TIPOS.length) % TIPOS.length; render(); break;
     case "empezar": {
       if (activa()) { veure("entreno"); avis("Ya tienes un entreno en marcha."); break; }
-      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); marcaEntrenat(); Efectos.suena("fuego"); Efectos.vibra([20, 30, 40]); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
+      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); marcaEntrenat(); Efectos.suena("fuego"); Efectos.vibra("encen"); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
       setTimeout(() => reacciona("tria"), 80);
       break;
     }
@@ -5816,10 +5921,10 @@ document.addEventListener("click", ev => {
       }
       guardar(); render();
       if (z.ok) {
-        Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); Efectos.vibra(14);
+        Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); Efectos.vibra("serie");
         Efectos.flota("+10 XP", r.left + r.width / 2, r.top - 6);
         setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
-        if (record) setTimeout(() => { popRecord(e.n, prAbans, Stats.e1rm(z.kg || 0, z.reps)); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra([30, 50, 30, 50, 60]); Efectos.lluvia(0.8); }, 350);
+        if (record) setTimeout(() => { popRecord(e.n, prAbans, Stats.e1rm(z.kg || 0, z.reps)); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra("record"); Efectos.lluvia(0.8); }, 350);
         reacciona("serie");
       }
       break;
@@ -5942,7 +6047,7 @@ document.addEventListener("click", ev => {
       if (t) avis(t.replace(/ - /, ": "));
       break;
     }
-    case "haptica": S.haptica = S.haptica === false; b.setAttribute("aria-checked", String(S.haptica !== false)); guardar(); Efectos.vibra(20); break;
+    case "haptica": S.haptica = S.haptica === false; b.setAttribute("aria-checked", String(S.haptica !== false)); guardar(); Efectos.vibra("tria"); break;
     case "copia": {
       const txt = JSON.stringify(S);
       const falla = () => { $("#restaura").innerHTML = `<label class="form"><span class="suau petit">No he podido copiarlos solo. Selecciona el texto y cópialo:</span><textarea readonly>${esc(txt)}</textarea></label>`; const ta = $("#restaura textarea"); ta.focus(); ta.select(); };
@@ -6035,7 +6140,7 @@ document.addEventListener("submit", async ev => {
     opinaGim(f);
   } else if (tipus === "medidas") {
     if (!desaMedidas(f)) { avis("Apunta al menos una medida.", true); return; }
-    guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); Efectos.vibra(14); avis("Medidas guardadas.");
+    guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); Efectos.vibra("serie"); avis("Medidas guardadas.");
   } else if (tipus === "cfg-ej") {
     const e = activa().ej[+f.dataset.i], series = Number($("#c-s").value), [mn, mx] = $("#c-r").value.split("-").map(Number);
     const carga = (f.querySelector('input[name="c-c"]:checked') || {}).value, paso = num($("#c-p") ? $("#c-p").value : "");
