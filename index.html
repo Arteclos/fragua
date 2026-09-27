@@ -6546,7 +6546,10 @@ async function despresEntrar(r, nou) {
   revisaSubscripcio(true).finally(() => setTimeout(() => preguntaAvisos(false), 1200));
 }
 async function surtCompte() {
-  try { await puja(); } catch (e) {}
+  // Tancar la sessió esborra el mòbil: abans, el que hi ha ha de ser al servidor. Si no ha pogut pujar, no es tanca
+  // (27-09-2026: el pany penjat de la pujada feia que un «Cerrar sesión» s'emportés els entrenos que no havien pujat).
+  try { pendent = true; await puja(); } catch (e) {}
+  if (pendent) { avis("No hemos podido guardar tus últimos datos en tu cuenta. Conéctate y vuelve a intentarlo: si cierras sesión ahora, se perderían.", true); return; }
   try { await treuAvisosAqui(); } catch (e) {}      // abans de sortir, que encara hi ha sessió: aquest mòbil deixa de rebre els avisos del compte
   try { await apiCompte("POST", "/compte/surt"); } catch (e) {}
   desaSessio(null); desaVersio(0);
