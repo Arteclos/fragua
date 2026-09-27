@@ -458,6 +458,39 @@ button.rk-fila .rk-nom{text-decoration:underline;text-decoration-color:rgba(255,
 .grups-perfil{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px;text-align:center}
 .grups-perfil div{display:grid;justify-items:center;gap:2px}
 .grups-perfil small{font-size:11.5px;color:var(--fum)}
+/* ---- el perfil d'un amic, a pantalla completa (27-09-2026) ---- */
+.amic-tanca{position:absolute;top:14px;right:14px;z-index:6;background:rgba(10,8,7,.6)}
+.amic{position:relative;padding:6px 0 18px}
+.amic-carrega{text-align:center;margin-top:140px}
+.amic-heroi{position:relative;display:grid;grid-template-columns:60% 1fr;align-items:end;min-height:340px}
+.amic-pj{height:340px}
+.amic-pj .brillo{bottom:4%;height:78%;background:radial-gradient(ellipse at 50% 70%,rgba(255,120,30,.45),rgba(255,90,20,.1) 45%,transparent 70%)}
+.amic-rang{display:grid;justify-items:center;gap:2px;align-self:center;margin-top:30px;padding:0;border:0;background:none;color:var(--crema);font:inherit;text-align:center;cursor:pointer}
+.amic-rang .amic-y{width:108px;height:108px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.7)) drop-shadow(0 0 16px rgba(255,150,60,.28))}
+.amic-rang b{font-family:var(--display);font-weight:900;font-size:24px;line-height:1.1;margin-top:2px}
+.amic-rang span{font-size:15.5px;font-weight:700;text-shadow:0 2px 2px rgba(0,0,0,.85)}
+.amic-placa{position:relative;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:-30px}
+.amic-placa .placa{margin-top:0}
+.amic-placa .placa-nom{margin:0;font-size:29px;padding:13px 10px 11px}
+.amic-placa .placa-nom.llarg{font-size:23px}.amic-placa .placa-nom.molt-llarg{font-size:19px}
+.amic-nv .hexagon{width:58px;height:66px}
+.amic-nv .hexagon small{font-size:12px}.amic-nv .hexagon b{font-size:29px}
+.amic-nv .hexagon.dos-xifres small{font-size:11px}.amic-nv .hexagon.dos-xifres b{font-size:24px}
+.amic-xifres{margin-top:14px}
+.amic-xifres.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.amic-xifres .mini{min-height:98px;justify-content:center;gap:5px;padding:12px 4px}
+.amic-xifres .gran{margin:0;font-size:27px}
+.amic-xifres .gran.petit{font-size:21px}
+.amic-xifres .dada{margin:0;color:var(--crema);font-size:13.5px}
+.amic-grups{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 0;margin-top:18px}
+.amic-grups>div{flex:0 0 20%}
+.amic-grups .yunque{width:48px;height:48px}
+.amic-grups small{font-size:13px;color:var(--crema)}
+.amic-peu{margin:24px 0 4px;text-align:center}
+.amic-peu .linia{margin:0 8% 16px}
+.amic-gim{margin:0 auto;max-width:92%;font-size:16.5px;font-weight:700;line-height:1.35;text-shadow:0 2px 2px rgba(0,0,0,.85)}
+.amic-gim svg{display:inline-block;width:20px;height:20px;margin-right:6px;vertical-align:-4px;color:#e6a45a}
+.amic-desde{margin:7px 0 0;font-size:14px;color:var(--fum)}
 .r-ranking .yunque.gran{width:64px;height:64px}
 .periode{justify-content:center;margin-bottom:6px}
 .grups-t{display:grid;gap:4px}
@@ -530,6 +563,8 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 /* ---- el compte (26-09-2026): la porta amb Kragg, els formularis i l'avís sense xarxa ---- */
 .kragg-3d{height:min(360px,46vh);margin:0 auto 6px;max-width:420px}
 .compte-botons{display:grid;gap:12px;max-width:420px;margin:14px auto 6px}
+.porta-entra{margin:4px 0 0;text-align:center;font-size:16.5px;color:var(--crema);text-shadow:0 2px 2px rgba(0,0,0,.85)}
+.porta-entra .enllac{font-size:16.5px;font-weight:700}
 .btn.gran{min-height:54px;font-size:16px;letter-spacing:.04em}
 .g-boto{display:flex;justify-content:center;min-height:44px}
 /* l'iframe de Google, en clar: amb la pàgina en fosc, el Chrome el pintava amb un fons blanc opac al voltant del botó */
@@ -3038,7 +3073,8 @@ function cosAj(k) {
     return `<div class="aj-fila"><span>Los rankings<small>${so.participa ? "Participas: sales en los rankings de tu zona y de tu clan." : "No participas. Para entrar, ve a Social."}</small></span>${so.participa ? `<button class="btn marc" data-accion="social-surt">Salir</button>` : `<button class="btn marc" data-accion="vista" data-v="social">Ir a Social</button>`}</div>
     ${so.participa ? `<div class="aj-fila"><span>Cómo sales<small>${so.visible === "publico" ? (menor ? "Con tu nickname, que solo ven los de tu clan: tienes menos de 18." : "Con tu nickname, tu personaje, tu rango y tus días.") : "Como «Anónimo». Los de tu clan sí te ven."}</small></span></div>
     <div class="fila envolta" style="margin:2px 0 8px"><button class="chip" data-accion="social-vis" data-v="publico" aria-pressed="${so.visible === "publico"}">Con mi nickname</button><button class="chip" data-accion="social-vis" data-v="anonimo" aria-pressed="${so.visible !== "publico"}">Anónimo</button></div>` : ""}
-    <div class="aj-fila"><span>Tu gimnasio en Social<small>${gm ? esc([gm.nom, gm.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="soc-gims">${gm ? "Cambiar" : "Elegir"}</button></div>`;
+    <div class="aj-fila"><span>Tu gimnasio en Social<small>${gm ? esc([gm.nom, gm.ciutat].filter(Boolean).join(", ")) : "Sin elegir"}</small></span><button class="btn marc" data-accion="soc-gims">${gm ? "Cambiar" : "Elegir"}</button></div>
+    ${menor ? "" : `<div class="aj-fila"><span>Tu gimnasio, en tu perfil<small>Solo lo ven los de tu clan.</small></span>${interruptor("soc-gim-clan", so.gimClan !== false, "Enseñar tu gimnasio a tu clan")}</div>`}`;
   }
   // els avisos (27-09-2026): en aquest mòbil, el recordatori amb l'hora i els dies, i els del clan
   if (k === "avisos") {
@@ -3105,8 +3141,7 @@ function cosAj(k) {
   if (k === "cuenta") return blocCompte();
   if (k === "datos") return `
     <div class="aj-fila"><span>Modo demostración<small>La app llena de entrenos y medidas de ejemplo, para enseñarla. Tus datos se guardan aparte y vuelven al apagarlo.</small></span>${interruptor("aj-demo", S.demo, "Modo demostración")}</div>
-    <p class="suau petit">Tus datos se guardan en tu cuenta, y este móvil tiene una copia para cuando no hay red. También puedes copiarlos y guardarlos donde quieras.</p>
-    <div class="fila envolta"><button class="btn marc" data-accion="copia">Copiar mis datos</button><button class="btn marc" data-accion="restaura-veure">Pegar una copia</button></div><div id="restaura"></div>
+    <p class="suau petit">Tus datos se guardan en tu cuenta, y este móvil tiene una copia para cuando no hay red.</p>
     <p class="aj-legal"><a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     <div style="margin-top:14px"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div>`;
   if (k === "calcula") return `<div class="text-llarg">
@@ -3407,7 +3442,7 @@ function despertaPag(i) {
   // el percentil de cada rècord, quan el servidor ha rebut l'entreno d'avui
   if (i === 0 && soc().participa && !S.demo) sincro.then(yo => {
     if (!yo || !yo.percentils) return;
-    pag.querySelectorAll(".r-rec[data-n]").forEach(el => { const pc = yo.percentils[el.dataset.n]; if (pc != null) el.querySelector(".r-rec-t").insertAdjacentHTML("beforeend", `<small class="pctil-r">Por encima del <b class="or">${pc} %</b> de la gente de FRAGUA en este ejercicio.</small>`); });
+    pag.querySelectorAll(".r-rec[data-n]").forEach(el => { const pc = yo.percentils[el.dataset.n]; if (pc != null) el.querySelector(".r-rec-t").insertAdjacentHTML("beforeend", `<small class="pctil-r">Por encima del <b class="or">${pc} %</b> de la gente de KLONK en este ejercicio.</small>`); });
   });
   if (i === 3 && soc().participa && !S.demo) sincro.then(async yo => {
     const el = $("#r-ranking"); if (!el) return;
@@ -3573,7 +3608,7 @@ function sincronitza() {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: sessio.nick || null, publico: so.visible === "publico", menor: sessio.franja !== "major", franja: sessio.franja || null, sexe: ambPes ? S.perfil.sexo || null : null,
       pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
-      ejercicios: marquesLocals() });
+      xp: xp.xp, gim_clan: so.gimClan !== false, ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
   })().catch(e => { S.ui.errSocial = e.message; return null; });
@@ -3639,7 +3674,7 @@ function vistaSocial() {
   if (S.demo) return h + `<p class="suau" style="text-align:center">En el modo demostración, Social no envía nada.</p>`;
   if (!yo && teCompte() && !intent.yoErr) { carregaYo(); return h + `<p class="suau petit" style="text-align:center">Cargando…</p>`; }
   if (!gim) {
-    if (S.ui.socTria) return h + `<h2 class="sub-t or">Elige tu gimnasio</h2><p class="suau petit intro-gim">Búscalo por su nombre o en el mapa. Si entrenas en casa, elige el que tengas más cerca.</p>
+    if (S.ui.socTria) return h + `<h2 class="sub-t or">Elige tu gimnasio</h2><p class="suau petit intro-gim">Búscalo por su nombre o en el mapa. Si entrenas en casa, elige el que tengas más cerca. ${sessio && sessio.franja === "major" ? "Tu clan verá en tu perfil a qué gimnasio vas; lo puedes ocultar en Ajustes, Social." : "Tu gimnasio no sale en tu perfil: solo sirve para los rankings de tu zona."}</p>
       ${cosGimnasos()}<p style="text-align:center"><button class="enllac" data-accion="soc-tria-no">Volver</button></p>`;
     return h + `<div class="porta-social"><p>Social va por gimnasios: los rankings son de tu gimnasio, tu ciudad, tu provincia y más allá. Si entrenas en casa, elige el que tengas más cerca.</p>
       ${botoForja('data-accion="soc-tria"', "ELIGE TU GIMNASIO", "Por su nombre o en el mapa")}</div>`;
@@ -3880,6 +3915,11 @@ async function accioSocial(acc, b) {
       return true;
     case "soc-yunques": obreFull(fullYunques(), "Los yunques"); return true;
     case "soc-tria": S.ui.socTria = true; guardar(); render(); return true;
+    case "soc-gim-clan": {     // un adult: ensenyar o no el seu gimnàs al seu clan (un menor no el té mai a la vista)
+      S.social = { ...soc(), gimClan: soc().gimClan === false }; guardar(); render();
+      sincronitza().then(yo => { if (yo) avis(soc().gimClan === false ? "Tu clan ya no ve tu gimnasio." : "Tu clan ve tu gimnasio en tu perfil."); });
+      return true;
+    }
     case "soc-tria-no": S.ui.socTria = false; guardar(); render(); window.scrollTo({ top: 0 }); return true;
     case "soc-gims": if (so.yo && so.yo.gimnas && so.participa) S.ui.socTab = "gimnasios"; else S.ui.socTria = true; veure("social"); return true;
     case "social-vis": {     // des d'Ajustes: amb el nickname o anònim
@@ -3890,18 +3930,8 @@ async function accioSocial(acc, b) {
       else { S.social = { ...soc(), visible: so.visible }; guardar(); avis(S.ui.errSocial || "No se ha podido guardar.", true); }
       render(); return true;
     }
-    case "social-perfil": {
-      obreFull('<p class="suau" style="text-align:center">Cargando…</p>', "Perfil");
-      try {
-        const p = await api("GET", "/perfil/" + b.dataset.p), y = yunqueDe(p.poder);
-        $("#capa .full-cap h2").textContent = p.nick;
-        const cos = `<div class="perfil-gran"><img src="${imgPersonaje(PERSONAJES[p.personatge] ? p.personatge : "herrero")}" alt=""><div>${imgYunque(p.poder, "gran")}<b class="or">${y ? y.nom : ""}</b><small>Nivel ${p.nivell}</small></div></div>
-          <div class="r-tiles tres-t"><div class="r-tile marc"><b class="or num">${p.dies}</b><span>días de gym</span></div><div class="r-tile marc"><b class="or num">${p.racha || 0}</b><span>este año</span></div><div class="r-tile marc"><b class="or num">${p.poder != null ? n0(p.poder) : "·"}</b><span>Temple</span></div></div>
-          <div class="grups-perfil">${Object.entries(p.poder_grups || {}).map(([g, v]) => `<div>${imgYunque(v)}<small>${esc(g)}</small></div>`).join("")}</div>`;
-        const d = $("#capa .dins"); d.querySelectorAll(":scope > p").forEach(x => x.remove()); d.insertAdjacentHTML("beforeend", cos);
-      } catch (e) { tancaFull(); avis(e.message, true); }
-      return true;
-    }
+    case "social-perfil": obrePerfil(b.dataset.p); return true;     // a pantalla completa (27-09-2026)
+    case "amic-tanca": veure(S.ui.amicDe && S.ui.amicDe !== "amic" ? S.ui.amicDe : "social"); return true;
     case "social-surt": {
       // Sortir dels rànquings no esborra res més: el compte, el gimnàs i el clan es queden (per esborrar-ho tot, Ajustes).
       try { await api("POST", "/rankings/surt"); } catch (e) { avis(e.message, true); return true; }
@@ -4120,9 +4150,67 @@ async function accioGimnasos(acc, b) {
 
 // Els gestos d'aquí són asíncrons: el despatxador diu que són seus a l'acte i els deixa córrer.
 const ACC_SOCIAL = new Set(["social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
-  "soc-tab", "soc-tria", "soc-tria-no", "soc-gims", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
+  "soc-tab", "soc-tria", "soc-tria-no", "soc-gim-clan", "soc-gims", "amic-tanca", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
   "clan-confirma", "clan-envia-conf", "clan-conf-no", "soc-yunques"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
+/* ---- EL PERFIL D'UN AMIC, a pantalla completa (l'Albert, 27-09-2026: «que al inspeccionar et mostri rango, días de gym,
+   puntos, xp, el temple amb el yunque, el gym al que va, el nivell; tot ben dissenyat i a pantalla completa: la gent és molt
+   cotilla d'aquestes coses»). Amb les peces de l'entrada (la placa del nom, l'hexàgon, els mini de «Cómo vas») i la
+   disposició de la referència (referencies/perfil-amic/ref-1.png). El gimnàs, només d'un adult del teu clan que no l'amagui,
+   i el lloc, només dels del teu clan: ho decideix el servidor (/v1/perfil). ---- */
+const MESOS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const desdeTxt = d => { const m = /^(\d{4})-(\d{2})/.exec(d || ""); return m ? `En KLONK desde ${MESOS[+m[2] - 1]} de ${m[1]}` : ""; };
+const I_PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>';
+let amicCarrega = null;
+function carregaAmic(pid) {
+  if (amicCarrega === pid) return;
+  amicCarrega = pid;
+  api("GET", "/perfil/" + pid)
+    .then(p => { if (S.ui.amic && S.ui.amic.pid === pid) { S.ui.amic = { pid, p }; guardar(); if (S.ui.vista === "amic") render(); } })
+    .catch(e => { avis(e.message, true); if (S.ui.vista === "amic") veure(S.ui.amicDe || "social"); })
+    .finally(() => { amicCarrega = null; });
+}
+function obrePerfil(pid) {
+  if (!pid) return;
+  if ((S.ui.vista || "inicio") !== "amic") S.ui.amicDe = S.ui.vista || "social";
+  S.ui.amic = { pid, p: null };
+  veure("amic");
+}
+function vistaAmic() {
+  const a = S.ui.amic || {}, p = a.p;
+  const tanca = `<button class="tanca amic-tanca" data-accion="amic-tanca" aria-label="Cerrar el perfil">${I_X}</button>`;
+  if (!p) {
+    if (a.pid) carregaAmic(a.pid); else setTimeout(() => veure("social"), 0);
+    return tanca + '<p class="suau amic-carrega">Cargando…</p>';
+  }
+  const tipo = PERSONAJES[p.personatge] ? p.personatge : "herrero", y = yunqueDe(p.poder), nom = p.nick || "Tu amigo";
+  const mida = nom.length > 12 ? " molt-llarg" : nom.length > 9 ? " llarg" : "";
+  const xifres = [];
+  if (p.xp != null) xifres.push([n0(p.xp), "XP en total"]);
+  xifres.push([n0(p.dies || 0), `${p.dies === 1 ? "día" : "días"} de gym`]);
+  if (p.clan && p.clan.pos) xifres.push([`${p.clan.pos}.º de ${p.clan.total}`, "en tu clan"]);
+  else if (p.poder != null) xifres.push([n0(p.poder), "Temple"]);
+  const grups = Object.entries(p.poder_grups || {}), desde = desdeTxt(p.desde);
+  const gim = p.gimnas ? [p.gimnas.nom, p.gimnas.ciutat].filter(Boolean).join(", ") : "";
+  return `${tanca}
+  <article class="amic" aria-label="Perfil de ${esc(nom)}">
+    <div class="amic-heroi">
+      <div class="personatge amic-pj"><div class="brillo"></div><img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}"></div>
+      ${y ? `<button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}, temple ${n0(p.poder)}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">Temple ${n0(p.poder)}</span></button>`
+        : '<div class="amic-rang"><span class="suau">Aún sin rango</span></div>'}
+    </div>
+    <div class="amic-placa">
+      <div class="placa marc"><h1 class="placa-nom${mida}"><span class="or">${esc(nom)}</span></h1></div>
+      <div class="amic-nv">${hexagon(p.nivell || 1)}</div>
+    </div>
+    <div class="tres amic-xifres${xifres.length === 2 ? " n2" : ""}">${xifres.map(([n, t]) => `<div class="mini marc"><b class="gran or num${n.length > 5 ? " petit" : ""}">${n}</b><span class="dada">${t}</span></div>`).join("")}</div>
+    ${grups.length ? `<div class="grups-perfil amic-grups">${grups.map(([g, v]) => `<div>${imgYunque(v)}<small>${esc(g)}</small></div>`).join("")}</div>` : ""}
+    ${gim || desde ? `<div class="amic-peu"><div class="linia"></div>
+      ${gim ? `<p class="amic-gim">${I_PIN}${esc(gim)}</p>` : ""}
+      ${desde ? `<p class="amic-desde">${desde}</p>` : ""}</div>` : ""}
+  </article>`;
+}
+
 /* ---- ELS AVISOS (27-09-2026, l'Albert: «sobretot notificacions, que és el que fa que entrenin; que ens repregunti quan
    entrem; a Ajustes s'ha de poder posar o no»). A l'iPhone només arriben amb KLONK a la pantalla d'inici: llavors el primer
    pas és el tutorial animat per afegir-l'hi («com fan les apps bones»). ---- */
@@ -4471,8 +4559,8 @@ function vistaCompte() {
     <div class="personatge kragg-3d" id="personatge" data-tipo="herrero" data-accion="heroi"><div class="brillo"></div><img class="foto3d" src="${ACTIUS}personatges/herrero-3d.webp" alt="Kragg, el herrero de Klonk"></div>
     <div class="compte-botons">
       ${botoForja('type="button" data-accion="compte-mode" data-m="nou"', "CREAR CUENTA", "")}
-      <button class="btn clar marc gran" data-accion="compte-mode" data-m="entra">YA TENGO CUENTA</button>
       ${botoGoogle()}
+      <p class="porta-entra">¿Ya tienes cuenta? <button class="enllac" data-accion="compte-mode" data-m="entra">Entra</button></p>
     </div>
     <p class="llegenda" style="text-align:center">KLONK es a partir de 14 años.</p>${legal}`;
 }
@@ -5509,7 +5597,7 @@ function fullFaltaProt() {
     candidatsProt(falten).map((o, i) => `<div class="item"><div class="nom">${esc(val(o.it.a).n)}</div><div class="q">${cantidadTxt(o.it)}</div><div class="e">${esc(val(o.it.a).e)}, unos ${n0(o.p)} g de proteína</div><div style="grid-column:1/-1;margin-top:6px"><button class="btn marc" data-accion="afegeix-prot" data-i="${i}">Apuntarlo</button></div></div>`).join("");
 }
 const TXT_MOLT = '<div class="text-llarg"><p>Un día en el que comes más no cambia tu cuerpo. Lo que cuenta es lo que haces casi todos los días.</p><p>Sigue con la siguiente comida con normalidad. No hace falta comer menos mañana, saltarte comidas ni hacer más cardio para compensar: la comida no es una deuda.</p></div>';
-const TXT_INFLAT = '<div class="text-llarg"><p>Notarte hinchado no quiere decir que hayas ganado grasa. Suele ser una mezcla de comida en el intestino, agua y glucógeno (sobre todo con más hidratos), sal, digestión, sueño y estrés.</p><p>Qué no hacer: ayunar, dejar de beber, quitar toda la sal, meter cardio de más, saltarte comidas o hacer una dieta de choque. Come normal y mira cómo evoluciona en unos días.</p><div class="avis-salut">Si dura varios días, hay dolor, mareos o cambios grandes de peso, cuéntaselo a tu madre, a tu padre o a tu tutor y a un profesional sanitario.</div></div>';
+const TXT_INFLAT = '<div class="text-llarg"><p>Notarte hinchado no quiere decir que hayas ganado grasa. Suele ser una mezcla de comida en el intestino, agua y glucógeno (sobre todo con más hidratos), sal, digestión, sueño y estrés.</p><p>Qué no hacer: ayunar, dejar de beber, quitar toda la sal, meter cardio de más, saltarte comidas o hacer una dieta de choque. Come normal y mira cómo evoluciona en unos días.</p><div class="avis-salut">KLONK es para entrenar mejor, no para obsesionarse. Si dura varios días, hay dolor, mareos o cambios grandes de peso, habla con alguien de confianza y con un profesional sanitario.</div></div>';
 
 /* ---------------------------------------------------------------- descans, pantalla, avisos */
 let desc = { fin: 0, total: 0, int: null };
@@ -5633,7 +5721,7 @@ function render() {
   else if (!S.personaje) vista = "eleccion";
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
-  const f = { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
+  const f = { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, amic: vistaAmic, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
   v.innerHTML = (vista !== "compte" ? bannerCorreu() : "") + f();
   if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
