@@ -5227,6 +5227,8 @@ function vistaMenu() {
    xarxa i al menú de la setmana. ---- */
 const normAl = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const r1Al = v => Math.round((v || 0) * 10) / 10;
+// sense el plural, com al servidor: «platanos» troba «Plátano», «limones» troba «Limón»
+const arrelAl = w => w.length > 4 && /[lnrdzj]es$/.test(w) ? w.slice(0, -2) : w.length > 3 && /[^s]s$/.test(w) ? w.slice(0, -1) : w;
 const macro100 = x => `${n0(x.k)} kcal · ${fmt(r1Al(x.p))} g prot · ${fmt(r1Al(x.c))} g hid · ${fmt(r1Al(x.g))} g grasa`;
 function cercaAliments(q) {
   const n = normAl(q).trim();
@@ -5235,7 +5237,7 @@ function cercaAliments(q) {
   const usats = Object.entries(S.alCache || {}).map(([k, x]) => ({ k, x, usat: true }));
   const fixos = Object.keys(AL).filter(k => !AL[k].libre).map(k => ({ k, x: val(k) }));
   // cada paraula, per separat i en qualsevol ordre: «pollo pechuga» troba «Pechuga de pollo»
-  const ps = n.split(/\s+/), cas = ({ x }) => { const t = normAl(x.n); return ps.every(p => t.includes(p)); };
+  const ps = n.split(/\s+/).map(arrelAl), cas = ({ x }) => { const t = normAl(x.n); return ps.every(p => t.includes(p)); };
   return [...propis.filter(cas), ...usats.filter(cas), ...fixos.filter(cas)].slice(0, 40);
 }
 /* Els de fora: la cerca al servidor quan porta dues lletres, amb una pausa perquè no vagi lletra a lletra, i sense cap
@@ -5267,16 +5269,20 @@ function pintaFora() {
   const el = $("#n-fora"); if (!el) return;
   const q = (($("#n-cerca") || {}).value || "").trim(), f = alFora;
   if (q.length < 2) { el.innerHTML = ""; return; }
-  if (f.q !== q || f.estat === "cercant") { el.innerHTML = `<p class="suau petit al-fora-t">Buscando en el súper…</p>`; return; }
+  if (f.q !== q || f.estat === "cercant") { el.innerHTML = `<p class="suau petit al-fora-t">Buscando más alimentos…</p>`; return; }
   if (f.estat === "error") { el.innerHTML = `<p class="suau petit al-fora-t">Sin conexión: salen solo los de la app y los tuyos.</p>`; return; }
   // el que ja tens a «ya lo usaste» i ja surt a dalt, no es repeteix
   const dalt = new Set(cercaAliments(q).map(r => r.k)), items = f.items.map((x, i) => ({ x, i })).filter(({ x }) => !dalt.has(x.id));
   if (!items.length) { el.innerHTML = /^\d{8,14}$/.test(q) && !f.items.length ? `<p class="suau petit al-fora-t">Ese código no está. Créalo con los números de su etiqueta.</p>` : ""; return; }
-  const ft = f.font || {};
-  el.innerHTML = `<h3 class="al-fora-t">En el súper</h3><div class="al-llista">${items.map(({ x, i }) => `<div class="al-fila${S.ui.alSel === x.id ? " triat" : ""}">
-      <button type="button" class="al-tria" data-accion="al-fora" data-i="${i}"><b>${esc(x.n)}</b><small>${x.marca ? `<span class="al-marca">${esc(x.marca)}</span> · ` : ""}${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}</small></button>
+  // les dues fonts diuen el que les seves llicències demanen: l'AESAN, font i data; la Ciqual (Etalab 2.0), font, data i
+  // que els noms en castellà són traducció nostra. Només la que surt a la llista.
+  const ft = f.font || {}, fc = ft.ciqual || {}, hiAesan = items.some(({ x }) => x.font === "aesan"), hiCiqual = items.some(({ x }) => x.font === "ciqual");
+  const fonts = [hiAesan ? `Productos: datos de sus etiquetas, de la <a href="${esc(ft.url || "https://www.aesan.gob.es")}" target="_blank" rel="noopener">AESAN</a> (recogidos en ${esc(ft.any_dades || "2022")}; actualizado el ${esc(ft.data || "29-07-2025")}).` : "",
+    hiCiqual ? `Genéricos: tabla <a href="${esc(fc.url || "https://ciqual.anses.fr")}" target="_blank" rel="noopener">Ciqual 2025</a> de la Anses (${esc(fc.data || "19-11-2025")}, ${esc(fc.llicencia || "Licencia Abierta Etalab 2.0")}), con los nombres traducidos por KLONK.` : ""].filter(Boolean).join(" ");
+  el.innerHTML = `<h3 class="al-fora-t">Más alimentos</h3><div class="al-llista">${items.map(({ x, i }) => `<div class="al-fila${S.ui.alSel === x.id ? " triat" : ""}">
+      <button type="button" class="al-tria" data-accion="al-fora" data-i="${i}"><b>${esc(x.n)}</b><small>${x.marca ? `<span class="al-marca">${esc(x.marca)}</span> · ` : x.font === "ciqual" ? "Genérico · " : ""}${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}</small></button>
       <button type="button" class="al-ed" data-accion="al-fora-ed" data-i="${i}" aria-label="Corregir con tu etiqueta: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>
-    <p class="al-font">Datos de sus etiquetas: <a href="${esc(ft.url || "https://www.aesan.gob.es")}" target="_blank" rel="noopener">AESAN</a>, alimentos vendidos en España (recogidos en ${esc(ft.any_dades || "2022")}; actualizado el ${esc(ft.data || "29-07-2025")}). Si tu envase dice otra cosa, corrígelo con el lápiz.</p>`;
+    <p class="al-font">${fonts} Si tu envase dice otra cosa, corrígelo con el lápiz.</p>`;
 }
 // El que tries de fora es queda al mòbil (S.alCache): el veus sense xarxa, surt al menú de la setmana i viatja amb el
 // compte. Com a molt 400: si en sobren, se'n van els més vells que ja no surten a cap àpat ni a cap menú.
@@ -5300,7 +5306,7 @@ function pintaAliments(q) {
   el.innerHTML = res.length ? `<div class="al-llista">${res.map(({ k, x, propi, usat }) => `<div class="al-fila${S.ui.alSel === k ? " triat" : ""}">
       <button type="button" class="al-tria" data-accion="al-tria" data-k="${esc(k)}"><b>${esc(x.n)}</b><small>${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}${propi ? " · <span class=\"al-teu\">tuyo</span>" : usat ? " · ya lo usaste" : ""}</small></button>
       <button type="button" class="al-ed" data-accion="al-edita" data-k="${esc(k)}" aria-label="${propi ? "Editar" : "Corregir con tu etiqueta"}: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>`
-    : `<p class="suau petit">${q.trim().length > 1 ? "En la app no está: mira abajo lo del súper, o créalo con los números de su etiqueta." : q.trim() ? "" : "Busca por el nombre, la marca o el código de barras. Los que crees o corrijas saldrán aquí primero."}</p>`;
+    : `<p class="suau petit">${q.trim().length > 1 ? "Mira abajo, o créalo con los números de su etiqueta." : q.trim() ? "" : "Busca por el nombre, la marca o el código de barras. Los que crees o corrijas saldrán aquí primero."}</p>`;
 }
 function fullAfegeix() {
   S.ui.alSel = null;
