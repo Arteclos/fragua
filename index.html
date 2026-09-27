@@ -5285,9 +5285,11 @@ function pintaFora() {
   if (!items.length) { el.innerHTML = /^\d{8,14}$/.test(q) && !f.items.length ? `<p class="suau petit al-fora-t">Ese código no está. Créalo con los números de su etiqueta.</p>` : ""; return; }
   // les dues fonts diuen el que les seves llicències demanen: l'AESAN, font i data; la Ciqual (Etalab 2.0), font, data i
   // que els noms en castellà són traducció nostra. Només la que surt a la llista.
-  const ft = f.font || {}, fc = ft.ciqual || {}, hiAesan = items.some(({ x }) => x.font === "aesan"), hiCiqual = items.some(({ x }) => x.font === "ciqual");
+  const ft = f.font || {}, fc = ft.ciqual || {}, fo = ft.off || {}, hi = font => items.some(({ x }) => x.font === font);
+  const hiAesan = hi("aesan"), hiCiqual = hi("ciqual"), hiOff = hi("off");
   const fonts = [hiAesan ? `Productos: datos de sus etiquetas, de la <a href="${esc(ft.url || "https://www.aesan.gob.es")}" target="_blank" rel="noopener">AESAN</a> (recogidos en ${esc(ft.any_dades || "2022")}; actualizado el ${esc(ft.data || "29-07-2025")}).` : "",
-    hiCiqual ? `Genéricos: tabla <a href="${esc(fc.url || "https://ciqual.anses.fr")}" target="_blank" rel="noopener">Ciqual 2025</a> de la Anses (${esc(fc.data || "19-11-2025")}, ${esc(fc.llicencia || "Licencia Abierta Etalab 2.0")}), con los nombres traducidos por KLONK.` : ""].filter(Boolean).join(" ");
+    hiCiqual ? `Genéricos: tabla <a href="${esc(fc.url || "https://ciqual.anses.fr")}" target="_blank" rel="noopener">Ciqual 2025</a> de la Anses (${esc(fc.data || "19-11-2025")}, ${esc(fc.llicencia || "Licencia Abierta Etalab 2.0")}), con los nombres traducidos por KLONK.` : "",
+    hiOff ? `Contiene información de <a href="${esc(fo.url || "https://es.openfoodfacts.org")}" target="_blank" rel="noopener">Open Food Facts</a>, hecha por su comunidad y disponible bajo la ${esc(fo.llicencia || "Open Database License (ODbL)")}.` : ""].filter(Boolean).join(" ");
   el.innerHTML = `<h3 class="al-fora-t">Más alimentos</h3><div class="al-llista">${items.map(({ x, i }) => `<div class="al-fila${S.ui.alSel === x.id ? " triat" : ""}">
       <button type="button" class="al-tria" data-accion="al-fora" data-i="${i}"><b>${esc(x.n)}</b><small>${x.marca ? `<span class="al-marca">${esc(x.marca)}</span> · ` : x.font === "ciqual" ? "Genérico · " : ""}${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}</small></button>
       <button type="button" class="al-ed" data-accion="al-fora-ed" data-i="${i}" aria-label="Corregir con tu etiqueta: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>
