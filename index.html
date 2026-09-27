@@ -987,6 +987,15 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .al-ed svg{width:20px;height:20px}
 .al-q{margin-top:10px;display:grid;gap:10px}
 .al-crea{text-align:center;margin:12px 0 0}
+/* ---- escanejar el codi de barres (27-09-2026) ---- */
+.al-esc-b{display:inline-flex;align-items:center;gap:8px;justify-self:start;min-height:44px}
+.al-esc-b svg{width:22px;height:22px;flex:none}
+.esc{display:grid;gap:10px;margin:10px 0 4px}
+.esc-v{position:relative;overflow:hidden;border-radius:12px;background:#000;aspect-ratio:4/3}
+.esc-v video,.esc-v canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.esc-v canvas.drawingBuffer{display:none}
+.esc-guia{position:absolute;z-index:2;left:10%;right:10%;top:32%;bottom:32%;border:2px solid #f0a050;border-radius:10px;box-shadow:0 0 0 999px rgba(0,0,0,.35);pointer-events:none}
+.esc p{margin:0}
 /* ---- la foto de l'etiqueta (27-09-2026) ---- */
 .al-foto{display:grid;gap:6px;margin:2px 0 4px}
 .form label.al-foto-b{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;cursor:pointer}
@@ -5319,10 +5328,75 @@ function pintaAliments(q) {
       <button type="button" class="al-ed" data-accion="al-edita" data-k="${esc(k)}" aria-label="${propi ? "Editar" : "Corregir con tu etiqueta"}: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>`
     : `<p class="suau petit">${q.trim().length > 1 ? "Mira abajo, o créalo con los números de su etiqueta." : q.trim() ? "" : "Busca por el nombre, la marca o el código de barras. Los que crees o corrijas saldrán aquí primero."}</p>`;
 }
+/* ---- ESCANEJAR EL CODI DE BARRES (27-09-2026) ----
+   La càmera només es fa servir al mòbil, per llegir el número: cap imatge no en surt. On hi ha el lector del sistema
+   (BarcodeDetector, l'Android) es fa servir aquell; on no (l'iPhone), Quagga2 (MIT, assets/lib/quagga/), que només es
+   carrega en obrir l'escàner. Un codi val si el dígit de control quadra i, amb Quagga, si surt dues vegades seguides:
+   un codi mal llegit trobaria un altre producte. */
+const I_CODI = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6v12M7 6v12M10.5 6v12M14 6v12M17 6v12M20 6v12"/></svg>';
+const eanBo = c => { if (!/^(\d{8}|\d{12,14})$/.test(c || "")) return false; const d = [...c].map(Number), k = d.pop(); return (10 - d.reverse().reduce((a, x, i) => a + x * (i % 2 ? 1 : 3), 0) % 10) % 10 === k; };
+const potEscanejar = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+let escaner = null;
+function carregaQuagga() {
+  if (window.Quagga) return Promise.resolve();
+  return new Promise((ok, ko) => { const js = document.createElement("script"); js.src = ACTIUS + "lib/quagga/quagga.min.js"; js.onload = ok; js.onerror = () => ko(new Error("lector")); document.head.appendChild(js); });
+}
+function paraEscaner() {
+  const e = escaner; escaner = null;
+  if (!e) return;
+  e.viu = false;
+  if (e.quagga && window.Quagga) { try { Quagga.offDetected(); Quagga.stop(); } catch (x) {} }
+  if (e.stream) e.stream.getTracks().forEach(t => t.stop());
+  const el = $("#n-esc"); if (el) el.innerHTML = "";
+}
+function codiLlegit(codi) {
+  paraEscaner();
+  Efectos.vibra("tic");
+  const inp = $("#n-cerca"); if (!inp) return;
+  inp.value = codi; pintaAliments(codi);
+}
+async function obreEscaner() {
+  const el = $("#n-esc"); if (!el || escaner) return;
+  el.innerHTML = `<div class="esc" role="group" aria-label="Escanear el código de barras"><div class="esc-v" id="esc-v"><div class="esc-guia" aria-hidden="true"></div></div>
+    <p class="petit suau" id="esc-e">Apunta al código de barras del envase.</p><button type="button" class="btn marc" data-accion="esc-tanca">Cancelar</button></div>`;
+  const e = escaner = { viu: true }, v = $("#esc-v");
+  try {
+    const natiu = "BarcodeDetector" in window && (await BarcodeDetector.getSupportedFormats().catch(() => [])).includes("ean_13");
+    if (natiu) {
+      const det = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+      e.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      if (!e.viu) { e.stream.getTracks().forEach(t => t.stop()); return; }
+      const video = document.createElement("video"); video.setAttribute("playsinline", ""); video.muted = true; video.srcObject = e.stream; v.prepend(video); await video.play();
+      const mira = async () => {
+        if (!e.viu) return;
+        try { const c = (await det.detect(video)).map(x => x.rawValue).find(eanBo); if (c) { codiLlegit(c); return; } } catch (x) { /* un fotograma dolent */ }
+        setTimeout(mira, 150);
+      };
+      mira();
+    } else {
+      await carregaQuagga();
+      if (!e.viu) return;
+      e.quagga = true;
+      await new Promise((ok, ko) => Quagga.init({ inputStream: { type: "LiveStream", target: v, constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } } },
+        decoder: { readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader"] }, locate: true, frequency: 8 }, err => err ? ko(err) : ok()));
+      if (!e.viu) { try { Quagga.stop(); } catch (x) {} return; }
+      let abans = "";
+      Quagga.onDetected(r => { const c = r && r.codeResult && r.codeResult.code; if (!eanBo(c)) return; if (c === abans) codiLlegit(c); else abans = c; });
+      Quagga.start();
+    }
+  } catch (x) {
+    const nom = x && x.name, msg = nom === "NotAllowedError" || nom === "SecurityError" ? "KLONK no tiene permiso para la cámara. Escribe el número que hay debajo de las barras."
+      : "No se ha podido abrir la cámara. Escribe el número que hay debajo de las barras.";
+    paraEscaner();
+    const el2 = $("#n-esc"); if (el2) el2.innerHTML = `<p class="petit al-foto-ull" role="status">${msg}</p>`;
+  }
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) paraEscaner(); });
 function fullAfegeix() {
   S.ui.alSel = null;
-  return `<div class="form"><label>Busca el alimento<input id="n-cerca" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Arroz, pollo, tu yogur, su código…"></label></div>
-    <div id="n-res"></div><div id="n-fora" aria-live="polite"></div><div id="n-sel"></div>
+  return `<div class="form"><label>Busca el alimento<input id="n-cerca" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Arroz, pollo, tu yogur, su código…"></label>
+    ${potEscanejar() ? `<button type="button" class="enllac al-esc-b" data-accion="esc-obre">${I_CODI}<span>Escanear el código de barras</span></button>` : ""}</div>
+    <div id="n-esc" aria-live="polite"></div><div id="n-res"></div><div id="n-fora" aria-live="polite"></div><div id="n-sel"></div>
     <p class="al-crea"><button type="button" class="enllac" data-accion="al-nou">Crear un alimento con su etiqueta</button></p>`;
 }
 function triaAliment(k) {
@@ -6006,9 +6080,10 @@ function fullCarta(t) {
 
 /* ---------------------------------------------------------------- fulls */
 function obreFull(html, titol) {
+  if (typeof paraEscaner === "function") paraEscaner();
   $("#capa").innerHTML = `<div class="vel" data-accion="tanca-full"></div><div class="full" tabindex="-1" role="dialog" aria-modal="true" aria-label="${esc(titol)}"><div class="dins"><div class="ansa"></div><div class="full-cap"><h2>${esc(titol)}</h2><button class="tanca" data-accion="tanca-full" aria-label="Cerrar">${I_X}</button></div>${html}</div></div>`;
 }
-const tancaFull = () => { $("#capa").innerHTML = ""; };
+const tancaFull = () => { if (typeof paraEscaner === "function") paraEscaner(); $("#capa").innerHTML = ""; };
 function fullRebost() {
   let h = '<p class="suau petit">Marca lo que no tienes en casa. Las propuestas lo cambian por algo equivalente.</p><div class="rebost">';
   GRUPOS.forEach(([g, nom]) => {
@@ -6423,6 +6498,8 @@ document.addEventListener("click", ev => {
     case "al-nou": obreFull(fullAlNou(null), "Crear un alimento"); break;
     case "al-edita": obreFull(fullAlNou(b.dataset.k), (S.alPropis || {})[b.dataset.k] ? "Tu alimento" : "Corregir con tu etiqueta"); break;
     case "al-fora": { const id = alDeFora(Number(b.dataset.i)); if (id) triaAliment(id); break; }
+    case "esc-obre": obreEscaner(); break;
+    case "esc-tanca": paraEscaner(); break;
     case "al-fora-ed": { const id = alDeFora(Number(b.dataset.i)); if (id) obreFull(fullAlNou(id), "Corregir con tu etiqueta"); break; }
     case "al-esborra": esborraAlPropi(b.dataset.k); break;
     case "treu": { const kk = diaReg || k; S.reg[kk] = (S.reg[kk] || []).filter(r => r.id !== b.dataset.id); guardar(); render(); break; }
