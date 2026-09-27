@@ -2727,7 +2727,8 @@ void main(){
   }
   function pinta(ara) {
     rafId = 0;
-    if (document.hidden) return;
+    // la Forja de les versions Beta porta el seu fons calmat: sense foc ni boira, i sense gastar ni un fotograma
+    if (document.hidden || document.body.classList.contains("sense-ambient")) return;
     if (ara - ultim >= 1000 / FPS - 2) {
       ultim = ara;
       gl.uniform1f(loc.t, (ara - t0) / 1000);
@@ -2759,7 +2760,9 @@ void main(){
     } catch (e) { if (cv) cv.remove(); gl = null; }
   }
   engega();
-  return { actiu: () => !!gl };
+  // torna a pintar quan una pantalla que l'havia apagat (body.sense-ambient) el deixa
+  function desperta() { if (gl && !rafId && !document.hidden) rafId = requestAnimationFrame(pinta); }
+  return { actiu: () => !!gl, desperta };
 })();
 
 /* Generat per prepara_biblioteca.py (free-exercise-db, The Unlicense, traduït al castellà). No s'edita a mà.
@@ -6764,7 +6767,11 @@ const Versions = (() => {
   const LLISTA = [
     { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
     { id: "original", nom: "KLONK con el menú nuevo", desc: "La de siempre con la barra de abajo nueva. En pruebas." },
+    { id: "neta", nom: "Beta · Neta", desc: "Clara y limpia, estilo Nintendo. La Forja y el menú; el resto aún es el de siempre." },
+    { id: "marro", nom: "Beta · Marrón", desc: "La forja limpia, en carbón y bronce. La Forja y el menú; el resto aún es el de siempre." },
   ];
+  // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
+  const AMB_FORJA = ["neta", "marro"];
   const CLAU = "klonk-versio";
   let actual = "actual";
   try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
@@ -6811,6 +6818,28 @@ body.te-barra.descansant #barra-nova{display:none}
 @keyframes bo-pop{0%{transform:scale(.8)}55%{transform:scale(1.16)}100%{transform:scale(1)}}
 @keyframes bo-respira{0%,100%{opacity:.4;transform:scaleX(.92)}50%{opacity:.95;transform:scaleX(1.05)}}
 @media (prefers-reduced-motion:reduce){.bo-tab.on img,.bo-forja.on .bo-brasa{animation:none}.bo-forja.on .bo-brasa{opacity:.7}}
+.bv-barra{display:flex;align-items:flex-end;justify-content:space-between;height:66px;padding:0 8px 8px;border-radius:26px;background:var(--fb-sup);
+  box-shadow:0 -10px 30px -14px rgb(0 0 0 / .45),var(--fb-o1);font-family:'M PLUS Rounded 1c','Nunito',system-ui,sans-serif}
+.bv-tab{flex:1;display:grid;justify-items:center;gap:1px;padding-top:6px;background:none;border:0;color:var(--fb-suau)}
+.bv-ic{display:grid;place-items:center;width:50px;height:32px;border-radius:999px;transition:background .2s}
+.bv-ic svg{width:25px;height:25px}
+.bv-nom{font-size:11px;font-weight:800;opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s}
+.bv-tab.on{color:var(--fb-accio-text)}
+.bv-tab.on .bv-ic{background:var(--fb-enfonsat)}
+.bv-tab.on .bv-ic svg{animation:bo-pop .42s cubic-bezier(.3,1.7,.5,1)}
+.bv-tab.on .bv-nom{opacity:1;transform:none}
+.bv-tab:active .bv-ic{transform:scale(.9)}
+/* EL PEDESTAL: tres pedres (el capitell, el fust que s'eixampla i la base), buit fins que hi pugi l'enclusa de Rive */
+.bv-forja{position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));width:104px;height:110px;margin-left:-52px;background:none;border:0;padding:0}
+.bv-plint{position:absolute;left:0;right:0;bottom:0;height:62px;transition:transform .09s;transform-origin:50% 100%}
+.bv-plint svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(var(--fb-ped-ombra))}
+.bv-forja:active .bv-plint{transform:scale(1.03,.94)}
+.bv-brasa{position:absolute;left:14%;right:14%;bottom:44px;height:30px;border-radius:50%;opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse,var(--fb-brasa-glow),transparent 70%)}
+.bv-forja.on .bv-brasa{animation:bo-respira 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.bv-forja.on .bv-brasa{animation:none;opacity:.7}}
+body.v-neta{--fb-ped-1:#ffffff;--fb-ped-2:#e8f0f6;--fb-ped-3:#cfdde8;--fb-ped-vora:#ffffff;--fb-ped-ombra:0 6px 8px rgb(38 84 122 / .28)}
+body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-vora:#d29a5e;--fb-ped-ombra:0 6px 10px rgb(0 0 0 / .6)}
 .vers-opc{display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;padding:14px;border-radius:14px;border:1.5px solid rgb(255 255 255 / .12);background:rgb(255 255 255 / .04);color:inherit;text-align:left;font:inherit;cursor:pointer}
 .vers-opc[aria-checked="true"]{border-color:#ffb55e;background:rgb(255 181 94 / .12)}
 .vers-opc b{display:block;font-size:16px}.vers-opc small{display:block;opacity:.75;margin-top:2px}`;
@@ -6819,15 +6848,34 @@ body.te-barra.descansant #barra-nova{display:none}
     if (document.getElementById("estil-versions")) return;
     const st = document.createElement("style"); st.id = "estil-versions"; st.textContent = CSS; document.head.appendChild(st);
   }
+  const IC = {
+    comer: '<svg viewBox="0 0 24 24"><g fill="currentColor"><ellipse cx="14.8" cy="9.2" rx="6.6" ry="5.2" transform="rotate(-45 14.8 9.2)"/><circle cx="4.6" cy="17.4" r="2.1"/><circle cx="6.6" cy="19.4" r="2.1"/></g><path d="M11.2 12.8l-5.3 5.3" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"/></svg>',
+    progreso: '<svg viewBox="0 0 24 24"><g fill="currentColor"><rect x="3.5" y="12.5" width="4.4" height="8" rx="1.4"/><rect x="9.8" y="7.5" width="4.4" height="13" rx="1.4"/><rect x="16.1" y="3.5" width="4.4" height="17" rx="1.4"/></g></svg>',
+    gimnasios: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.3s-6.6-6.1-6.6-11.2a6.6 6.6 0 0 1 13.2 0c0 5.1-6.6 11.2-6.6 11.2z"/><path d="M9.3 11.4V8.6l1.3.8 1.4-1.4 1.4 1.4 1.3-.8v2.8z" fill="currentColor" stroke-width="1"/></g></svg>',
+    ajustes: '<svg viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></svg>',
+  };
+  const PEDESTAL = '<svg viewBox="0 0 104 62" aria-hidden="true"><rect x="4" y="50" width="96" height="11" rx="5.5" style="fill:var(--fb-ped-3)"/>'
+    + '<path d="M20 20h64l6 31H14z" style="fill:var(--fb-ped-2)"/><path d="M20 20h64l1.2 6H18.8z" style="fill:var(--fb-ped-3)" opacity=".55"/>'
+    + '<rect x="11" y="9" width="82" height="13" rx="6.5" style="fill:var(--fb-ped-1)"/><rect x="11.5" y="9.5" width="81" height="12" rx="6" fill="none" style="stroke:var(--fb-ped-vora)" stroke-opacity=".5"/>'
+    + '<ellipse cx="52" cy="12.6" rx="25" ry="2.6" style="fill:var(--fb-ped-3)" opacity=".5"/></svg>';
+  // LA BARRA DIBUIXADA AMB CODI (neta i marró): icones de línia, només l'activa porta nom, i el pedestal buit al mig
+  function muntaVector() {
+    const tab = ([lloc, v, nom]) => `<button class="bv-tab" data-lloc="${lloc}" data-accion="vista" data-v="${v}" aria-label="${nom}"><span class="bv-ic">${IC[lloc]}</span><span class="bv-nom">${nom}</span></button>`;
+    return `<div class="bv-barra">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
+      + `<button class="bv-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bv-brasa"></span><span class="bv-plint">${PEDESTAL}</span></button>`;
+  }
   function muntaOriginal() {
     const tab = ([lloc, v, nom, ic]) => `<button class="bo-tab" data-lloc="${lloc}" data-accion="vista" data-v="${v}" aria-label="${nom}"><img src="${A()}icones/${ic}.webp" alt="">${nom}</button>`;
     return `<div class="bo-barra marc">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
       + `<button class="bo-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bo-brasa"></span><span class="bo-plint"></span></button>`;
   }
-  const BARRES = { original: muntaOriginal };
+  const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector };
   function aplica() {
     estil();
     document.querySelectorAll("#barra-nova").forEach(n => n.remove());
+    // el que la versió d'abans hagués deixat posat (si no, en tornar a «la de sempre» quedaria el fons de la Forja)
+    document.body.classList.remove("fb-actiu", "sense-ambient", "bb-entrada");
+    if (typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     LLISTA.forEach(v => document.body.classList.remove("v-" + v.id));
     document.body.classList.add("v-" + actual);
     document.body.classList.toggle("te-barra", teBarra());
@@ -6840,6 +6888,11 @@ body.te-barra.descansant #barra-nova{display:none}
   function despresRender(vista) {
     if (!teBarra()) return;
     document.body.classList.toggle("bb-entrada", ["compte", "eleccion", "datos"].includes(vista));
+    const forja = AMB_FORJA.includes(actual) && vista === "inicio";
+    document.body.classList.toggle("fb-actiu", forja);
+    document.body.classList.toggle("sense-ambient", forja);
+    if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
+    else if (typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
     document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
@@ -6865,13 +6918,196 @@ body.te-barra.descansant #barra-nova{display:none}
     const actiu = ev.target.closest("#barra-nova .on");
     if (actiu) { ev.preventDefault(); ev.stopPropagation(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
     // tres tocs ràpids al logo obren el selector
-    if (ev.target.closest('img[src$="logo.webp"]')) {
+    if (ev.target.closest('img[src$="logo.webp"], .fb-logo')) {
       const t = Date.now(); tocs = tocs.filter(x => t - x < 1000); tocs.push(t);
       if (tocs.length >= 3) { tocs = []; obreSelector(); }
     }
   }, true);
   aplica();
-  return { despresRender, actual: () => actual };
+  // la pantalla que aquesta versió pinta al lloc de la de sempre (de moment, només l'inici: la Forja)
+  function vista(v) { return AMB_FORJA.includes(actual) && v === "inicio" && typeof ForjaBeta === "object" ? () => ForjaBeta.vista(actual) : null; }
+  return { despresRender, vista, actual: () => actual };
+})();
+
+/* LA FORJA DE LA BETA 1.0 (28-09-2026): la pantalla principal de les versions d'estil (src/versions.js).
+   BETA-1.0/ARQUITECTURA.md §11 i l'Albert: la rutina és una RODA de cartes que gira amb el dit (com la mola de la farga),
+   la carta d'avui al davant amb el seu botó «Empezar» (es toca i comença, sense arrossegar ni girar), la placa del mes
+   amb una osca per dia i les dels dies entrenats enceses, l'ELO i l'or a dalt amb la botiga, la carta segellada del
+   Maestro (el Pro) i la carta «+» per crear-ne una. Tot surt de les dades de debò de l'app.
+   EL CODI ÉS UN DE SOL i les peces es dibuixen amb CSS: cada estil hi posa els seus colors, ombres i radis (les
+   variables de .fb[data-estil]) i, si en té, les seves imatges pintades (--fb-carta-img…). El fons, sempre calmat
+   (l'Albert: «ojito amb els fons, que no vull que m'ho sobrecarreguis»). Les peces animades (l'enclusa) van a Rive. */
+const ForjaBeta = (() => {
+  const MESOS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const A = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
+  const I = {
+    enclusa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6.5h15.5c.5 0 1 .4 1 1 0 2.5-2 4.3-4.3 4.6l-.6 2.4H16c.6 0 1 .4 1 1V18H7v-2.5c0-.6.4-1 1-1h1.4l-.5-2.1C6 12 4 10 3 7.9z"/></svg>',
+    moneda: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12.5" r="9.5" fill="#B97D0A"/><circle cx="12" cy="11.5" r="9.2" fill="#F5C348"/><circle cx="12" cy="11.5" r="6" fill="none" stroke="#C68A0E" stroke-width="1.3"/><path d="M12 7.8l2.4 3.7L12 15.2l-2.4-3.7z" fill="#C68A0E"/></svg>',
+    mes: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>',
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.6l4.2 4.2 8.8-9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  const ara = () => new Date();
+  function diesEntrenats() {
+    const d = ara(), pre = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-`;
+    return new Set(S.ses.filter(s => s.fin && String(s.fecha || "").startsWith(pre)).map(s => +String(s.fecha).slice(8, 10)));
+  }
+  function fetsAquestaSetmana() { const lim = Date.now() - 7 * 864e5; return new Set(S.ses.filter(s => s.fin && s.fin >= lim).map(s => s.dia)); }
+  function elo() { try { const so = typeof soc === "function" ? soc() : null; const p = so && so.yo && so.yo.poder; return p != null ? Math.round(p) : null; } catch (e) { return null; } }
+  function cartes() {
+    const r = rutinaActual(), act = activa(), fets = fetsAquestaSetmana();
+    const avui = act ? act.dia : siguienteDia();
+    const llista = r.dias.map((d, i) => ({ tipus: "dia", n: i + 1, t: d.t, ej: d.ej, feta: fets.has(i + 1) && i + 1 !== avui, avui: i + 1 === avui }));
+    llista.push({ tipus: "maestro" }, { tipus: "nova" });
+    return { llista, idx: Math.max(0, avui - 1), act };
+  }
+  function carta(c, act) {
+    if (c.tipus === "maestro") return `<div class="fb-carta fb-segellada" data-tipus="maestro"><span class="fb-segell">${I.enclusa}</span><b>Rutina del Maestro</b><span class="fb-sub">Tu plan, hecho para ti</span><span class="fb-pro">PRO</span></div>`;
+    if (c.tipus === "nova") return `<button class="fb-carta fb-nova" data-tipus="nova" data-accion="vista" data-v="rutinas"><span class="fb-mes-gros">${I.mes}</span><b>Nueva rutina</b></button>`;
+    const foto = c.ej[0] && fotoEj(c.ej[0][0]), min = Math.round(c.ej.length * 6.5 / 5) * 5;
+    return `<div class="fb-carta${c.feta ? " fb-feta" : ""}${c.avui ? " fb-avui" : ""}" data-tipus="dia" data-n="${c.n}">`
+      + `<div class="fb-fin">${foto ? `<img src="${foto}" alt="" loading="lazy">` : ""}${c.feta ? `<span class="fb-ok" aria-label="Hecho">${I.check}</span>` : ""}</div>`
+      + `<div class="fb-cos"><span class="fb-dia">Día ${c.n}</span><b class="fb-tit">${esc(c.t)}</b>`
+      + `<span class="fb-ics">${c.ej.slice(0, 6).map(x => { const f = fotoEj(x[0]); return f ? `<img src="${f}" alt="" loading="lazy">` : ""; }).join("")}${c.ej.length > 6 ? `<i>+${c.ej.length - 6}</i>` : ""}</span>`
+      + `<span class="fb-sub">${c.ej.length} ejercicios · ~${min} min</span></div>`
+      + (c.avui ? `<button class="fb-boto" data-accion="${act ? "vista" : "empezar"}" data-v="entreno" data-dia="${c.n}">${act ? "Seguir" : "Empezar"}</button>` : "")
+      + `</div>`;
+  }
+  function vista(e) {
+    const d = ara(), dies = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), fets = diesEntrenats(), el = elo();
+    const { llista, idx, act } = cartes();
+    const clar = getComputedStyle(document.body).getPropertyValue("--fb-logo").trim() !== "fosc";
+    const osques = Array.from({ length: dies }, (_, i) => `<i class="${fets.has(i + 1) ? "on" : ""}${i + 1 === d.getDate() ? " avui" : ""}"></i>`).join("");
+    return `<section class="fb" data-estil="${e}">
+      <header class="fb-cap">
+        <img class="fb-logo" src="${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp" alt="KLONK">
+        <button class="fb-xip fb-elo" data-accion="vista" data-v="estadisticas" aria-label="Tu ELO">${I.enclusa}<small>ELO</small><b>${el != null ? n0(el) : "…"}</b></button>
+        <span class="fb-xip fb-or">${I.moneda}<b>${n0(oroTotal())}</b><button class="fb-botiga" data-accion="vista" data-v="tienda" aria-label="Tienda">${I.mes}</button></span>
+      </header>
+      <div class="fb-mes" aria-label="${MESOS[d.getMonth()]}: ${fets.size} días entrenados"><div class="fb-mes-cap"><b>${MESOS[d.getMonth()]}</b><span>${fets.size} ${fets.size === 1 ? "día" : "días"}</span></div><div class="fb-osques" style="--n:${dies}">${osques}</div></div>
+      <div class="fb-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}</div>
+    </section>`;
+  }
+
+  const CSS = `
+.fb{--fb-r:24px;position:relative;display:flex;flex-direction:column;height:calc(100vh - env(safe-area-inset-top,0px));height:calc(100svh - env(safe-area-inset-top,0px));
+  margin:0 -12px;padding:10px 16px 0;color:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
+/* el fons de la Forja, calmat: ni la pintura de la farga, ni el foc i la boira de l'ambient, ni el vel fosc de sota */
+body.fb-actiu .fons{background:var(--fb-fons) !important}
+body.fb-actiu .fons::after,body.fb-actiu .ambient{display:none}
+body.fb-actiu{background:var(--fb-fons-1)}
+body.fb-actiu .app,body.te-barra.fb-actiu:not(.bb-entrada) #vista{padding-bottom:0}
+body.fb-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;border-radius:999px;padding:11px 18px;font:800 14px/1.3 'Nunito',system-ui,sans-serif;box-shadow:var(--fb-o2)}
+.fb-cap{display:flex;align-items:center;gap:8px;height:48px}
+.fb-logo{height:20px;width:auto;margin-right:auto}
+.fb-xip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px 0 8px;border-radius:999px;border:0;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-tinta);font-weight:800;font-size:15px;line-height:1;font-family:inherit}
+.fb-xip svg{width:20px;height:20px;flex:none}
+.fb-xip small{font-size:10.5px;font-weight:800;color:var(--fb-suau);letter-spacing:.04em}
+.fb-elo svg{color:var(--fb-or)}
+.fb-or{padding-right:3px}
+.fb-botiga{display:grid;place-items:center;width:28px;height:28px;margin-left:3px;border-radius:50%;border:0;background:var(--fb-accio);color:var(--fb-accio-tinta);box-shadow:var(--fb-o1)}
+.fb-botiga svg{width:15px;height:15px}
+.fb-mes{margin-top:12px;padding:10px 14px 12px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.fb-mes-cap{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--fb-suau)}
+.fb-mes-cap b{font-size:15px;color:var(--fb-tinta)}
+.fb-osques{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:3px;margin-top:8px}
+.fb-osques i{height:10px;border-radius:99px;background:var(--fb-enfonsat);box-shadow:inset 0 1px 2px rgb(0 0 0 / .18)}
+.fb-osques i.on{background:linear-gradient(180deg,var(--fb-brasa-1),var(--fb-brasa-2));box-shadow:0 0 6px var(--fb-brasa-glow)}
+.fb-osques i.avui{outline:2px solid var(--fb-accio);outline-offset:1px}
+/* la roda ocupa tot el que queda fins a la barra, i la carta es fa tan gran com hi cap (72 % de l'ample, com a molt) */
+.fb-roda{position:relative;flex:1 1 auto;min-height:260px;margin:12px 0 calc(128px + env(safe-area-inset-bottom,0px));perspective:1000px;touch-action:pan-y;user-select:none;-webkit-user-select:none;container-type:size}
+.fb-carta{--h:min(400px,52vh);position:absolute;left:50%;top:50%;height:var(--h);width:calc(var(--h) / 1.525);margin-top:calc(var(--h) / -2);display:flex;flex-direction:column;border-radius:var(--fb-r);border:0;padding:0;
+  background:var(--fb-carta-img,var(--fb-sup));background-size:100% 100%;box-shadow:var(--fb-o2);color:var(--fb-tinta);text-align:left;
+  transition:transform .42s cubic-bezier(.2,.9,.25,1),opacity .42s,filter .3s;transform-style:preserve-3d;will-change:transform;overflow:hidden;font:inherit}
+.fb-roda.mou .fb-carta{transition:none}
+.fb-carta img{pointer-events:none;-webkit-user-drag:none;user-select:none}
+.fb-fin{position:relative;flex:0 0 50%;margin:10px 10px 0;border-radius:calc(var(--fb-r) - 8px);overflow:hidden;background:var(--fb-enfonsat)}
+.fb-fin img{width:100%;height:100%;object-fit:cover;filter:var(--fb-il-filtre,none)}
+.fb-ok{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--fb-or);color:var(--fb-or-tinta);box-shadow:var(--fb-o1)}
+.fb-ok svg{width:18px;height:18px}
+.fb-cos{display:flex;flex-direction:column;gap:3px;padding:10px 14px 0}
+.fb-dia{font-size:12px;font-weight:800;color:var(--fb-accio-text)}
+.fb-tit{font-size:18px;line-height:1.15;font-weight:800}
+.fb-sub{font-size:12px;font-weight:700;color:var(--fb-suau)}
+.fb-ics{display:flex;gap:4px;margin:4px 0 2px}
+.fb-ics img{width:24px;height:24px;border-radius:7px;object-fit:cover;filter:var(--fb-il-filtre,none);box-shadow:0 0 0 1.5px var(--fb-sup)}
+.fb-ics i{display:grid;place-items:center;min-width:24px;height:24px;border-radius:7px;background:var(--fb-enfonsat);font-weight:800;font-size:11px;font-family:inherit;font-style:normal;color:var(--fb-suau)}
+.fb-boto{position:absolute;left:12px;right:12px;bottom:12px;height:48px;border-radius:999px;border:0;background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);
+  font-weight:800;font-size:18px;font-family:inherit;box-shadow:var(--fb-o-accio);transition:transform .09s}
+.fb-boto:active{transform:scale(.96) translateY(1px)}
+.fb-carta.fb-feta{filter:saturate(.55) brightness(.92)}
+.fb-carta.fb-avui.davant{box-shadow:var(--fb-o2),0 0 0 2.5px var(--fb-accio),0 0 26px var(--fb-brasa-glow);animation:fb-respira 3.2s ease-in-out infinite}
+.fb-carta.colp{animation:fb-colp .38s cubic-bezier(.2,.9,.3,1)}
+.fb-segellada{justify-content:center;align-items:center;gap:8px;background:var(--fb-maestro);color:var(--fb-maestro-tinta);text-align:center}
+.fb-segell{display:grid;place-items:center;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d8864c,#9c3f16 70%);box-shadow:0 4px 10px rgb(0 0 0 / .35),inset 0 2px 3px rgb(255 220 180 / .4);color:#5b1d06}
+.fb-segell svg{width:38px;height:38px}
+.fb-segellada b{font-size:17px}
+.fb-segellada .fb-sub{color:inherit;opacity:.7}
+.fb-pro{padding:2px 10px;border-radius:7px;background:var(--fb-or);color:var(--fb-or-tinta);font-weight:800;font-size:12px}
+.fb-nova{justify-content:center;align-items:center;gap:10px;background:transparent;box-shadow:none;outline:2.5px dashed var(--fb-suau);outline-offset:-4px;color:var(--fb-suau);cursor:pointer}
+.fb-mes-gros{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-accio-text)}
+.fb-mes-gros svg{width:28px;height:28px}
+@supports (height:1cqh){.fb-carta{--h:min(100cqh - 12px,72cqw * 1.525)}}
+@keyframes fb-respira{0%,100%{box-shadow:var(--fb-o2),0 0 0 2.5px var(--fb-accio),0 0 16px var(--fb-brasa-glow)}50%{box-shadow:var(--fb-o2),0 0 0 2.5px var(--fb-accio),0 0 32px var(--fb-brasa-glow)}}
+@keyframes fb-colp{0%{scale:1}30%{scale:1.04 .95;filter:brightness(1.3)}100%{scale:1}}
+@media (prefers-reduced-motion:reduce){.fb-carta{transition:none}.fb-carta.fb-avui.davant,.fb-carta.colp{animation:none}}
+/* ELS ESTILS: només colors, ombres i fons (calmats) */
+body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-1:#e5eff6;--fb-logo:fosc;--fb-tinta:#1f2f38;--fb-suau:#5d6f79;--fb-sup:#ffffff;--fb-enfonsat:#e3ecf3;
+  --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
+  --fb-accio:#e8672a;--fb-accio-grad:linear-gradient(180deg,#f47d3a,#d9531c);--fb-accio-tinta:#fff;--fb-accio-text:#c9521c;--fb-o-accio:0 8px 16px -8px rgb(217 83 28 / .7);
+  --fb-or:#f3b53c;--fb-or-tinta:#3a2604;--fb-brasa-1:#ffb15a;--fb-brasa-2:#ef6b24;--fb-brasa-glow:rgb(239 107 36 / .45);--fb-maestro:linear-gradient(160deg,#2f3a44,#1c242b);--fb-maestro-tinta:#f3ede4}
+body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons-1:#16110d;--fb-logo:clar;--fb-tinta:#f4ece3;--fb-suau:#bdaea0;--fb-sup:#262019;--fb-enfonsat:#0f0c0a;
+  --fb-o1:0 4px 12px -5px rgb(0 0 0 / .6),inset 0 1px 0 rgb(255 214 170 / .08);--fb-o2:0 16px 32px -14px rgb(0 0 0 / .75),inset 0 1px 0 rgb(255 214 170 / .1);
+  --fb-accio:#d29a5e;--fb-accio-grad:linear-gradient(180deg,#e0ae74,#c18a50);--fb-accio-tinta:#2a1a0c;--fb-accio-text:#f0bd80;--fb-o-accio:0 10px 18px -10px rgb(58 32 10 / .9);
+  --fb-or:#f0bd80;--fb-or-tinta:#2a1a0c;--fb-brasa-1:#ffb15a;--fb-brasa-2:#d86a24;--fb-brasa-glow:rgb(230 120 40 / .4);--fb-maestro:linear-gradient(160deg,#3a2c20,#1c1510);--fb-maestro-tinta:#f4ece3;
+  --fb-il-filtre:saturate(.8)}`;
+  // la lletra de les versions Beta: Nunito (SIL Open Font License), el tall llatí i prou, servida des de l'app
+  const LLETRA = `@font-face{font-family:'Nunito';font-style:normal;font-weight:500 900;font-display:swap;src:url(${A()}fonts/Nunito-latin.woff2) format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}`;
+  function estil() { if (document.getElementById("estil-forja")) return; const s = document.createElement("style"); s.id = "estil-forja"; s.textContent = LLETRA + CSS; document.head.appendChild(s); }
+
+  /* LA RODA: cada carta es col·loca sobre un arc segons la distància a la del davant; arrossegar-la la fa girar i en deixar-la
+     s'atura a la carta més propera, amb un clic a cada carta que passa. Un toc a una carta del costat la porta al davant. */
+  function colloca(roda, p) {
+    [...roda.children].forEach((c, i) => {
+      const d = i - p, a = Math.abs(d);
+      c.style.transform = `translateX(calc(-50% + ${d * 64}%)) translateZ(${-a * 120}px) rotateY(${-d * 24}deg) scale(${1 - Math.min(a, 3) * .08})`;
+      c.style.opacity = a > 2.4 ? 0 : String(1 - a * .22);
+      c.style.zIndex = String(100 - Math.round(a * 10));
+      c.style.pointerEvents = a > 1.5 ? "none" : "";
+      c.classList.toggle("davant", a < .5);
+    });
+  }
+  function activaRoda(roda) {
+    const n = roda.children.length; let pos = Math.min(n - 1, +roda.dataset.idx || 0); colloca(roda, pos);
+    let x0 = 0, p0 = 0, ultim = Math.round(pos), mogut = false, dit = null;
+    roda.addEventListener("pointerdown", ev => { if (ev.target.closest(".fb-boto")) return; dit = ev.pointerId; x0 = ev.clientX; p0 = pos; mogut = false; roda.classList.add("mou"); });
+    roda.addEventListener("pointermove", ev => {
+      if (dit !== ev.pointerId) return;
+      const dx = ev.clientX - x0; if (Math.abs(dx) > 6) { mogut = true; try { roda.setPointerCapture(ev.pointerId); } catch (e) {} }
+      pos = Math.max(-.35, Math.min(n - .65, p0 - dx / (roda.clientWidth * .55)));
+      colloca(roda, pos);
+      const r = Math.round(pos); if (r !== ultim) { ultim = r; if (typeof Efectos === "object") { try { Efectos.toque(ev); } catch (e) {} } if (navigator.vibrate) try { navigator.vibrate(6); } catch (e) {} }
+    });
+    const deixa = ev => {
+      if (dit !== ev.pointerId) return; dit = null; roda.classList.remove("mou");
+      if (!mogut) { const c = ev.target.closest(".fb-carta"); const i = c ? [...roda.children].indexOf(c) : -1; if (i >= 0 && i !== Math.round(pos)) { pos = i; colloca(roda, pos); return; } }
+      pos = Math.max(0, Math.min(n - 1, Math.round(pos))); colloca(roda, pos);
+    };
+    roda.addEventListener("pointerup", deixa); roda.addEventListener("pointercancel", deixa);
+  }
+  function despresPintar() { estil(); const r = document.querySelector(".fb-roda"); if (r) activaRoda(r); }
+  // «Empezar»: primer el KLONK i el cop de la carta, i després l'acció de sempre de l'app (la música, les espurnes, marcar el
+  // dia), que és qui comença de debò (l'Albert: el KLONK en començar i en acabar)
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest('.fb-boto[data-accion="empezar"]'); if (!b || b.dataset.picat) return;
+    ev.stopPropagation(); ev.preventDefault(); b.dataset.picat = "1";
+    try { const s = new Audio(A() + "sons/klonk.mp3"); s.volume = .9; s.play().catch(() => {}); } catch (e) {}
+    try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
+    const c = b.closest(".fb-carta"); if (c) c.classList.add("colp");
+    setTimeout(() => b.click(), 380);
+  }, true);
+  estil();
+  return { vista, despresPintar };
 })();
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
@@ -8075,7 +8311,7 @@ function render() {
   else if (!S.personaje) vista = "eleccion";
   else if (!S.perfil.peso && vista !== "eleccion") vista = "datos";
   if (vista === "eleccion" && S.personaje && !S.ui.triaIniciada) { triaIdx = Math.max(0, TIPOS.indexOf(S.personaje.tipo)); S.ui.triaIniciada = true; }
-  const f = { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, amic: vistaAmic, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
+  const f = (typeof Versions === "object" && Versions.vista(vista)) || { compte: vistaCompte, inicio: vistaInicio, eleccion: vistaEleccion, datos: vistaDatos, entreno: vistaEntreno, estadisticas: vistaEstadisticas, social: vistaSocial, amic: vistaAmic, gimnasios: vistaGimnasios, comer: vistaComer, registro: vistaRegistro, personaje: vistaPersonaje, ajustes: vistaAjustes, tienda: vistaTienda, rutinas: vistaRutinas, rutina: vistaRutina, editor: vistaEditor }[vista] || vistaInicio;
   v.innerHTML = (vista !== "compte" ? bannerCorreu() : "") + f();
   if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
