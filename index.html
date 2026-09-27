@@ -988,6 +988,17 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .jd-barra i{display:block;height:100%}
 .jd-barra .p{background:#fd5a1e}.jd-barra .c{background:#ffc23a}.jd-barra .g{background:#8ec46a}
 .jd-avis{margin:12px 0 0}
+/* ---- l'aigua (27-09-2026) ---- */
+.aigua{margin-top:12px}
+.aig-cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.aig-cap b{font-size:16px}
+.aig-fila{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:8px;margin-top:8px}
+.aig-b{width:44px;height:44px;border-radius:50%;border:1px solid var(--bronze-fil);background:rgba(0,0,0,.3);color:var(--crema);font-size:22px;line-height:1}
+.aig-b:disabled{opacity:.35}
+.aig-gots{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+.got{width:18px;height:25px;fill:none;stroke:#8f7b66;stroke-width:1.4}
+.got.ple{stroke:#7fc4ff}
+.got .aig{fill:#4aa3ef;stroke:none;opacity:.9}
 .item .nom{font-size:15.5px}
 .item .q{font-weight:700;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
 .item .e{grid-column:1/-1;font-size:13px;color:var(--fum)}
@@ -4923,7 +4934,7 @@ function fusiona(local, remot) {
   if (local.medidas || remot.medidas) nou.medidas = unio(local.medidas, remot.medidas, "f");
   nou.desbloq = [...new Set([...(local.desbloq || []), ...(remot.desbloq || [])])];
   // els aliments teus i els de fora que has fet servir: la unió (el més nou mana en cada un), menys els esborrats
-  ["alPropis", "alCache"].forEach(c => { const [vell, nouS] = (local.modificat || 0) >= (remot.modificat || 0) ? [remot, local] : [local, remot];
+  ["alPropis", "alCache", "agua"].forEach(c => { const [vell, nouS] = (local.modificat || 0) >= (remot.modificat || 0) ? [remot, local] : [local, remot];
     const u = { ...(vell[c] || {}), ...(nouS[c] || {}) }; esb.forEach(id => delete u[id]); nou[c] = u; });
   nou.esborrats = [...esb].slice(-500);
   NOMES_AQUI.forEach(k => { if (k in local) nou[k] = local[k]; else delete nou[k]; });
@@ -5082,7 +5093,8 @@ function propuestaDia(slot, k) {
 }
 const modoDe = a => { const x = val(a); return x.ud && x.gr !== "fruta" ? "ud" : "g"; };
 const uniDe = it => { const x = val(it.a); return it.modo === "ud" ? (x.udn ? x.udn[1] : "ud") : x.ml ? "ml" : "g"; };
-const opcionsAliments = sel => GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
+// els teus primer (27-09-2026): el que has creat o corregit amb la teva etiqueta també va al menú de la setmana
+const opcionsAliments = sel => (Object.keys(S.alPropis || {}).length ? `<optgroup label="Tus alimentos">${Object.entries(S.alPropis).map(([k, x]) => `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("")}</optgroup>` : "") + GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
 function filaAliment(it, i) {
   return `<div class="ap-fila" data-fila="${i}"><span class="ap-nom">${esc(val(it.a).n)}</span>
     <span class="camp"><input inputmode="decimal" autocomplete="off" data-q="${i}" value="${fmt(it.q)}" aria-label="Cantidad de ${esc(val(it.a).n)}"><span class="u">${uniDe(it)}</span></span>
@@ -5268,7 +5280,24 @@ function judiciDieta() {
   const fv = frDia >= 3 ? fila("jd-be", "Fruta y verdura", `Bien: unas ${fmt(Math.round(frDia * 10) / 10)} al día. La meta es cinco.`)
     : fila("jd-quasi", "Fruta y verdura", `Unas ${fmt(Math.round(frDia * 10) / 10)} al día de las que apuntas; la meta es cinco. Una pieza de fruta en el desayuno y verdura en la comida y la cena ya casi lo es.`);
   const barra = `<div class="jd-barra" role="img" aria-label="Energía: ${n0(pc.p)} % proteína, ${n0(pc.c)} % hidratos, ${n0(pc.g)} % grasas"><i class="p" style="width:${pc.p.toFixed(1)}%"></i><i class="c" style="width:${pc.c.toFixed(1)}%"></i><i class="g" style="width:${pc.g.toFixed(1)}%"></i></div>`;
-  return bloc("Cómo vas comiendo", `<p class="suau petit" style="margin:0 0 8px">De ${n === 1 ? "1 día" : `los ${n} días`} que has apuntado esta semana.</p>${prot}${rep}${barra}${ene}${fv}${avis}`, "jd");
+  const gots = dies.map(k => (S.agua || {})[k] || 0), ambAigua = gots.filter(x => x > 0);
+  const aig = !ambAigua.length ? "" : (ambAigua.reduce((a, x) => a + x, 0) / ambAigua.length) >= metaAgua() * 0.85
+    ? fila("jd-be", "Agua", `Bien: unos ${fmt(Math.round(ambAigua.reduce((a, x) => a + x, 0) / ambAigua.length * 10) / 10)} vasos al día.`)
+    : fila("jd-quasi", "Agua", `Unos ${fmt(Math.round(ambAigua.reduce((a, x) => a + x, 0) / ambAigua.length * 10) / 10)} vasos al día; la meta es ${metaAgua()}, y más los días que entrenas.`);
+  return bloc("Cómo vas comiendo", `<p class="suau petit" style="margin:0 0 8px">De ${n === 1 ? "1 día" : `los ${n} días`} que has apuntado esta semana.</p>${prot}${rep}${barra}${ene}${fv}${aig}${avis}`, "jd");
+}
+
+/* ---- L'AIGUA (el pla de l'Eric: «mantener una buena hidratación, especialmente alrededor del entrenamiento»; la meta, de
+   l'EFSA 2010: uns 2,5 litres d'aigua total al dia en homes i 2 en dones a partir dels 14, i un 20-30 % ve del menjar: uns
+   8 gots de 250 ml de beguda ells i 7 elles). Es compta per gots, dia a dia, a S.agua. ---- */
+const metaAgua = () => (S.perfil.sexo === "m" ? 7 : 8);
+const I_GOT = (ple) => `<svg viewBox="0 0 16 22" class="got${ple ? " ple" : ""}" aria-hidden="true"><path d="M2 2h12l-1.6 17.2a1 1 0 0 1-1 .8H4.6a1 1 0 0 1-1-.8z"/>${ple ? '<path class="aig" d="M3.1 8h9.8l-1.2 11H4.3z"/>' : ""}</svg>`;
+function filaAigua(k) {
+  const n = (S.agua || {})[k] || 0, m = metaAgua();
+  return `<div class="panel pad aigua"><div class="aig-cap"><b>Agua</b><span class="num suau">${n} de ${m} vasos</span></div>
+    <div class="aig-fila"><button class="aig-b" data-accion="aigua" data-d="-1" aria-label="Un vaso menos"${n ? "" : " disabled"}>−</button>
+      <span class="aig-gots" role="img" aria-label="${n} de ${m} vasos de agua">${Array.from({ length: Math.max(m, n) }, (_, i) => I_GOT(i < n)).join("")}</span>
+      <button class="aig-b" data-accion="aigua" data-d="1" aria-label="Un vaso más">+</button></div></div>`;
 }
 
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
@@ -5748,6 +5777,7 @@ function cosRegistre() {
     <div style="font-weight:700;font-size:18px">${k === hoy() ? "Hoy" : fechaLarga(k)}</div>
     <button class="tanca" data-accion="dia-reg" data-d="1" aria-label="Día siguiente"${k >= hoy() ? " disabled" : ""}><span style="display:inline-block;transform:scaleX(-1)">${I_ENRERE}</span></button></div>
   <div class="panel pad" style="margin-top:12px"><div class="linia-macros"><span><i class="dot p"></i>${n0(t.p)}${obj ? " / " + obj.lo : ""} g proteína</span><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span></div></div>
+  ${filaAigua(k)}
   <div class="fila entre" style="margin-top:16px"><h2 style="font-size:19px">Lo que has comido</h2><button class="btn clar marc" data-accion="afegeix">Añadir</button></div>`;
   if (!llista.length) h += `<p class="buit">Aún no hay nada. Desde Comer, «APUNTAR» lo guarda con las cantidades.</p>`;
   COMIDAS.forEach(([slot, nom]) => {
@@ -6232,6 +6262,8 @@ document.addEventListener("click", ev => {
     case "hinchado": obreFull(TXT_INFLAT, "Me noto hinchado"); break;
     case "afegeix": obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(""); break;
     case "al-tria": triaAliment(b.dataset.k); break;
+    case "aigua": { const kk = diaReg || hoy(), n = Math.max(0, Math.min(20, ((S.agua || {})[kk] || 0) + Number(b.dataset.d)));
+      S.agua = { ...(S.agua || {}), [kk]: n }; guardar(); render(); Efectos.vibra("tria"); if (Number(b.dataset.d) > 0) Efectos.suena("tap"); break; }
     case "al-nou": obreFull(fullAlNou(null), "Crear un alimento"); break;
     case "al-edita": obreFull(fullAlNou(b.dataset.k), (S.alPropis || {})[b.dataset.k] ? "Tu alimento" : "Corregir con tu etiqueta"); break;
     case "al-esborra": esborraAlPropi(b.dataset.k); break;
