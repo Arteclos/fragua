@@ -1862,6 +1862,26 @@ function mediaSemanaAno(S, ahora = new Date()) {
 // reptes amb números rodons»). Cada fita paga una bossa d'or una sola vegada a la vida.
 const HITOS = [5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 250, 300, 365, 500, 730, 1000];
 const bolsa = h => h * 5;
+/* ---- LES METES DE DIES (27-09-2026). L'Albert: «dels dies de compromís no diguis este año, perquè potser ja som a
+   desembre... digues a quin objectiu vols arribar ara», i «quan facis els cinc dies o els 10, 15, 20». Cada meta compta
+   els dies de gimnàs des del dia que la tries, i un dia no compta per a dues metes: van en cadena, i la primera que no
+   s'ha complert és l'activa. Cada meta complerta paga la seva bossa (bolsa(dies)), una vegada.
+   ULL: servidor/sincro.py (metes) fa exactament el mateix, i proves/prova_or_js.py ho comprova. ---- */
+const DATA_RE = /^\d{4}-\d{2}-\d{2}$/;
+const metaValida = m => !!m && typeof m === "object" && typeof m.dies === "number" && Math.floor(m.dies) >= 1 && Math.floor(m.dies) <= 366
+  && typeof m.des === "string" && DATA_RE.test(m.des);
+function metes(S) {
+  const dies = [...new Set(finSesiones(S).map(s => s.fecha).filter(f => typeof f === "string" && DATA_RE.test(f)))].sort();
+  let cursor = "", activa = null;
+  const fetes = [];
+  for (const m of (Array.isArray(S.metes) ? S.metes : [])) {
+    if (!metaValida(m)) continue;
+    const n = Math.floor(m.dies), compt = dies.filter(d => d >= m.des && d > cursor);
+    if (compt.length >= n) { fetes.push({ des: m.des, dies: n, fins: compt[n - 1] }); cursor = compt[n - 1]; }
+    else { activa = { des: m.des, dies: n, fets: compt.length }; break; }
+  }
+  return { fetes, activa };
+}
 const proximoHito = n => HITOS.find(h => h > n) || null;
 // Els set dies d'aquesta setmana, de dilluns a diumenge: entrenat, avui o encara no.
 function semana(S, ahora = new Date()) {
@@ -1874,7 +1894,7 @@ function semana(S, ahora = new Date()) {
   });
 }
 
-return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, experienciaPj, nivellDe, nivellMaxPj, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
+return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, experienciaPj, nivellDe, nivellMaxPj, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, metaValida, metes, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
 })();
 
 /* Generat per prepara_sons.py: quins sons d'Artlist hi ha a assets/sons/. No s'edita a mà. */
@@ -3576,14 +3596,17 @@ function pagMejoras(d) {
     ${amb.map((m, i) => `<div class="r-graf panel entra" style="--d:${(0.35 + i * 0.22).toFixed(2)}s"><div class="r-graf-cap"><b>${esc(m.n)}</b><span class="${m.canvi >= 0 ? "puja" : "baixa"} num">${m.canvi >= 0 ? "+" : ""}${n0(m.canvi * 100)} %</span></div>${grafTendencia(m.vals)}<small>${m.vals.length} entrenos: de ${n0(m.vals[0])} a ${n0(m.vals[m.vals.length - 1])} kg</small></div>`).join("")}
     ${sense.length ? `<p class="r-nota entra" style="--d:${(0.4 + amb.length * 0.22).toFixed(2)}s">${sense.length === 1 ? "Un ejercicio" : sense.length + " ejercicios"} por primera vez: la próxima vez ya tendrás línea.</p>` : ""}`;
 }
-// Els dies de gimnàs: el de l'any compta, el de sempre dona les bosses, i la meta de l'any es tria aquí, en acabar
-// l'entreno (com el Duolingo), amb el compte enrere.
-const METAS_ANY = [50, 80, 100, 150, 200, 250];
-function htmlMeta(dies) {
-  const any = String(new Date().getFullYear()), m = (S.metaAny || {})[any];
-  if (!m) return `<div class="r-meta"><b>¿Cuántos días vas a ir al gimnasio este año?</b><div class="fila envolta" style="justify-content:center;margin-top:8px">${METAS_ANY.map(x => `<button class="chip" data-accion="meta-any" data-m="${x}">${x}</button>`).join("")}</div><small>Comprométete. Al llegar, una bolsa de ${Stats.bolsa(80)} a ${Stats.bolsa(250)} de oro.</small></div>`;
-  const falten = Math.max(0, m - dies);
-  return `<div class="r-hito"><div class="r-hito-t"><span>Tu meta de ${any}</span><b class="num">${dies} / ${m}</b></div><div class="barra"><i style="width:${(Math.min(1, dies / m) * 100).toFixed(1)}%"></i></div><small>${falten ? `Te ${falten === 1 ? "falta 1 día" : `faltan ${falten} días`}. Al llegar, ${Stats.bolsa(m)} de oro.` : "¡Meta cumplida este año!"}</small></div>`;
+// Els dies de gimnàs: el de l'any compta, el de sempre dona les bosses, i la META es tria aquí, en acabar l'entreno (com
+// el Duolingo), amb el compte enrere. Des del 27-09-2026 la meta és «a partir d'ara» (Stats.metes), no de l'any.
+const METAS_DIES = [5, 10, 15, 20, 30, 50];
+function htmlMeta() {
+  const { fetes, activa } = Stats.metes(S);
+  if (!activa) {
+    const ultima = fetes[fetes.length - 1], avui = ultima && ultima.fins === hoy();
+    return `<div class="r-meta">${avui ? `<p class="or" style="margin:0 0 6px"><b>¡Meta de ${ultima.dies} días cumplida!</b></p>` : ""}<b>${fetes.length ? "¿Y ahora? ¿Cuántos días más te propones?" : "¿Cuántos días de gimnasio te propones a partir de hoy?"}</b><div class="fila envolta" style="justify-content:center;margin-top:8px">${METAS_DIES.map(x => `<button class="chip" data-accion="meta-dies" data-m="${x}">${x}</button>`).join("")}</div><small>Comprométete. Al llegar, una bolsa de ${Stats.bolsa(METAS_DIES[0])} a ${Stats.bolsa(METAS_DIES[METAS_DIES.length - 1])} de oro.</small></div>`;
+  }
+  const falten = activa.dies - activa.fets;
+  return `<div class="r-hito"><div class="r-hito-t"><span>Tu meta: ${activa.dies} días</span><b class="num">${activa.fets} / ${activa.dies}</b></div><div class="barra"><i style="width:${(activa.fets / activa.dies * 100).toFixed(1)}%"></i></div><small>Desde el ${fechaCorta(activa.des)}. Te ${falten === 1 ? "falta 1 día" : `faltan ${falten} días`}; al llegar, ${Stats.bolsa(activa.dies)} de oro.</small></div>`;
 }
 function pagRacha(d) {
   const set = Stats.semana(S), tot = d.mrDes, prox = Stats.proximoHito(tot), antHito = [...Stats.HITOS].reverse().find(h => h <= tot) || 0;
@@ -3593,8 +3616,8 @@ function pagRacha(d) {
     <div class="r-flama entra" style="--d:.25s">${flama(true, "r-flama-svg")}<b class="or num" data-compta="${d.rDes}" data-de="${d.rAbans}" data-quan="500">${d.rAbans}</b></div>
     <div class="r-sub entra" style="--d:.5s">${d.rDes === 1 ? "día" : "días"} este año; ${tot} desde que empezaste</div>
     <div class="r-setmana entra" style="--d:.8s">${set.map(x => `<span class="${x.entreno ? "foc" : x.futuro ? "futur" : x.hoy ? "avui" : "desc"}">${x.entreno ? flama(true) : ""}<i>${x.letra}</i></span>`).join("")}</div>
-    ${bossa ? `<div class="r-bossa entra" style="--d:1.3s" data-so="cofre" data-quan="1300"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="150" height="150"><div><b class="or">${d.hitos.length ? `¡${d.hitos[d.hitos.length - 1]} días!` : "¡Meta cumplida!"}</b><span>+${d.hitos.reduce((a, h) => a + Stats.bolsa(h), 0) + (d.metaNova ? Stats.bolsa(d.metaNova) : 0)} de oro</span></div></div>` : ""}
-    <div class="entra" id="r-meta" style="--d:${bossa ? 2 : 1.2}s">${htmlMeta(d.rDes)}</div>
+    ${bossa ? `<div class="r-bossa entra" style="--d:1.3s" data-so="cofre" data-quan="1300"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="150" height="150"><div><b class="or">${d.hitos.length ? `¡${d.hitos[d.hitos.length - 1]} días!` : `¡Meta de ${d.metaNova} días cumplida!`}</b><span>+${d.hitos.reduce((a, h) => a + Stats.bolsa(h), 0) + (d.metaNova ? Stats.bolsa(d.metaNova) : 0)} de oro</span></div></div>` : ""}
+    <div class="entra" id="r-meta" style="--d:${bossa ? 2 : 1.2}s">${htmlMeta()}</div>
     ${prox ? `<div class="r-hito entra" style="--d:${bossa ? 2.3 : 1.5}s"><div class="r-hito-t"><span>Próxima bolsa de oro</span><b class="num">${tot} / ${prox}</b></div><div class="barra"><i style="width:0" data-ample="${(frac * 100).toFixed(1)}"></i></div><small>A los ${prox} días de gimnasio: ${Stats.bolsa(prox)} de oro.</small></div>` : ""}
     <p class="r-nota entra" style="--d:${bossa ? 2.6 : 1.8}s">Los días no se pierden nunca: si descansas, siguen ahí.</p>`;
 }
@@ -3745,7 +3768,7 @@ function vistaRachaStats() {
   return `<div class="panel pad r-racha-cap"><div class="r-flama">${flama(dAny > 0, "r-flama-svg")}<b class="or num">${dAny}</b></div>
       <div><div class="r-sub" style="margin:0">${dAny === 1 ? "día" : "días"} de gimnasio en ${any}</div><div class="suau petit">${dTot} desde que empezaste; ${fmt(Math.round(Stats.mediaSemanaAno(S) * 10) / 10)} por semana de media este año. Los días no se pierden nunca.</div></div></div>
     ${bloc("Constancia", `${grafConstancia(Stats.constancia(S))}<p class="llegenda">Cada casilla es un día de las últimas 12 semanas. Las encendidas, entrenaste.</p>`, "graf")}
-    ${bloc(`Tu meta de ${any}`, htmlMeta(dAny) + ((S.metaAny || {})[String(any)] ? `<p style="margin:10px 0 0;text-align:center"><button class="enllac" data-accion="meta-any" data-m="0">Cambiar la meta</button></p>` : ""))}
+    ${bloc("Tu meta", htmlMeta() + (Stats.metes(S).activa ? `<p style="margin:10px 0 0;text-align:center"><button class="enllac" data-accion="meta-dies" data-m="0">Cambiar la meta</button></p>` : ""))}
     ${bloc("Bolsas de oro", `<div class="bosses">${Stats.HITOS.slice(0, 12).map(h => `<div class="bossa-h${dTot >= h ? " feta" : ""}"><img src="${ACTIUS}bolsa-oro.webp" alt="" width="56" height="56" loading="lazy"><b class="num">${h}</b><small>${Stats.bolsa(h)} oro</small></div>`).join("")}</div>
       <p class="llegenda">${prox ? `Te faltan ${prox - dTot} ${prox - dTot === 1 ? "día" : "días"} de gimnasio para la siguiente.` : "Las tienes todas."} Cada bolsa se cobra una vez.</p>`)}`;
 }
@@ -3754,12 +3777,13 @@ function vistaRachaStats() {
 function accioPagines(acc, b) {
   switch (acc) {
     case "ej-stats": obreFull(fullEjercicio(b.dataset.n), b.dataset.n); pasosDe(b.dataset.n).then(pp => { const o = $("#pasos"); if (o && pp) o.innerHTML = pp.map(x => `<li>${esc(x)}</li>`).join(""); }); return true;
-    case "meta-any": {
-      const any = String(new Date().getFullYear()), m = +b.dataset.m;
-      S.metaAny = { ...(S.metaAny || {}), [any]: m || null }; guardar();
+    case "meta-dies": {
+      // les complertes es queden (ja han pagat la seva bossa); l'activa, si n'hi ha, se substitueix per la nova
+      const m = +b.dataset.m, fetes = Stats.metes(S).fetes.length, valides = (S.metes || []).filter(Stats.metaValida).slice(0, fetes);
+      S.metes = m ? [...valides, { des: hoy(), dies: m }] : valides; guardar();
       const lloc = document.getElementById("r-meta");
-      if (lloc) lloc.innerHTML = htmlMeta(Stats.diasAno(S)); else render();
-      if (m) { Efectos.suena("triar"); Efectos.vibra("fet"); avis(`Meta: ${m} días en ${any}. ¡A por ella!`); }
+      if (lloc) lloc.innerHTML = htmlMeta(); else render();
+      if (m) { Efectos.suena("triar"); Efectos.vibra("fet"); avis(`Meta: ${m} días de gimnasio a partir de hoy. ¡A por ella!`); }
       return true;
     }
     case "racha-veure": S.ui.statsTab = "racha"; veure("estadisticas"); return true;
@@ -5616,7 +5640,8 @@ function oroGanado() {
   let menjars = 0;
   Object.values(S.reg).forEach(ll => { menjars += Math.min(6, new Set(ll.map(r => r.comida)).size); });
   const dt = Stats.diasTotal(S);
-  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0);
+  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0)
+    + Stats.metes(S).fetes.reduce((a, m) => a + Stats.bolsa(m.dies), 0);
   return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
 }
 // Amb compte, el saldo el mana el servidor (src/compte.js, oroServidor); sense, el càlcul del mòbil.
@@ -6429,6 +6454,7 @@ document.addEventListener("click", ev => {
     case "terminar": {
       const s = activa(); if (!s) break;
       const abans = Stats.experienciaPj(S), rAbans = Stats.diasAno(S), oroAbans = oroGanado(), mrAbans = Stats.diasTotal(S), sid = s.id;
+      const metesAbans = Stats.metes(S).fetes.length;
       const ahir = clave(new Date(Date.now() - 864e5));
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
@@ -6438,10 +6464,8 @@ document.addEventListener("click", ev => {
       if (soc().participa) miraPujada(pujaAbans); else sincronitza();
       marcaEntrenat();     // que el recordatori no avisi qui ja ha entrenat (i si no hi ha xarxa, es torna a provar)
       const des = Stats.experienciaPj(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
-      // la meta de dies de l'any: si l'ha feta avui, la seva bossa (una vegada per any)
-      const any = String(new Date().getFullYear()), meta = (S.metaAny || {})[any];
-      const metaNova = meta && rDes >= meta && !(S.metasAnyOk || []).includes(any) ? meta : null;
-      if (metaNova) S.metasAnyOk = [...(S.metasAnyOk || []), any];
+      // la meta de dies: si l'ha complert avui, la seva bossa (Stats.metes la compta, una vegada)
+      const mf = Stats.metes(S).fetes, metaNova = mf.length > metesAbans ? mf[mf.length - 1].dies : null;
       render();
       // com el gel del Duolingo: ahir no va entrenar i la ratxa segueix gràcies al dia de descans
       resumEntreno({ sid, abans, des, rAbans, rDes, mrAbans, mrDes, metaNova, oro: oroGanado() - oroAbans,
