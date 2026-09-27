@@ -977,6 +977,17 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .al-ed svg{width:20px;height:20px}
 .al-q{margin-top:10px;display:grid;gap:10px}
 .al-crea{text-align:center;margin:12px 0 0}
+/* ---- el judici de la dieta (27-09-2026) ---- */
+.jd{margin-top:28px}
+.jd-fila{display:grid;gap:3px;padding:10px 0 10px 14px;border-bottom:1px solid rgba(197,123,55,.15);position:relative}
+.jd-fila::before{content:"";position:absolute;left:0;top:14px;width:8px;height:8px;border-radius:50%;background:#8f7b66}
+.jd-fila.jd-be::before{background:#6cc26c}.jd-fila.jd-quasi::before{background:#f0a050}.jd-fila.jd-falta::before{background:#e0503a}
+.jd-fila b{font-size:15.5px}
+.jd-fila span{font-size:14.5px;line-height:1.45;color:var(--crema)}
+.jd-barra{display:flex;height:10px;margin:12px 0 4px;border-radius:5px;overflow:hidden;background:#141312}
+.jd-barra i{display:block;height:100%}
+.jd-barra .p{background:#fd5a1e}.jd-barra .c{background:#ffc23a}.jd-barra .g{background:#8ec46a}
+.jd-avis{margin:12px 0 0}
 .item .nom{font-size:15.5px}
 .item .q{font-weight:700;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
 .item .e{grid-column:1/-1;font-size:13px;color:var(--fum)}
@@ -5223,6 +5234,43 @@ function esborraAlPropi(k) {
   guardar(); obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(""); avis(`«${x.n}» borrado. Lo que ya apuntaste se queda.`);
 }
 
+/* ---- EL JUDICI DE LA DIETA (l'Albert, 26-09-2026: «calcular un equilibri o analitzar la dieta i dir què en penses, amb el
+   disclaimer del nutricionista»). Regles i prou, cap IA: de l'última setmana apuntada, quatre coses amb font, dites en
+   positiu i sense calories per retallar (hi ha menors: res de dèficits ni de pes).
+   - La proteïna: 1,6 g/kg al dia és on la força i el múscul deixen de guanyar (Morton i col., Br J Sports Med 2018,
+     metaanàlisi de 49 estudis); el tram de l'app és 1,6-2,0 (objetivoProt).
+   - El repartiment: millor en tres o quatre menjars amb 20-40 g que en un de gran (Schoenfeld i Aragon, JISSN 2018).
+   - L'energia: els hidrats, del 45 al 65 %; el greix, del 20 al 35 % (els intervals de l'IOM; l'EFSA, semblants).
+   - La fruita i la verdura: uns 400 g al dia, cinc racions (OMS). ---- */
+function judiciDieta() {
+  const dies = [];
+  for (let i = 0; i < 7; i++) { const d = new Date(); d.setDate(d.getDate() - i); const k = clave(d); if ((S.reg[k] || []).length) dies.push(k); }
+  const avis = '<p class="suau petit jd-avis">Es una orientación a partir de lo que apuntas, no un consejo médico.</p>';
+  if (dies.length < 2) return bloc("Cómo vas comiendo", `<p class="suau">Apunta lo que comes dos días y aquí te decimos cómo vas: la proteína, cómo la repartes, la energía y la fruta y la verdura.</p>${avis}`, "jd");
+  const t = { p: 0, c: 0, g: 0, k: 0 }, apats = [], frVer = { n: 0 };
+  dies.forEach(k => {
+    const l = S.reg[k] || []; l.forEach(r => { t.p += r.p; t.c += r.c; t.g += r.g; t.k += r.k; const x = val(r.a); if (x.gr === "fruta" || x.gr === "verdura") frVer.n++; });
+    COMIDAS.forEach(([slot]) => { const p = l.filter(r => r.comida === slot).reduce((a, r) => a + r.p, 0); if (p > 0) apats.push(p); });
+  });
+  const n = dies.length, obj = objetivoProt(), pDia = t.p / n, kcal = t.p * 4 + t.c * 4 + t.g * 9 || 1;
+  const pc = { p: t.p * 4 / kcal * 100, c: t.c * 4 / kcal * 100, g: t.g * 9 / kcal * 100 };
+  const bons = apats.filter(p => p >= 20).length / n, frDia = frVer.n / n;
+  const fila = (ok, titol, txt) => `<div class="jd-fila ${ok}"><b>${titol}</b><span>${txt}</span></div>`;
+  const prot = !obj ? fila("", "Proteína", `${n0(pDia)} g al día de media. Pon tu peso en Ajustes y te decimos si es suficiente.`)
+    : pDia >= obj.lo ? fila("jd-be", "Proteína", `Vas bien: ${n0(pDia)} g al día de media, y lo que te ayuda a ganar fuerza es a partir de ${obj.lo} g.`)
+    : pDia >= obj.lo * 0.8 ? fila("jd-quasi", "Proteína", `Casi: ${n0(pDia)} g al día de media, y lo que te ayuda es a partir de ${obj.lo} g. Un lácteo, unos huevos o un poco más de carne o legumbre en una comida lo arregla.`)
+    : fila("jd-falta", "Proteína", `Te falta: ${n0(pDia)} g al día de media, y lo que te ayuda a ganar fuerza es a partir de ${obj.lo} g. Pon algo de proteína en cada comida: lácteos, huevos, carne, pescado o legumbres.`);
+  const rep = bons >= 3 ? fila("jd-be", "Cómo la repartes", `Bien repartida: ${fmt(Math.round(bons * 10) / 10)} comidas al día con 20 g o más.`)
+    : fila("jd-quasi", "Cómo la repartes", `Mejor en tres o cuatro comidas con 20 a 40 g cada una que casi toda en una: ahora son ${fmt(Math.round(bons * 10) / 10)} al día.`);
+  const ene = pc.c >= 45 && pc.g <= 35 ? fila("jd-be", "La energía", `Equilibrada: ${n0(pc.c)} % de hidratos, ${n0(pc.g)} % de grasas y ${n0(pc.p)} % de proteína.`)
+    : pc.c < 45 ? fila("jd-quasi", "La energía", `Pocos hidratos para entrenar fuerte (${n0(pc.c)} %; lo normal es de 45 a 65 %). Arroz, pasta, pan, patata o fruta son tu gasolina.`)
+    : fila("jd-quasi", "La energía", `Bastante grasa (${n0(pc.g)} %; lo normal es de 20 a 35 %). Revisa los fritos, la bollería y las salsas.`);
+  const fv = frDia >= 3 ? fila("jd-be", "Fruta y verdura", `Bien: unas ${fmt(Math.round(frDia * 10) / 10)} al día. La meta es cinco.`)
+    : fila("jd-quasi", "Fruta y verdura", `Unas ${fmt(Math.round(frDia * 10) / 10)} al día de las que apuntas; la meta es cinco. Una pieza de fruta en el desayuno y verdura en la comida y la cena ya casi lo es.`);
+  const barra = `<div class="jd-barra" role="img" aria-label="Energía: ${n0(pc.p)} % proteína, ${n0(pc.c)} % hidratos, ${n0(pc.g)} % grasas"><i class="p" style="width:${pc.p.toFixed(1)}%"></i><i class="c" style="width:${pc.c.toFixed(1)}%"></i><i class="g" style="width:${pc.g.toFixed(1)}%"></i></div>`;
+  return bloc("Cómo vas comiendo", `<p class="suau petit" style="margin:0 0 8px">De ${n === 1 ? "1 día" : `los ${n} días`} que has apuntado esta semana.</p>${prot}${rep}${barra}${ene}${fv}${avis}`, "jd");
+}
+
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
    El motor (rutina, menjar, entreno) és src/motor.js; les estadístiques, stats.js; la dopamina,
    src/efectos.js; el personatge en 3D, src/escena3d.js (mòdul a part). Aquí només es pinta i s'escolta.
@@ -5708,6 +5756,7 @@ function cosRegistre() {
     h += `<div class="panel pad" style="margin-top:10px"><div class="fila entre"><b style="font-size:16px">${nom}</b><span class="suau petit num">${n0(del.reduce((a, r) => a + r.p, 0))} g proteína</span></div>
       ${del.map(r => `<div class="reg"><div><div>${esc(r.n)}</div><div class="d">${esc(cantidadTxt({ a: r.a, q: r.q, modo: r.modo }))}, ${esc(r.e)}${r.hora ? ", " + r.hora : ""}</div></div><div class="num petit">${n0(r.p)} g P</div><button class="treu" data-accion="treu" data-id="${r.id}" aria-label="Quitar ${esc(r.n)}">${I_X}</button></div>`).join("")}</div>`;
   });
+  if (!diaReg || diaReg === hoy()) h += judiciDieta();
   return h;
 }
 
