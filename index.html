@@ -5567,9 +5567,9 @@ const I_GOT = (ple) => `<svg viewBox="0 0 16 22" class="got${ple ? " ple" : ""}"
 function filaAigua(k) {
   const n = (S.agua || {})[k] || 0, m = metaAgua();
   return `<div class="panel pad aigua"><div class="aig-cap"><b>Agua</b><span class="num suau">${n} de ${m} vasos</span></div>
-    <div class="aig-fila"><button class="aig-b" data-accion="aigua" data-d="-1" aria-label="Un vaso menos"${n ? "" : " disabled"}>−</button>
+    <div class="aig-fila"><button class="aig-b" data-accion="aigua" data-d="-1" data-k="${k}" aria-label="Un vaso menos"${n ? "" : " disabled"}>−</button>
       <span class="aig-gots" role="img" aria-label="${n} de ${m} vasos de agua">${Array.from({ length: Math.max(m, n) }, (_, i) => I_GOT(i < n)).join("")}</span>
-      <button class="aig-b" data-accion="aigua" data-d="1" aria-label="Un vaso más">+</button></div></div>`;
+      <button class="aig-b" data-accion="aigua" data-d="1" data-k="${k}" aria-label="Un vaso más">+</button></div></div>`;
 }
 
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
@@ -6032,6 +6032,7 @@ function vistaComer() {
     <div class="macro"><img class="ico" src="${ACTIUS}icones/comer.webp" alt=""><div><div class="et"><span>Proteína</span><span class="num">${n0(t.p)}${obj ? " / " + obj.lo : ""} g</span></div><div class="barra"><i style="width:${(pr * 100).toFixed(1)}%"></i></div></div></div>
     <div class="linia-macros"><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span><span>unas ${n0(t.k)} kcal</span></div>
   </div>
+  ${filaAigua(k)}
   ${ambPla() ? "" : `<div class="panel pad comer-propi"><b class="or">Tu comida, a tu manera</b><p class="suau petit" style="margin:6px 0 0">Apunta lo que comes y KLONK te suma la proteína, los hidratos y las grasas. Si pones tu menú de la semana en «Mi semana», cada día lo apuntas de un toque.</p></div>`}
   <div class="fila envolta" style="margin-top:12px;justify-content:center${ambPla() ? "" : ";display:none"}">
     <button class="chip" data-accion="tipus" data-t="entreno" aria-pressed="${entreno}">Día de entreno</button>
@@ -6067,7 +6068,7 @@ function cosRegistre() {
     <div style="font-weight:700;font-size:18px">${k === hoy() ? "Hoy" : fechaLarga(k)}</div>
     <button class="tanca" data-accion="dia-reg" data-d="1" aria-label="Día siguiente"${k >= hoy() ? " disabled" : ""}><span style="display:inline-block;transform:scaleX(-1)">${I_ENRERE}</span></button></div>
   <div class="panel pad" style="margin-top:12px"><div class="linia-macros"><span><i class="dot p"></i>${n0(t.p)}${obj ? " / " + obj.lo : ""} g proteína</span><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span></div></div>
-  ${filaAigua(k)}
+  ${k === hoy() ? "" : filaAigua(k)}
   <div class="fila entre" style="margin-top:16px"><h2 style="font-size:19px">Lo que has comido</h2><button class="btn clar marc" data-accion="afegeix">Añadir</button></div>`;
   if (!llista.length) h += `<p class="buit">Aún no hay nada. Desde Comer, «APUNTAR» lo guarda con las cantidades.</p>`;
   COMIDAS.forEach(([slot, nom]) => {
@@ -6555,7 +6556,7 @@ document.addEventListener("click", ev => {
     case "hinchado": obreFull(TXT_INFLAT, "Me noto hinchado"); break;
     case "afegeix": obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(""); break;
     case "al-tria": triaAliment(b.dataset.k); break;
-    case "aigua": { const kk = diaReg || hoy(), n = Math.max(0, Math.min(20, ((S.agua || {})[kk] || 0) + Number(b.dataset.d)));
+    case "aigua": { const kk = /^\d{4}-\d{2}-\d{2}$/.test(b.dataset.k || "") ? b.dataset.k : (diaReg || hoy()), n = Math.max(0, Math.min(20, ((S.agua || {})[kk] || 0) + Number(b.dataset.d)));
       S.agua = { ...(S.agua || {}), [kk]: n }; guardar(); render(); Efectos.vibra("tria"); if (Number(b.dataset.d) > 0) Efectos.suena("tap"); break; }
     case "al-nou": obreFull(fullAlNou(null), "Crear un alimento"); break;
     case "al-edita": obreFull(fullAlNou(b.dataset.k), (S.alPropis || {})[b.dataset.k] ? "Tu alimento" : "Corregir con tu etiqueta"); break;
