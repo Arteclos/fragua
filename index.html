@@ -1326,11 +1326,23 @@ function objetivoProt() {
   return { lo: Math.round(w * 1.6), hi: Math.round(w * 2.0) };
 }
 const esEntreno = k => (S.tipo[k] || (deClave(k).getDay() === 0 ? "descanso" : "entreno")) === "entreno";
+// UN ÀPAT QUE SE SALTA (el pla de l'Eric: «si se salta una comida, NO crear una comida gigantesca ni compensar
+// agresivamente; redistribuir los alimentos de forma razonable entre las comidas restantes»). Els àpats principals
+// d'avui que ja han passat sense apuntar-los. Només si avui ja n'ha apuntat algun: qui no apunta res no s'ha saltat res.
+const ART_COMIDA = { desayuno: "el desayuno", cole: "el almuerzo", comida: "la comida", merienda: "la merienda", cena: "la cena" };
+function saltats(k) {
+  if (k !== hoy() || !(S.reg[k] || []).length) return [];
+  const orden = COMIDAS.map(([s]) => s).filter(s => s !== "snack"), ara = orden.indexOf(slotAhora());
+  const fets = new Set((S.reg[k] || []).map(r => r.comida));
+  return orden.slice(0, ara < 0 ? orden.length : ara).filter(s => !fets.has(s));
+}
 function fraccion(a, k) {
-  const gr = AL[a].gr;
+  const gr = (AL[a] || {}).gr;
   let f = 0.5;
   if (gr === "hc" || gr === "fruta" || gr === "dulce") f = esEntreno(k) ? 0.65 : 0.25;
   if (S.hambre[k]) f = Math.min(1, f + 0.35);
+  // cada àpat saltat puja una mica les racions dels que queden (com a molt dos), i mai per sobre del màxim del pla
+  f = Math.min(1, f + 0.12 * Math.min(2, saltats(k).length));
   return f;
 }
 function porcion(it, k) {
@@ -1438,6 +1450,8 @@ function propuesta(slot, k, n, combo) {
     pl.it.forEach(it => items.push({ ...it, q: porcion(it, k) }));
     combo = { slot, t: pl.t, base: pl.it[0].a, fecha: k };
   }
+  const sal = saltats(k);
+  if (sal.length) nota = (nota ? nota + " " : "") + `Hoy no has apuntado ${sal.map(s => ART_COMIDA[s]).join(" ni ")}: esta lleva un poco más, sin pasarse.`;
   return { titulo, items: items.map(sustituye), combo, nota, n, unica };
 }
 const mismoCombo = (a, b) => !!a && !!b && a.prot === b.prot && a.hc === b.hc && a.t === b.t;
