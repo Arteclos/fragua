@@ -1102,6 +1102,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .descans .accions button{min-height:40px;padding:0 10px;border-radius:999px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--crema);font-size:14px;font-weight:700}
 .descans .barra{grid-column:1/-1;height:8px}
 .descansant .app{padding-bottom:140px}
+#descans .accions button.desc-fi{background:var(--flama);color:#1a0d00;font-weight:800;border-color:var(--flama)}
 
 /* ---- gràfiques de pàgina ---- */
 .graf svg{width:100%;display:block}
@@ -2548,10 +2549,13 @@ const Efectos = (() => {
       tocIOS.click();
     } catch (e) {}
   }
-  function vibra(p) {
+  // senseGest: una vibració que no surt d'un toc (el compte enrere del descans). A l'iPhone el truc de l'interruptor només
+  // vibra dins d'un gest, i un clic amagat fet mentre algú toca un botó li pot menjar el toc: fora d'un gest, no es fa.
+  function vibra(p, senseGest) {
     if (typeof S !== "undefined" && S.haptica === false) return;
     if (typeof p === "string") p = HAPTICA[p] || HAPTICA.toc;
     try { if (navigator.vibrate && navigator.vibrate(p)) return; } catch (e) {}
+    if (senseGest) return;
     const n = Array.isArray(p) ? Math.min(3, Math.ceil(p.length / 2)) : 1;
     tocaIOS();
     for (let i = 1; i < n; i++) setTimeout(tocaIOS, i * 110);
@@ -7649,7 +7653,8 @@ function vistaPersonaje() {
     <p class="llegenda">Cada serie da 10 XP, cada entreno terminado 50 y cada récord 25. Solo puntúa un entreno al día.</p>`, "graf")}
   <details class="plega marc"><summary>Su historia</summary><p>${esc(HISTORIA[p.tipo] || "")}</p></details>
   <details class="plega marc"><summary>Crónicas de Klonk <small>${capitolsFins(xp.nivel).length} de ${CRONICA.length}</small></summary>${capitolsFins(xp.nivel).map(c => `<div class="cron"><div class="cron-cap"><b class="or">${esc(c.titol)}</b><span>Nivel ${c.nivel}</span></div><p>${esc(c.text)}</p></div>`).join("")}${CRONICA.find(c => c[0] > xp.nivel) ? `<p class="llegenda">La siguiente, en el nivel ${CRONICA.find(c => c[0] > xp.nivel)[0]}.</p>` : ""}</details>
-  <p style="text-align:center;margin-top:16px" class="fila envolta" ><span style="flex:1"></span><button class="btn marc" data-accion="vista" data-v="eleccion">Cambiar de nombre</button><button class="btn clar marc" data-accion="vista" data-v="tienda">${MONEDA.replace("<svg", '<svg width="18" height="18"')} Tienda</button><span style="flex:1"></span></p>`;
+  <!-- fora «Cambiar de nombre» (l'Albert, 27-09: «no és algo que volem que la gent es canviï fàcilment»); el nick és únic a la base i no s'ha tocat -->
+  <p style="text-align:center;margin-top:16px" class="fila envolta" ><span style="flex:1"></span><button class="btn clar marc" data-accion="vista" data-v="tienda">${MONEDA.replace("<svg", '<svg width="18" height="18"')} Tienda</button><span style="flex:1"></span></p>`;
 }
 
 function vistaTienda() {
@@ -7790,16 +7795,18 @@ const TXT_INFLAT = '<div class="text-llarg"><p>Notarte hinchado no quiere decir 
 let desc = { fin: 0, total: 0, int: null };
 let ticFet = -1;
 function empezarDescanso(seg) { $("#toast").hidden = true; desc.total = seg; desc.fin = Date.now() + seg * 1000; ticFet = -1; clearInterval(desc.int); desc.int = setInterval(pintaDescans, 250); pintaDescans(); setTimeout(() => Efectos.suena("descans"), 450); }
+// Totes les sèries de treball de l'entreno fetes: la barra del descans ofereix «Terminar» en lloc de «Saltar».
+const totFet = () => { const s = activa(); return !!s && s.ej.length > 0 && s.ej.every(e => e.sets.filter(serieCompta).every(z => z.ok && z.reps)); };
 function pararDescanso() { clearInterval(desc.int); desc.int = null; const b = $("#descans"); b.hidden = true; b.innerHTML = ""; document.body.classList.remove("descansant"); }
 function pintaDescans() {
   const b = $("#descans"), queden = Math.max(0, Math.round((desc.fin - Date.now()) / 1000));
-  if (queden <= 0 && desc.int) { pararDescanso(); if (!Efectos.suena("campana")) Efectos.suena("yunque"); Efectos.vibra("descans"); avis("¡A por la siguiente serie!"); return; }
-  if (queden <= 3 && queden > 0 && ticFet !== queden) { ticFet = queden; Efectos.suena("tic"); Efectos.vibra("tic"); }
+  if (queden <= 0 && desc.int) { pararDescanso(); if (!Efectos.suena("campana")) Efectos.suena("yunque"); Efectos.vibra("descans", true); avis("¡A por la siguiente serie!"); return; }
+  if (queden <= 3 && queden > 0 && ticFet !== queden) { ticFet = queden; Efectos.suena("tic"); Efectos.vibra("tic", true); }
   if (!desc.int) return;
   b.hidden = false; document.body.classList.add("descansant");
   b.innerHTML = `<div class="caixa panel"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#ffb030" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>
     <div><div class="suau petit">Descanso</div><div class="temps or">${Math.floor(queden / 60)}:${String(queden % 60).padStart(2, "0")}</div></div>
-    <div class="accions"><button data-accion="desc-menys" aria-label="Quitar 15 segundos">−15</button><button data-accion="desc-mes" aria-label="Añadir 15 segundos">+15</button><button data-accion="desc-salta">Saltar</button></div>
+    <div class="accions"><button data-accion="desc-menys" aria-label="Quitar 15 segundos">−15</button><button data-accion="desc-mes" aria-label="Añadir 15 segundos">+15</button>${totFet() ? '<button data-accion="terminar" class="desc-fi">Terminar</button>' : '<button data-accion="desc-salta">Saltar</button>'}</div>
     <div class="barra"><i style="width:${(queden / desc.total * 100).toFixed(1)}%"></i></div></div>`;
 }
 let bloqueig = null;
@@ -8043,6 +8050,10 @@ document.addEventListener("click", ev => {
     }
     case "terminar": {
       const s = activa(); if (!s) break;
+      // el descans que corre no ho impedeix: s'atura primer. I si el resum falla per qualsevol cosa, l'entreno s'acaba igual
+      // i es diu què ha passat: ningú no s'ha de quedar sense poder acabar (l'Albert, 27-09, al gimnàs)
+      pararDescanso(); desc.fin = 0;
+      try {
       const abans = Stats.experienciaPj(S), rAbans = Stats.diasAno(S), oroAbans = oroGanado(), mrAbans = Stats.diasTotal(S), sid = s.id;
       const metesAbans = Stats.metes(S).fetes.length;
       const ahir = clave(new Date(Date.now() - 864e5));
@@ -8061,7 +8072,15 @@ document.addEventListener("click", ev => {
       resumEntreno({ sid, abans, des, rAbans, rDes, mrAbans, mrDes, metaNova, oro: oroGanado() - oroAbans,
         salvada: false });
       S.pendentNivell = null;
-      guardar(); break;
+      guardar();
+      } catch (err) {
+        // primer, que quedi acabat i desat; després, el missatge; i el repintat, l'últim i protegit (pot tornar a fallar)
+        try { if (activa() && s.ej.some(e => e.sets.some(z => z.ok && z.reps))) { terminar(); S.ui.vista = "inicio"; } } catch (e2) { S.activa = null; S.ui.vista = "inicio"; }
+        try { guardarYa(); } catch (e3) {}
+        avis("Entreno terminado. El resumen ha fallado: " + ((err && err.message) || "error"), true);
+        try { musica(); marcaEntrenat(); render(); } catch (e4) {}
+      }
+      break;
     }
     case "tanca-celebra": {
       $("#celebra").innerHTML = "";
