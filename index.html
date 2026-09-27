@@ -184,6 +184,8 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .aj-fila{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(197,123,55,.15)}
 .aj-fila>span:first-child{display:grid;gap:3px;font-weight:700;font-size:15px}
 .aj-fila small{font-weight:400;color:var(--fum);font-size:12.5px;line-height:1.35}
+.aj-fila.aj-apilada{display:grid;justify-content:stretch;gap:8px}
+.aj-apilada .fila{gap:8px}
 .aj-sub{font-size:14.5px;margin:16px 0 8px;color:#ffb55e}
 .camp.curt{width:96px;flex:none}
 .camp.curt input{height:44px}
@@ -3298,6 +3300,13 @@ function resumAj(k) {
     avisos: { actius: "Activados", pregunta: "Desactivados", bloquejats: "Bloqueados", instal: "Añade KLONK al inicio", no: "No disponibles" }[estatAvisos()],
   }[k] || "";
 }
+// El sexe (27-09-2026): a «Tus datos» i a les mesures. Serveix per a la fórmula de la grasa i perquè els rànquings et
+// comparin amb els del teu sexe (l'Albert, 26-09: «percentils per pes i sexe»); com el pes, només arriba al servidor amb
+// el permís de salut. Abans només sortia si encenies la cinta, i per això gairebé ningú no el tenia.
+function filaSexe(pr, nota) {
+  return `<div class="aj-fila aj-apilada"><span>Tu sexo<small>${nota || "Para la fórmula de la grasa y para compararte con los de tu sexo en los rankings. Como el peso, solo llega a tu cuenta con el permiso de salud."}</small></span>
+    <span class="fila envolta">${[["h", "Hombre"], ["m", "Mujer"], ["", "Prefiero no decirlo"]].map(([s, n]) => `<button type="button" class="chip" data-accion="aj-sexo" data-s="${s}" aria-pressed="${(pr.sexo || "") === s}">${n}</button>`).join("")}</span></div>`;
+}
 function vistaAjustes() {
   const ob = S.ui.ajOberta || null;
   return `${capcalera("Ajustes")}${S.demo ? bandaDemo() : ""}
@@ -3338,7 +3347,8 @@ function cosAj(k) {
       <button class="btn clar marc" data-accion="suport-oro">APÓYANOS CON ORO</button></div>`;
   if (k === "perfil") return `<form class="form" data-form="ajustes"><div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
       <label>Sueles entrenar a las<input id="a-hora" type="time" value="${esc(pr.horaEntreno || "18:00")}"></label>
-      <p class="suau petit" style="margin:0">Tu peso de cada semana, mejor en Estadísticas, en «Cuerpo»: así ves cómo cambia.</p><button class="btn clar marc" type="submit">GUARDAR</button></form>`;
+      <p class="suau petit" style="margin:0">Tu peso de cada semana, mejor en Estadísticas, en «Cuerpo»: así ves cómo cambia.</p><button class="btn clar marc" type="submit">GUARDAR</button></form>
+    ${filaSexe(pr)}`;
   if (k === "gimnasio") return `
     <div class="aj-fila"><span>Barra olímpica</span><span class="camp curt"><input inputmode="decimal" autocomplete="off" data-aj="barra" value="${fmt(G.barra)}" aria-label="Peso de la barra olímpica"><span class="u">kg</span></span></div>
     <div class="aj-fila"><span>Barra de la multipower<small>Cada una pesa distinto: pregunta en tu gimnasio o mira la etiqueta.</small></span><span class="camp curt"><input inputmode="decimal" autocomplete="off" data-aj="multipower" value="${fmt(G.multipower)}" aria-label="Peso de la barra de la multipower"><span class="u">kg</span></span></div>
@@ -3373,7 +3383,7 @@ function cosAj(k) {
     <h3 class="aj-sub">De tu báscula o tu nutricionista</h3>
     <div class="fila envolta">${BASCULA.map(([m, n, u]) => `<button class="chip" data-accion="aj-med" data-k="${m}" aria-pressed="${!!M[m]}">${n}${u === "%" ? " (%)" : ""}</button>`).join("")}</div>
     <div class="aj-fila" style="margin-top:14px"><span>Calcular mi grasa con la cinta<small>Con la cintura, el cuello y la altura (y la cadera, en mujeres).</small></span>${interruptor("aj-cinta", M.cinta, "Calcular mi grasa con la cinta")}</div>
-    ${M.cinta ? `<div class="aj-fila"><span>La fórmula es distinta en</span><span class="fila"><button class="chip" data-accion="aj-sexo" data-s="h" aria-pressed="${pr.sexo === "h"}">Hombres</button><button class="chip" data-accion="aj-sexo" data-s="m" aria-pressed="${pr.sexo === "m"}">Mujeres</button></span></div>` : ""}`;
+    ${M.cinta ? filaSexe(pr, "La fórmula es distinta en hombres y en mujeres.") : ""}`;
   if (k === "sonido") return `
     <div class="aj-fila"><span>Sonidos</span>${interruptor("so", S.sonido !== false, "Sonidos")}</div>
     <div class="aj-fila"><span>Música</span>${interruptor("musica", S.musica !== false, "Música")}</div>
@@ -3466,7 +3476,7 @@ function accioAjustes(acc, b) {
       const on = !medir().cinta;
       S.medir = { ...medir(), cinta: on, ...(on ? { cintura: true, cuello: true } : {}), ...(on && S.perfil.sexo === "m" ? { cadera: true } : {}) }; desa(); return true;
     }
-    case "aj-sexo": S.perfil = { ...S.perfil, sexo: b.dataset.s }; if (b.dataset.s === "m") S.medir = { ...medir(), cadera: true }; desa(); return true;
+    case "aj-sexo": S.perfil = { ...S.perfil, sexo: b.dataset.s || null }; if (b.dataset.s === "m") S.medir = { ...medir(), cadera: true }; desa(); return true;
     case "aj-demo": demo(!S.demo); return true;
   }
   return false;
