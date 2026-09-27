@@ -252,6 +252,23 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 @keyframes gira-medalla{from{transform:rotateY(180deg) scale(.4)}to{transform:none}}
 .r-nota{color:var(--fum);font-size:14px;line-height:1.5;margin:14px 6px 0}
 .r-accions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
+/* ---- supersèries i circuits, i la icona dels conceptes (27-09-2026) ---- */
+.info-boto{display:inline-grid;place-items:center;width:30px;height:30px;margin:-6px 0 -6px 2px;padding:0;border:0;border-radius:50%;background:none;color:#e6a45a;vertical-align:middle;cursor:pointer}
+.info-boto:focus-visible{outline:2px solid #ffd84a}
+.grup-cap{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin:10px 0 2px;padding-left:10px;border-left:3px solid #f0a050;color:#ffd27a}
+.grup-cap b{font-size:14px}
+.grup-cap small{flex-basis:100%;color:var(--fum);font-size:12.5px}
+.grup-cap.sessio{margin:18px 0 6px}
+.en-grup{box-shadow:inset 3px 0 0 #f0a050}
+.ej-ed.en-grup{padding-left:6px}
+.grup-tag{display:inline-block;min-width:26px;margin-right:6px;padding:1px 6px;border-radius:6px;background:#3a1d0c;color:#ffd27a;font-size:12px;font-weight:800;text-align:center}
+.exercici.en-grup{position:relative}
+.exercici.toca-ara{box-shadow:0 0 0 2px #f0a050,0 0 22px rgba(240,160,80,.45)}
+.ej-ed{position:relative}
+.ed-uneix{position:absolute;left:-6px;bottom:-17px;z-index:3;display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--bronze-fil);background:#15110e;color:#8f7b66;cursor:pointer}
+.ed-uneix[aria-pressed="true"]{color:#1a0e06;background:#f0a050;border-color:#f0a050}
+.ed-uneix:focus-visible{outline:2px solid #ffd84a}
+.imp-ej.en-grup{border-left-color:#f0a050}
 .r-graf{padding:10px 12px 10px;margin:10px 0;text-align:left}
 .r-graf svg{width:100%;height:auto;display:block}
 .r-graf small{color:var(--fum);font-size:12px}
@@ -1649,11 +1666,11 @@ function empezar(dia) {
   const d = diaRutina(dia) || diaRutina(1);
   const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
   // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
-  s.ej = d.ej.map(([n, t, x]) => {
+  s.ej = d.ej.map(([n, t, x, g]) => {
     const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
     const sets = p.sets ? p.sets.map(z => ({ kg: z.kg, reps: z.reps, ok: false }))
       : Array.from({ length: c.series }, () => ({ kg: x === "lastre" ? 0 : null, reps: null, ok: false }));
-    return { n, t, x, sets };
+    return { n, t, x, ...(g ? { g } : {}), sets };      // g: la supersèrie o el circuit (src/grups.js)
   });
   S.ses.push(s); S.activa = s.id; S.tipo[hoy()] = "entreno"; S.ui.tab = "entreno";
   guardar(); pedirPantalla(); render();
@@ -2724,7 +2741,7 @@ function vistaRutina() {
   return `${capcalera("")}<h1 class="titol-pag or">${esc(r.nombre)}</h1>
     <div class="panel pad rutina-fitxa">${htmlEstrellas(r)}<p>${esc(r.resumen || "Tu rutina.")}</p><p class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana${act ? ". Es la que usas." : "."}</p></div>
     ${r.dias.map((d, i) => `<section class="panel pad dia-rut"><div class="fila entre"><b>Día ${i + 1}: ${esc(d.t)}</b><span class="suau petit">${d.ej.length} ejercicios</span></div>
-      <div class="ej-llista">${d.ej.map(e => `<span class="ej-mini">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="36" height="36">` : ""}${esc(e[0])}</span>`).join("")}</div></section>`).join("")}
+      <div class="ej-llista">${d.ej.map((e, j) => { const pg = posGrup(d.ej, j); return `<span class="ej-mini${pg ? " en-grup" : ""}">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="36" height="36">` : ""}${pg ? `<b class="grup-tag">${esc(e[3])}${pg.pos}</b>` : ""}${esc(e[0])}</span>`; }).join("")}</div></section>`).join("")}
     <div style="margin-top:16px">${accions}</div>`;
 }
 // L'editor treballa sobre una còpia (S.ui.edit) i només es desa amb «GUARDAR».
@@ -2736,11 +2753,14 @@ function vistaEditor() {
       <div class="fila entre"><label class="form" style="flex:1"><span class="suau petit">Día ${i + 1}</span><input data-dia-t="${i}" maxlength="40" autocomplete="off" value="${esc(d.t)}"></label>
         <button class="tanca" data-accion="ed-treu-dia" data-i="${i}" aria-label="Quitar el día ${i + 1}">${I_X}</button></div>
       ${d.ej.length ? "" : '<p class="suau petit ed-buit">Sin ejercicios. Añade uno, o arrastra aquí uno de otro día.</p>'}
-      ${d.ej.map((e, j) => `<div class="ej-ed" data-i="${i}" data-j="${j}"><button class="ej-nansa" data-nansa data-i="${i}" data-j="${j}" aria-label="Mover ${esc(e[0])}: mantén y arrastra">${I_NANSA}</button>${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
-        <span class="nom">${esc(e[0])}<small class="ed-sr num">${srTxt(r.cfgImport && r.cfgImport[e[0]] ? { ...cfgEj(e[0], e[1]), ...r.cfgImport[e[0]] } : cfgEj(e[0], e[1]))}</small></span>
-        <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir ${esc(e[0])}"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span></div>`).join("")}
+      ${d.ej.map((e, j) => { const pg = posGrup(d.ej, j), junt = !!(e[3] && d.ej[j + 1] && d.ej[j + 1][3] === e[3]);
+        return (pg && pg.pos === 1 ? `<div class="grup-cap"><b>${nomGrup(pg.n)} ${esc(e[3])}</b>${infoBoto(pg.n >= 3 ? "circuito" : "superserie")}<small>Sin descanso entre ellos</small></div>` : "")
+        + `<div class="ej-ed${pg ? " en-grup" : ""}${pg && pg.pos === pg.n ? " grup-fi" : ""}" data-i="${i}" data-j="${j}"><button class="ej-nansa" data-nansa data-i="${i}" data-j="${j}" aria-label="Mover ${esc(e[0])}: mantén y arrastra">${I_NANSA}</button>${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
+        <span class="nom">${pg ? `<span class="grup-tag">${esc(e[3])}${pg.pos}</span>` : ""}${esc(e[0])}<small class="ed-sr num">${srTxt(r.cfgImport && r.cfgImport[e[0]] ? { ...cfgEj(e[0], e[1]), ...r.cfgImport[e[0]] } : cfgEj(e[0], e[1]))}</small></span>
+        <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir ${esc(e[0])}"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span>
+        ${j < d.ej.length - 1 ? `<button class="ed-uneix" data-accion="ed-uneix" data-i="${i}" data-j="${j}" aria-pressed="${junt}" aria-label="${junt ? `Separar ${esc(e[0])} del siguiente` : `Unir ${esc(e[0])} con el siguiente en superserie`}">${I_CADENA}</button>` : ""}</div>`; }).join("")}
       <button class="btn marc" style="margin-top:8px" data-accion="ed-afegeix" data-i="${i}">Añadir ejercicio</button></section>`).join("")}
-    <p class="suau petit" style="text-align:center;margin:10px 0 0">Para cambiar el orden, mantén el dedo en ⠿ y arrastra, también a otro día.</p>
+    <p class="suau petit" style="text-align:center;margin:10px 0 0">Para cambiar el orden, mantén el dedo en ⠿ y arrastra, también a otro día. Con la cadena unes un ejercicio con el siguiente: una superserie ${infoBoto("superserie")}</p>
     <p style="text-align:center"><button class="btn marc" data-accion="ed-dia">Añadir un día</button></p>
     <div class="panel pad" style="margin-top:6px"><div class="fila entre">${htmlEstrellas(r)}<span class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></div>
       <p class="suau petit" style="margin:8px 0 0">Para crecer: cada músculo dos veces por semana y unas 10 a 20 series por músculo.</p></div>
@@ -2812,8 +2832,8 @@ function accioRutina(acc, b) {
       b.parentElement.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
       refrescaTria(); return true;
     }
-    case "ed-treu": llegeixEditor(); S.ui.edit.dias[+b.dataset.i].ej.splice(+b.dataset.j, 1); guardar(); render(); return true;
-    case "ed-puja": { llegeixEditor(); const ll = S.ui.edit.dias[+b.dataset.i].ej, j = +b.dataset.j; if (j > 0) [ll[j - 1], ll[j]] = [ll[j], ll[j - 1]]; guardar(); render(); return true; }
+    case "ed-treu": llegeixEditor(); S.ui.edit.dias[+b.dataset.i].ej.splice(+b.dataset.j, 1); normalitzaGrups(S.ui.edit.dias[+b.dataset.i]); guardar(); render(); return true;
+    case "ed-puja": { llegeixEditor(); const ll = S.ui.edit.dias[+b.dataset.i].ej, j = +b.dataset.j; if (j > 0) [ll[j - 1], ll[j]] = [ll[j], ll[j - 1]]; normalitzaGrups(S.ui.edit.dias[+b.dataset.i]); guardar(); render(); return true; }
     case "ed-desa": {
       llegeixEditor();
       const r = S.ui.edit, dies = r.dias.filter(d => d.ej.length);
@@ -2882,6 +2902,9 @@ document.addEventListener("pointermove", ev => {
 }, { passive: false });
 function acabaArr(ev, ok) {
   if (!arr || ev.pointerId !== arr.id) return;
+  // el destí, al punt on es deixa anar: el navegador ajunta els últims moviments i el «pointerup» pot arribar abans que
+  // l'últim «pointermove» (27-09-2026: la prova d'arrossegar fallava de tant en tant, i al mòbil també podia passar)
+  if (ok && Number.isFinite(ev.clientX)) marcaDesti(ev.clientX, ev.clientY);
   const a = arr; arr = null;
   cancelAnimationFrame(a.raf); a.fantasma.remove(); netejaDesti();
   document.querySelectorAll(".ej-origen").forEach(e => e.classList.remove("ej-origen"));
@@ -2890,7 +2913,9 @@ function acabaArr(ev, ok) {
   if (i === a.i && (j === a.j || j === a.j + 1)) return;        // on ja era
   const [e] = D[a.i].ej.splice(a.j, 1);
   if (i === a.i && j > a.j) j--;                                  // en treure'l, els de sota han pujat un lloc
+  if (i !== a.i && e[3]) e[3] = "";                               // a un altre dia no s'emporta la supersèrie
   D[i].ej.splice(j, 0, e);
+  normalitzaGrups(D[a.i]); if (i !== a.i) normalitzaGrups(D[i]);
   guardar(); render(); Efectos.suena("tap"); Efectos.vibra("tria");
 }
 document.addEventListener("pointerup", ev => acabaArr(ev, true));
@@ -2913,12 +2938,14 @@ function afegeixPropi(i) {
 const APP_URL = "https://klonk.fit/";
 const b64u = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => { bin += String.fromCharCode(x); }); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
 const deb64u = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)));
-const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 3)) })) });
+const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })) });
 // Una rutina que ve de fora (un enllaç o un amic) es mira abans de fer-la servir: noms curts, poques coses.
 function rutinaValida(x) {
   if (!x || typeof x.nombre !== "string" || !Array.isArray(x.dias) || !x.dias.length || x.dias.length > 14) return null;
   const dias = x.dias.map(d => ({ t: String(d.t || "Día").slice(0, 40), ej: (Array.isArray(d.ej) ? d.ej : []).slice(0, 25)
-    .filter(e => Array.isArray(e) && typeof e[0] === "string").map(e => [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", ...(["lastre", "fino"].includes(e[2]) ? [e[2]] : [])]) }));
+    .filter(e => Array.isArray(e) && typeof e[0] === "string").map(e => { const x2 = ["lastre", "fino"].includes(e[2]) ? e[2] : "", g = typeof e[3] === "string" && /^[A-Z]$/.test(e[3]) ? e[3] : "";
+      return g ? [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", x2, g] : [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", ...(x2 ? [x2] : [])]; }) }));
+  dias.forEach(normalitzaGrups);
   return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias };
 }
 function fullCompartir(r) {
@@ -3196,6 +3223,10 @@ const tipusPropi = n => /press|sentadilla|peso muerto|remo|dominada|fondo|hip th
 const RX_DIA_IMP = /^(?:d[ií]a|day|sesi[oó]n|session|entreno|entrenamiento|workout|rutina)\s*(\d{1,2}|[a-f]|iv|v?i{1,3}|v)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
 const RX_SETMANA_IMP = /^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday|dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
 const RX_DESCANS_IMP = /^(descanso|descans|rest|off|libre|recuperaci[oó]n)\b/i;
+// «Superserie:», «Biserie», «Triserie», «Circuito»: els exercicis que venen fins a la línia en blanc, junts
+const RX_GRUP_IMP = /^(super\s*-?\s*series?|bi\s*-?\s*series?|tri\s*-?\s*series?|giant\s*sets?|circuitos?|circuits?)\b\s*[:.\-–]?\s*(.*)$/i;
+// «A1. Press banca», «A2) Remo»: la lletra fa el grup (dins del mateix dia)
+const RX_LLETRA_IMP = /^\s*[-•·*]?\s*([a-h])(\d{1,2})\s*[.):\-]?\s+/i;
 const RX_SALTA_IMP = /^(calentamiento|warm ?up|estiramientos?|stretching|movilidad|notas?|observaciones|importante|recuerda|cardio|hiit)\b/i;
 const RX_NOTA_IMP = /^(descanso|descansos|rest|rir|rpe|tempo|cadencia|nota|ojo|importante|progresi[oó]n|semana)\b/i;
 const GRUPS_IMP = new Set("pecho espalda pierna hombro bicep tricep brazo gluteo core abdomen abdominal ab torso tren superior inferior full body cuerpo completo push pull leg upper lower empuje tiron traccion cuadricep femoral isquio isquiotibial gemelo dorsal trapecio lumbar antebrazo dia day chest back shoulder arm glute pierna pectoral deltoide".split(" "));
@@ -3265,9 +3296,9 @@ function netejaLinia(l) {
 }
 
 function llegeixRutina(text) {
-  const linies = String(text || "").replace(/\r\n?/g, "\n").split("\n").map(netejaLinia);
+  const crues = String(text || "").replace(/\r\n?/g, "\n").split("\n"), linies = crues.map(netejaLinia);
   const res = { nombre: "", dias: [], ignorades: [], avisos: [] };
-  let dia = null, saltant = false, abansDeRes = true;
+  let dia = null, saltant = false, abansDeRes = true, grupBloc = null, nGrup = 0;
   const nouDia = (t, generic) => {
     if (dia && !dia.ej.length) {                    // dues capçaleres seguides: «Día 1» i després «PECHO»
       if (generic && !esGenericImp(dia.t)) return;
@@ -3277,22 +3308,25 @@ function llegeixRutina(text) {
   };
   const teSR = l => !!(l && srDe(l.toLowerCase()));
   for (let i = 0; i < linies.length; i++) {
-    const l = linies[i];
-    if (!l) { saltant = false; continue; }
+    let l = linies[i];
+    if (!l) { saltant = false; grupBloc = null; continue; }
     if (!/[a-záéíóúñ]/i.test(l)) continue;                                          // només números o símbols
     let m = RX_DIA_IMP.exec(l);
     if (m && !teSR(l)) {
       const resta = majus(frase(netejaNom(m[2] || "")));
       if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
-      nouDia(resta || `Día ${res.dias.length + 1}`, !resta); saltant = false; abansDeRes = false; continue;
+      nouDia(resta || `Día ${res.dias.length + 1}`, !resta); saltant = false; grupBloc = null; abansDeRes = false; continue;
     }
     m = RX_SETMANA_IMP.exec(l);
     if (m && !teSR(l)) {
       const resta = majus(frase(netejaNom(m[2] || "")));
       if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
       const nomDia = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-      nouDia(resta ? `${nomDia}: ${resta}` : nomDia, !resta); saltant = false; abansDeRes = false; continue;
+      nouDia(resta ? `${nomDia}: ${resta}` : nomDia, !resta); saltant = false; grupBloc = null; abansDeRes = false; continue;
     }
+    m = RX_GRUP_IMP.exec(l);
+    if (m) { grupBloc = "H" + (++nGrup); saltant = false; if (!/[a-záéíóúñ]{3}/i.test(m[2] || "")) continue; l = m[2]; }
+    const mLl = RX_LLETRA_IMP.exec(crues[i]), gLletra = mLl ? `L${mLl[1].toUpperCase()}@${res.dias.length}` : null;
     const low = l.toLowerCase(), sr = srDe(low);
     if (!sr && RX_SALTA_IMP.test(l)) { saltant = true; continue; }
     if (!sr && RX_NOTA_IMP.test(l)) continue;
@@ -3305,7 +3339,10 @@ function llegeixRutina(text) {
     }
     if (saltant) continue;
     // una línia amb diversos exercicis («Press banca 4x10, aperturas 3x12»)
-    const trossos = (low.match(new RegExp(RX_SR_IMP.source, "gi")) || []).length > 1 ? l.split(/\s*[,;+]\s*|\s+[-–]\s+|\s+\/\s+/) : [l];
+    // «Curl + press francés 3x12»: una supersèrie a la mateixa línia
+    const mes = /\s\+\s/.test(l), gMes = mes ? "P" + (++nGrup) : null;
+    const trossos = mes ? l.split(/\s+\+\s+/) : (low.match(new RegExp(RX_SR_IMP.source, "gi")) || []).length > 1 ? l.split(/\s*[,;]\s*|\s+[-–]\s+|\s+\/\s+/) : [l];
+    if (mes) { const sUlt = srDe(trossos[trossos.length - 1].toLowerCase()); if (sUlt) trossos.srComu = sUlt; }
     let srLinia = null, afegits = 0;
     for (const tros of trossos) {
       const tl = tros.toLowerCase(), s = srDe(tl) || null;
@@ -3314,13 +3351,13 @@ function llegeixRutina(text) {
       if (!/[a-záéíóúñ]{2}/i.test(nom) || nom.length > 70) continue;
       const t = trobaEj(nom);
       if (!t) continue;
-      if (!s && t.conf < 0.62 && !(trossos.length > 1 && srLinia)) {
+      if (!s && t.conf < 0.62 && !(trossos.length > 1 && (srLinia || trossos.srComu))) {
         if (abansDeRes && !res.nombre && !res.dias.length && nom.length <= 60) { res.nombre = frase(tros.trim()).slice(0, 60); continue; }
         res.ignorades.push(tros.trim()); continue;
       }
       if (!dia) nouDia(`Día ${res.dias.length + 1}`, true);
-      const sr2 = s || (trossos.length > 1 ? srLinia : null);
-      dia.ej.push({ orig: nom, ...t, ...(sr2 ? { series: sr2.series ? acota(sr2.series, 1, 10) : null, min: sr2.min ? acota(sr2.min, 1, 50) : null, max: sr2.max ? acota(sr2.max, 1, 50) : null } : {}) });
+      const sr2 = s || trossos.srComu || (trossos.length > 1 ? srLinia : null), g = gMes || gLletra || grupBloc;
+      dia.ej.push({ orig: nom, ...t, ...(g ? { g } : {}), ...(sr2 ? { series: sr2.series ? acota(sr2.series, 1, 10) : null, min: sr2.min ? acota(sr2.min, 1, 50) : null, max: sr2.max ? acota(sr2.max, 1, 50) : null } : {}) });
       afegits++; abansDeRes = false;
     }
     if (!afegits && trossos.length > 1) res.ignorades.push(l);
@@ -3364,7 +3401,7 @@ function fullImporta() {
     <div id="imp-prev" aria-live="polite">${htmlPrevImp()}</div>
   </div>`;
 }
-function filaImp(e) {
+function filaImp(e, enGrup) {
   const k = esc(netImp(e.orig)), sr = srTxt(e);
   const xip = n => `<button class="chip" data-accion="imp-tria" data-k="${k}" data-n="${esc(n)}">${esc(n)}</button>`;
   const pedit = (S.ui.impPedits || []).includes(netImp(e.orig));
@@ -3375,7 +3412,7 @@ function filaImp(e) {
     ${!e.triat && (e.sug || []).length ? `<span class="imp-alts"><span class="petit suau">¿Es alguno de estos?</span>${e.sug.map(xip).join("")}</span>` : ""}
     <button class="enllac imp-pide" data-accion="imp-pide" data-n="${esc(e.orig)}"${pedit ? " disabled" : ""}>${pedit ? "Pedido: lo miraremos" : "Pídenos que lo añadamos"}</button>`;
   const foto = !e.propi && fotoEj(e.nom);
-  return `<div class="imp-ej ${e.estat}"><div class="imp-ej-cap">${foto ? `<img src="${foto}" alt="" width="36" height="36" loading="lazy">` : '<span class="sense-foto"></span>'}<span class="imp-nom">${esc(e.nom)}</span>${sr ? `<span class="imp-sr num">${sr}</span>` : ""}</div>${sota}</div>`;
+  return `<div class="imp-ej ${e.estat}${enGrup ? " en-grup" : ""}"><div class="imp-ej-cap">${foto ? `<img src="${foto}" alt="" width="36" height="36" loading="lazy">` : '<span class="sense-foto"></span>'}<span class="imp-nom">${esc(e.nom)}</span>${sr ? `<span class="imp-sr num">${sr}</span>` : ""}</div>${sota}</div>`;
 }
 function htmlPrevImp() {
   const txt = S.ui.impTxt || "";
@@ -3385,7 +3422,8 @@ function htmlPrevImp() {
   const dubtes = r.dias.reduce((a, d) => a + d.ej.filter(e => e.estat !== "ok").length, 0);
   return `<h3 class="imp-cap">${esc(r.nombre || "Tu rutina")}: ${nDies(r.dias.length)}, ${n} ${n === 1 ? "ejercicio" : "ejercicios"}</h3>
     ${dubtes ? `<p class="petit suau" style="margin:0 0 8px">${dubtes === 1 ? "Hay uno para revisar" : `Hay ${dubtes} para revisar`}: están marcados.</p>` : ""}
-    ${r.dias.map((d, i) => `<section class="imp-dia"><b class="imp-dia-t">Día ${i + 1}: ${esc(d.t)}</b>${d.ej.map(filaImp).join("")}</section>`).join("")}
+    ${r.dias.map((d, i) => `<section class="imp-dia"><b class="imp-dia-t">Día ${i + 1}: ${esc(d.t)}</b>${d.ej.map((e, j) => { const pg = posGrup(d.ej, j, x => x.g);
+      return (pg && pg.pos === 1 && pg.n > 1 ? `<div class="grup-cap"><b>${nomGrup(pg.n)}</b>${infoBoto(pg.n >= 3 ? "circuito" : "superserie")}<small>${pg.n} seguidos, sin descanso entre ellos</small></div>` : "") + filaImp(e, pg && pg.n > 1); }).join("")}</section>`).join("")}
     ${r.ignorades.length ? `<details class="imp-ign"><summary>${r.ignorades.length === 1 ? "Una línea no la hemos entendido" : `${r.ignorades.length} líneas no las hemos entendido`}</summary>${r.ignorades.slice(0, 20).map(l => `<p>${esc(l)}</p>`).join("")}<p class="suau petit">Si es un ejercicio, ponle sus series en el texto: «Remo 3x12».</p></details>` : ""}
     ${r.avisos.map(a => `<p class="petit al-foto-ull">${esc(a)}</p>`).join("")}
     <div style="margin-top:14px">${botoForja('data-accion="imp-obre"', "ABRIR EN EL EDITOR", "La revisas y la guardas")}</div>`;
@@ -3440,10 +3478,12 @@ function obreImportada() {
   if (!dias.length) { avis("Aún no vemos ejercicios: pon uno por línea, con sus series.", true); return; }
   const cfg = {};
   const d2 = dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.slice(0, 25).map(e => {
-    const fila = e.propi ? [String(e.nom).slice(0, 50), e.tipus] : [...(catalogo(e.nom) || [e.nom, e.tipus])];
+    const f0 = e.propi ? [String(e.nom).slice(0, 50), e.tipus] : [...(catalogo(e.nom) || [e.nom, e.tipus])];
+    const fila = e.g ? [f0[0], f0[1], f0[2] || "", e.g] : f0;
     if ((e.series || e.min) && !cfg[fila[0]]) cfg[fila[0]] = { ...(e.series ? { series: e.series } : {}), ...(e.min ? { min: e.min, max: e.max } : {}) };
     return fila;
   }) }));
+  d2.forEach(normalitzaGrups);
   S.ui.edit = { id: nouId(), nombre: String(r.nombre || "Mi rutina").slice(0, 40), resumen: "Importada por ti.", dias: d2, cfgImport: cfg };
   S.ui.edDia = null; guardar(); tancaFull(); veure("editor"); Efectos.suena("yunque");
   avis("Revísala y pulsa GUARDAR.");
@@ -3493,6 +3533,76 @@ document.addEventListener("drop", ev => {
   if (!f) return;
   ev.preventDefault(); importaFitxer(f);
 });
+
+/* KLONK · supersèries i circuits, i els conceptes explicats (27-09-2026, bloc KLONK; Hub 767 i 768).
+   L'Albert (via la capitana, [dig-97713]): «supersèries i circuits: Hevy i Strong en porten de sèrie; i l'importador: les
+   rutines d'entrenador en porten sovint (A1/A2, biserie)». I per als conceptes: «molta gent no sap què és: a cada concepte,
+   una icona d'info que en clicar expliqui què és en paraules planeres».
+   COM ES GUARDA: cada exercici de la rutina és [nom, tipus, extra, grup]; els que van seguits amb el mateix grup són una
+   supersèrie (2) o un circuit (3 o més). El grup viatja amb l'exercici quan s'arrossega, es comparteix i s'importa. Les
+   lletres (A, B, C…) es tornen a posar en ordre cada vegada que es toca la rutina (normalitzaGrups).
+   A L'ENTRENO: entre els exercicis d'un grup no hi ha descans; el descans va al final de cada volta, i la pantalla et torna
+   al primer del grup. */
+"use strict";
+
+// Els grups d'un dia: seguits, de 2 o més, amb lletres A, B, C… per ordre. Un grup partit o d'un de sol, fora.
+function normalitzaGrups(dia) {
+  const ej = dia.ej;
+  ej.forEach((e, i) => { const g = e[3]; if (!g) return; const ant = ej[i - 1], seg = ej[i + 1]; if (!(ant && ant[3] === g) && !(seg && seg[3] === g)) e[3] = ""; });
+  let lletra = 0, prev = null, nova = null;
+  ej.forEach((e, i) => {
+    const g = e[3];
+    if (!g) { prev = null; return; }
+    if (g !== prev) { nova = String.fromCharCode(65 + lletra++); prev = g; }
+    e[3] = nova;
+    if (e[2] == null) e[2] = "";
+  });
+  ej.forEach(e => { if (!e[3] && e.length > 3) e.length = e[2] ? 3 : 2; });
+}
+// Unir l'exercici j amb el següent (o separar-los si ja hi van junts)
+function uneixSeguent(dia, j) {
+  const ej = dia.ej, a = ej[j], b = ej[j + 1]; if (!a || !b) return;
+  if (a[3] && a[3] === b[3]) {                               // separar: el que ve després fa un grup nou
+    const nou = "z" + j;
+    for (let k = j + 1; k < ej.length && ej[k][3] === a[3]; k++) ej[k][3] = nou;
+  } else {
+    const g = a[3] || b[3] || "n" + j;
+    if (a[2] == null) a[2] = ""; if (b[2] == null) b[2] = "";
+    const vell = b[3];
+    a[3] = g;
+    for (let k = j + 1; k < ej.length && (k === j + 1 || (vell && ej[k][3] === vell)); k++) { if (ej[k][2] == null) ej[k][2] = ""; ej[k][3] = g; }
+  }
+  normalitzaGrups(dia);
+}
+// On és cada exercici dins del seu grup: {g, pos (1…), n (quants), primer, ultim}
+function posGrup(llista, i, clau = e => e[3]) {
+  const g = clau(llista[i]); if (!g) return null;
+  let a = i, b = i;
+  while (a > 0 && clau(llista[a - 1]) === g) a--;
+  while (b < llista.length - 1 && clau(llista[b + 1]) === g) b++;
+  return { g, pos: i - a + 1, n: b - a + 1, primer: a, ultim: b };
+}
+const nomGrup = n => n >= 3 ? "Circuito" : "Superserie";
+
+/* ---- els conceptes, en paraules planeres (la icona ⓘ) ---- */
+const CONCEPTES = {
+  superserie: ["Superserie", "Dos ejercicios seguidos, sin descansar entre ellos. Haces una serie del primero, pasas al segundo y descansas al acabar los dos. Ahorra tiempo y funciona muy bien con músculos opuestos, como bíceps y tríceps."],
+  circuito: ["Circuito", "Tres ejercicios o más seguidos, sin descanso entre ellos. Haces una vuelta entera y descansas al final; luego, la siguiente vuelta. Cansa más y se hace más rápido."],
+  calentamiento: ["Serie de calentamiento", "Una serie con poco peso antes de las de verdad, para que el músculo y las articulaciones entren en calor. No cuenta para tus récords ni para la experiencia."],
+  drop: ["Drop set", "Al terminar una serie, bajas el peso (más o menos un 20 o 30 %) y sigues sin descansar hasta que no puedas más. Sirve para cansar el músculo del todo; mejor al final y en ejercicios con máquina o mancuernas."],
+  fallo: ["Al fallo", "Hacer repeticiones hasta que no puedes hacer ni una más con buena técnica. Cansa mucho: úsalo en la última serie, no en todas, y con cuidado en los ejercicios pesados."],
+};
+const I_INFO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>';
+const infoBoto = k => `<button type="button" class="info-boto" data-accion="concepte" data-k="${k}" aria-label="¿Qué es ${esc(CONCEPTES[k][0].toLowerCase())}?">${I_INFO}</button>`;
+const I_CADENA = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+
+function accioGrups(acc, b) {
+  switch (acc) {
+    case "concepte": { const c = CONCEPTES[b.dataset.k]; if (c) obreFull(`<p style="margin-top:0">${esc(c[1])}</p>`, c[0], !!$("#celebra").innerHTML); return true; }
+    case "ed-uneix": { llegeixEditor(); const d = S.ui.edit && S.ui.edit.dias[+b.dataset.i]; if (!d) return true; uneixSeguent(d, +b.dataset.j); guardar(); render(); Efectos.suena("tap"); Efectos.vibra("tria"); return true; }
+  }
+  return false;
+}
 
 /* KLONK · la roba de la botiga. GENERAT per referencies/merch-samarretes/fes_botiga.py: no s'edita a mà. */
 const ROBA_GRUPS = [["esenciales", "Esenciales"], ["nombre", "El nombre"], ["pump", "Pump covers"], ["sudaderas", "Sudaderas"], ["anime", "Anime"], ["edgy", "Edgy"], ["premium", "Premium"], ["bolsas", "Bolsas"], ["shakers", "Shakers"]];
@@ -6627,7 +6737,7 @@ function vistaEntreno() {
         <button class="dia-info" data-accion="dia-obre" data-dia="${n}" aria-expanded="${ob}"><span class="n or">${n}</span><span class="dia-txt"><span class="t">${esc(dd.t)}</span>${hoy ? '<span class="toca">Toca hoy</span>' : ""}<span class="s">${dd.ej.length} ejercicios${ult ? `, la última vez el ${fechaCorta(ult.fecha)}` : ""}</span></span></button>
         <button class="dia-edita" data-accion="rut-lapiz" data-dia="${n}" aria-label="Editar el día ${n}, ${esc(dd.t)}">${I_LLAPIS}</button>
         <button class="dia-play" data-accion="empezar" data-dia="${n}" aria-label="Empezar el día ${n}, ${esc(dd.t)}">${I_PLAY}</button>
-        ${ob ? `<div class="dia-prev">${dd.ej.map(e => { const c = cfgEj(e[0], e[1]); return `<div class="ej-prev">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${esc(e[0])}</span><small class="num">${srTxt(c)}</small></div>`; }).join("")}
+        ${ob ? `<div class="dia-prev">${dd.ej.map((e, j) => { const c = cfgEj(e[0], e[1]), pg = posGrup(dd.ej, j); return `<div class="ej-prev${pg ? " en-grup" : ""}">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${pg ? `<b class="grup-tag">${esc(e[3])}${pg.pos}</b>` : ""}${esc(e[0])}</span><small class="num">${srTxt(c)}</small></div>`; }).join("")}
           <p style="margin:10px 0 0"><button class="enllac" data-accion="rut-compartir-dia" data-id="${r.id}" data-dia="${n}">Compartir solo este día</button></p></div>` : ""}
       </div>`; }).join("")}
     ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<button class="reg reg-ses" data-accion="ses-obre" data-id="${x.id}"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div>${I_BAIXA}</button>`).join("")}</div></section>` : ""}`;
@@ -6639,8 +6749,9 @@ function vistaEntreno() {
     <div class="barra"><i style="width:${(fetsEj / s.ej.length * 100).toFixed(1)}%"></i></div><div class="xp num">${fetsEj} de ${s.ej.length} ejercicios</div></div></div>`;
   s.ej.forEach((e, i) => {
     const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
-    const foto = fotoEj(e.n);
-    h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
+    const foto = fotoEj(e.n), pgr = posGrup(s.ej, i, x => x.g);
+    if (pgr && pgr.pos === 1) h += `<div class="grup-cap sessio"><b>${nomGrup(pgr.n)} ${esc(e.g)}</b>${infoBoto(pgr.n >= 3 ? "circuito" : "superserie")}<small>Sin descanso entre ellos: descansa al final de cada vuelta</small></div>`;
+    h += `<section class="panel exercici${pgr ? " en-grup" : ""}" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
       <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
       ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}"><span class="i">${j + 1}</span>
@@ -7176,7 +7287,13 @@ document.addEventListener("click", ev => {
         let millor = 0;
         S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(q => { if (q.ok && q.reps) millor = Math.max(millor, Stats.e1rm(q.kg || 0, q.reps)); }); });
         record = millor > 0 && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre"; prAbans = millor;
-        if (S.descansoOn !== false) empezarDescanso(descansoDe(e.t));
+        // supersèrie o circuit (src/grups.js): sense descans fins a l'últim del grup, i llavors es torna al primer
+        const pgr = posGrup(s.ej, +b.dataset.i, x => x.g);
+        if (pgr && pgr.pos < pgr.n) setTimeout(() => { const el = document.getElementById("ej-" + (+b.dataset.i + 1)); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("toca-ara"); setTimeout(() => el.classList.remove("toca-ara"), 1800); } }, 260);
+        else {
+          if (S.descansoOn !== false) empezarDescanso(pgr ? Math.max(...s.ej.slice(pgr.primer, pgr.ultim + 1).map(x => descansoDe(x.t))) : descansoDe(e.t));
+          if (pgr && s.ej.slice(pgr.primer, pgr.ultim + 1).some(x => x.sets.some(q => !q.ok))) setTimeout(() => { const el = document.getElementById("ej-" + pgr.primer); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 420);
+        }
       }
       guardar(); render();
       if (z.ok) {
@@ -7327,7 +7444,7 @@ document.addEventListener("click", ev => {
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
     default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
-      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b)) accioRutina(acc, b);
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b) && !accioGrups(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
