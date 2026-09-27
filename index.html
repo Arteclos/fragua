@@ -3089,10 +3089,14 @@ function accioRutinesSync(acc, b) { if (!ACC_COMPARTIR.has(acc)) return false; a
 /* ---------------------------------------------------------------- comparar noms */
 const netImp = t => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
   .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
-const BUIDES_IMP = new Set(["de", "del", "con", "en", "a", "al", "la", "el", "los", "las", "y", "e", "para", "sobre", "un", "una", "the", "with", "of", "and", "tipo", "o"]);
+const BUIDES_IMP = new Set(["de", "del", "con", "en", "a", "al", "la", "el", "los", "las", "y", "e", "para", "sobre", "un", "una", "the", "with", "of", "and", "tipo", "o", "w", "on", "to", "in", "for", "at", "or", "by"]);
 // el que no canvia l'exercici i que la gent afegeix («press banca libre», «sentadilla clásica»)
-const SOROLL_IMP = new Set(["libre", "normal", "clasico", "clasica", "tradicional", "convencional", "olimpica", "olimpico", "estricto", "estricta", "basico", "basica"]);
-const SINONIMS_IMP = { dumbbell: "mancuerna", db: "mancuerna", pesa: "mancuerna", barbell: "barra", cable: "polea", smith: "multipower", machine: "maquina", kb: "kettlebell" };
+// i els adjectius d'un programa en anglès que no canvien l'exercici («Paused», «Cuffed», «Lean-Back», «Super-ROM»…)
+const SOROLL_IMP = new Set(["libre", "normal", "clasico", "clasica", "tradicional", "convencional", "olimpica", "olimpico", "estricto", "estricta", "basico", "basica",
+  "paused", "pause", "cuffed", "super", "rom", "lean", "leaning", "constant", "tension", "bottom", "integrated", "partial", "mechanical", "dropset", "low", "long",
+  "length", "extended", "strict", "slow", "tempo", "iso", "isometric", "heavy", "light", "pausado", "pausada", "lento", "lenta"]);
+const SINONIMS_IMP = { dumbbell: "mancuerna", db: "mancuerna", pesa: "mancuerna", barbell: "barra", cable: "polea", smith: "multipower", machine: "maquina", kb: "kettlebell",
+  fly: "flye", flie: "flye", pressdown: "pushdown", skullcrusher: "skull", extensions: "extension" };
 function arrelImp(w) {
   if (w.length > 5 && /[lrndz]es$/.test(w)) return w.slice(0, -2);             // laterales, extensiones, abductores
   if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss")) return w.slice(0, -1);   // mancuernas, curls, poleas
@@ -3190,7 +3194,68 @@ const ALIES_IMP = [
   ["Plancha", "plancha|plank|planchas|plancha abdominal|plancha frontal"],
   ["Plancha lateral", "plancha lateral|side plank"],
   ["Rueda abdominal", "rueda abdominal|rueda|ab wheel|rueda abs"],
-  ["Elevación de piernas en paralelas", "elevacion de piernas|elevaciones de piernas|leg raises|elevacion piernas colgado|elevaciones piernas|elevacion de piernas colgado|hanging leg raise"],
+  ["Elevación de piernas en paralelas", "elevacion de piernas|elevaciones de piernas|leg raises|elevacion piernas colgado|elevaciones piernas|elevacion de piernas colgado|hanging leg raise|roman chair leg raise|captain chair leg raise|leg raise"],
+  // en anglès (27-09-2026, la rutina de l'Albert i els noms de Hevy i Strong)
+  ["Peck Deck", "pec deck|pec fly|machine fly|machine flye|pec deck fly|chest fly machine|butterfly machine"],
+  ["Press inclinado en Smith", "incline smith press|incline smith machine press|smith incline press|smith machine incline press|incline smith"],
+  ["Extensión de tríceps tras nuca en polea", "overhead cable tricep extension|overhead tricep extension|cable overhead extension|overhead cable extension|overhead rope extension"],
+  ["Extensión de tríceps", "tricep pushdown|tricep pressdown|pushdown|pressdown|tricep pushdown bar|cable pushdown|straight bar pushdown"],
+  ["Extensión de tríceps en polea con cuerda", "rope pushdown|rope pressdown|tricep rope pushdown|tricep diverging pressdown|diverging pressdown|tricep pushdown rope"],
+  ["Crunch en polea con cuerda", "cable crunch|rope crunch|kneeling cable crunch|cable crunches"],
+  ["Peso muerto rumano", "rdl|romanian deadlift|dumbbell rdl|db rdl|barbell rdl"],
+  ["Peso muerto con barra", "deadlift|conventional deadlift|barbell deadlift"],
+  ["Remo isolateral en máquina de palanca", "chest supported machine row|machine row|chest supported row|seated machine row|iso lateral row"],
+  ["Jalón con brazos rectos en polea", "straight arm pulldown|straight bar lat prayer|lat prayer|cable pullover|straight arm lat pulldown"],
+  ["Curl martillo en banco Scott", "hammer preacher curl|preacher hammer curl"],
+  ["Face pull", "rope face pull|lying face pull|face pull rope"],
+  ["Curl femoral sentado", "seated leg curl|seated hamstring curl"],
+  ["Curl femoral tumbado", "lying leg curl|leg curl|lying hamstring curl|prone leg curl"],
+  ["Aducción de cadera en máquina", "machine hip adduction|hip adduction|adduction machine|adductor machine|hip adductor"],
+  ["Abducción de cadera en máquina", "machine hip abduction|hip abduction|abduction machine|abductor machine|hip abductor"],
+  ["Hack Squat", "hack squat|machine hack squat|hack squat machine"],
+  ["Extensión de cuádriceps", "leg extension|leg extensions|quad extension|machine leg extension"],
+  ["Press de gemelos en prensa", "leg press calf press|calf press|calf press on leg press|leg press calf raise"],
+  ["Elevación de gemelos", "standing calf raise|calf raise|calf raises|smith standing calf raise|smith calf raise|machine calf raise"],
+  ["Press militar en máquina", "machine shoulder press|shoulder press machine|machine overhead press"],
+  ["Press de hombros en multipower", "smith machine shoulder press|smith shoulder press|smith overhead press"],
+  ["Press de hombros con mancuernas", "dumbbell shoulder press|db shoulder press|seated dumbbell press|seated db shoulder press"],
+  ["Curl a una mano de pie en polea", "bayesian cable curl|bayesian curl|behind the body cable curl"],
+  ["Press francés con mancuernas", "seated db french press|db french press|dumbbell french press|seated french press|french press"],
+  ["Curl de bíceps en banco con soporte", "preacher curl|constant tension preacher curl|ez bar preacher curl|machine preacher curl"],
+  ["Patada de tríceps con mancuernas", "tricep kickback|cable tricep kickback|dumbbell kickback|db kickback"],
+  ["Elevaciones laterales en polea", "cable lateral raise|cable y raise|y raise|cuffed lateral raise|cable side raise"],
+  ["Elevaciones laterales con mancuernas", "lateral raise|dumbbell lateral raise|db lateral raise|side lateral raise|side raise"],
+  ["Fondos", "dip|dips|assisted dip|assisted dips|machine dip|chest dip|tricep dip|weighted dip"],
+  ["Aperturas inclinadas con mancuernas", "incline dumbbell flye|incline db flye|incline flye|incline dumbbell fly"],
+  ["Aperturas con mancuernas", "dumbbell flye|db flye|flat dumbbell flye|dumbbell fly"],
+  ["Cruce de poleas", "cable flye|cable fly|cable crossover|crossover|standing cable fly"],
+  ["Rueda abdominal", "ab wheel|ab wheel rollout|ab rollout|rollout|ab roller"],
+  ["Remo sentado en polea baja", "seated cable row|cable row|overhand cable row|low row|seated row"],
+  ["Extensión lumbar", "hyperextension|back extension|45 hyperextension|45 degree hyperextension|hyperextensions"],
+  ["Jalón al pecho", "lat pulldown|wide grip lat pulldown|lat pull down|pulldown|wide grip pulldown"],
+  ["Curl Zottman", "zottman curl|inverse zottman curl|dumbbell zottman curl"],
+  ["Pájaros en polea", "cable reverse flye|cable reverse fly|reverse cable flye|rear delt cable flye|cable rear delt fly|reverse flye|rear delt fly|reverse pec deck"],
+  ["Encogimientos en polea", "cable shrug|cable shrug in|cable shrugs"],
+  ["Encogimientos con mancuernas", "shrug|shrugs|dumbbell shrug|db shrug"],
+  ["Prensa de piernas", "leg press|45 leg press|machine leg press"],
+  ["Press francés en polea", "cable skull crusher|cable skullcrusher|cable skull"],
+  ["Press francés con barra Z", "skull crusher|skullcrusher|ez bar skull crusher|lying tricep extension"],
+  ["Curl inclinado con mancuernas", "incline db stretch curl|incline curl|incline dumbbell curl|incline stretch curl"],
+  ["Curl de bíceps de pie en polea", "cable curl|standing cable curl|kneeling overhead cable curl|overhead cable curl"],
+  ["Sentadilla con barra", "squat|back squat|barbell squat|barbell back squat|high bar squat|low bar squat"],
+  ["Press de banca con barra, agarre medio", "bench press|barbell bench press|flat bench press|flat barbell bench press"],
+  ["Press inclinado con mancuernas", "incline dumbbell press|incline db press|low incline dumbbell press"],
+  ["Press de banca con mancuernas", "dumbbell bench press|db bench press|flat dumbbell press"],
+  ["Remo con barra", "barbell row|bent over row|bent over barbell row|pendlay row"],
+  ["Remo unilateral", "dumbbell row|one arm dumbbell row|single arm dumbbell row|db row"],
+  ["Dominadas", "pull up|pullup|pull ups|chin up|chin ups|weighted pull up"],
+  ["Hip thrust con barra", "hip thrust|barbell hip thrust|machine hip thrust|smith hip thrust"],
+  ["Sentadilla búlgara con mancuernas", "bulgarian split squat|split squat|db bulgarian split squat"],
+  ["Zancada con mancuernas", "lunge|lunges|walking lunge|dumbbell lunge|smith machine lunge|smith lunge|reverse lunge"],
+  ["Curl martillo", "hammer curl|dumbbell hammer curl|db hammer curl|rope hammer curl"],
+  ["Curl de bíceps con mancuernas", "dumbbell curl|db curl|bicep curl|biceps curl|alternating dumbbell curl"],
+  ["Curl con barra", "barbell curl|ez bar curl|ez curl"],
+  ["Press militar", "overhead press|ohp|military press|standing overhead press|barbell overhead press"],
 ];
 let ALIES_MAP = null;
 function aliesImp() {
@@ -3203,7 +3268,13 @@ let POOL_IMP = null;
 function poolImp() {
   if (POOL_IMP) return POOL_IMP;
   const vist = new Set(); POOL_IMP = [];
-  const posa = (n, casa, nivell) => { if (vist.has(n)) return; vist.add(n); const tk = tokImp(n); POOL_IMP.push({ n, casa, nivell: nivell || 1, tk: new Set(tk), tri: trigrames(tk.join(" ")), net: netImp(n) }); };
+  // el nom en anglès de cada exercici de la biblioteca és el seu id («Seated_Leg_Curl»): així «Seated Leg Curl» el troba
+  const angles = new Map(BIBLIOTECA.map(e => [e[1], String(e[0]).replace(/[_-]+/g, " ")]));
+  const posa = (n, casa, nivell) => {
+    if (vist.has(n)) return; vist.add(n);
+    const en = angles.get(n) || "", tk = [...new Set([...tokImp(n), ...(en ? tokImp(en) : [])])];
+    POOL_IMP.push({ n, casa, nivell: nivell || 1, tk: new Set(tk), tri: trigrames(tokImp(n).join(" ")), triEn: en ? trigrames(tokImp(en).join(" ")) : null, net: netImp(n), en: en ? netImp(en) : "" });
+  };
   CATALOGO.forEach(e => posa(e[0], true, 1));
   BIBLIOTECA.forEach(e => posa(e[1], false, e[7]));
   return POOL_IMP;
@@ -3240,12 +3311,23 @@ function corregeixImp(w) {
   for (const v of V) { const x = levImp(w, v, max); if (x < d) { d = x; millor = v; if (d === 1 && max === 1) break; } }
   return d <= max ? millor : w;
 }
+// El nom net del soroll: «WP 1 (Leg Extension)» → «Leg Extension»; «(Smith) Standing Calf Raise» → «Smith Standing Calf
+// Raise»; «Pec Deck (w/ Integrated Partials)» → «Pec Deck»; «Cuffed Behind-The-Back Lateral Raise» → «Lateral Raise».
+function netejaNomEj(nom) {
+  let n = String(nom || "").trim();
+  const wp = /^(?:wp|weak\s*point)\s*\d*\s*\((.+)\)\s*$/i.exec(n); if (wp) n = wp[1];
+  // els parèntesis: només es queda el material, si n'hi ha
+  n = n.replace(/\(([^)]*)\)/g, (_, dins) => { const m = dins.match(/\b(smith|rope|cable|dumbbells?|db|machine|barbell|ez[- ]?bar|kettlebell|bands?)\b/gi); return m ? " " + m.join(" ") + " " : " "; });
+  n = n.replace(/behind[- ]the[- ]back|cross[- ]body|super[- ]rom|lean[- ]back|arms?[- ]extended|bottom[- ]\d\/\d|constant[- ]tension|long[- ]length|snatch[- ]grip|\d+\s*º|\d+\s*(?:degrees?|grados)/gi, " ")
+    .replace(/\blow[- ]incline\b/gi, "incline").replace(/\s+/g, " ").trim();
+  return n || String(nom || "").trim();
+}
 // {nom, conf 0-1, alts: els següents més semblants, sug: els que es proposen si no hi és}. La confiança baixa quan una
 // paraula del que ha escrit no hi és («Remo Meadows» no és «Remo en T»: com a molt, un suggeriment).
-function trobaEj(orig) {
-  const tk0 = tokImp(orig);
+function trobaEj(orig0) {
+  const orig = netejaNomEj(orig0), tk0 = tokImp(orig);
   if (!tk0.length) return null;
-  const P = poolImp(), exacte = P.find(x => x.net === netImp(orig));
+  const P = poolImp(), no = netImp(orig), exacte = P.find(x => x.net === no || x.en === no);
   if (exacte) return { nom: exacte.n, conf: 1, alts: [] };
   const tk = tokImp(orig, true), clau = tk.join(" "), cont = tk.filter(w => !SOROLL_IMP.has(w));
   const alies = aliesImp().get(clau) || aliesImp().get(cont.join(" "));
@@ -3254,7 +3336,7 @@ function trobaEj(orig) {
   const punts = P.map(x => {
     let q = 0; cont.forEach(w => { if (x.tk.has(w)) q++; });
     const qCov = cont.length ? q / cont.length : 0, cCov = x.tk.size ? q / x.tk.size : 0;
-    let s = 0.5 * qCov + 0.25 * cCov + 0.25 * diceImp(triQ, x.tri) + (x.casa ? 0.04 : 0) - (x.nivell >= 3 ? 0.04 : 0);
+    let s = 0.5 * qCov + 0.25 * Math.min(1, cCov * 1.6) + 0.25 * Math.max(diceImp(triQ, x.tri), x.triEn ? diceImp(triQ, x.triEn) : 0) + (x.casa ? 0.04 : 0) - (x.nivell >= 3 ? 0.04 : 0);
     if (qCov < 1) s = Math.min(s, qCov >= 0.6 ? 0.7 : 0.5);
     else plens++;
     return { n: x.n, s, ple: qCov === 1 };
@@ -3272,6 +3354,20 @@ const tipusPropi = n => /press|sentadilla|peso muerto|remo|dominada|fondo|hip th
 const RX_DIA_IMP = /^(?:d[ií]a|day|sesi[oó]n|session|entreno|entrenamiento|workout|rutina)\s*(\d{1,2}|[a-f]|iv|v?i{1,3}|v)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
 const RX_SETMANA_IMP = /^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday|dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
 const RX_DESCANS_IMP = /^(descanso|descans|rest|off|libre|recuperaci[oó]n)\b/i;
+// el prefix d'un missatge de WhatsApp: «[16/08/2026, 11:39:27] Alex Montilla: », amb espais o no al davant
+const RX_WA_IMP = /^\s*\[?\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\]?\s*(?:-\s*)?[^:\n]{1,40}:\s*/;
+// «Push A», «Pull B», «Legs A», «Arms & Weak Points B», «Upper 1», «Torso», «Pierna B»: un dia, si no porta sèries
+const RX_SPLIT_IMP = /^(?:push|pull|legs?|upper|lower|arms?|weak\s*points?|full\s*body|chest|back|shoulders?|core|torso|pierna|piernas|empuje|tir[oó]n|brazos?|hombros?|pecho|espalda|gl[uú]teos?)(?:\s*(?:&|and|y|\+|\/|,)\s*(?:weak\s*points?|shoulders?|arms?|abs|core|brazos|hombros|abdomen|gl[uú]teos?|chest|back|legs?|pecho|espalda))*(?:\s+(?:day\s*)?(?:[a-f]|\d{1,2}))?\s*:?\s*$/i;
+// una sèrie d'escalfament: «WUS (~50% x 6 - 10 reps)», «Warm-up set», «Calentamiento: 1 serie», «Aproximación»
+const RX_WUS_IMP = /^(?:wus|w\/?u\b|warm\s*-?\s*ups?(?:\s*sets?)?|calentamiento|aproximaci[oó]n(?:es)?|approach(?:\s*sets?)?|ramp(?:\s*-?\s*up)?(?:\s*sets?)?)\b/i;
+// sèries de treball a la seva línia: «3 S x 10 - 12 reps», «2 S x 8 reps», «1 HS x 4 reps», «3 S x 5, 4, 3 reps»
+const RX_SETS_EST_IMP = /^(\d{1,2})\s*(?:s|hs|ms|ls|ws|sets?|series?|working\s*sets?)\b\.?\s*(?:[x×*]\s*)?(.*)$/i;
+// una nota d'un exercici obert, en un programa en anglès o en castellà («* Add Myo-reps to last set», «* Dropset on last set»)
+const RX_NOTA_EST_IMP = /\b(add|last\s+set|drop\s*-?\s*sets?|partials?|pause|stretch|strech|between|myo|rest|tempo|each|all\s+(?:sets|reps)|alternate|descanso|pausa|parcial(?:es)?|[uú]ltima|cada)\b/i;
+// el títol d'una rutina sencera, no d'un dia («RUTINA HIPERTROFIA 4 DÍAS», «Mi programa», «Plan de 5 días»)
+const RX_TITOL_IMP = /\b(rutina|programa|plan|routine|program|split|semana|week|d[ií]as|days)\b/i;
+// el registre del que va fer: «(50kg x 8 n 8 n 8)», «Barbell 50kg x 7 n 4», «80 kg 10 n 8 n 8», «Normal 35 (n n n)», ✅ ❌
+const RX_REGISTRE_IMP = /\d\s*n\s*\d|\bn\s+n\b|\(\s*n\b|[✅❌✔✖]|^\(?\s*\d+(?:[.,]\d+)?\s*kg\b/i;
 // «Superserie:», «Biserie», «Triserie», «Circuito»: els exercicis que venen fins a la línia en blanc, junts
 const RX_GRUP_IMP = /^(super\s*-?\s*series?|bi\s*-?\s*series?|tri\s*-?\s*series?|giant\s*sets?|circuitos?|circuits?)\b\s*[:.\-–]?\s*(.*)$/i;
 // «A1. Press banca», «A2) Remo»: la lletra fa el grup (dins del mateix dia)
@@ -3345,10 +3441,11 @@ function netejaLinia(l) {
 }
 
 function llegeixRutina(text) {
-  const crues = String(text || "").replace(/\r\n?/g, "\n").split("\n"), linies = crues.map(netejaLinia);
+  const crues = String(text || "").replace(/\r\n?/g, "\n").split("\n");
   const res = { nombre: "", dias: [], ignorades: [], avisos: [] };
-  let dia = null, saltant = false, abansDeRes = true, grupBloc = null, nGrup = 0;
+  let dia = null, saltant = false, abansDeRes = true, grupBloc = null, nGrup = 0, ex = null;   // ex: l'exercici obert (format estructurat)
   const nouDia = (t, generic) => {
+    ex = null;
     if (dia && !dia.ej.length) {                    // dues capçaleres seguides: «Día 1» i després «PECHO»
       if (generic && !esGenericImp(dia.t)) return;
       dia.t = t; return;
@@ -3356,38 +3453,78 @@ function llegeixRutina(text) {
     dia = { t, ej: [] }; res.dias.push(dia);
   };
   const teSR = l => !!(l && srDe(l.toLowerCase()));
-  for (let i = 0; i < linies.length; i++) {
-    let l = linies[i];
-    if (!l) { saltant = false; grupBloc = null; continue; }
+  for (let i = 0; i < crues.length; i++) {
+    let cru = crues[i];
+    const wa = RX_WA_IMP.exec(cru);
+    if (wa) cru = cru.slice(wa[0].length);
+    let l = netejaLinia(cru);
+    if (!l) { saltant = false; grupBloc = null; ex = null; continue; }
+    // una nota de l'exercici obert («* Add Dropset on last set»); «• Jalón 4x10» és un exercici amb pic, no una nota
+    const esNota = /^\s*[*•]\s*\D/.test(cru) && !teSR(l) && RX_NOTA_EST_IMP.test(l);
     if (!/[a-záéíóúñ]/i.test(l)) continue;                                          // només números o símbols
+    // un missatge de WhatsApp que comença amb poca cosa i sense sèries: és el títol d'un dia («Push A»)
+    // (si diu «rutina», «programa» o «4 días», és el títol de tota la rutina: «RUTINA HIPERTROFIA 4 DÍAS»)
+    if (wa && abansDeRes && !res.nombre && !res.dias.length && RX_TITOL_IMP.test(l) && !teSR(l) && l.length <= 60) { res.nombre = frase(l.replace(/[:.]+$/, "")).slice(0, 60); continue; }
+    if (wa && l.length <= 40 && !teSR(l) && !/:\s*$/.test(l) && !RX_WUS_IMP.test(l) && !RX_SETS_EST_IMP.test(l)) { nouDia(majus(frase(l.replace(/[:.]+$/, ""))), false); saltant = false; abansDeRes = false; continue; }
     let m = RX_DIA_IMP.exec(l);
     if (m && !teSR(l)) {
       const resta = majus(frase(netejaNom(m[2] || "")));
-      if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
+      if (RX_DESCANS_IMP.test(resta)) { dia = null; ex = null; saltant = true; continue; }
       nouDia(resta || `Día ${res.dias.length + 1}`, !resta); saltant = false; grupBloc = null; abansDeRes = false; continue;
     }
     m = RX_SETMANA_IMP.exec(l);
     if (m && !teSR(l)) {
       const resta = majus(frase(netejaNom(m[2] || "")));
-      if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
+      if (RX_DESCANS_IMP.test(resta)) { dia = null; ex = null; saltant = true; continue; }
       const nomDia = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
       nouDia(resta ? `${nomDia}: ${resta}` : nomDia, !resta); saltant = false; grupBloc = null; abansDeRes = false; continue;
     }
+    if (RX_SPLIT_IMP.test(l) && !teSR(l)) { nouDia(majus(frase(l.replace(/[:.]+$/, "").trim())), false); saltant = false; grupBloc = null; abansDeRes = false; continue; }
     m = RX_GRUP_IMP.exec(l);
-    if (m) { grupBloc = "H" + (++nGrup); saltant = false; if (!/[a-záéíóúñ]{3}/i.test(m[2] || "")) continue; l = m[2]; }
-    const mLl = RX_LLETRA_IMP.exec(crues[i]), gLletra = mLl ? `L${mLl[1].toUpperCase()}@${res.dias.length}` : null;
+    if (m) { grupBloc = "H" + (++nGrup); saltant = false; ex = null; if (!/[a-záéíóúñ]{3}/i.test(m[2] || "")) continue; l = m[2]; }
+    // ---- el format estructurat: les línies que són d'un exercici obert
+    if (RX_WUS_IMP.test(l)) { if (ex) ex.esc = Math.min(3, (ex.esc || 0) + 1); continue; }
+    if (esNota) {
+      if (ex) { if (/drop\s*-?\s*sets?/i.test(l)) ex.drop = true; if (/\b(al\s+fallo|failure|to\s+failure)\b/i.test(l)) ex.fallo = true; }
+      continue;
+    }
+    const mse = RX_SETS_EST_IMP.exec(l);
+    if (mse && (ex || !/[a-záéíóúñ]{4}/i.test(mse[2].replace(/reps?|repeticiones|kg|x/gi, "")))) {
+      if (ex) {
+        const nums = (mse[2].split(/\(|reps?\b|repeticiones/i)[0].match(/\d{1,3}/g) || []).map(Number).filter(v => v > 0 && v <= 50);
+        ex.series = Math.min(10, (ex.series || 0) + Number(mse[1]));
+        if (nums.length) { ex.min = Math.min(ex.min || 99, ...nums); ex.max = Math.max(ex.max || 0, ...nums); }
+      }
+      continue;
+    }
+    if (ex && RX_REGISTRE_IMP.test(l) && !teSR(l)) continue;                        // el registre del que va fer: no és cap exercici
+    if (!ex && RX_REGISTRE_IMP.test(l) && !/[a-záéíóúñ]{3,}.*[:]$/i.test(l) && /\bn\b/i.test(l)) continue;
     const low = l.toLowerCase(), sr = srDe(low);
     if (!sr && RX_SALTA_IMP.test(l)) { saltant = true; continue; }
     if (!sr && RX_NOTA_IMP.test(l)) continue;
+    // ---- el nom d'un exercici sol a la seva línia, acabat en «:» (el que ve a sota en són les sèries)
+    if (/:\s*$/.test(l) && !sr) {
+      const mLl = RX_LLETRA_IMP.exec(cru), gLl = mLl ? `L${mLl[1].toUpperCase()}@${res.dias.length}` : null;
+      const nom = frase(netejaNomEj(l.replace(/:\s*$/, "").replace(/^\s*[a-h]\d{1,2}\s*[.):\-]?\s*/i, "")));
+      if (/[a-záéíóúñ]{2}/i.test(nom) && nom.length <= 80) {
+        const tt = trobaEj(nom);
+        if (tt) {
+          if (!dia) nouDia(`Día ${res.dias.length + 1}`, true);
+          ex = { orig: nom, ...tt, ...((gLl || grupBloc) ? { g: gLl || grupBloc } : {}) };
+          dia.ej.push(ex); abansDeRes = false; saltant = false; continue;
+        }
+      }
+    }
+    ex = null;
     const paraules = tokImp(l);
     if (!sr && paraules.length && paraules.length <= 6 && paraules.every(w => GRUPS_IMP.has(w))) {
-      const seg = linies.slice(i + 1).find(x => x);
+      const seg = crues.slice(i + 1).map(netejaLinia).find(x => x);
       if (/:\s*$/.test(l) || l === l.toUpperCase() || teSR(seg) || paraules.length > 1) {
         nouDia(majus(frase(netejaNom(l))), false); saltant = false; abansDeRes = false; continue;
       }
     }
     if (saltant) continue;
-    // una línia amb diversos exercicis («Press banca 4x10, aperturas 3x12»)
+    const mLl = RX_LLETRA_IMP.exec(cru), gLletra = mLl ? `L${mLl[1].toUpperCase()}@${res.dias.length}` : null;
     // «Curl + press francés 3x12»: una supersèrie a la mateixa línia
     const mes = /\s\+\s/.test(l), gMes = mes ? "P" + (++nGrup) : null;
     const trossos = mes ? l.split(/\s+\+\s+/) : (low.match(new RegExp(RX_SR_IMP.source, "gi")) || []).length > 1 ? l.split(/\s*[,;]\s*|\s+[-–]\s+|\s+\/\s+/) : [l];
@@ -3529,7 +3666,9 @@ function obreImportada() {
   const d2 = dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.slice(0, 25).map(e => {
     const f0 = e.propi ? [String(e.nom).slice(0, 50), e.tipus] : [...(catalogo(e.nom) || [e.nom, e.tipus])];
     const fila = e.g ? [f0[0], f0[1], f0[2] || "", e.g] : f0;
-    if ((e.series || e.min) && !cfg[fila[0]]) cfg[fila[0]] = { ...(e.series ? { series: e.series } : {}), ...(e.min ? { min: e.min, max: e.max } : {}) };
+    // el drop set i el «al fallo» que diu el programa passen a la configuració; l'escalfament (WUS) no, que no tothom el
+    // vol (l'Albert, 27-09: «a mi el sistema WUS no em cal»): és dels mètodes avançats (Hub 773)
+    if ((e.series || e.min || e.drop || e.fallo) && !cfg[fila[0]]) cfg[fila[0]] = { ...(e.series ? { series: e.series } : {}), ...(e.min ? { min: e.min, max: e.max } : {}), ...(e.drop ? { drop: true } : {}), ...(e.fallo ? { fallo: true } : {}) };
     return fila;
   }) }));
   d2.forEach(normalitzaGrups);
@@ -3723,7 +3862,7 @@ function accioSeries(acc, b) {
 
 /* KLONK · la roba de la botiga. GENERAT per referencies/merch-samarretes/fes_botiga.py: no s'edita a mà. */
 const ROBA_GRUPS = [["esenciales", "Esenciales"], ["nombre", "El nombre"], ["pump", "Pump covers"], ["sudaderas", "Sudaderas"], ["anime", "Anime"], ["edgy", "Edgy"], ["premium", "Premium"], ["bolsas", "Bolsas"], ["shakers", "Shakers"]];
-const ROBA = [["ess-1", "esenciales", "Camiseta ajustada negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-2", "esenciales", "Pump cover carbón", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-3", "esenciales", "Tirantes color hueso", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-4", "esenciales", "Manga larga negra", 3495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-1", "nombre", "KLONK al pecho, negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-2", "nombre", "KLONK grande a la espalda", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-3", "nombre", "Crop con KLONK", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-4", "nombre", "KLONK al pecho y la sigma en la manga", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-1", "pump", "Negra con la sigma en relieve", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-2", "pump", "Crema con la sigma bordada", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-3", "pump", "Gris con parche rojo", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-4", "pump", "Rojo forja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-1", "sudaderas", "Sudadera con KLONK al pecho", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-2", "sudaderas", "Sudadera crop crema", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-3", "sudaderas", "Cremallera con la sigma de fuego", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-4", "sudaderas", "Cremallera roja", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-1", "anime", "El herrero, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-2", "anime", "La herrera, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-3", "anime", "La barra sobre el yunque", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-4", "anime", "Lisa con la sigma naranja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-1", "edgy", "Tirantes lavados, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-2", "edgy", "Crop rota, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-3", "edgy", "Stringer con alambre estampado", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-4", "edgy", "Oversize de pintura roja y negra", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-1", "premium", "Conjunto arena", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-2", "premium", "Negra de piqué, sigma bordada", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-3", "premium", "Conjunto oliva", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-4", "premium", "Crema con la sigma en la nuca", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["bolsa-1", "bolsas", "Bolsa de deporte", null, ["Única"]], ["bolsa-2", "bolsas", "Tote con la sigma", 2495, ["Única"]], ["bolsa-3", "bolsas", "Mochila con la sigma", null, ["Única"]], ["bolsa-4", "bolsas", "Bolsa de cuerdas", 1495, ["Única"]], ["shaker-1", "shakers", "Shaker negro y bronce", 1295, ["Única"]], ["shaker-2", "shakers", "Shaker transparente", 1295, ["Única"]], ["shaker-3", "shakers", "Shaker de acero", 1995, ["Única"]], ["shaker-4", "shakers", "Shaker con la sigma de fuego", 1295, ["Única"]]];
+const ROBA = [["ess-1", "esenciales", "Camiseta ajustada negra", 3500, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-2", "esenciales", "Pump cover carbón", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-3", "esenciales", "Tirantes color hueso", 3000, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-4", "esenciales", "Manga larga negra", 4000, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-1", "nombre", "KLONK al pecho, negra", 3500, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-2", "nombre", "KLONK grande a la espalda", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-3", "nombre", "Crop con KLONK", 3000, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-4", "nombre", "KLONK al pecho y la sigma en la manga", 3500, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-1", "pump", "Negra con la sigma en relieve", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-2", "pump", "Crema con la sigma bordada", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-3", "pump", "Gris con parche rojo", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-4", "pump", "Rojo forja", 3500, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-1", "sudaderas", "Sudadera con KLONK al pecho", 6000, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-2", "sudaderas", "Sudadera crop crema", 6000, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-3", "sudaderas", "Cremallera con la sigma de fuego", 6500, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-4", "sudaderas", "Cremallera roja", 6500, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-1", "anime", "El herrero, a la espalda", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-2", "anime", "La herrera, a la espalda", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-3", "anime", "La barra sobre el yunque", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-4", "anime", "Lisa con la sigma naranja", 3800, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-1", "edgy", "Tirantes lavados, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-2", "edgy", "Crop rota, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-3", "edgy", "Stringer con alambre estampado", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-4", "edgy", "Oversize de pintura roja y negra", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-1", "premium", "Conjunto arena", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-2", "premium", "Negra de piqué, sigma bordada", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-3", "premium", "Conjunto oliva", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-4", "premium", "Crema con la sigma en la nuca", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["bolsa-1", "bolsas", "Bolsa de deporte", null, ["Única"]], ["bolsa-2", "bolsas", "Tote con la sigma", 2495, ["Única"]], ["bolsa-3", "bolsas", "Mochila con la sigma", null, ["Única"]], ["bolsa-4", "bolsas", "Bolsa de cuerdas", 1495, ["Única"]], ["shaker-1", "shakers", "Shaker negro y bronce", 1295, ["Única"]], ["shaker-2", "shakers", "Shaker transparente", 1295, ["Única"]], ["shaker-3", "shakers", "Shaker de acero", 1995, ["Única"]], ["shaker-4", "shakers", "Shaker con la sigma de fuego", 1295, ["Única"]]];
 
 /* KLONK · la targeta per compartir (27-09-2026, bloc KLONK; Hub 765).
    L'Albert (via la capitana, [dig-97713]): «targeta-imatge per compartir el rang o l'entreno a les stories» (fins ara
