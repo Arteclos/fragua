@@ -5911,6 +5911,20 @@ function llegeixSessio(s) {
 
 /* ---------------------------------------------------------------- estadístiques */
 const tabsStats = () => `<div class="tabs-t">${[["fuerza", "Fuerza"], ["cuerpo", "Cuerpo"]].map(([t, n]) => `<button class="chip" data-accion="stats-tab" data-t="${t}" aria-pressed="${(S.ui.statsTab || "fuerza") === t}">${n}</button>`).join("")}</div>`;
+/* L'evolució del teu Temple (27-09-2026): el servidor en guarda un per dia (només si participes a Social); es demana un
+   cop per sessió i es pinta quan arriba, sense repintar la pàgina. Amb un sol dia no hi ha evolució i no surt res. */
+let templeHist = null, templeDemanat = 0;
+function blocTemple() {
+  if (Date.now() - templeDemanat > 10 * 60 * 1000) {
+    templeDemanat = Date.now();
+    api("GET", "/yo/temple").then(h => { templeHist = Array.isArray(h) ? h : []; const el = $("#temple-hist"); if (el) el.innerHTML = blocTemple(); }).catch(() => {});
+  }
+  const h = templeHist || [];
+  if (h.length < 2) return "";
+  const pas = Math.ceil(h.length / 45), mostra = h.filter((x, i) => i % pas === 0 || i === h.length - 1), v = mostra.map(x => x.temple);
+  const canvi = v[v.length - 1] - v[0];
+  return bloc("Tu Temple", `${grafLinia(v, 300, 110)}<p class="llegenda">Tu fuerza para tu peso, comparada con la gente de KLONK, día a día desde el ${fechaCorta(mostra[0].dia)}: de ${n0(v[0])} a ${n0(v[v.length - 1])} (${canvi >= 0 ? "+" : "−"}${n0(Math.abs(canvi))}). Sube cuando levantas más, y se mueve un poco cuando entra gente nueva.</p>`, "graf");
+}
 function vistaEstadisticas() {
   const tab = S.ui.statsTab || "fuerza", pag = { cuerpo: vistaCuerpo, ejercicios: vistaEjercicios, racha: vistaRachaStats }[tab];
   if (pag) return `${capcalera("Estadísticas")}${tabsStats4()}${pag()}`;
@@ -5929,6 +5943,7 @@ function vistaEstadisticas() {
   const tg = Stats.tendenciaGrupos(S, nS);
   const grups = Object.entries(tg).map(([g, v]) => { const p = v.filter(x => x != null); return { g, p, canvi: p.length >= 2 ? p[p.length - 1] / p[0] - 1 : null }; }).filter(x => x.p.length >= 2);
   return `${capcalera("Estadísticas")}${tabsStats4()}
+  ${teCompte() && soc().participa ? `<div id="temple-hist">${blocTemple()}</div>` : ""}
   <div class="xips-scroll petits periode">${[["mes", "Mes"], ["trimestre", "Trimestre"], ["anual", "Año"], ["total", "Todo"]].map(([p, n]) => `<button class="chip" data-accion="periode" data-p="${p}" aria-pressed="${per === p}">${n}</button>`).join("")}</div>
   <div class="tres">
     <div class="mini marc"><h3>Días</h3><div class="gran or num">${Stats.diasAno(S)}</div><div class="dada">este año</div></div>
