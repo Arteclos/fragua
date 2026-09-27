@@ -698,6 +698,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .mini-clan .gran{margin:auto 0 0}
 .mini-clan .fantasma .gran{opacity:.25;font-size:44px;margin:auto}
 .mini-clan .fantasma.fusta{display:grid;justify-items:center;gap:4px}
+.gim-rang img{width:20px;height:20px;object-fit:contain;vertical-align:-5px;margin-right:4px}
 .seg-llast{display:inline-grid;grid-template-columns:auto auto;margin-top:8px;border:1px solid var(--bronze-fil);border-radius:8px;overflow:hidden}
 .seg-llast button{min-height:34px;padding:0 12px;border:0;background:rgba(15,13,12,.9);color:var(--fum);font:700 13.5px var(--text);white-space:nowrap}
 .seg-llast button+button{border-left:1px solid var(--bronze-fil)}
@@ -4440,7 +4441,7 @@ const GERMANDATS = [[0, "madera", "Hermandad de Madera"], [5000, "piedra", "Herm
   [500000, "oro", "Hermandad de Oro"], [1000000, "obsidiana", "Hermandad de Obsidiana"], [2000000, "criselefantino", "Hermandad Criselefantina"],
   [5000000, "estelar", "Hermandad Estelar"]];
 const germandatDe = g => { if (!g || !g.klonk) return null; const xp = g.xp_gim ?? g.xp ?? 0; let y = GERMANDATS[0]; GERMANDATS.forEach(t => { if (xp >= t[0]) y = t; }); return { id: y[1], nom: y[2] }; };
-const genKlonk = n => `${n0(n)} ${n === 1 ? "persona" : "personas"} de KLONK`;
+const genKlonk = n => `${n0(n)} ${n === 1 ? "herrero" : "herreros"}`;         // la gent de KLONK són herreros (l'Albert, 27-09-2026)
 const filaRangGim = g => { const t = germandatDe(g);
   return `<div class="rk-fila rg-fila${g.meu ? " yo" : ""}"><span class="rk-pos num">${g.pos}</span>${t ? `<img class="yunque" src="${ACTIUS}yunques/${t.id}.webp" alt="${esc(t.nom)}" title="${esc(t.nom)}">` : "<span></span>"}<span class="rk-nom"><b>${esc(g.nom)}</b><small>${g.meu ? "Tu gimnasio · " : ""}${genKlonk(g.klonk)}</small></span><span class="rk-val num or">${n0(g.xp)} XP</span></div>`; };
 // El gimnàs més dur, a dalt de la pestanya Gimnasios: la teva ciutat o el teu país (el del teu gimnàs).
@@ -4854,7 +4855,7 @@ function cosGimnasos() {
   return `<form class="gim-cerca" data-form="gim-cerca" role="search"><input id="g-q" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Nombre del gimnasio" aria-label="Nombre del gimnasio" value="${esc(S.ui.gimCerca || "")}"><button class="btn clar marc" type="submit">BUSCAR</button></form>
     <div class="mapa-caixa panel"><div id="mapa" role="application" aria-label="Mapa de gimnasios"></div></div>
     <div class="fila envolta" style="justify-content:center;margin:10px 0"><button class="btn marc" data-accion="gim-jo">Mi ubicación</button><button class="btn marc" data-accion="gim-busca">Buscar en esta zona</button></div>
-    <div id="gim-fitxa"></div><div id="gim-llista"><p class="suau petit" style="text-align:center">Busca tu gimnasio por su nombre, o mueve el mapa hasta tu barrio y toca «Buscar en esta zona».</p></div>
+    <div id="gim-fitxa"></div><div id="gim-llista"><p class="suau petit" style="text-align:center">${gims.length ? "" : "Buscando los gimnasios de tu zona…"}</p></div>
     <p class="gim-falta">¿No está tu gimnasio? <button class="enllac" data-accion="gim-nou">Añádelo tú</button></p>
     <p class="font" style="text-align:center">Mapa de OpenStreetMap. Tu ubicación solo se usa en el móvil para centrar el mapa; no la guardamos.</p>`;
 }
@@ -4862,14 +4863,18 @@ async function iniciaMapa() {
   const el = $("#mapa"); if (!el) return;
   try { await carregaLeaflet(); } catch (e) { el.innerHTML = `<p class="falta" style="padding:20px">${esc(e.message)}</p>`; return; }
   if (!$("#mapa")) return;
-  const c = S.ui.mapaCentre || [41.3874, 2.1686];
+  // la zona: on vas deixar el mapa; si no, el teu gimnàs; si no, Barcelona
+  const g0 = soc().yo && soc().yo.gimnas;
+  const c = S.ui.mapaCentre || (g0 && g0.lat != null ? [g0.lat, g0.lon] : [41.3874, 2.1686]);
   mapa = L.map("mapa", { zoomControl: true, attributionControl: true }).setView(c, S.ui.mapaZoom || 14);
   // Les teselles d'OpenStreetMap, enfosquides amb CSS (.mapa-fosc): les fosques de CARTO ja demanen clau (26/09).
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "mapa-fosc",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
   capaGims = L.layerGroup().addTo(mapa);
   mapa.on("moveend", () => { const m = mapa.getCenter(); S.ui.mapaCentre = [m.lat, m.lng]; S.ui.mapaZoom = mapa.getZoom(); guardar(); });
-  if (gims.length) pintaGims();
+  // en entrar, els de la zona ja carregats, amb la germandat i els herreros (l'Albert, 27-09-2026: «quan entres a gimnasios,
+  // no es poden veure ja els de la teva zona carregats amb el rang que tenen i el número de herreros que hi ha?»)
+  if (gims.length) pintaGims(); else buscaGims();
 }
 // Els gimnasos d'OpenStreetMap no són només leisure=fitness_centre: l'Aiguajoc és un sports_centre (26-09-2026). Dels
 // centres esportius, els que tenen nom i un esport de gimnàs (o cap): fora camps de futbol, tir o aeromodelisme. És la
@@ -4926,7 +4931,7 @@ function pintaGims(ajusta) {
     if (ajusta && gims.length && mapa) mapa.fitBounds(L.latLngBounds(gims.slice(0, 6).map(g => [g.lat, g.lon])), { maxZoom: 15, padding: [30, 30] });
   }
   const el = $("#gim-llista"); if (!el) return;
-  el.innerHTML = gims.length ? `<div class="gim-llista">${gims.map((g, i) => `<button class="gim-fila marc${g.id === meu ? " gim-meu" : ""}" data-accion="gim-fitxa" data-i="${i}"><span><b>${esc(g.nom)}</b><small>${esc(g.adreca || g.adreca_gent || "Sin dirección")}</small>${germandatDe(g) ? `<small class="gim-rang">${germandatDe(g).nom} · ${genKlonk(g.klonk)}</small>` : ""}${g.id === meu ? `<small class="gim-teu">Tu gimnasio</small>` : ""}</span><span class="gim-dades">${g.preu != null ? `<b class="or num">${fmt(Math.round(g.preu))} €</b>` : ""}${g.estrelles ? `<small class="estr">${estrelles(g.estrelles)}</small>` : ""}</span></button>`).join("")}</div>`
+  el.innerHTML = gims.length ? `<div class="gim-llista">${gims.map((g, i) => `<button class="gim-fila marc${g.id === meu ? " gim-meu" : ""}" data-accion="gim-fitxa" data-i="${i}"><span><b>${esc(g.nom)}</b><small>${esc(g.adreca || g.adreca_gent || "Sin dirección")}</small>${germandatDe(g) ? `<small class="gim-rang"><img src="${ACTIUS}yunques/${germandatDe(g).id}.webp" alt="">${germandatDe(g).nom}, ${genKlonk(g.klonk)}</small>` : ""}${g.id === meu ? `<small class="gim-teu">Tu gimnasio</small>` : ""}</span><span class="gim-dades">${g.preu != null ? `<b class="or num">${fmt(Math.round(g.preu))} €</b>` : ""}${g.estrelles ? `<small class="estr">${estrelles(g.estrelles)}</small>` : ""}</span></button>`).join("")}</div>`
     : '<p class="suau petit" style="text-align:center">No hay gimnasios en el mapa por aquí. Aleja el mapa y vuelve a buscar.</p>';
 }
 function fitxaGim(i) {
@@ -6434,7 +6439,7 @@ function vistaEleccion() {
   <form class="form" data-form="personaje" style="margin-top:14px">
     <label>Tu nickname<input id="f-nom" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(S.personaje?.nombre || (typeof sessio !== "undefined" && sessio && sessio.nick) || "")}" placeholder="Así te verán en KLONK"></label>
     <p class="suau petit" style="margin:-4px 0 0">Es el nombre de tu personaje. Único: nadie más puede tenerlo. De 3 a 20 letras o números, sin espacios.</p>
-    ${esTeu(t) ? botoForja('type="submit"', nou ? "FORJAR PERSONAJE" : "ELEGIR ESTE", "")
+    ${esTeu(t) ? botoForja('type="submit"', nou ? "ENTRAR A LA FORJA" : "ELEGIR ESTE", "")
        : `<p class="falta">Bloqueado: se forja con ${P.precio} de oro en la tienda.</p>${nou ? "" : botoForja('type="button" data-accion="vista" data-v="tienda"', "IR A LA TIENDA", "")}`}
   </form>`;
 }
