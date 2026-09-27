@@ -4465,7 +4465,7 @@ function vistaAmic() {
   return `${tanca}
   <article class="amic" aria-label="Perfil de ${esc(nom)}">
     <div class="amic-heroi">
-      <div class="personatge amic-pj"><div class="brillo"></div><img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}"></div>
+      <div class="personatge amic-pj${(p.nivell || 1) >= 12 ? " aura" : ""}" id="personatge" data-tipo="${tipo}" data-nivell="${Math.max(1, Math.min(20, p.nivell || 1))}"><div class="brillo"></div><img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}"></div>
       ${y ? `<button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}, temple ${n0(p.poder)}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">Temple ${n0(p.poder)}</span></button>`
         : '<div class="amic-rang"><span class="suau">Aún sin rango</span></div>'}
     </div>
@@ -5154,7 +5154,7 @@ const modoDe = a => { const x = val(a); return x.ud && x.gr !== "fruta" ? "ud" :
 const uniDe = it => { const x = val(it.a); return it.modo === "ud" ? (x.udn ? x.udn[1] : "ud") : x.ml ? "ml" : "g"; };
 // els teus primer (27-09-2026): el que has creat o corregit amb la teva etiqueta també va al menú de la setmana
 const grupOpcions = (nom, obj, sel) => Object.keys(obj || {}).length ? `<optgroup label="${nom}">${Object.entries(obj).map(([k, x]) => `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("")}</optgroup>` : "";
-const opcionsAliments = sel => grupOpcions("Tus alimentos", S.alPropis, sel) + grupOpcions("Del súper", S.alCache, sel) + GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
+const opcionsAliments = sel => grupOpcions("Tus alimentos", S.alPropis, sel) + grupOpcions("Los que ya usaste", S.alCache, sel) + GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
 function filaAliment(it, i) {
   return `<div class="ap-fila" data-fila="${i}"><span class="ap-nom">${esc(val(it.a).n)}</span>
     <span class="camp"><input inputmode="decimal" autocomplete="off" data-q="${i}" value="${fmt(it.q)}" aria-label="Cantidad de ${esc(val(it.a).n)}"><span class="u">${uniDe(it)}</span></span>
@@ -5308,7 +5308,7 @@ function pintaFora() {
 // compte. Com a molt 400: si en sobren, se'n van els més vells que ja no surten a cap àpat ni a cap menú.
 function alDeFora(i) {
   const x = alFora.items[i]; if (!x) return null;
-  S.alCache = { ...(S.alCache || {}), [x.id]: { n: nomFora(x), e: "tal como viene en el envase", k: x.k, p: x.p, c: x.c, g: x.g, gr: "fuera", ...(x.ml ? { ml: true } : {}), font: x.font, ean: x.ean, t: Date.now() } };
+  S.alCache = { ...(S.alCache || {}), [x.id]: { n: nomFora(x), e: x.font === "ciqual" ? "como dice su nombre (crudo o cocinado)" : "tal como viene en el envase", k: x.k, p: x.p, c: x.c, g: x.g, gr: "fuera", ...(x.ml ? { ml: true } : {}), font: x.font, ean: x.ean, t: Date.now() } };
   podaCache();
   guardar();
   return x.id;
@@ -6306,7 +6306,10 @@ function render() {
   if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
   if (S.personaje) {
-    const nv = Stats.experienciaPj(S).nivel;
+    // EL NINOT D'UN AMIC, EVOLUCIONAT (27-09-2026, ARREGLOS: «el ninot evolucionat a Social i al perfil, perquè la gent
+    // l'ensenyi»): al seu perfil, el 3D és el seu personatge amb el seu nivell (els braços, el martell i l'aura); en
+    // tornar a una pantalla teva, torna el teu.
+    const nv = h && h.dataset.nivell ? +h.dataset.nivell : Stats.experienciaPj(S).nivel;
     if (h && nv >= 12) h.classList.add("aura");
     window.FRAGUA_NIVEL = nv;
     if (window.Escena3D && window.Escena3D.fuerza) window.Escena3D.fuerza(nv);
