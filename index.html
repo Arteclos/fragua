@@ -2977,15 +2977,18 @@ function accioRutina(acc, b) {
       const r = S.ui.edit, dies = r.dias.filter(d => d.ej.length);
       if (!dies.length) { avis("Añade al menos un ejercicio.", true); return true; }
       r.dias = dies; r.nombre = r.nombre.trim() || "Mi rutina";
+      let encesa = false;
       // una rutina importada (src/importa.js): les sèries i repeticions llegides entren ara, en desar-la, i no abans
       if (r.cfgImport) {
         Object.entries(r.cfgImport).forEach(([n, c]) => { if (r.dias.some(d => d.ej.some(e => e[0] === n))) S.cfg[n] = { ...(S.cfg[n] || {}), ...c }; });
+        // la rutina que entres porta sèries especials: s'encenen soles (Hub 773)
+        if (!metodesOn() && Object.values(r.cfgImport).some(c => c && (c.esc > 0 || c.drop || c.fallo))) { S.metodos = true; encesa = true; }
         delete r.cfgImport; S.ui.impTxt = ""; S.ui.impTria = {};
       }
       S.rutinas = [...(S.rutinas || []).filter(x => x.id !== r.id), r];
       if (!S.activa) S.rutinaActiva = r.id;
       S.ui.edit = null; S.ui.rutVer = r.id; guardarYa();
-      Efectos.suena("fanfarria"); Efectos.lluvia(1); veure("rutina"); avis("Rutina guardada.");
+      Efectos.suena("fanfarria"); Efectos.lluvia(1); veure("rutina"); avis(encesa ? "Rutina guardada. Lleva series especiales: las hemos encendido." : "Rutina guardada.");
       return true;
     }
   }
@@ -3108,7 +3111,9 @@ function rutinaValida(x) {
 // En guardar una rutina que ve d'algú: les seves sèries i repeticions, per als exercicis que tu encara no tens configurats.
 function guardaRutinaDeFora(x) {
   const { cfg, ...r } = x, nova = { ...r, id: nouId() };
-  Object.entries(cfg || {}).forEach(([n, c]) => { if (!(S.cfg || {})[n]) S.cfg = { ...(S.cfg || {}), [n]: c }; });
+  let especials = false;
+  Object.entries(cfg || {}).forEach(([n, c]) => { if (!(S.cfg || {})[n]) { S.cfg = { ...(S.cfg || {}), [n]: c }; especials = especials || !!(c && (c.esc > 0 || c.drop || c.fallo)); } });
+  if (especials && !metodesOn()) S.metodos = true;           // la rutina porta sèries especials: s'encenen (Hub 773)
   S.rutinas = [...(S.rutinas || []), nova];
   return nova;
 }
@@ -4050,10 +4055,16 @@ const TIPUS_SERIE = [["", "Normal", "La de siempre."], ["c", "Calentamiento", "C
 const CONCEPTE_TIPUS = { c: "calentamiento", d: "drop", f: "fallo" };
 const redona = (kg, f) => kg == null ? null : Math.max(0, Math.round(kg * f / 2.5) * 2.5);
 const serieCompta = z => z.tipo !== "c" && z.tipo !== "d";           // compta per als rècords i per a com puja el pes
+// LES SÈRIES ESPECIALS, ENCESES O APAGADES (Hub 773; l'Albert, 27-09 11:50: «potser s'ha de poder fer toggle de mètodes,
+// com el WUS... però tampoc que no molesti molt»). Apagades, un entreno nou no en porta cap i el número de la sèrie no obre
+// res; les que ja hi són es queden. Mentre no s'ha triat a Ajustes, enceses només per qui ja en té configurades.
+const especialsCfg = () => Object.values(S.cfg || {}).some(c => c && (c.esc > 0 || c.drop || c.fallo));
+const metodesOn = () => S.metodos != null ? !!S.metodos : especialsCfg();
 
 // Les sèries d'un exercici amb les especials de la seva configuració: n d'escalfament al davant, el drop set al final i
 // l'última de treball al fallo. Les que ja estan fetes no es toquen.
 function aplicaEspecials(sets, cfg, c) {
+  if (!metodesOn()) return sets.slice();
   cfg = cfg || {};
   let s = sets.slice();
   const feina = s.filter(serieCompta), primer = feina[0] || {}, ultim = feina[feina.length - 1] || {};
@@ -4074,6 +4085,7 @@ function aplicaEspecials(sets, cfg, c) {
 // El número de la sèrie, o la lletra del seu tipus, que es toca per canviar-lo
 function botoTipus(z, i, j, n) {
   const t = z.tipo || "", nom = (TIPUS_SERIE.find(x => x[0] === t) || TIPUS_SERIE[0])[1];
+  if (!t && !metodesOn()) return `<span class="i tipus-n" aria-label="Serie ${n}">${n}</span>`;
   return `<button class="i tipus-${t || "n"}" data-accion="serie-tipus" data-i="${i}" data-j="${j}" aria-label="Serie ${n}: ${nom.toLowerCase()}. Cambiar el tipo">${t ? t.toUpperCase() : n}</button>`;
 }
 function fullTipusSerie(i, j) {
@@ -4857,6 +4869,8 @@ function cosAj(k) {
     <p class="suau petit">Se redondea a lo que se puede cargar con tus discos. Si no llegas al mínimo en ninguna serie, te baja lo mismo.</p>
     <h3 class="aj-sub">Qué margen de repeticiones quieres</h3>
     ${[["c", "En los grandes"], ["a", "En los pequeños"]].map(([t, n]) => `<div class="aj-fila"><span>${n}</span><select data-aj-rang="${t}" aria-label="Repeticiones de los ejercicios ${n.toLowerCase()}">${RANGS.map(([a, b]) => `<option value="${a}-${b}"${rangoDe(t)[0] === a && rangoDe(t)[1] === b ? " selected" : ""}>${a} a ${b}</option>`).join("")}</select></div>`).join("")}
+    <h3 class="aj-sub">Series especiales</h3>
+    <div class="aj-fila"><span>Calentamiento, drop set y al fallo<small>${metodesOn() ? "Se eligen en cada ejercicio, tocando sus series y repeticiones, y se cambian tocando el número de la serie." : "Apagadas: el entreno va sin ellas. Si las usas, enciéndelas."}</small></span>${interruptor("aj-metodos", metodesOn(), "Series especiales")}</div>
     <h3 class="aj-sub">Descanso entre series</h3>
     <div class="aj-fila"><span>Contar el descanso<small>Si lo apagas, no sale el reloj entre series.</small></span>${interruptor("aj-sense-desc", S.descansoOn !== false, "Contar el descanso")}</div>
     ${S.descansoOn === false ? "" : [["c", "En los grandes"], ["a", "En los pequeños"]].map(([t, n]) => `<div class="aj-fila"><span>${n}</span>${pas("aj-desc", t, mmss(descansoDe(t)), -15, 15)}</div>`).join("")}
@@ -4956,6 +4970,7 @@ function accioAjustes(acc, b) {
     case "aj-placas": S.gym = { ...G, placas: Number(b.dataset.v) }; desa(); return true;
     case "aj-pct": { const v = Math.min(10, Math.max(1, P[b.dataset.k] + Number(b.dataset.d))); S.progres = { ...P, [b.dataset.k]: v }; desa(); return true; }
     case "aj-dos": S.progres = { ...P, dos: !P.dos }; desa(); return true;
+    case "aj-metodos": S.metodos = !metodesOn(); desa(); return true;
     case "aj-desc": { const t = b.dataset.k, v = Math.min(300, Math.max(30, descansoDe(t) + Number(b.dataset.d))); S.descansos = { ...DESCANSO, ...(S.descansos || {}), [t]: v }; desa(); return true; }
     case "aj-med": S.medir = { ...medir(), [b.dataset.k]: !medir()[b.dataset.k] }; desa(); return true;
     case "aj-cinta": {
@@ -7762,10 +7777,10 @@ function fullCfgEj(i) {
     <label>Repeticiones<select id="c-r">${(RANGS.some(([a, b]) => a === c.min && b === c.max) ? RANGS : [...RANGS, [c.min, c.max]].sort((x, y) => x[0] - y[0] || x[1] - y[1])).map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a === b ? a : `${a} a ${b}`}</option>`).join("")}</select></label></div>
     <fieldset class="cargues"><legend>Cómo se carga</legend>${ORDRE_CARGAS.map(k => `<label class="chip-r"><input type="radio" name="c-c" value="${k}"${k === carga ? " checked" : ""}><span>${CARGAS[k].nom}</span></label>`).join("")}</fieldset>
     <label id="c-p-l"${CARGAS[carga].paso ? "" : " hidden"}>Va de<select id="c-p"><option value="">lo de tu gimnasio (${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} en ${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} kg)</option>${[1, 2, 2.5, 5, 10].map(v => `<option value="${v}"${cf.paso === v ? " selected" : ""}>${fmt(v)} en ${fmt(v)} kg</option>`).join("")}</select></label>
-    <fieldset class="especials"><legend>Series especiales</legend>
+    ${metodesOn() ? `<fieldset class="especials"><legend>Series especiales</legend>
       <label class="esp-fila"><span>Calentamiento ${infoBoto("calentamiento")}</span><select id="c-esc">${[0, 1, 2, 3].map(n => `<option value="${n}"${(cf.esc || 0) === n ? " selected" : ""}>${n ? (n === 1 ? "1 serie" : n + " series") : "Ninguna"}</option>`).join("")}</select></label>
       <label class="casella"><input type="checkbox" id="c-fallo"${cf.fallo ? " checked" : ""}><span><b>La última, al fallo ${infoBoto("fallo")}</b></span></label>
-      <label class="casella"><input type="checkbox" id="c-drop"${cf.drop ? " checked" : ""}><span><b>Un drop set al final ${infoBoto("drop")}</b></span></label></fieldset>
+      <label class="casella"><input type="checkbox" id="c-drop"${cf.drop ? " checked" : ""}><span><b>Un drop set al final ${infoBoto("drop")}</b></span></label></fieldset>` : `<p class="suau petit">Las series especiales (calentamiento, drop set y al fallo) están apagadas. Se encienden en Ajustes, en «Progresión».</p>`}
     <button class="btn clar marc" type="submit">GUARDAR PARA ESTE EJERCICIO</button></form>`;
 }
 // Per què avui toca aquest pes: el que va fer l'última vegada i la regla, amb l'esquema dels discos.
@@ -8302,7 +8317,9 @@ document.addEventListener("submit", async ev => {
   } else if (tipus === "cfg-ej") {
     const e = activa().ej[+f.dataset.i], series = Number($("#c-s").value), [mn, mx] = $("#c-r").value.split("-").map(Number);
     const carga = (f.querySelector('input[name="c-c"]:checked') || {}).value, paso = num($("#c-p") ? $("#c-p").value : "");
-    const esc2 = Number($("#c-esc") ? $("#c-esc").value : 0) || 0, fallo = !!($("#c-fallo") && $("#c-fallo").checked), drop = !!($("#c-drop") && $("#c-drop").checked);
+    // amb les especials apagades no hi ha els camps: es queda el que hi havia (no s'esborra en silenci)
+    const cfA = S.cfg[e.n] || {}, esc2 = $("#c-esc") ? Number($("#c-esc").value) || 0 : cfA.esc || 0;
+    const fallo = $("#c-fallo") ? $("#c-fallo").checked : !!cfA.fallo, drop = $("#c-drop") ? $("#c-drop").checked : !!cfA.drop;
     S.cfg[e.n] = { series, min: mn, max: mx, ...(carga ? { carga } : {}), ...(paso > 0 ? { paso } : {}), ...(esc2 ? { esc: esc2 } : {}), ...(fallo ? { fallo } : {}), ...(drop ? { drop } : {}) };
     // les de treball (sense l'escalfament ni el drop set): n'afegeix o en treu de les que no estan fetes
     for (let feina = e.sets.filter(serieCompta); feina.length < series; feina = e.sets.filter(serieCompta)) {
@@ -8424,7 +8441,7 @@ function carrega(tipo) {
       // la textura (herrero.jpg) es busca al costat del model
       return await new Promise(ok => new GLTFLoader().parse(bin.buffer, ARREL + "3d/", ok, () => ok(null)));
     } catch (e) { return null; }
-  })();
+  })().then(m => { if (!m) delete models[tipo]; return m; });     // si ha fallat (sense xarxa), la propera vegada es torna a provar
   return models[tipo];
 }
 
