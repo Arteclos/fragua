@@ -476,7 +476,7 @@ button.rk-fila .rk-nom{text-decoration:underline;text-decoration-color:rgba(255,
 .grups-perfil div{display:grid;justify-items:center;gap:2px}
 .grups-perfil small{font-size:11.5px;color:var(--fum)}
 /* ---- el perfil d'un amic, a pantalla completa (27-09-2026) ---- */
-.amic-tanca{position:absolute;top:14px;right:14px;z-index:6;background:rgba(10,8,7,.6)}
+.amic-tanca{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:10px;z-index:6;width:48px;height:48px;background:rgba(10,8,7,.72)}
 .amic{position:relative;padding:6px 0 18px}
 .amic-carrega{text-align:center;margin-top:140px}
 .amic-heroi{position:relative;display:grid;grid-template-columns:60% 1fr;align-items:end;min-height:340px}
@@ -1007,6 +1007,46 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .al-foto-ok{color:#b9e39a}
 .al-foto-ull{color:#f0b060}
 .form input.al-llegit{border-color:#f0a050;box-shadow:0 0 0 1px #f0a050}
+/* ---- importar una rutina i els tres camins per començar (27-09-2026) ---- */
+.imp{display:grid;gap:10px}
+.imp p{margin:0}
+.imp-txt{width:100%;min-height:150px;border-radius:10px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--crema);padding:10px 12px;font-size:16px;line-height:1.45;resize:vertical}
+.imp-txt:focus{outline:2px solid #f0a050;outline-offset:1px}
+.imp-txt::placeholder{color:#7d6c58}
+.imp-fitxer{display:grid;gap:6px}
+.imp-fit-b{width:100%;cursor:pointer}
+.imp-fit-b:focus-within{outline:3px solid #ffd84a;outline-offset:3px}
+.imp-fit-b svg{width:22px;height:22px;flex:none}
+.imp-cap{font-size:16px;margin:6px 0 2px;color:var(--crema)}
+.imp-buit{color:var(--fum);font-size:14px}
+.imp-dia{display:grid;padding:8px 0 4px;border-top:1px solid rgba(197,123,55,.22)}
+.imp-dia-t{font-size:15px;color:#ffd27a;margin-bottom:4px}
+.imp-ej{display:grid;gap:4px;padding:7px 0 7px 10px;border-left:3px solid transparent}
+.imp-ej.dubte{border-left-color:#f0a050;background:rgba(240,160,80,.07)}
+.imp-ej.nou{border-left-color:#9a8a74;background:rgba(255,255,255,.035)}
+.imp-ej-cap{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center}
+.imp-ej-cap img,.imp-ej-cap .sense-foto{width:36px;height:36px;border-radius:8px;object-fit:cover}
+.imp-nom{font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.imp-sr{font-size:14px;color:#ffd27a;white-space:nowrap}
+.imp-ej small{color:var(--fum);font-size:13px;padding-left:46px}
+.imp-alts{display:flex;flex-wrap:wrap;gap:6px;padding-left:46px}
+.imp-alts .chip{min-height:36px;font-size:13px;padding:4px 11px;white-space:normal;text-align:left;line-height:1.25}
+.imp-alts .petit{width:100%}
+.enllac.imp-pide{justify-self:start;margin-left:46px;font-size:14px;padding:4px 0}
+.enllac.imp-pide:disabled{color:#b9e39a;text-decoration:none}
+.imp-ign summary{cursor:pointer;color:#f0b060;font-size:14px;padding:6px 0}
+.imp-ign p{font-size:13px;color:var(--fum);margin:2px 0 2px 12px;overflow-wrap:anywhere}
+.ej-ed .nom small.ed-sr{display:block;color:var(--fum);font-size:12.5px;margin-top:1px}
+.dos-botons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.dos-botons .btn{padding:0 8px;font-size:14.5px}
+.dos-botons .btn svg{flex:none}
+.camins{display:grid;gap:12px;margin-top:4px}
+.cami{--x:10px;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;align-items:center;width:100%;min-height:84px;padding:14px 16px;text-align:left;color:var(--crema)}
+.cami svg{width:30px;height:30px;color:#ffd27a;justify-self:center}
+.cami b{display:block;font-family:var(--display);font-size:19px;line-height:1.2}
+.cami small{display:block;color:var(--fum);font-size:14px;margin-top:3px;line-height:1.35}
+.cami:focus-visible{outline:3px solid #ffd84a;outline-offset:3px}
+.rutina-res{font-size:13.5px;color:var(--fum);line-height:1.35}
 /* ---- els del súper (la base de l'AESAN, 27-09-2026) ---- */
 .al-fora-t{margin:14px 0 2px;font:800 15px var(--display);color:#f0c27a}
 p.al-fora-t{font:inherit;color:var(--fum)}
@@ -2638,8 +2678,8 @@ function vistaRutinas() {
       <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span></button>`;
   if (teCompte() && !S.demo && Date.now() - (S.ui.rebudesAt || 0) > 60000) { S.ui.rebudesAt = Date.now(); setTimeout(carregaRebudes, 0); }
   return `${capcalera("Rutinas")}
-    <section class="seccio"><h2>Tus rutinas</h2>${teves.length ? teves.map(carta).join("") : '<p class="suau petit">Aún no tienes ninguna tuya: crea una o copia una plantilla y cámbiala a tu gusto.</p>'}
-      <button class="btn clar marc" style="width:100%;margin-top:4px" data-accion="rut-nova">Crear una rutina nueva</button></section>
+    <section class="seccio"><h2>Tus rutinas</h2>${teves.length ? teves.map(carta).join("") : '<p class="suau petit">Aún no tienes ninguna tuya: crea una, importa la que ya usas o copia una plantilla y cámbiala a tu gusto.</p>'}
+      <div class="dos-botons"><button class="btn clar marc" data-accion="rut-nova">${I_CREA}<span>Crear una nueva</span></button><button class="btn clar marc" data-accion="rut-importa">${I_IMPORTA}<span>Importar la mía</span></button></div></section>
     ${rebudes.length ? `<section class="seccio"><h2>Te han compartido</h2>${rebudes.map(x => `<div class="rutina marc rebuda"><span class="rutina-cap"><span class="rutina-nom">${esc(x.rutina.nombre)}</span><span class="toca">de ${esc(x.de)}</span></span>
       <span class="rutina-dades"><span>${nDies(x.rutina.dias.length)}</span></span><span class="fila envolta" style="margin-top:8px"><button class="btn clar marc" data-accion="rut-guarda-rebuda" data-id="${x.id}">GUARDAR</button><button class="btn marc" data-accion="rut-descarta-rebuda" data-id="${x.id}">Descartar</button></span></div>`).join("")}</section>` : ""}
     <section class="seccio"><h2>Plantillas de KLONK</h2>${[RUTINA_BASE, ...PLANTILLAS].map(carta).join("")}</section>
@@ -2669,7 +2709,7 @@ function vistaEditor() {
         <button class="tanca" data-accion="ed-treu-dia" data-i="${i}" aria-label="Quitar el día ${i + 1}">${I_X}</button></div>
       ${d.ej.length ? "" : '<p class="suau petit ed-buit">Sin ejercicios. Añade uno, o arrastra aquí uno de otro día.</p>'}
       ${d.ej.map((e, j) => `<div class="ej-ed" data-i="${i}" data-j="${j}"><button class="ej-nansa" data-nansa data-i="${i}" data-j="${j}" aria-label="Mover ${esc(e[0])}: mantén y arrastra">${I_NANSA}</button>${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}
-        <span class="nom">${esc(e[0])}</span>
+        <span class="nom">${esc(e[0])}<small class="ed-sr num">${srTxt(r.cfgImport && r.cfgImport[e[0]] ? { ...cfgEj(e[0], e[1]), ...r.cfgImport[e[0]] } : cfgEj(e[0], e[1]))}</small></span>
         <span class="ej-botons"><button data-accion="ed-puja" data-i="${i}" data-j="${j}" aria-label="Subir ${esc(e[0])}"${j ? "" : " disabled"}>↑</button><button data-accion="ed-treu" data-i="${i}" data-j="${j}" aria-label="Quitar ${esc(e[0])}">${I_X}</button></span></div>`).join("")}
       <button class="btn marc" style="margin-top:8px" data-accion="ed-afegeix" data-i="${i}">Añadir ejercicio</button></section>`).join("")}
     <p class="suau petit" style="text-align:center;margin:10px 0 0">Para cambiar el orden, mantén el dedo en ⠿ y arrastra, también a otro día.</p>
@@ -2698,7 +2738,7 @@ function llistaTria(i) {
   const ll = candidatsTria(), mostra = ll.slice(0, 60);
   return mostra.map(e => `<button class="ej-tria" data-accion="ed-posa" data-i="${i}" data-n="${esc(e.n)}">${fotoEj(e.n) ? `<img src="${fotoEj(e.n)}" alt="" loading="lazy" width="48" height="48">` : "<span class=\"ej-sense\"></span>"}<span class="ej-tria-t"><span>${esc(e.n)}</span><small>${esc([e.g, e.eq].filter(Boolean).join(", "))}${e.casa ? ", de la casa" : ""}</small></span></button>`).join("")
     + (ll.length > mostra.length ? `<p class="suau petit" style="text-align:center">Y ${ll.length - mostra.length} más: afina la búsqueda.</p>` : "")
-    + (!ll.length ? '<p class="suau petit" style="text-align:center">Nada con esa búsqueda. Puedes crear el tuyo aquí abajo.</p>' : "");
+    + (!ll.length ? `<p class="suau petit" style="text-align:center">Nada con esa búsqueda. Puedes crear el tuyo aquí abajo${(S.ui.triaQ || "").trim().length >= 3 ? `, o <button class="enllac" data-accion="imp-pide" data-n="${esc(S.ui.triaQ.trim().slice(0, 60))}">pedirnos que añadamos «${esc(S.ui.triaQ.trim().slice(0, 60))}»</button>` : ""}.</p>` : "");
 }
 function fullTriaEj(i) {
   S.ui.triaQ = ""; S.ui.triaG = ""; S.ui.triaE = "";
@@ -2751,6 +2791,11 @@ function accioRutina(acc, b) {
       const r = S.ui.edit, dies = r.dias.filter(d => d.ej.length);
       if (!dies.length) { avis("Añade al menos un ejercicio.", true); return true; }
       r.dias = dies; r.nombre = r.nombre.trim() || "Mi rutina";
+      // una rutina importada (src/importa.js): les sèries i repeticions llegides entren ara, en desar-la, i no abans
+      if (r.cfgImport) {
+        Object.entries(r.cfgImport).forEach(([n, c]) => { if (r.dias.some(d => d.ej.some(e => e[0] === n))) S.cfg[n] = { ...(S.cfg[n] || {}), ...c }; });
+        delete r.cfgImport; S.ui.impTxt = ""; S.ui.impTria = {};
+      }
       S.rutinas = [...(S.rutinas || []).filter(x => x.id !== r.id), r];
       if (!S.activa) S.rutinaActiva = r.id;
       S.ui.edit = null; S.ui.rutVer = r.id; guardarYa();
@@ -2924,6 +2969,502 @@ async function accioCompartir(acc, b) {
 }
 const ACC_COMPARTIR = new Set(["rut-compartir", "rut-compartir-dia", "rut-enllac", "rut-a-amic", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz"]);
 function accioRutinesSync(acc, b) { if (!ACC_COMPARTIR.has(acc)) return false; accioCompartir(acc, b); return true; }
+
+/* KLONK · importar una rutina (27-09-2026, bloc KLONK).
+   L'Albert: «com que la gent tindrà les seves rutines ja, s'hauria de poder fer un copy paste i pegar imatges o arxius de
+   tot tipus per fer l'import... perquè la gent es pugui importar les rutines easy». I després: «si no és possible afegir
+   l'exercici, que la gent el pugui personalitzar, o demanar-nos que es pugi a la biblio, o fer una suggerència si no s'ha
+   trobat».
+   El text (enganxat, o el que el servidor treu d'una foto o d'un fitxer: servidor/importa.py) es llegeix AQUÍ, amb regles
+   i sense IA: els dies, els exercicis i les sèries × repeticions. Cada exercici es busca entre els de la casa (29) i la
+   biblioteca (739): si és segur, s'hi posa; si és dubtós, es proposen els més semblants; si no hi és, es queda com a teu i
+   ens el pots demanar. El resultat s'obre a l'editor, i les sèries i repeticions llegides només es desen amb «GUARDAR».
+   Va després de src/rutinas.js al mateix <script>. */
+"use strict";
+
+/* ---------------------------------------------------------------- comparar noms */
+const netImp = t => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+  .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const BUIDES_IMP = new Set(["de", "del", "con", "en", "a", "al", "la", "el", "los", "las", "y", "e", "para", "sobre", "un", "una", "the", "with", "of", "and", "tipo", "o"]);
+// el que no canvia l'exercici i que la gent afegeix («press banca libre», «sentadilla clásica»)
+const SOROLL_IMP = new Set(["libre", "normal", "clasico", "clasica", "tradicional", "convencional", "olimpica", "olimpico", "estricto", "estricta", "basico", "basica"]);
+const SINONIMS_IMP = { dumbbell: "mancuerna", db: "mancuerna", pesa: "mancuerna", barbell: "barra", cable: "polea", smith: "multipower", machine: "maquina", kb: "kettlebell" };
+function arrelImp(w) {
+  if (w.length > 5 && /[lrndz]es$/.test(w)) return w.slice(0, -2);             // laterales, extensiones, abductores
+  if (w.length > 3 && w.endsWith("s") && !w.endsWith("ss")) return w.slice(0, -1);   // mancuernas, curls, poleas
+  return w;
+}
+// amb `corr`, cada paraula que no coneixem es corregeix primer (abans del plural: «prees» → «press», i no «pree»)
+const tokImp = (t, corr) => netImp(t).split(" ").filter(w => w && !BUIDES_IMP.has(w)).map(w => corr ? corregeixImp(w) : w).map(arrelImp).map(w => SINONIMS_IMP[w] || w);
+const trigrames = s => { const t = new Set(), x = "  " + s + " "; for (let i = 0; i < x.length - 2; i++) t.add(x.slice(i, i + 3)); return t; };
+const diceImp = (a, b) => { if (!a.size || !b.size) return 0; let n = 0; for (const x of a) if (b.has(x)) n++; return 2 * n / (a.size + b.size); };
+
+// Com ho escriu la gent → el nom que tenim. Els de la casa (amb il·lustració) primer. La prova (app/proves) mira que tots
+// els noms de la dreta existeixin.
+const ALIES_IMP = [
+  ["Press de banca con barra, agarre medio", "press banca|banca|press plano|bench|bench press|press banca plano|press banca barra|press plano barra|pecho plano|press de banca plano"],
+  ["Press de banca con mancuernas", "press banca mancuernas|press plano mancuernas|press mancuernas|press pecho mancuernas|press de pecho con mancuernas"],
+  ["Press inclinado", "press inclinado|press banca inclinado|inclinado|press inclinado barra|press de banca inclinado"],
+  ["Press inclinado con mancuernas", "press inclinado mancuernas|inclinado mancuernas|press banca inclinado mancuernas"],
+  ["Press inclinado en Smith", "press inclinado smith|press inclinado multipower|inclinado multipower|inclinado smith"],
+  ["Press declinado con barra", "press declinado|declinado|press banca declinado"],
+  ["Press de pecho en máquina", "press pecho|press pecho maquina|chest press|press de pecho|press maquina pecho"],
+  ["Press de banca con agarre cerrado", "press cerrado|press banca cerrado|press banca agarre cerrado|press cerrado barra"],
+  ["Aperturas con mancuernas", "aperturas|aperturas mancuernas|aperturas planas|flyes|fly|aperturas banco plano|aperturas plano"],
+  ["Aperturas inclinadas con mancuernas", "aperturas inclinadas|aperturas inclinado|aperturas inclinadas mancuernas"],
+  ["Cruce de poleas", "aperturas polea|cruces polea|cruce poleas|cruces|crossover|cable crossover|cruce de polea|cruces en polea alta"],
+  ["Peck Deck", "peck deck|pec deck|contractora|mariposa|aperturas maquina|contractor|butterfly"],
+  ["Fondos", "fondos|fondos paralelas|dips|fondos en paralelas|fondos pecho|fondos triceps"],
+  ["Fondos en banco", "fondos banco|fondos en banco|fondos entre bancos"],
+  ["Press militar", "press militar|press hombro|press hombros|overhead press|ohp|press militar barra|press militar de pie|militar"],
+  ["Press de hombros con mancuernas", "press militar mancuernas|press hombros mancuernas|press hombro mancuernas|press sentado mancuernas"],
+  ["Press Arnold con mancuernas", "press arnold|arnold|arnold press"],
+  ["Elevaciones laterales con mancuernas", "elevaciones laterales|laterales|vuelos laterales|lateral raise|elevaciones laterales mancuernas|elevacion lateral"],
+  ["Elevaciones laterales en polea", "elevaciones laterales polea|laterales polea|laterales en polea|elevacion lateral polea"],
+  ["Elevaciones frontales con dos mancuernas", "elevaciones frontales|frontales|elevacion frontal|vuelos frontales|front raise"],
+  ["Pájaros sentado con mancuernas", "pajaros|pajaro|vuelos posteriores|reverse fly|pajaros mancuernas|deltoides posterior"],
+  ["Elevaciones posteriores en polea", "pajaros polea|elevaciones posteriores|elevaciones posteriores polea|posteriores polea|posterior polea"],
+  ["Pájaros en máquina", "pajaros maquina|contractora invertida|peck deck invertido|reverse peck deck"],
+  ["Face pull", "face pull|facepull|face pulls|jalon a la cara"],
+  ["Encogimientos con mancuernas", "encogimientos|encogimientos mancuernas|shrugs|trapecio|encogimientos de hombros"],
+  ["Encogimientos con barra", "encogimientos barra|shrugs barra"],
+  ["Remo al mentón con barra", "remo al menton|remo al cuello|upright row|remo menton"],
+  ["Dominadas", "dominadas|pull ups|pullups|dominada|pull up|dominadas pronas"],
+  ["Dominadas con agarre supino", "dominadas supinas|chin ups|chin up|dominadas agarre supino|dominada supina"],
+  ["Jalón al pecho", "jalon|jalon al pecho|jalon pecho|lat pulldown|polea al pecho|jalones|jalon polea alta|jalon abierto|polea alta|jalon agarre abierto"],
+  ["Jalón al pecho con triángulo", "jalon agarre cerrado|jalon triangulo|jalon estrecho|jalon cerrado"],
+  ["Jalón tras nuca con agarre abierto", "jalon tras nuca|jalon nuca"],
+  ["Remo con barra", "remo con barra|remo barra|remo inclinado barra|remo inclinado|barbell row|remo pendlay|pendlay|remo pendlay barra"],
+  ["Remo unilateral", "remo mancuerna|remo con mancuerna|remo unilateral|remo a una mano|serrucho|remo serrucho|remo mancuerna una mano|remo unilateral mancuerna"],
+  ["Remo Gironda", "remo gironda|gironda|remo polea baja|remo sentado polea|remo sentado|remo polea|seated row|remo en polea|remo polea sentado"],
+  ["Remo en T", "remo en t|remo t|t bar row|remo barra t|remo t barra"],
+  ["Pullover con mancuerna, brazos rectos", "pullover|pull over|pullover mancuerna"],
+  ["Jalón con brazos rectos en polea", "pullover polea|jalon brazos rectos|straight arm pulldown|pull down brazos rectos"],
+  ["Peso muerto con barra", "peso muerto|deadlift|peso muerto barra"],
+  ["Peso muerto rumano", "peso muerto rumano|rumano|rdl|peso muerto piernas rigidas|piernas rigidas|stiff|peso muerto rumano barra|romanian deadlift"],
+  ["Peso muerto sumo", "peso muerto sumo|sumo|sumo deadlift"],
+  ["Extensión lumbar", "hiperextensiones|extension lumbar|lumbares|hiperextensiones lumbares|banco lumbar|lumbar|extensiones lumbares"],
+  ["Buenos días con barra", "buenos dias|good morning|good mornings"],
+  ["Sentadilla con barra", "sentadilla|sentadillas|squat|sentadilla barra|sentadilla trasera|back squat|sentadilla profunda"],
+  ["Sentadilla frontal con barra", "sentadilla frontal|front squat|sentadilla delantera"],
+  ["Sentadilla goblet", "sentadilla goblet|goblet|goblet squat|sentadilla copa"],
+  ["Sentadilla búlgara con mancuernas", "sentadilla bulgara|bulgaras|bulgara|zancada bulgara|split squat|bulgarian split squat|sentadillas bulgaras"],
+  ["Sentadilla en multipower", "sentadilla smith|sentadilla multipower|smith squat"],
+  ["Hack Squat", "sentadilla hack|hack|hack squat|prensa hack|jaca"],
+  ["Prensa de piernas", "prensa|prensa piernas|leg press|prensa inclinada|prensa 45|prensa de pierna|prensa horizontal"],
+  ["Extensión de cuádriceps", "extension cuadriceps|extensiones|extensiones cuadriceps|leg extension|cuadriceps maquina|sillon cuadriceps|silla cuadriceps|extension de pierna|extensiones de pierna|cuadriceps"],
+  ["Curl femoral tumbado", "curl femoral|femoral|femorales|curl femoral tumbado|leg curl|curl de femoral|isquios|curl isquios|femoral tumbado|curl femoral acostado"],
+  ["Curl femoral sentado", "curl femoral sentado|femoral sentado|seated leg curl"],
+  ["Zancada con mancuernas", "zancadas|zancada|lunges|estocadas|zancadas mancuernas|lunge|zancada mancuernas|estocada"],
+  ["Zancada con barra", "zancadas barra|zancada barra"],
+  ["Hip thrust con barra", "hip thrust|hip thrusts|empuje de cadera|hip thrust barra|puente gluteo barra"],
+  ["Puente de glúteos", "puente de gluteo|puente gluteos|glute bridge|puente gluteo|puente"],
+  ["Patada de glúteo en polea", "patada gluteo|patada de gluteo polea|kickback gluteo|patada gluteo polea|patadas de gluteo"],
+  ["Abducción de cadera en máquina", "abductores|abductor|abduccion|abduccion de cadera|abductores maquina|abduccion maquina"],
+  ["Aducción de cadera en máquina", "aductores|aductor|aduccion|aduccion de cadera|aductores maquina|aduccion maquina"],
+  ["Elevación de gemelos", "gemelos|gemelo|elevacion de gemelos|gemelos de pie|pantorrillas|calf raise|gemelos maquina|elevacion de talones|elevaciones de gemelos|gemelos pie"],
+  ["Elevación de gemelos sentado en máquina", "gemelos sentado|gemelo sentado|seated calf raise"],
+  ["Press de gemelos en prensa", "gemelos prensa|gemelos en prensa"],
+  ["Curl de bíceps con mancuernas", "curl biceps|curl|biceps|curl mancuernas|curl con mancuernas|curl alterno|curl biceps mancuernas|curl biceps alterno|curl alterno mancuernas"],
+  ["Curl con barra", "curl barra|curl con barra|curl biceps barra|barbell curl"],
+  ["Curl con barra Z", "curl barra z|curl z|curl con barra z|curl biceps barra z"],
+  ["Curl martillo", "curl martillo|martillo|hammer curl|curl martillo mancuernas|martillo mancuernas"],
+  ["Curl de bíceps en banco con soporte", "curl predicador|curl scott|banco scott|curl en banco scott|predicador|curl scott barra z|preacher curl"],
+  ["Curl concentrado", "curl concentrado|concentrado"],
+  ["Curl de bíceps de pie en polea", "curl polea|curl en polea|curl biceps polea|curl polea baja"],
+  ["Curl inclinado con mancuernas", "curl inclinado|curl banco inclinado|curl inclinado mancuernas"],
+  ["Press francés con barra Z", "press frances|frances|rompecraneos|skull crusher|skullcrusher|press frances barra z|press frances barra"],
+  ["Extensión de tríceps", "extension triceps|triceps polea|extension triceps polea|jalon triceps|pushdown|triceps en polea|polea triceps|extensiones triceps|triceps|extension de triceps en polea|push down"],
+  ["Extensión de tríceps en polea con cuerda", "triceps cuerda|extension triceps cuerda|triceps con cuerda|extension triceps polea cuerda|triceps polea cuerda|cuerda triceps"],
+  ["Extensión de tríceps tras nuca sentado", "extension triceps tras nuca|triceps tras nuca|copa|triceps copa|extension sobre la cabeza|triceps sobre cabeza|press frances sentado|extension triceps copa"],
+  ["Extensión de tríceps tipo katana en polea", "katana|extension katana|triceps katana"],
+  ["Patada de tríceps con mancuernas", "patada de triceps|patada triceps|kickback|kickback triceps|patadas de triceps"],
+  ["Crunch abdominal", "crunch|crunches|abdominales|encogimientos abdominales|abs|abdominal|crunch abdominales|crunches abdominales"],
+  ["Crunch en polea con cuerda", "crunch polea|crunch en polea|crunch con cuerda|crunch cuerda|abdominales polea"],
+  ["Crunch oblicuo", "oblicuos|crunch oblicuo|abdominales oblicuos"],
+  ["Crunch inverso", "crunch inverso|reverse crunch|abdominales inversos"],
+  ["Plancha", "plancha|plank|planchas|plancha abdominal|plancha frontal"],
+  ["Plancha lateral", "plancha lateral|side plank"],
+  ["Rueda abdominal", "rueda abdominal|rueda|ab wheel|rueda abs"],
+  ["Elevación de piernas en paralelas", "elevacion de piernas|elevaciones de piernas|leg raises|elevacion piernas colgado|elevaciones piernas|elevacion de piernas colgado|hanging leg raise"],
+];
+let ALIES_MAP = null;
+function aliesImp() {
+  if (ALIES_MAP) return ALIES_MAP;
+  ALIES_MAP = new Map();
+  ALIES_IMP.forEach(([n, ll]) => ll.split("|").forEach(a => { const k = tokImp(a).join(" "); if (k && !ALIES_MAP.has(k)) ALIES_MAP.set(k, n); }));
+  return ALIES_MAP;
+}
+let POOL_IMP = null;
+function poolImp() {
+  if (POOL_IMP) return POOL_IMP;
+  const vist = new Set(); POOL_IMP = [];
+  const posa = (n, casa, nivell) => { if (vist.has(n)) return; vist.add(n); const tk = tokImp(n); POOL_IMP.push({ n, casa, nivell: nivell || 1, tk: new Set(tk), tri: trigrames(tk.join(" ")), net: netImp(n) }); };
+  CATALOGO.forEach(e => posa(e[0], true, 1));
+  BIBLIOTECA.forEach(e => posa(e[1], false, e[7]));
+  return POOL_IMP;
+}
+// Una paraula mal escrita (l'OCR, o el dit: «sentadila», «prees») es canvia per la més semblant que coneixem, si és a 1
+// lletra (a 2, si és llarga).
+let VOCAB_IMP = null;
+function vocabImp() {
+  if (VOCAB_IMP) return VOCAB_IMP;
+  VOCAB_IMP = new Set();
+  poolImp().forEach(x => x.net.split(" ").forEach(w => VOCAB_IMP.add(w)));
+  ALIES_IMP.forEach(([, ll]) => netImp(ll.replace(/\|/g, " ")).split(" ").forEach(w => VOCAB_IMP.add(w)));
+  return VOCAB_IMP;
+}
+function levImp(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let ant = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const ara = [i]; let min = i;
+    for (let j = 1; j <= b.length; j++) {
+      ara[j] = Math.min(ant[j] + 1, ara[j - 1] + 1, ant[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (ara[j] < min) min = ara[j];
+    }
+    if (min > max) return max + 1;
+    ant = ara;
+  }
+  return ant[b.length];
+}
+function corregeixImp(w) {
+  const V = vocabImp();
+  if (w.length < 4 || V.has(w) || /\d/.test(w)) return w;
+  const max = w.length >= 7 ? 2 : 1;
+  let millor = w, d = max + 1;
+  for (const v of V) { const x = levImp(w, v, max); if (x < d) { d = x; millor = v; if (d === 1 && max === 1) break; } }
+  return d <= max ? millor : w;
+}
+// {nom, conf 0-1, alts: els següents més semblants, sug: els que es proposen si no hi és}. La confiança baixa quan una
+// paraula del que ha escrit no hi és («Remo Meadows» no és «Remo en T»: com a molt, un suggeriment).
+function trobaEj(orig) {
+  const tk0 = tokImp(orig);
+  if (!tk0.length) return null;
+  const P = poolImp(), exacte = P.find(x => x.net === netImp(orig));
+  if (exacte) return { nom: exacte.n, conf: 1, alts: [] };
+  const tk = tokImp(orig, true), clau = tk.join(" "), cont = tk.filter(w => !SOROLL_IMP.has(w));
+  const alies = aliesImp().get(clau) || aliesImp().get(cont.join(" "));
+  const triQ = trigrames(clau);
+  let plens = 0;
+  const punts = P.map(x => {
+    let q = 0; cont.forEach(w => { if (x.tk.has(w)) q++; });
+    const qCov = cont.length ? q / cont.length : 0, cCov = x.tk.size ? q / x.tk.size : 0;
+    let s = 0.5 * qCov + 0.25 * cCov + 0.25 * diceImp(triQ, x.tri) + (x.casa ? 0.04 : 0) - (x.nivell >= 3 ? 0.04 : 0);
+    if (qCov < 1) s = Math.min(s, qCov >= 0.6 ? 0.7 : 0.5);
+    else plens++;
+    return { n: x.n, s, ple: qCov === 1 };
+  }).sort((a, b) => b.s - a.s);
+  if (alies) return { nom: alies, conf: 0.97, alts: punts.filter(p => p.n !== alies).slice(0, 3).map(p => p.n) };
+  const top = punts[0];
+  // si només un exercici té totes les paraules («Curl araña»), és aquest
+  const conf = Math.min(0.95, top.ple && plens === 1 ? Math.max(top.s, 0.85) : top.s);
+  return { nom: top.n, conf, alts: punts.slice(1, 4).map(p => p.n), sug: punts.slice(0, 3).filter(p => p.s >= 0.3).map(p => p.n) };
+}
+// Un exercici que no tenim: gran si és d'aquests moviments (6 a 10 repeticions), aïllat si no.
+const tipusPropi = n => /press|sentadilla|peso muerto|remo|dominada|fondo|hip thrust|zancada|prensa|jalon|thruster|cargada|arrancada|burpee|squat|deadlift|row|pull ?up|dip|lunge|push|clean|snatch|swing/.test(netImp(n)) ? "c" : "a";
+
+/* ---------------------------------------------------------------- llegir el text */
+const RX_DIA_IMP = /^(?:d[ií]a|day|sesi[oó]n|session|entreno|entrenamiento|workout|rutina)\s*(\d{1,2}|[a-f]|iv|v?i{1,3}|v)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
+const RX_SETMANA_IMP = /^(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|monday|tuesday|wednesday|thursday|friday|saturday|sunday|dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge)\b\s*[:.\-–\u2014)|]*\s*(.*)$/i;
+const RX_DESCANS_IMP = /^(descanso|descans|rest|off|libre|recuperaci[oó]n)\b/i;
+const RX_SALTA_IMP = /^(calentamiento|warm ?up|estiramientos?|stretching|movilidad|notas?|observaciones|importante|recuerda|cardio|hiit)\b/i;
+const RX_NOTA_IMP = /^(descanso|descansos|rest|rir|rpe|tempo|cadencia|nota|ojo|importante|progresi[oó]n|semana)\b/i;
+const GRUPS_IMP = new Set("pecho espalda pierna hombro bicep tricep brazo gluteo core abdomen abdominal ab torso tren superior inferior full body cuerpo completo push pull leg upper lower empuje tiron traccion cuadricep femoral isquio isquiotibial gemelo dorsal trapecio lumbar antebrazo dia day chest back shoulder arm glute pierna pectoral deltoide".split(" "));
+// sèries × repeticions: «4x8-10», «3 x 12», «4×6/8», «3 series de 10», «4x12,10,8,6», «12-10-8»
+const RX_PIRAMIDE_IMP = /(\d{1,2})\s*[x×*]\s*(\d{1,3}(?:\s*[,\/-]\s*\d{1,3}){2,})/i;
+const RX_SR_IMP = /(\d{1,2})\s*(?:[x×*]|por)\s*(\d{1,3})(?:\s*(?:-|–|\u2014|\/|a|al|o)\s*(\d{1,3}))?(?!\d)(\s*(?:s|seg|segundos|sec|"|''|min|minutos|')(?![a-z]))?/i;
+const RX_SR_FALLO_IMP = /(\d{1,2})\s*[x×*]\s*((?:al\s+)?(?:fallo|m[aá]x(?:imo|imas)?|amrap|failure|tope))/i;
+const RX_SERIES_IMP = /(\d{1,2})\s*(?:series|serie|sets|set)\b\s*(?:de|of|x|×|por)?\s*(?:(\d{1,3})(?:\s*(?:-|–|\/|a)\s*(\d{1,3}))?)?(\s*(?:s|seg|segundos|min|minutos)\b)?/i;
+const RX_REPS_IMP = /(\d{1,3})(?:\s*(?:-|–|a)\s*(\d{1,3}))?\s*(?:reps?|repeticiones)\b/i;
+const RX_LLISTA_IMP = /(?:^|\s)(\d{1,2}(?:\s*[-,\/]\s*\d{1,2}){2,})(?:\s*(?:reps?|repeticiones))?(?=\s|$)/i;
+const RX_COLS_IMP = /\s(\d{1,2})\s+(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?(?=\s|$)/;
+const RX_FALLO_IMP = /\b(al\s+fallo|fallo|amrap|m[aá]x(?:imo|imas)?|failure)\b/i;
+const acota = (v, a, b) => Math.min(b, Math.max(a, v));
+
+function srDe(low) {
+  // torna {series, min, max, ini, fi} (ini/fi: on és, per treure-ho del nom), o null
+  let m = RX_PIRAMIDE_IMP.exec(low);
+  if (m) { const v = m[2].split(/[,\/-]/).map(Number); return { series: +m[1], min: Math.min(...v), max: Math.max(...v), ini: m.index, fi: m.index + m[0].length }; }
+  m = RX_SR_IMP.exec(low);
+  if (m) {
+    let s = +m[1], a = +m[2], b = m[3] ? +m[3] : a;
+    if (m[4]) return { series: s, ini: m.index, fi: m.index + m[0].length };            // «3x30 s»: és temps, no repeticions
+    if (s > 10 && a <= 6 && !m[3]) [s, a, b] = [a, s, s];                               // «12x3» vol dir 3 sèries de 12
+    return { series: s, min: Math.min(a, b), max: Math.max(a, b), ini: m.index, fi: m.index + m[0].length };
+  }
+  m = RX_SR_FALLO_IMP.exec(low);
+  if (m) return { series: +m[1], ini: m.index, fi: m.index + m[0].length };
+  m = RX_SERIES_IMP.exec(low);
+  if (m) {
+    const r = { series: +m[1], ini: m.index, fi: m.index + m[0].length };
+    if (m[2] && !m[4]) { const a = +m[2], b = m[3] ? +m[3] : a; r.min = Math.min(a, b); r.max = Math.max(a, b); }
+    else if (!m[2]) { const q = RX_REPS_IMP.exec(low.slice(r.fi)); if (q) { const a = +q[1], b = q[2] ? +q[2] : a; r.min = Math.min(a, b); r.max = Math.max(a, b); r.fi += q.index + q[0].length; } }
+    return r;
+  }
+  m = RX_REPS_IMP.exec(low);
+  if (m) { const a = +m[1], b = m[2] ? +m[2] : a; return { min: Math.min(a, b), max: Math.max(a, b), ini: m.index, fi: m.index + m[0].length }; }
+  m = RX_LLISTA_IMP.exec(low);
+  if (m) { const v = m[1].split(/[-,\/]/).map(Number); return { series: v.length, min: Math.min(...v), max: Math.max(...v), ini: m.index + m[0].indexOf(m[1]), fi: m.index + m[0].length }; }
+  m = RX_COLS_IMP.exec(low);                                                             // un Excel: «Press banca 4 8-10 90»
+  if (m && /[a-zñ]{3}/.test(low.slice(0, m.index)) && +m[1] >= 1 && +m[1] <= 10 && +m[2] >= 1 && +m[2] <= 50) {
+    const a = +m[2], b = m[3] ? +m[3] : a;
+    return { series: +m[1], min: Math.min(a, b), max: Math.max(a, b), ini: m.index, fi: low.length };
+  }
+  return null;
+}
+function netejaNom(s) {
+  return s.replace(/\([^)]*\)|\[[^\]]*\]/g, " ")
+    .replace(/\b(descanso|descansos|rest|rir|rpe|tempo|cadencia)\b.*$/i, " ")
+    .replace(/@.*$/, " ")
+    .replace(/\b\d+(?:[.,]\d+)?\s*(?:kg|kgs|kilos|lb|lbs)\b/gi, " ")
+    .replace(RX_FALLO_IMP, " ")
+    .replace(/(^|\s)\d+(?:[.,]\d+)?(?=\s|$)/g, " ")
+    .replace(/^[\s\-–\u2014:|,.;·•*>]+|[\s\-–\u2014:|,.;·•*]+$/g, "")
+    .replace(/\s+/g, " ").trim();
+}
+// Les majúscules d'un document d'entrenador («PRESS BANCA») passen a frase («Press banca»).
+const majus = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const frase = s => s && s === s.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(s) ? s.charAt(0) + s.slice(1).toLowerCase() : s;
+const esGenericImp = t => /^(d[ií]a|day|sesi[oó]n|rutina|entreno|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b\s*\S*$/i.test(t);
+
+function netejaLinia(l) {
+  return l.replace(/^\[?\d{1,2}\/\d{1,2}\/\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\]?\s*(?:-\s*)?[^:]{1,40}:\s/, "")     // WhatsApp exportat
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}\u{2B00}-\u{2BFF}]/gu, " ")
+    .replace(/^[\s\-–\u2014•·*▪►>✓✔☐☑□■◆◇○●→⇒]+/, "")
+    .replace(/^(?:[a-e]\d{1,2}|\d{1,2})[.)]\s+/i, "")                                                 // «1.», «A1)»
+    .replace(/\t+/g, " ").replace(/\s{2,}/g, " ").trim();
+}
+
+function llegeixRutina(text) {
+  const linies = String(text || "").replace(/\r\n?/g, "\n").split("\n").map(netejaLinia);
+  const res = { nombre: "", dias: [], ignorades: [], avisos: [] };
+  let dia = null, saltant = false, abansDeRes = true;
+  const nouDia = (t, generic) => {
+    if (dia && !dia.ej.length) {                    // dues capçaleres seguides: «Día 1» i després «PECHO»
+      if (generic && !esGenericImp(dia.t)) return;
+      dia.t = t; return;
+    }
+    dia = { t, ej: [] }; res.dias.push(dia);
+  };
+  const teSR = l => !!(l && srDe(l.toLowerCase()));
+  for (let i = 0; i < linies.length; i++) {
+    const l = linies[i];
+    if (!l) { saltant = false; continue; }
+    if (!/[a-záéíóúñ]/i.test(l)) continue;                                          // només números o símbols
+    let m = RX_DIA_IMP.exec(l);
+    if (m && !teSR(l)) {
+      const resta = majus(frase(netejaNom(m[2] || "")));
+      if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
+      nouDia(resta || `Día ${res.dias.length + 1}`, !resta); saltant = false; abansDeRes = false; continue;
+    }
+    m = RX_SETMANA_IMP.exec(l);
+    if (m && !teSR(l)) {
+      const resta = majus(frase(netejaNom(m[2] || "")));
+      if (RX_DESCANS_IMP.test(resta)) { dia = null; saltant = true; continue; }
+      const nomDia = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+      nouDia(resta ? `${nomDia}: ${resta}` : nomDia, !resta); saltant = false; abansDeRes = false; continue;
+    }
+    const low = l.toLowerCase(), sr = srDe(low);
+    if (!sr && RX_SALTA_IMP.test(l)) { saltant = true; continue; }
+    if (!sr && RX_NOTA_IMP.test(l)) continue;
+    const paraules = tokImp(l);
+    if (!sr && paraules.length && paraules.length <= 6 && paraules.every(w => GRUPS_IMP.has(w))) {
+      const seg = linies.slice(i + 1).find(x => x);
+      if (/:\s*$/.test(l) || l === l.toUpperCase() || teSR(seg) || paraules.length > 1) {
+        nouDia(majus(frase(netejaNom(l))), false); saltant = false; abansDeRes = false; continue;
+      }
+    }
+    if (saltant) continue;
+    // una línia amb diversos exercicis («Press banca 4x10, aperturas 3x12»)
+    const trossos = (low.match(new RegExp(RX_SR_IMP.source, "gi")) || []).length > 1 ? l.split(/\s*[,;+]\s*|\s+[-–]\s+|\s+\/\s+/) : [l];
+    let srLinia = null, afegits = 0;
+    for (const tros of trossos) {
+      const tl = tros.toLowerCase(), s = srDe(tl) || null;
+      if (s) srLinia = srLinia || s;
+      const nom = frase(netejaNom(s ? tros.slice(0, s.ini) + " " + tros.slice(s.fi) : tros));
+      if (!/[a-záéíóúñ]{2}/i.test(nom) || nom.length > 70) continue;
+      const t = trobaEj(nom);
+      if (!t) continue;
+      if (!s && t.conf < 0.62 && !(trossos.length > 1 && srLinia)) {
+        if (abansDeRes && !res.nombre && !res.dias.length && nom.length <= 60) { res.nombre = frase(tros.trim()).slice(0, 60); continue; }
+        res.ignorades.push(tros.trim()); continue;
+      }
+      if (!dia) nouDia(`Día ${res.dias.length + 1}`, true);
+      const sr2 = s || (trossos.length > 1 ? srLinia : null);
+      dia.ej.push({ orig: nom, ...t, ...(sr2 ? { series: sr2.series ? acota(sr2.series, 1, 10) : null, min: sr2.min ? acota(sr2.min, 1, 50) : null, max: sr2.max ? acota(sr2.max, 1, 50) : null } : {}) });
+      afegits++; abansDeRes = false;
+    }
+    if (!afegits && trossos.length > 1) res.ignorades.push(l);
+  }
+  res.dias = res.dias.filter(d => d.ej.length);
+  if (res.dias.length > 14) { res.avisos.push(`Solo caben 14 días: nos quedamos con los primeros.`); res.dias = res.dias.slice(0, 14); }
+  res.dias.forEach(d => { if (d.ej.length > 25) { res.avisos.push(`«${d.t}» tenía ${d.ej.length} ejercicios: caben 25.`); d.ej = d.ej.slice(0, 25); } });
+  return res;
+}
+
+// El que es veu: amb les tries de la persona (S.ui.impTria: el text llegit → el nom triat, o "" per deixar-lo com a seu).
+function llegeixRutinaApl(text) {
+  const r = llegeixRutina(text), tries = S.ui.impTria || {};
+  r.dias.forEach(d => d.ej.forEach(e => {
+    const k = netImp(e.orig);
+    if (k in tries) {
+      if (tries[k]) { e.nom = tries[k]; e.conf = 1; e.triat = true; }
+      else { e.nom = e.orig; e.propi = true; e.triat = true; }
+    } else if (e.conf < 0.55) { e.sug = e.sug || []; e.nom = e.orig; e.propi = true; }
+    e.estat = e.propi ? "nou" : e.conf >= 0.8 ? "ok" : "dubte";
+    e.tipus = e.propi ? tipusPropi(e.nom) : ((catalogo(e.nom) || [])[1] || "a");
+  }));
+  return r;
+}
+
+/* ---------------------------------------------------------------- la fulla */
+const I_IMPORTA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="M7.5 9.5 12 14l4.5-4.5"/><path d="M4 15v4h16v-4"/></svg>';
+const I_CREA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+const I_PLANTILLA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>';
+const srTxt = c => `${c.series ? c.series + " × " : ""}${c.min ? (c.min === c.max ? c.min : c.min + "-" + c.max) : ""}`.replace(/ × $/, " series");
+
+function fullImporta() {
+  const compte = teCompte();
+  return `<div class="imp">
+    <p class="suau petit" style="margin-top:0">Pégala tal como la tienes: de WhatsApp, de tus notas o de un PDF${compte ? ". También puedes subir una foto, una captura o un archivo" : ""}. La lees aquí abajo y la revisas en el editor antes de guardarla.</p>
+    <label class="lector" for="imp-txt">Tu rutina</label>
+    <textarea id="imp-txt" class="imp-txt" rows="8" spellcheck="false" autocomplete="off" placeholder="Día 1: Pecho y tríceps&#10;Press banca 4x8-10&#10;Aperturas 3x12&#10;Fondos 3x10&#10;&#10;Día 2: Pierna&#10;Sentadilla 4x6-8">${esc(S.ui.impTxt || "")}</textarea>
+    ${compte ? `<div class="imp-fitxer"><label class="btn marc imp-fit-b">${I_FOTO}<span>Subir foto o archivo</span><input type="file" id="imp-fit" accept="image/*,.pdf,.xlsx,.docx,.txt,.csv,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden></label>
+      <p class="petit suau" id="imp-e" aria-live="polite">Foto, captura, PDF, Excel o Word. No se guardan: se leen y se borran.</p></div>`
+      : `<p class="petit suau" id="imp-e" aria-live="polite">Para leer fotos y archivos, entra en tu cuenta. El texto pegado funciona igual.</p>`}
+    <div id="imp-prev" aria-live="polite">${htmlPrevImp()}</div>
+  </div>`;
+}
+function filaImp(e) {
+  const k = esc(netImp(e.orig)), sr = srTxt(e);
+  const xip = n => `<button class="chip" data-accion="imp-tria" data-k="${k}" data-n="${esc(n)}">${esc(n)}</button>`;
+  const pedit = (S.ui.impPedits || []).includes(netImp(e.orig));
+  let sota = "";
+  if (e.estat === "ok") sota = e.triat || netImp(e.orig) === netImp(e.nom) ? "" : `<small>Leído: «${esc(e.orig)}»</small>`;
+  else if (e.estat === "dubte") sota = `<small>Leído: «${esc(e.orig)}». ¿Es este? Si no, toca el bueno.</small><span class="imp-alts">${e.alts.slice(0, 2).map(xip).join("")}<button class="chip" data-accion="imp-tria" data-k="${k}" data-n="">Es otro, el mío</button></span>`;
+  else sota = `<small>${e.triat ? "Como ejercicio tuyo." : "No lo tenemos: se guarda como ejercicio tuyo."}</small>
+    ${!e.triat && (e.sug || []).length ? `<span class="imp-alts"><span class="petit suau">¿Es alguno de estos?</span>${e.sug.map(xip).join("")}</span>` : ""}
+    <button class="enllac imp-pide" data-accion="imp-pide" data-n="${esc(e.orig)}"${pedit ? " disabled" : ""}>${pedit ? "Pedido: lo miraremos" : "Pídenos que lo añadamos"}</button>`;
+  const foto = !e.propi && fotoEj(e.nom);
+  return `<div class="imp-ej ${e.estat}"><div class="imp-ej-cap">${foto ? `<img src="${foto}" alt="" width="36" height="36" loading="lazy">` : '<span class="sense-foto"></span>'}<span class="imp-nom">${esc(e.nom)}</span>${sr ? `<span class="imp-sr num">${sr}</span>` : ""}</div>${sota}</div>`;
+}
+function htmlPrevImp() {
+  const txt = S.ui.impTxt || "";
+  if (!txt.trim()) return "";
+  const r = llegeixRutinaApl(txt), n = r.dias.reduce((a, d) => a + d.ej.length, 0);
+  if (!n) return `<p class="imp-buit">Aún no vemos ejercicios. Pon uno por línea, con sus series: «Press banca 4x10».</p>`;
+  const dubtes = r.dias.reduce((a, d) => a + d.ej.filter(e => e.estat !== "ok").length, 0);
+  return `<h3 class="imp-cap">${esc(r.nombre || "Tu rutina")}: ${nDies(r.dias.length)}, ${n} ${n === 1 ? "ejercicio" : "ejercicios"}</h3>
+    ${dubtes ? `<p class="petit suau" style="margin:0 0 8px">${dubtes === 1 ? "Hay uno para revisar" : `Hay ${dubtes} para revisar`}: están marcados.</p>` : ""}
+    ${r.dias.map((d, i) => `<section class="imp-dia"><b class="imp-dia-t">Día ${i + 1}: ${esc(d.t)}</b>${d.ej.map(filaImp).join("")}</section>`).join("")}
+    ${r.ignorades.length ? `<details class="imp-ign"><summary>${r.ignorades.length === 1 ? "Una línea no la hemos entendido" : `${r.ignorades.length} líneas no las hemos entendido`}</summary>${r.ignorades.slice(0, 20).map(l => `<p>${esc(l)}</p>`).join("")}<p class="suau petit">Si es un ejercicio, ponle sus series en el texto: «Remo 3x12».</p></details>` : ""}
+    ${r.avisos.map(a => `<p class="petit al-foto-ull">${esc(a)}</p>`).join("")}
+    <div style="margin-top:14px">${botoForja('data-accion="imp-obre"', "ABRIR EN EL EDITOR", "La revisas y la guardas")}</div>`;
+}
+let tPrevImp = 0;
+function refrescaPrevImp(tard) {
+  clearTimeout(tPrevImp);
+  const fes = () => { const el = $("#imp-prev"); if (el) el.innerHTML = htmlPrevImp(); guardar(); };
+  if (tard) tPrevImp = setTimeout(fes, 250); else fes();
+}
+
+async function importaFitxer(f) {
+  const e = $("#imp-e"); if (!f || !e) return;
+  if (!teCompte()) { e.textContent = "Para leer fotos y archivos, entra en tu cuenta. El texto pegado funciona igual."; e.className = "petit al-foto-ull"; return; }
+  e.textContent = "Leyendo…"; e.className = "petit suau";
+  try {
+    const imatge = /^image\//.test(f.type || "") || /\.(heic|heif|jpe?g|png|webp|gif|bmp)$/i.test(f.name || "");
+    if (!imatge && f.size > 2500000) throw new Error("El archivo pesa demasiado (máximo 2,5 MB). Prueba con una captura.");
+    // la foto, al servidor com a molt a 1.600 px (el que ell llegeix): així una captura llarga de mòbil encara es llegeix
+    const cos = imatge ? await redueixFoto(f, 1600).catch(() => { throw new Error("No podemos abrir esa foto. Haz una captura de pantalla de la rutina y súbela."); }) : f;
+    const c = clauApi();
+    let r;
+    try { r = await fetch(API + "/rutinas/importa", { method: "POST", headers: { "Content-Type": "application/octet-stream", Authorization: `Bearer ${c.id}.${c.token}` }, body: cos }); }
+    catch (x) { throw new Error("Sin conexión. Pega el texto de la rutina, que funciona sin conexión."); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "No hemos podido leerlo. Pega el texto de la rutina.");
+    const t = $("#imp-txt"); if (!t) return;
+    const nou = String(j.text || "").trim();
+    t.value = t.value.trim() ? t.value.trim() + "\n\n" + nou : nou;
+    S.ui.impTxt = t.value; refrescaPrevImp(false);
+    const n = llegeixRutina(t.value).dias.reduce((a, d) => a + d.ej.length, 0);
+    e.textContent = !n ? "Hemos leído el texto, pero no vemos ejercicios con series. Revísalo arriba."
+      : j.tipus === "imatge" ? "Leído de la foto. Revisa el texto: una foto puede confundir alguna letra." : "Leído. Revisa lo que hemos entendido.";
+    e.className = "petit " + (n ? "al-foto-ok" : "al-foto-ull");
+    if (n) Efectos.vibra("fet");
+  } catch (x) {
+    if (e.isConnected) { e.textContent = x.message || "No hemos podido leerlo."; e.className = "petit al-foto-ull"; }
+  }
+}
+async function pideEj(nom, b) {
+  const k = netImp(nom);
+  if (!teCompte()) { avis("Para pedírnoslo, entra en tu cuenta.", true); return; }
+  try {
+    await api("POST", "/ejercicios/pide", { nombre: String(nom).slice(0, 60) });
+    S.ui.impPedits = [...new Set([...(S.ui.impPedits || []), k])]; guardar();
+    if (b && b.isConnected) { b.textContent = "Pedido: lo miraremos"; b.disabled = true; }
+    Efectos.suena("triar"); avis("Pedido. Lo revisamos y, si encaja, lo añadimos a la biblioteca.");
+  } catch (x) { avis(x.message, true); }
+}
+function obreImportada() {
+  const r = llegeixRutinaApl(S.ui.impTxt || ""), dias = r.dias.filter(d => d.ej.length).slice(0, 14);
+  if (!dias.length) { avis("Aún no vemos ejercicios: pon uno por línea, con sus series.", true); return; }
+  const cfg = {};
+  const d2 = dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.slice(0, 25).map(e => {
+    const fila = e.propi ? [String(e.nom).slice(0, 50), e.tipus] : [...(catalogo(e.nom) || [e.nom, e.tipus])];
+    if ((e.series || e.min) && !cfg[fila[0]]) cfg[fila[0]] = { ...(e.series ? { series: e.series } : {}), ...(e.min ? { min: e.min, max: e.max } : {}) };
+    return fila;
+  }) }));
+  S.ui.edit = { id: nouId(), nombre: String(r.nombre || "Mi rutina").slice(0, 40), resumen: "Importada por ti.", dias: d2, cfgImport: cfg };
+  S.ui.edDia = null; guardar(); tancaFull(); veure("editor"); Efectos.suena("yunque");
+  avis("Revísala y pulsa GUARDAR.");
+}
+// Els camins per començar (l'Albert, 27-09-2026: «jo no posaria tantes rutines només entrar... que posi comença la teva
+// rutina, i que allà puguis escollir entre importar, crear o plantilles de KLONK»).
+function fullPlantilles() {
+  const d = S.perfil.diasSemana, rec = d ? rutinaPerDies(d) : null;
+  const ll = [RUTINA_BASE, ...PLANTILLAS].sort((a, b) => (b.id === rec) - (a.id === rec));
+  return `<p class="suau petit" style="margin-top:0">Hechas con lo que dice la ciencia${rec ? `. Para tus ${d} ${d === 1 ? "día" : "días"} a la semana, la primera` : ""}. Tócala para verla por dentro.</p>
+    ${ll.map(r => `<button class="rutina marc" data-accion="rut-ver-full" data-id="${r.id}"><span class="rutina-cap"><span class="rutina-nom">${esc(r.nombre)}</span>${r.id === rec ? '<span class="toca">Para ti</span>' : ""}</span>
+      <span class="rutina-dades">${htmlEstrellas(r)}<span>${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana</span></span>${r.resumen ? `<span class="rutina-res">${esc(r.resumen)}</span>` : ""}</button>`).join("")}`;
+}
+const senseRutina = () => !S.rutinaActiva && !S.ses.some(x => x.fin);
+function camins() {
+  return `<div class="camins">
+    <button class="cami marc" data-accion="rut-importa">${I_IMPORTA}<span><b>Importar la mía</b><small>Pégala o sube una foto, un PDF o un Excel.</small></span></button>
+    <button class="cami marc" data-accion="rut-nova">${I_CREA}<span><b>Crear una nueva</b><small>Eliges los ejercicios uno a uno.</small></span></button>
+    <button class="cami marc" data-accion="rut-plantilles">${I_PLANTILLA}<span><b>Plantillas de KLONK</b><small>Hechas con ciencia, para empezar hoy.</small></span></button></div>`;
+}
+function vistaEmpieza() {
+  return `${capcalera("")}<h1 class="titol-pag or">Empieza tu rutina</h1>${camins()}`;
+}
+
+function accioImporta(acc, b) {
+  switch (acc) {
+    case "rut-importa": obreFull(fullImporta(), "Importar tu rutina"); return true;
+    case "rut-plantilles": obreFull(fullPlantilles(), "Plantillas de KLONK"); return true;
+    case "rut-ver-full": tancaFull(); S.ui.rutVer = b.dataset.id; veure("rutina"); return true;
+    case "imp-tria": S.ui.impTria = { ...(S.ui.impTria || {}), [b.dataset.k]: b.dataset.n }; Efectos.suena("tap"); refrescaPrevImp(false); return true;
+    case "imp-pide": pideEj(b.dataset.n, b); return true;
+    case "imp-obre": obreImportada(); return true;
+  }
+  return false;
+}
+// Enganxar una captura o arrossegar un fitxer sobre la fulla oberta
+document.addEventListener("paste", ev => {
+  if (!$("#imp-txt")) return;
+  const fs = [...((ev.clipboardData && ev.clipboardData.files) || [])];
+  if (!fs.length) return;                                     // el text s'enganxa sol al quadre
+  ev.preventDefault(); importaFitxer(fs[0]);
+});
+document.addEventListener("dragover", ev => { if ($("#imp-txt") && ev.dataTransfer && [...ev.dataTransfer.types].includes("Files")) ev.preventDefault(); });
+document.addEventListener("drop", ev => {
+  if (!$("#imp-txt")) return;
+  const f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+  if (!f) return;
+  ev.preventDefault(); importaFitxer(f);
+});
 
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
    L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
@@ -3343,8 +3884,8 @@ function cosAj(k) {
   if (k === "somos") return `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
       <p>Creemos que el que se lo curra tiene que notarse. Por eso los personajes buenos no se compran: se ganan entrenando, un día tras otro.</p>
       <p>Que descansar también es entrenar. Que no hace falta obsesionarse con los números para mejorar. Y que una comunidad se cuida sin llenarla de anuncios.</p></div>
-    <div class="suport"><b class="or">¿Te gusta KLONK?</b><p class="suau petit">Apóyanos: con el oro que compras pagamos el servidor y seguimos mejorándola, sin anuncios. Si tienes menos de 18, pídeselo a tu madre o a tu padre.</p>
-      <button class="btn clar marc" data-accion="suport-oro">APÓYANOS CON ORO</button></div>`;
+    ${esMenor() ? "" : `<div class="suport"><b class="or">¿Te gusta KLONK?</b><p class="suau petit">Apóyanos: con el oro que compras pagamos el servidor y seguimos mejorándola, sin anuncios.</p>
+      <button class="btn clar marc" data-accion="suport-oro">APÓYANOS CON ORO</button></div>`}`;
   if (k === "perfil") return `<form class="form" data-form="ajustes"><div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
       <label>Sueles entrenar a las<input id="a-hora" type="time" value="${esc(pr.horaEntreno || "18:00")}"></label>
       <p class="suau petit" style="margin:0">Tu peso de cada semana, mejor en Estadísticas, en «Cuerpo»: así ves cómo cambia.</p><button class="btn clar marc" type="submit">GUARDAR</button></form>
@@ -4745,7 +5286,7 @@ function fullMaterial(k) {
     ${talles.length > 1 ? `<div><b>Tu talla</b><div class="fila envolta talles">${talles.map(t => `<button class="chip" data-accion="mat-talla" data-t="${t}" aria-pressed="${tria === t}">${t}</button>`).join("")}</div></div>` : ""}
     ${botoForja(`data-accion="mat-reserva" data-k="${k}"`, meva ? "CAMBIAR LA RESERVA" : "RESERVAR", "No pagas nada")}
     ${meva ? `<p style="text-align:center;margin:0"><button class="enllac" data-accion="mat-anula" data-k="${k}">Anular la reserva</button></p>` : ""}
-    <p class="suau petit" style="margin:0">Te avisamos por correo cuando esté a la venta, con su precio, y entonces decides.${q ? ` ${q === 1 ? "Ya lo ha reservado 1 persona." : `Ya lo han reservado ${q} personas.`}` : ""} Si tienes menos de 18, la compra la hará una persona adulta.</p></div>`;
+    <p class="suau petit" style="margin:0">Te avisamos por correo cuando esté a la venta, con su precio, y entonces decides.${q ? ` ${q === 1 ? "Ya lo ha reservado 1 persona." : `Ya lo han reservado ${q} personas.`}` : ""}${esMenor() ? " Tienes menos de 18: la compra la hará una persona adulta." : ""}</p></div>`;
 }
 async function accioMaterial(acc, b) {
   const k = b.dataset.k, nom = (MATERIAL.find(x => x[0] === k) || [0, ""])[1];
@@ -4817,6 +5358,8 @@ let versio = (() => { try { return Number(localStorage.getItem(VERSIO)) || 0; } 
 function desaSessio(x) { sessio = x; try { x ? localStorage.setItem(SESSIO, JSON.stringify(x)) : localStorage.removeItem(SESSIO); } catch (e) {} }
 function desaVersio(v) { versio = v; try { localStorage.setItem(VERSIO, String(v)); } catch (e) {} }
 const teCompte = () => !!(sessio && sessio.token);
+// Menor d'edat pel que ha dit en crear el compte (14 a 17). Els avisos de compres només li surten a ell (l'Albert, 27-09-2026).
+const esMenor = () => !!(sessio && sessio.franja === "menor");
 // La clau per a l'API: la sessió del compte; si no n'hi ha, l'usuari anònim de Social d'abans (perquè en registrar-se
 // el servidor l'ampliï i no en faci un de nou, SINCRO.md §1).
 const clauApi = () => sessio && sessio.token ? sessio : (S.cuenta || null);
@@ -5822,7 +6365,8 @@ function vistaInicio() {
       <div class="mini marc"><h3>Proteína hoy</h3>${proteina}</div>
     </div></div>
   </section>
-  ${botoForja(`data-accion="${act ? "vista" : "empezar"}" data-v="entreno" data-dia="${dia}"`, act ? "SEGUIR ENTRENO" : "EMPEZAR DÍA " + dia, d.t, "inici-forja")}
+  ${!act && senseRutina() ? botoForja('data-accion="vista" data-v="entreno"', "EMPIEZA TU RUTINA", "Importa la tuya, crea una o elige una de KLONK", "inici-forja")
+    : botoForja(`data-accion="${act ? "vista" : "empezar"}" data-v="entreno" data-dia="${dia}"`, act ? "SEGUIR ENTRENO" : "EMPEZAR DÍA " + dia, d.t, "inici-forja")}
   <nav class="eines" aria-label="Herramientas">
     ${[["entreno", "Entreno"], ["comer", "Comer"], ["tienda", "Tienda"], ["estadisticas", "Estadísticas"], ["social", "Social"], ["ajustes", "Ajustes"]]
       .map(([v, t]) => `<button class="eina marc" data-accion="vista" data-v="${v}"><img src="${ACTIUS}icones/${v}.webp" alt="">${t}</button>`).join("")}
@@ -5867,7 +6411,7 @@ function vistaDatos() {
       <label>Tu altura, en cm<input id="d-altura" inputmode="numeric" autocomplete="off" value="${fmt(S.perfil.altura || 170)}"></label></div>
     <div><span class="dades-t">¿Cuántos días a la semana puedes entrenar?</span>
       <div class="dies-7">${[1, 2, 3, 4, 5, 6, 7].map(d => `<button type="button" class="chip dia" data-accion="dies" data-n="${d}" data-id="${rutinaPerDies(d)}" aria-pressed="${n === d}">${d}</button>`).join("")}</div>
-      <p class="suau petit" style="margin:8px 0 0">Te ponemos una rutina para empezar. La cambias cuando quieras en Entreno.</p></div>
+      <p class="suau petit" style="margin:8px 0 0">Luego eliges tu rutina: la tuya, una nueva o una de KLONK.</p></div>
     ${s && !s.salut ? `<label class="casella"><input type="checkbox" id="d-salut"><span><b>Guardar mi peso y mis medidas en mi cuenta</b><small>Así no se pierden si cambias de móvil y sales en el ranking de fuerza. Son datos de salud: solo con tu permiso.</small></span></label>` : ""}
     ${s && !s.comercial ? `<label class="casella"><input type="checkbox" id="d-comercial"><span><b>Quiero recibir novedades y ofertas de KLONK</b><small>Por correo, de vez en cuando. Te das de baja cuando quieras.</small></span></label>` : ""}
     ${botoForja('type="submit"', "ENCENDER LA FRAGUA", "")}
@@ -5879,6 +6423,7 @@ function vistaDatos() {
 /* ---------------------------------------------------------------- entreno */
 function vistaEntreno() {
   const s = activa();
+  if (!s && senseRutina()) return vistaEmpieza();          // encara no en té cap: els tres camins (src/importa.js)
   if (!s) {
     // L'Albert, 26-09-2026: «s'hauria de diferenciar la rutina com a bloc editable del que et fa entrar dins l'entreno,
     // perquè si no et penses que obres per revisar la rutina. Jo posaria un botó de play i un d'editar, i faria
@@ -5899,7 +6444,7 @@ function vistaEntreno() {
         <button class="dia-info" data-accion="dia-obre" data-dia="${n}" aria-expanded="${ob}"><span class="n or">${n}</span><span class="dia-txt"><span class="t">${esc(dd.t)}</span>${hoy ? '<span class="toca">Toca hoy</span>' : ""}<span class="s">${dd.ej.length} ejercicios${ult ? `, la última vez el ${fechaCorta(ult.fecha)}` : ""}</span></span></button>
         <button class="dia-edita" data-accion="rut-lapiz" data-dia="${n}" aria-label="Editar el día ${n}, ${esc(dd.t)}">${I_LLAPIS}</button>
         <button class="dia-play" data-accion="empezar" data-dia="${n}" aria-label="Empezar el día ${n}, ${esc(dd.t)}">${I_PLAY}</button>
-        ${ob ? `<div class="dia-prev">${dd.ej.map(e => { const c = cfgEj(e[0], e[1]); return `<div class="ej-prev">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${esc(e[0])}</span><small class="num">${c.series} × ${c.min}-${c.max}</small></div>`; }).join("")}
+        ${ob ? `<div class="dia-prev">${dd.ej.map(e => { const c = cfgEj(e[0], e[1]); return `<div class="ej-prev">${fotoEj(e[0]) ? `<img src="${fotoEj(e[0])}" alt="" loading="lazy" width="40" height="40">` : '<span class="sense-foto"></span>'}<span>${esc(e[0])}</span><small class="num">${srTxt(c)}</small></div>`; }).join("")}
           <p style="margin:10px 0 0"><button class="enllac" data-accion="rut-compartir-dia" data-id="${r.id}" data-dia="${n}">Compartir solo este día</button></p></div>` : ""}
       </div>`; }).join("")}
     ${fetes.length ? `<section class="seccio"><h2>Últimos entrenos</h2><div class="panel pad">${fetes.map(x => `<button class="reg reg-ses" data-accion="ses-obre" data-id="${x.id}"><div><div>Día ${x.dia}, ${esc((x.dt || (RUTINA[x.dia - 1] || {}).t || "").toLowerCase())}</div><div class="d">${fechaLarga(x.fecha)}</div></div><div class="num">${x.ej.reduce((a, e) => a + e.sets.filter(z => z.ok).length, 0)} series</div>${I_BAIXA}</button>`).join("")}</div></section>` : ""}`;
@@ -5913,7 +6458,7 @@ function vistaEntreno() {
     const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
     const foto = fotoEj(e.n);
     h += `<section class="panel exercici" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
-      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min}-${c.max}</button></div>
+      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
       ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}"><span class="i">${j + 1}</span>
         ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
@@ -6119,7 +6664,7 @@ function vistaTienda() {
   } else {
     h += `${[["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]].map(([k2, n, q, e]) =>
       `<button class="paquet marc" data-accion="compra-oro" data-p="${k2}">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Comprar</div></div></button>`).join("")}
-    <p class="suau petit" style="text-align:center">Con tarjeta o PayPal. Si tienes menos de 18 años, pídele a tu madre o a tu padre que lo pague. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
+    <p class="suau petit" style="text-align:center">Con tarjeta o PayPal.${esMenor() ? " Tienes menos de 18: las compras las hace una persona adulta." : ""} El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
     <p class="suau petit" style="text-align:center">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     ${bloc("Cómo se gana", `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div><div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
   }
@@ -6174,8 +6719,8 @@ function fullCfgEj(i) {
   const e = activa().ej[i], c = cfgEj(e.n, e.t), carga = cargaDe(e.n, e.x), cf = S.cfg[e.n] || {};
   const pasGim = k => CARGAS[k].paso ? CARGAS[k].paso() : 0;
   return `<form class="form" data-form="cfg-ej" data-i="${i}"><p class="suau" style="margin:0">${esc(e.n)}</p>
-    <div class="dos"><label>Series<select id="c-s">${[2, 3, 4, 5, 6].map(n => `<option${n === c.series ? " selected" : ""}>${n}</option>`).join("")}</select></label>
-    <label>Repeticiones<select id="c-r">${RANGS.map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a} a ${b}</option>`).join("")}</select></label></div>
+    <div class="dos"><label>Series<select id="c-s">${[...new Set([2, 3, 4, 5, 6, c.series])].sort((x, y) => x - y).map(n => `<option${n === c.series ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label>Repeticiones<select id="c-r">${(RANGS.some(([a, b]) => a === c.min && b === c.max) ? RANGS : [...RANGS, [c.min, c.max]].sort((x, y) => x[0] - y[0] || x[1] - y[1])).map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a === b ? a : `${a} a ${b}`}</option>`).join("")}</select></label></div>
     <fieldset class="cargues"><legend>Cómo se carga</legend>${ORDRE_CARGAS.map(k => `<label class="chip-r"><input type="radio" name="c-c" value="${k}"${k === carga ? " checked" : ""}><span>${CARGAS[k].nom}</span></label>`).join("")}</fieldset>
     <label id="c-p-l"${CARGAS[carga].paso ? "" : " hidden"}>Va de<select id="c-p"><option value="">lo de tu gimnasio (${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} en ${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} kg)</option>${[1, 2, 2.5, 5, 10].map(v => `<option value="${v}"${cf.paso === v ? " selected" : ""}>${fmt(v)} en ${fmt(v)} kg</option>`).join("")}</select></label>
     <button class="btn clar marc" type="submit">GUARDAR PARA ESTE EJERCICIO</button></form>`;
@@ -6526,7 +7071,8 @@ document.addEventListener("click", ev => {
     case "rebost": obreFull(fullRebost(), "No tengo…"); break;
     case "tienda-tab": S.ui.tiendaTab = b.dataset.t; guardar(); render(); break;
     case "comer-tab": S.ui.comerTab = b.dataset.t; diaReg = null; guardar(); render(); break;
-    case "dies": { S.rutinaActiva = b.dataset.id; if (b.dataset.n) S.perfil = { ...S.perfil, diasSemana: Number(b.dataset.n) }; guardar(); b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); break; }
+    // els dies: la rutina ja no es tria aquí, sinó després, a «Empieza tu rutina» (src/importa.js)
+    case "dies": { if (b.dataset.n) S.perfil = { ...S.perfil, diasSemana: Number(b.dataset.n) }; guardar(); b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b))); break; }
     case "carta": obreFull(fullCarta(b.dataset.t), PERSONAJES[b.dataset.t].nombre); break;
     case "comprar": {
       const t = b.dataset.t, P = PERSONAJES[t];
@@ -6594,13 +7140,14 @@ document.addEventListener("click", ev => {
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
     default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
-      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b)) accioRutina(acc, b);
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "tria-q") { S.ui.triaQ = t.value; refrescaTria(); return; }
   if (t.id === "n-cerca") { pintaAliments(t.value); return; }
+  if (t.id === "imp-txt") { S.ui.impTxt = t.value; refrescaPrevImp(true); return; }
   if (t.id === "c-nick") { S.ui.clanNick = t.value; suggereix(t.value); return; }     // que un repintat no s'ho mengi, i l'autocompletar
   if (t.dataset && t.dataset.camp) {
     const s = activa(); if (!s) return;
@@ -6622,6 +7169,7 @@ document.addEventListener("change", ev => {
   if (ev.target.name === "c-c") { const l = $("#c-p-l"); if (l) l.hidden = !CARGAS[ev.target.value].paso; }
   if (ev.target.id === "n-a") refrescaAfegeix();
   if (ev.target.id === "al-foto") { const f = ev.target.files && ev.target.files[0]; ev.target.value = ""; llegeixEtiqueta(f); return; }
+  if (ev.target.id === "imp-fit") { const f = ev.target.files && ev.target.files[0]; ev.target.value = ""; importaFitxer(f); return; }
   if (ev.target.id === "s-ej") { S.ui.ejStats = ev.target.value; guardar(); render(); }
 });
 document.addEventListener("submit", async ev => {
@@ -6639,12 +7187,12 @@ document.addEventListener("submit", async ev => {
     if (alt >= 1.2 && alt <= 2.5) alt = Math.round(alt * 100);          // «1,70» vol dir 170
     if (alt && (alt < 120 || alt > 230)) { avis("Tu altura en centímetros: por ejemplo, 170.", true); $(`#${pre}-altura`).focus(); return; }
     S.perfil = { ...S.perfil, peso: pes, altura: alt || null, ...($("#a-hora") ? { horaEntreno: $("#a-hora").value || "18:00" } : {}) };
-    if (tipus === "datos" && !S.rutinaActiva) S.rutinaActiva = "iniciacion";
+    if (tipus === "datos") S.perfil.diasSemana = S.perfil.diasSemana || { iniciacion: 3, "torso-pierna": 4, "seis-dias": 6 }[S.rutinaActiva] || 3;
     if (tipus === "datos" && $("#d-salut") && $("#d-salut").checked && teCompte())
       apiCompte("POST", "/compte/consentiment", { salut: true }).then(r => { desaSessio({ ...sessio, salut: !!r.consent_salut }); programaPuja(); }).catch(e => avis(e.message, true));
     if (tipus === "datos" && $("#d-comercial") && $("#d-comercial").checked && teCompte())
       apiCompte("POST", "/compte/consentiment", { comercial: true }).then(r => desaSessio({ ...sessio, comercial: !!r.consent_comercial })).catch(e => avis(e.message, true));
-    S.ui.vista = "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
+    S.ui.vista = tipus === "datos" && senseRutina() ? "entreno" : "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
     if (tipus === "datos") { Efectos.suena("fuego"); Efectos.lluvia(1.4); avis("La fragua está encendida."); } else avis("Ajustes guardados.");
   } else if (tipus === "ed-propi") {
     afegeixPropi(+f.dataset.i);
@@ -6699,12 +7247,14 @@ document.addEventListener("submit", async ev => {
 // Sense zoom de pessic: Safari no fa cas de user-scalable=no des de l'iOS 10, però sí de gesturestart.
 ["gesturestart", "gesturechange"].forEach(t => document.addEventListener(t, ev => ev.preventDefault(), { passive: false }));
 document.addEventListener("touchmove", ev => { if (ev.touches.length > 1) ev.preventDefault(); }, { passive: false });
-document.addEventListener("keydown", ev => { if (ev.key === "Escape") { if ($("#capa").innerHTML) tancaFull(); else if ($("#celebra").innerHTML) $("#celebra").innerHTML = ""; } });
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") { if ($("#capa").innerHTML) tancaFull(); else if ($("#celebra").innerHTML) $("#celebra").innerHTML = ""; else if (S.ui.vista === "amic") { const b = document.querySelector('[data-accion="amic-tanca"]'); if (b) b.click(); } } });
 // lliscar al carrusel de personatges
 let x0 = null;
 document.addEventListener("touchstart", ev => { if (ev.target.closest("#carrusel")) x0 = ev.touches[0].clientX; }, { passive: true });
 document.addEventListener("touchend", ev => { if (x0 == null) return; const dx = ev.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 40) { triaIdx = (triaIdx + (dx < 0 ? 1 : -1) + TIPOS.length) % TIPOS.length; Efectos.suena("tap"); render(); } });
 
+// Un perfil d'un amic és de pas: si l'app es torna a obrir, no s'hi queda (27-09-2026: l'Albert s'hi va quedar atrapat).
+if (S.ui.vista === "amic") S.ui.vista = S.ui.amicDe && S.ui.amicDe !== "amic" ? S.ui.amicDe : "social";
 mirarEnllacCompte();
 mirarEnllacAmic();
 render();
