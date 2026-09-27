@@ -667,6 +667,22 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .carta.material.reservat{box-shadow:inset 0 0 0 1px #f0a050}
 .mat-full{display:grid;gap:14px}
 .mat-full>img{justify-self:center;width:240px;height:240px;object-fit:contain;border-radius:12px}
+/* ---- la roba (27-09-2026): les fotos quadrades de les làmines v4, amb «IA» a sobre ---- */
+.roba-av{text-align:center;margin:0 0 4px;color:var(--crema);text-shadow:0 1px 2px #000,0 0 10px rgba(0,0,0,.95)}
+.roba-g{font-size:16px;margin:18px 2px 8px;color:#ffd27a}
+.roba-foto{position:relative;display:block;width:100%;aspect-ratio:1;margin:0;border-radius:10px;overflow:hidden;background:#15110e}
+.carta.material .roba-foto img{width:100%;height:100%;object-fit:cover;border-radius:0;filter:none;display:block}
+.roba-ia{position:absolute;right:6px;bottom:6px;padding:1px 7px;border-radius:999px;background:rgba(0,0,0,.66);color:#f6e3b8;font-size:11px;font-weight:700}
+.roba-foto.gran{width:min(100%,360px);justify-self:center}
+.roba-foto.gran img{width:100%;height:100%;object-fit:cover;display:block}
+.roba-foto figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 10px 6px;background:linear-gradient(transparent,rgba(0,0,0,.78));color:#f6e3b8;font-size:12.5px;text-align:right}
+.roba-p{font-size:14px;color:#ffd27a;font-weight:700}
+.roba-preu{margin:0;display:grid;gap:2px;text-align:center}
+.roba-preu b{font-size:22px;color:#ffd27a}
+.roba-preu small{color:var(--fum);font-size:13px}
+.compra-oro-q{margin:0;display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center}
+.compra-oro-q .or{font-family:var(--display);font-size:24px}
+.compra-oro-q span{grid-column:2;color:var(--fum);font-size:14px}
 .talles{margin-top:8px}
 .talles .chip{min-width:52px;justify-content:center}
 .clan-sug{display:grid;margin-top:4px}
@@ -681,6 +697,7 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .mini-clan{width:100%;color:var(--crema);font:inherit;cursor:pointer}
 .mini-clan .gran{margin:auto 0 0}
 .mini-clan .fantasma .gran{opacity:.25;font-size:44px;margin:auto}
+.mini-clan .fantasma.fusta{display:grid;justify-items:center;gap:4px}
 .seg-llast{display:inline-grid;grid-template-columns:auto auto;margin-top:8px;border:1px solid var(--bronze-fil);border-radius:8px;overflow:hidden}
 .seg-llast button{min-height:34px;padding:0 12px;border:0;background:rgba(15,13,12,.9);color:var(--fum);font:700 13.5px var(--text);white-space:nowrap}
 .seg-llast button+button{border-left:1px solid var(--bronze-fil)}
@@ -3466,6 +3483,10 @@ document.addEventListener("drop", ev => {
   ev.preventDefault(); importaFitxer(f);
 });
 
+/* KLONK · la roba de la botiga. GENERAT per referencies/merch-samarretes/fes_botiga.py: no s'edita a mà. */
+const ROBA_GRUPS = [["esenciales", "Esenciales"], ["nombre", "El nombre"], ["pump", "Pump covers"], ["sudaderas", "Sudaderas"], ["anime", "Anime"], ["edgy", "Edgy"], ["premium", "Premium"], ["bolsas", "Bolsas"], ["shakers", "Shakers"]];
+const ROBA = [["ess-1", "esenciales", "Camiseta ajustada negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-2", "esenciales", "Pump cover carbón", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-3", "esenciales", "Tirantes color hueso", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-4", "esenciales", "Manga larga negra", 3495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-1", "nombre", "KLONK al pecho, negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-2", "nombre", "KLONK grande a la espalda", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-3", "nombre", "Crop con KLONK", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-4", "nombre", "KLONK al pecho y la sigma en la manga", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-1", "pump", "Negra con la sigma en relieve", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-2", "pump", "Crema con la sigma bordada", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-3", "pump", "Gris con parche rojo", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-4", "pump", "Rojo forja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-1", "sudaderas", "Sudadera con KLONK al pecho", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-2", "sudaderas", "Sudadera crop crema", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-3", "sudaderas", "Cremallera con la sigma de fuego", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-4", "sudaderas", "Cremallera roja", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-1", "anime", "El herrero, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-2", "anime", "La herrera, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-3", "anime", "La barra sobre el yunque", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-4", "anime", "Lisa con la sigma naranja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-1", "edgy", "Tirantes lavados, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-2", "edgy", "Crop rota, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-3", "edgy", "Stringer con alambre estampado", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-4", "edgy", "Oversize de pintura roja y negra", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-1", "premium", "Conjunto arena", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-2", "premium", "Negra de piqué, sigma bordada", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-3", "premium", "Conjunto oliva", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-4", "premium", "Crema con la sigma en la nuca", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["bolsa-1", "bolsas", "Bolsa de deporte", null, ["Única"]], ["bolsa-2", "bolsas", "Tote con la sigma", 2495, ["Única"]], ["bolsa-3", "bolsas", "Mochila con la sigma", null, ["Única"]], ["bolsa-4", "bolsas", "Bolsa de cuerdas", 1495, ["Única"]], ["shaker-1", "shakers", "Shaker negro y bronce", 1295, ["Única"]], ["shaker-2", "shakers", "Shaker transparente", 1295, ["Única"]], ["shaker-3", "shakers", "Shaker de acero", 1995, ["Única"]], ["shaker-4", "shakers", "Shaker con la sigma de fuego", 1295, ["Única"]]];
+
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
    L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
    que necessites a cada exercici, per no haver de comptar si són 2 de 10 o 2 de 20 i 1,25... a Ajustes
@@ -4449,7 +4470,8 @@ function rangGimnasos(so) {
    Surt del Poder (0-1000: la mitjana dels percentils de força relativa). Els de dalt són escassos a posta. */
 const YUNQUES = [[0, "madera", "Madera"], [100, "piedra", "Piedra"], [250, "cobre", "Cobre"], [400, "bronce", "Bronce"], [550, "hierro", "Hierro"],
   [700, "acero", "Acero"], [800, "oro", "Oro"], [880, "obsidiana", "Obsidiana"], [940, "criselefantino", "Criselefantino"], [980, "estelar", "Estelar"]];
-const yunqueDe = p => { if (p == null) return null; let y = YUNQUES[0]; YUNQUES.forEach(t => { if (p >= t[0]) y = t; }); return { id: y[1], nom: y[2], des: y[0] }; };
+// Sense temple encara (qui acaba d'entrar i no ha entrenat), el de fusta, amb `sense` (l'Albert, 27-09-2026).
+const yunqueDe = p => { let y = YUNQUES[0]; if (p != null) YUNQUES.forEach(t => { if (p >= t[0]) y = t; }); return { id: y[1], nom: y[2], des: y[0], sense: p == null }; };
 const imgYunque = (p, cls = "") => { const y = yunqueDe(p); return y ? `<img class="yunque ${cls}" src="${ACTIUS}yunques/${y.id}.webp" alt="Rango ${y.nom}" title="${y.nom}">` : ""; };
 function fullYunques() {
   const so = soc(), p = so.yo && so.yo.poder, meu = yunqueDe(p);
@@ -4492,9 +4514,10 @@ function capSocial(so) {
   let rang = "";
   if (so.participa && gim) {
     const y = yunqueDe(yo.poder), dif = yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
-    rang = `<div class="perfil-rang">${y ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
-      : sessio && sessio.salut ? `<small>Termina un entreno para tener rango de fuerza. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
-      : `<small>Sin permiso para guardar tu peso no hay rango de fuerza. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</div>`;
+    rang = `<div class="perfil-rang">${!y.sense ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
+      : `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: Madera. Ver todos">${imgYunque(null, "gran")}</button><span><b class="or">Madera</b>${sessio && sessio.salut
+        ? `<small>Tu primer yunque. Termina un entreno para tener temple y forjar el siguiente. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
+        : `<small>Tu primer yunque. Sin permiso para guardar tu peso no hay temple. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</span>`}</div>`;
   }
   return `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experienciaPj(S).nivel, "gran")}
     <div class="perfil-dades"><b class="perfil-nick">${esc(nomHeroi())}</b>${gim ? `<small class="perfil-gim">${esc(gim.nom)}</small>` : ""}
@@ -4572,20 +4595,20 @@ async function carregaClanInici() {
 function miniClan() {
   const so = soc();
   if (S.demo || !teCompte() || !so.participa || !(so.yo && so.yo.gimnas))
-    return `<div class="fantasma"><span class="gran num" aria-hidden="true">·</span><div class="pista">Entra en Social y compite con tu clan</div></div>`;
+    return `<div class="fantasma fusta">${imgYunque(null, "mini-y")}<div class="pista">Entra en Social y compite con tu clan</div></div>`;
   const rr = so.rank["rango|amigos|general"], rd = so.rank["dias|amigos|-"], ara = Date.now();
   if (ara - Math.min((rr || {}).at || 0, (rd || {}).at || 0) > 600000 && ara - (intent.inici || 0) > 60000) { intent.inici = ara; setTimeout(carregaClanInici, 0); }
   const r = rr && rr.yo ? rr : rd && rd.yo ? rd : null;
   if (!rr && !rd) return '<div class="buit">Cargando…</div>';
-  if (!r || r.total <= 1) return '<div class="buit">Añade a alguien a tu clan</div>';
-  return `${so.yo && so.yo.poder != null ? imgYunque(so.yo.poder, "mini-y") : ""}<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
+  if (!r || r.total <= 1) return `${imgYunque(so.yo ? so.yo.poder : null, "mini-y")}<div class="buit">Añade a alguien a tu clan</div>`;
+  return `${imgYunque(so.yo ? so.yo.poder : null, "mini-y")}<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
 }
 // Després d'un entreno: si has pujat de yunque o de lloc al rànquing del clan, una celebració pròpia. Es mira quan el
 // servidor ha tornat el poder nou; si el resum encara és obert, s'espera que es tanqui.
 async function miraPujada(abans) {
   const yo = await sincronitza(); if (!yo) return;
   const pujades = [], ya = yunqueDe(abans.poder), yd = yunqueDe(yo.poder);
-  if (yd && (!ya || YUNQUES.findIndex(t => t[1] === yd.id) > YUNQUES.findIndex(t => t[1] === ya.id))) pujades.push({ t: "yunque", y: yd, poder: yo.poder });
+  if (!yd.sense && (ya.sense || YUNQUES.findIndex(t => t[1] === yd.id) > YUNQUES.findIndex(t => t[1] === ya.id))) pujades.push({ t: "yunque", y: yd, poder: yo.poder });
   try {
     const r = await api("GET", "/ranking?metrica=rango&ambit=amigos&grupo=general");
     S.social = { ...soc(), rank: { ...soc().rank, "rango|amigos|general": { ...r, at: Date.now() } } };
@@ -5043,8 +5066,7 @@ function vistaAmic() {
   <article class="amic" aria-label="Perfil de ${esc(nom)}">
     <div class="amic-heroi">
       <div class="personatge amic-pj${(p.nivell || 1) >= 12 ? " aura" : ""}" id="personatge" data-tipo="${tipo}" data-nivell="${Math.max(1, Math.min(20, p.nivell || 1))}"><div class="brillo"></div><img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}"></div>
-      ${y ? `<button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}, temple ${n0(p.poder)}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">Temple ${n0(p.poder)}</span></button>`
-        : '<div class="amic-rang"><span class="suau">Aún sin rango</span></div>'}
+      <button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}${y.sense ? ", aún sin temple" : `, temple ${n0(p.poder)}`}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">${y.sense ? "Aún sin temple" : `Temple ${n0(p.poder)}`}</span></button>
     </div>
     <div class="amic-placa">
       <div class="placa marc"><h1 class="placa-nom${mida}"><span class="or">${esc(nom)}</span></h1></div>
@@ -5274,19 +5296,27 @@ const ACC_AVISOS = new Set(["avisos-activa", "avisos-desactiva", "avisos-ara-no"
 
 /* ---- reservar el material amb la talla (l'Albert, 26-09-2026: «que la gent pugui reservar una ja mola, no? Amb la
    seva talla?»). No es paga res: és per saber quantes en vol la gent, i de quina talla, abans de fer-ne. ---- */
-const MATERIAL = [["camiseta", "Camiseta"], ["sudadera", "Sudadera"], ["bolsa", "Bolsa de gimnasio"], ["shaker", "Shaker"]];
-const TALLES_MAT = { camiseta: ["XS", "S", "M", "L", "XL", "XXL"], sudadera: ["XS", "S", "M", "L", "XL", "XXL"], bolsa: ["Única"], shaker: ["Única"] };
+// La roba (27-09-2026, l'Albert via EL BOARD: «les posaria ja, que són finíssimes»): el catàleg és src/roba.js, que
+// genera referencies/merch-samarretes/fes_botiga.py. Les fotos porten «Modelo creado con IA».
+const MATERIAL = ROBA.map(r => [r[0], r[2]]);
+const TALLES_MAT = Object.fromEntries(ROBA.map(r => [r[0], r[4]]));
+const robaDe = k => ROBA.find(r => r[0] === k);
+const preuRoba = c => c == null ? "Precio pronto" : (c / 100).toFixed(2).replace(".", ",") + " €";
 async function carregaMaterial() {
   try { S.ui.material = { ...(await api("GET", "/material")), at: Date.now() }; guardar(); if (S.ui.vista === "tienda") render(); } catch (e) {}
 }
 function fullMaterial(k) {
-  const mt = S.ui.material || {}, talles = TALLES_MAT[k], meva = (mt.meves || {})[k], q = (mt.quants || {})[k] || 0;
+  const r = robaDe(k); if (!r) return "";
+  const figura = `<figure class="roba-foto gran"><img src="${ACTIUS}roba/${k}.webp" alt="${esc(r[2])}, de KLONK" width="600" height="600"><figcaption>Modelo creado con IA</figcaption></figure>`;
+  if (esMenor()) return `<div class="mat-full">${figura}<p class="suau petit" style="margin:0;text-align:center">Las compras son para mayores de edad.</p></div>`;
+  const mt = S.ui.material || {}, talles = r[4], meva = (mt.meves || {})[k], q = (mt.quants || {})[k] || 0;
   const tria = S.ui.matTalla || meva || (talles.length === 1 ? talles[0] : null);
-  return `<div class="mat-full"><img src="${ACTIUS}material/${k}.webp" alt="" width="240" height="240">
+  return `<div class="mat-full">${figura}
+    <p class="roba-preu"><b>${preuRoba(r[3])}</b><small>${r[3] != null ? "IVA incluido. Envío 4,95 €, gratis desde 75 €." : "Aún sin precio: te lo decimos antes de que decidas."}</small></p>
     ${talles.length > 1 ? `<div><b>Tu talla</b><div class="fila envolta talles">${talles.map(t => `<button class="chip" data-accion="mat-talla" data-t="${t}" aria-pressed="${tria === t}">${t}</button>`).join("")}</div></div>` : ""}
     ${botoForja(`data-accion="mat-reserva" data-k="${k}"`, meva ? "CAMBIAR LA RESERVA" : "RESERVAR", "No pagas nada")}
     ${meva ? `<p style="text-align:center;margin:0"><button class="enllac" data-accion="mat-anula" data-k="${k}">Anular la reserva</button></p>` : ""}
-    <p class="suau petit" style="margin:0">Te avisamos por correo cuando esté a la venta, con su precio, y entonces decides.${q ? ` ${q === 1 ? "Ya lo ha reservado 1 persona." : `Ya lo han reservado ${q} personas.`}` : ""}${esMenor() ? " Tienes menos de 18: la compra la hará una persona adulta." : ""}</p></div>`;
+    <p class="suau petit" style="margin:0">Te avisamos por correo cuando esté a la venta y entonces decides.${q ? ` ${q === 1 ? "Ya lo ha reservado 1 persona." : `Ya lo han reservado ${q} personas.`}` : ""}</p></div>`;
 }
 async function accioMaterial(acc, b) {
   const k = b.dataset.k, nom = (MATERIAL.find(x => x[0] === k) || [0, ""])[1];
@@ -5313,11 +5343,20 @@ function accioServidor(acc, b) {
   if (ACC_MAT.has(acc)) { accioMaterial(acc, b); return true; }
   if (ACC_SOCIAL.has(acc)) { accioSocial(acc, b); return true; }
   if (ACC_GIM.has(acc)) { accioGimnasos(acc, b); return true; }
-  if (acc === "compra-oro") { compraOro(b.dataset.p); return true; }
+  if (acc === "compra-oro") { if (!esMenor() && PAQUETS_ORO[b.dataset.p]) obreFull(fullCompraOro(b.dataset.p), "Comprar oro"); return true; }
   return false;
 }
 
 /* ---- comprar or (Stripe Checkout: targeta o PayPal). El servidor diu quant or ha comprat cadascú: si s'instal·la de nou, torna. ---- */
+// Abans de pagar, «Soy mayor de edad» (EL BOARD, 27-09-2026: només compren els majors d'edat; skill menors §7).
+const PAQUETS_ORO = { bolsa: ["Bolsa de oro", 500, "0,99 €"], cofre: ["Cofre de oro", 1200, "1,99 €"], tesoro: ["Tesoro del rey", 3000, "4,99 €"] };
+function fullCompraOro(p) {
+  const x = PAQUETS_ORO[p];
+  return `<form class="form" data-form="compra-oro" data-p="${p}"><p class="compra-oro-q">${MONEDA}<b class="or">${x[1]} de oro</b><span>${esc(x[0])}, ${x[2]} con IVA</span></p>
+    <label class="casella"><input type="checkbox" id="co-major"><span><b>Soy mayor de edad</b><small>Solo pueden comprar las personas mayores de edad.</small></span></label>
+    <p class="suau petit" style="margin:0">El oro llega en el momento: al pagar aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
+    <button class="btn clar marc" type="submit">PAGAR ${x[2]}</button></form>`;
+}
 async function compraOro(paquet) {
   if (S.demo) { avis("En el modo demostración no se compra nada.", true); return; }
   try {
@@ -6654,18 +6693,20 @@ function vistaTienda() {
       return `<button class="carta marc${teu ? "" : " bloq"}" data-accion="carta" data-t="${t}"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}" loading="lazy"><span class="carta-nom">${esc(P.nombre)}</span>${teu ? `<span class="carta-estat">${meu ? "Es el tuyo" : "Desbloqueado"}</span>` : `<span class="carta-req"><span class="nv-req${nivelOk(t) ? "" : " falta-nv"}">NV ${P.nivel || 1}</span><span class="preu">${MONEDA}${P.precio}</span></span>`}</button>`; }).join("")}</div>
     <p class="suau petit" style="text-align:center;margin-top:12px">Los personajes buenos piden nivel, además de oro: el nivel solo se gana entrenando.</p>`;
   } else if (tab === "material") {
-    // el material (Albert, 26/09): «samarretes... la bossa de gimnàs... el shaker». Encara no es ven (cap preu inventat
-    // fins que hi hagi proveïdor), però es reserva amb la talla i sense pagar res (26-09-2026 nit).
+    // la roba de KLONK (27-09-2026, les làmines v4 d'EL BOARD, src/roba.js): per línies, amb el preu, i es reserva amb la
+    // talla sense pagar res. L'Albert: «posaria a algun lloc lo de models IA» (a dalt, a cada foto i a la fitxa).
     const mt = S.ui.material || {};
     if (teCompte() && !S.demo && Date.now() - (mt.at || 0) > 60000) setTimeout(carregaMaterial, 0);
-    h += `<div class="botiga">${MATERIAL.map(([k, n]) => { const t = (mt.meves || {})[k];
-      return `<button class="carta marc material${t ? " reservat" : ""}" data-accion="mat-obre" data-k="${k}"><img src="${ACTIUS}material/${k}.webp" alt="${n} de KLONK" loading="lazy"><span class="carta-nom">${n}</span><span class="aviat">${t ? (t === "Única" ? "Reservado" : `Reservada, talla ${t}`) : "Reservar"}</span></button>`; }).join("")}</div>
-      <p class="suau petit" style="text-align:center;margin-top:12px">El material de KLONK, para ir al gimnasio con tu clan. Resérvalo con tu talla: no pagas nada y te avisamos cuando esté a la venta.</p>`;
+    const peca = r => { const k = r[0], t = (mt.meves || {})[k];
+      return `<button class="carta marc material${t ? " reservat" : ""}" data-accion="mat-obre" data-k="${k}"><span class="roba-foto"><img src="${ACTIUS}roba/${k}.webp" alt="" loading="lazy" width="600" height="600"><span class="roba-ia">IA</span></span><span class="carta-nom">${esc(r[2])}</span>${esMenor() ? "" : `<span class="roba-p">${preuRoba(r[3])}</span><span class="aviat">${t ? (t === "Única" ? "Reservado" : `Reservada, talla ${t}`) : "Reservar"}</span>`}</button>`; };
+    h += `<p class="suau petit roba-av">${esMenor() ? "La ropa de KLONK, para ir al gimnasio con tu clan. Las fotos y los modelos están creados con IA." : "La ropa de KLONK, para ir al gimnasio con tu clan. Resérvala con tu talla: no pagas nada y te avisamos cuando esté a la venta. Las fotos y los modelos están creados con IA."}</p>
+      ${ROBA_GRUPS.map(([g, gn]) => `<h3 class="roba-g">${esc(gn)}</h3><div class="botiga">${ROBA.filter(r => r[1] === g).map(peca).join("")}</div>`).join("")}`;
   } else {
-    h += `${[["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]].map(([k2, n, q, e]) =>
+    // al menor no se li ensenya res que es pagui (EL BOARD, 27-09-2026, skill menors §7: punt 28 i art. 30 LCD)
+    h += `${esMenor() ? '<p class="suau petit" style="text-align:center">Las compras son para mayores de edad. El oro se gana entrenando.</p>' : `${[["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]].map(([k2, n, q, e]) =>
       `<button class="paquet marc" data-accion="compra-oro" data-p="${k2}">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Comprar</div></div></button>`).join("")}
-    <p class="suau petit" style="text-align:center">Con tarjeta o PayPal.${esMenor() ? " Tienes menos de 18: las compras las hace una persona adulta." : ""} El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
-    <p class="suau petit" style="text-align:center">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
+    <p class="suau petit" style="text-align:center">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
+    <p class="suau petit" style="text-align:center">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>`}
     ${bloc("Cómo se gana", `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div><div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
   }
   return h;
@@ -7194,6 +7235,9 @@ document.addEventListener("submit", async ev => {
       apiCompte("POST", "/compte/consentiment", { comercial: true }).then(r => desaSessio({ ...sessio, comercial: !!r.consent_comercial })).catch(e => avis(e.message, true));
     S.ui.vista = tipus === "datos" && senseRutina() ? "entreno" : "inicio"; guardar(); render(); window.scrollTo({ top: 0 });
     if (tipus === "datos") { Efectos.suena("fuego"); Efectos.lluvia(1.4); avis("La fragua está encendida."); } else avis("Ajustes guardados.");
+  } else if (tipus === "compra-oro") {
+    if (!$("#co-major").checked) { avis("Marca que eres mayor de edad para comprar.", true); return; }
+    tancaFull(); compraOro(f.dataset.p);
   } else if (tipus === "ed-propi") {
     afegeixPropi(+f.dataset.i);
   } else if (tipus === "productes") {
