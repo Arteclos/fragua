@@ -1250,6 +1250,8 @@ const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVist
   ses: [], activa: null, cfg: {}, reg: {}, tipo: {}, hambre: {}, prop: {}, menus: [], ui: { tab: "hoy", abiertas: {} } });
 let guardable = true;
 let S = cargar();
+// les sessions d'abans del nivell per personatge (27-09-2026) són del personatge que es tenia llavors
+if (S.personaje && !S.pjOrigen) S.pjOrigen = S.personaje.tipo;
 function cargar() {
   try {
     const t = localStorage.getItem(LLAVE);
@@ -1490,7 +1492,7 @@ function resumenSets(sets, lastre) {
 }
 function empezar(dia) {
   const d = diaRutina(dia) || diaRutina(1);
-  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [] };
+  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
   // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
   s.ej = d.ej.map(([n, t, x]) => {
     const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
@@ -1579,11 +1581,15 @@ function puntuables(S) {
 // «Herrero» ja és el nom d'un personatge: els títols no el poden repetir.
 const TITULOS = [[1, "Aprendiz"], [3, "Oficial"], [5, "Veterano"], [8, "Maestro"], [12, "Señor de la forja"], [20, "Leyenda de la montaña"]];
 const xpParaSubir = nivel => 100 + 50 * (nivel - 1);
+// CADA PERSONATGE AMB EL SEU NIVELL (l'Albert, 27-09-2026: «la XP no es comparteix»): cada sessió porta el personatge amb
+// qui es va fer (s.pj) i la seva XP va a ell. Les d'abans, al personatge que es tenia quan va arribar el canvi (S.pjOrigen).
+// El que és del COMPTE no canvia: el total, els rècords i l'or (que el servidor calcula igual, servidor/sincro.py).
+const pjDe = (S, s) => s.pj || S.pjOrigen || (S.personaje && S.personaje.tipo) || "herrero";
 function experiencia(S) {
   let xp = 0, records = 0, series = 0, sesiones = 0;
-  const mejor = {}, punt = puntuables(S);
+  const mejor = {}, punt = puntuables(S), perPj = {};
   finSesiones(S).sort((a, b) => a.inicio - b.inicio).forEach(s => {
-    const puntua = punt.has(s.id);
+    const puntua = punt.has(s.id), xp0 = xp, pj = pjDe(S, s);
     if (puntua) { xp += 50; sesiones++; }
     let n = 0;
     s.ej.forEach(e => {
@@ -1597,12 +1603,23 @@ function experiencia(S) {
         mejor[e.n] = Math.max(mejor[e.n] || 0, v);
       });
     });
+    perPj[pj] = (perPj[pj] || 0) + (xp - xp0);
   });
+  const nv = nivellDe(xp);
+  return { xp, nivel: nv.nivel, enNivel: nv.enNivel, paraSubir: nv.paraSubir, titulo: nv.titulo, records, series, sesiones, perPj };
+}
+function nivellDe(xp) {
   let nivel = 1, resto = xp;
   while (resto >= xpParaSubir(nivel)) { resto -= xpParaSubir(nivel); nivel++; }
-  const titulo = TITULOS.filter(([n]) => nivel >= n).pop()[1];
-  return { xp, nivel, enNivel: resto, paraSubir: xpParaSubir(nivel), titulo, records, series, sesiones };
+  return { xp, nivel, enNivel: resto, paraSubir: xpParaSubir(nivel), titulo: TITULOS.filter(([n]) => nivel >= n).pop()[1] };
 }
+// El nivell del personatge que portes (o del que diguis): la XP de les sessions fetes amb ell.
+function experienciaPj(S, tipo) {
+  const t = tipo || (S.personaje && S.personaje.tipo) || "herrero";
+  return { ...nivellDe(experiencia(S).perPj[t] || 0), tipo: t };
+}
+// Per desbloquejar un personatge nou compta el teu millor personatge: qui en canvia no queda enrere.
+const nivellMaxPj = S => Math.max(1, ...Object.values(experiencia(S).perPj).map(x => nivellDe(x).nivel));
 
 /* ---- el foc: dies entrenats dels últims 7. Descansar no l'apaga: la seva rutina té 6 dies ---- */
 function fuego(S, ahora = Date.now()) {
@@ -1772,7 +1789,7 @@ function semana(S, ahora = new Date()) {
   });
 }
 
-return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
+return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, experienciaPj, nivellDe, nivellMaxPj, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
 })();
 
 /* Generat per prepara_sons.py: quins sons d'Artlist hi ha a assets/sons/. No s'edita a mà. */
@@ -3725,7 +3742,7 @@ function sincronitza() {
   sincro = (async () => {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: sessio.nick || null, publico: so.visible === "publico", menor: sessio.franja !== "major", franja: sessio.franja || null, sexe: ambPes ? S.perfil.sexo || null : null,
-      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: xp.nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
+      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: Stats.experienciaPj(S).nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       xp: xp.xp, gim_clan: so.gimClan !== false, ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
@@ -3817,7 +3834,7 @@ function capSocial(so) {
       : sessio && sessio.salut ? `<small>Termina un entreno para tener rango de fuerza. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
       : `<small>Sin permiso para guardar tu peso no hay rango de fuerza. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</div>`;
   }
-  return `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "gran")}
+  return `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experienciaPj(S).nivel, "gran")}
     <div class="perfil-dades"><b class="perfil-nick">${esc(nomHeroi())}</b>${gim ? `<small class="perfil-gim">${esc(gim.nom)}</small>` : ""}
       <div class="perfil-fila"><span>${flama(true)}<b class="num">${dg.dies}</b> ${dg.dies === 1 ? "día" : "días"} de gym</span><span><b class="num">${n0(Stats.experiencia(S).xp)}</b> XP en total</span></div></div>${rang}</div>`;
 }
@@ -5192,7 +5209,7 @@ async function pasosDe(n) {
 }
 const imgPersonaje = t => `${ACTIUS}personatges/${t}.webp`;
 const esTeu = t => (S.desbloq || []).includes(t) || !PERSONAJES[t].precio;
-const nivelOk = t => Stats.experiencia(S).nivel >= (PERSONAJES[t].nivel || 1);
+const nivelOk = t => Stats.nivellMaxPj(S) >= (PERSONAJES[t].nivel || 1);
 
 /* ---------------------------------------------------------------- l'or */
 // L'or que has guanyat surt del que has fet (com l'XP): 25 per entreno, 2 per sèrie, 10 per rècord, 3 per
@@ -5334,7 +5351,7 @@ const botoForja = (attrs, titol, sub, cls = "") => `<div class="forja ${cls}"><b
 
 /* ---------------------------------------------------------------- l'entrada */
 function vistaInicio() {
-  const p = S.personaje, xp = Stats.experiencia(S), racha = Stats.diasAno(S), foc = Stats.fuego(S);
+  const p = S.personaje, xp = Stats.experienciaPj(S), racha = Stats.diasAno(S), foc = Stats.fuego(S);
   const act = activa(), dia = act ? act.dia : siguienteDia(), d = act ? { t: act.dt || (RUTINA[act.dia - 1] || {}).t || "" } : (diaRutina(dia) || { t: "" });
   const k = hoy(), obj = objetivoProt(), prot = totalDia(k).p;
   const sf = serieFuerza(), fz = Stats.fuerza(S);
@@ -5522,7 +5539,7 @@ function vistaEstadisticas() {
   <div class="tres">
     <div class="mini marc"><h3>Días</h3><div class="gran or num">${Stats.diasAno(S)}</div><div class="dada">este año</div></div>
     <div class="mini marc"><h3>Récords</h3><div class="gran or num">${rec}</div><div class="dada">este mes</div></div>
-    <div class="mini marc"><h3>Entrenos</h3><div class="gran or num">${sesiones}</div><div class="dada">NV ${xp.nivel}</div></div>
+    <div class="mini marc"><h3>Entrenos</h3><div class="gran or num">${sesiones}</div><div class="dada">NV ${Stats.experienciaPj(S).nivel}</div></div>
   </div>
   ${bloc("Por grupo muscular", grups.length ? `<div class="grups-t">${grups.map(x => `<div class="r-graf"><div class="r-graf-cap"><b>${x.g === "General" ? "Todo el cuerpo" : x.g}</b><span class="${x.canvi >= 0 ? "puja" : "baixa"} num">${x.canvi >= 0 ? "+" : ""}${n0(x.canvi * 100)} %</span></div>${grafTendencia(x.p, 300, 74)}</div>`).join("")}</div>
     <p class="llegenda">Tu fuerza de cada grupo, semana a semana, contra el principio del periodo. La línea de puntos es la tendencia.</p>` : '<div class="buit">Con dos semanas de entrenos verás la tendencia de cada grupo.</div>', "graf")}
@@ -5609,7 +5626,7 @@ function cosRegistre() {
 
 /* ---------------------------------------------------------------- personatge i ajustos */
 function vistaPersonaje() {
-  const p = S.personaje, xp = Stats.experiencia(S);
+  const p = S.personaje, xp = Stats.experienciaPj(S);
   return `${capcalera("")}
   ${heroi(p.tipo, "height:340px;margin-top:4px")}
   <div class="panel pad fitxa"><div class="nom or">${esc(p.nombre || PERSONAJES[p.tipo].nombre)}</div><div class="lema">${esc(PERSONAJES[p.tipo].nombre)}, ${esc(xp.titulo.toLowerCase())}</div>
@@ -5653,14 +5670,14 @@ function vistaTienda() {
 }
 function fullCarta(t) {
   const P = PERSONAJES[t], teu = esTeu(t), oro = oroTotal();
-  const nv = Stats.experiencia(S).nivel;
+  const nv = Stats.nivellMaxPj(S);
   const accio = teu
     ? (S.personaje?.tipo === t ? '<p class="suau" style="text-align:center">Es tu personaje.</p>' : botoForja(`data-accion="elegir" data-t="${t}"`, "ELEGIR", ""))
-    : !nivelOk(t) ? `<p class="falta">Necesitas el nivel ${P.nivel}: te ${P.nivel - nv === 1 ? "falta 1 nivel" : `faltan ${P.nivel - nv} niveles`}. Se ganan entrenando.</p>`
+    : !nivelOk(t) ? `<p class="falta">Necesitas el nivel ${P.nivel} con alguno de tus personajes: te ${P.nivel - nv === 1 ? "falta 1 nivel" : `faltan ${P.nivel - nv} niveles`}. Se ganan entrenando.</p>`
     : oro >= P.precio ? botoForja(`data-accion="comprar" data-t="${t}"`, `FORJAR POR ${P.precio}`, "de oro")
     : `<p class="falta">Te faltan ${P.precio - oro} de oro. Un entreno completo da unos 70.</p>`;
   return `<div class="carta-gran${teu ? "" : " bloq"}" id="carta-gran"><img src="${imgPersonaje(t)}" alt="${esc(P.nombre)}"></div>
-    <p class="lema-c">${esc(P.lema)}</p>${teu ? "" : `<p style="text-align:center;margin:0 0 6px"><span class="nv-req${nivelOk(t) ? "" : " falta-nv"}">NV ${P.nivel || 1}</span> <span class="preu">${MONEDA}${P.precio}</span></p>`}
+    <p class="lema-c">${esc(P.lema)}</p>${teu ? `<p style="text-align:center;margin:0 0 6px"><span class="nv-req">NV ${Stats.experienciaPj(S, t).nivel}</span></p>` : `<p style="text-align:center;margin:0 0 6px"><span class="nv-req${nivelOk(t) ? "" : " falta-nv"}">NV ${P.nivel || 1}</span> <span class="preu">${MONEDA}${P.precio}</span></p>`}
     
     <div style="margin-top:14px">${accio}</div>`;
 }
@@ -5884,12 +5901,13 @@ function render() {
   if (vista === "compte") despresPintarCompte();
   const h = $("#personatge");
   if (S.personaje) {
-    const nv = Stats.experiencia(S).nivel;
+    const nv = Stats.experienciaPj(S).nivel;
     if (h && nv >= 12) h.classList.add("aura");
     window.FRAGUA_NIVEL = nv;
     if (window.Escena3D && window.Escena3D.fuerza) window.Escena3D.fuerza(nv);
   }
   window.FRAGUA_HEROE = h || null;
+  if (S.personaje && !S.pjOrigen) S.pjOrigen = S.personaje.tipo;       // també quan l'estat arriba del servidor
   // el foc de la ratxa, viu: més dies aquesta setmana, més foc (0 dies: la flama apagada i quieta)
   if (vista === "inicio") { const em = document.querySelector(".placa-foc .emblema"), fd = Stats.fuego(S).dias; if (em && fd > 0) Efectos.focViu(em, 0.6 + fd * 0.09); }
   document.dispatchEvent(new CustomEvent("fragua:heroe", { detail: h || null }));
@@ -6002,7 +6020,7 @@ document.addEventListener("click", ev => {
     }
     case "terminar": {
       const s = activa(); if (!s) break;
-      const abans = Stats.experiencia(S), rAbans = Stats.diasAno(S), oroAbans = oroGanado(), mrAbans = Stats.diasTotal(S), sid = s.id;
+      const abans = Stats.experienciaPj(S), rAbans = Stats.diasAno(S), oroAbans = oroGanado(), mrAbans = Stats.diasTotal(S), sid = s.id;
       const ahir = clave(new Date(Date.now() - 864e5));
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
@@ -6011,7 +6029,7 @@ document.addEventListener("click", ev => {
       terminar(); S.ui.vista = "inicio"; musica();
       if (soc().participa) miraPujada(pujaAbans); else sincronitza();
       marcaEntrenat();     // que el recordatori no avisi qui ja ha entrenat (i si no hi ha xarxa, es torna a provar)
-      const des = Stats.experiencia(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
+      const des = Stats.experienciaPj(S), rDes = Stats.diasAno(S), mrDes = Stats.diasTotal(S);
       // la meta de dies de l'any: si l'ha feta avui, la seva bossa (una vegada per any)
       const any = String(new Date().getFullYear()), meta = (S.metaAny || {})[any];
       const metaNova = meta && rDes >= meta && !(S.metasAnyOk || []).includes(any) ? meta : null;
@@ -6026,7 +6044,7 @@ document.addEventListener("click", ev => {
     case "tanca-celebra": {
       $("#celebra").innerHTML = "";
       if (S.pendentNivell) {
-        const n = S.pendentNivell; S.pendentNivell = null; const xp = Stats.experiencia(S);
+        const n = S.pendentNivell; S.pendentNivell = null; const xp = Stats.experienciaPj(S);
         setTimeout(() => Efectos.suena("nivell"), 150);
         celebra(`<div class="gran or">¡NIVEL ${n}!</div><div class="sub" style="font-size:18px;margin-top:10px">Ahora eres</div><div class="gran or" style="font-size:28px">${esc(xp.titulo)}</div>`, "A LA FRAGUA");
       } else if (!mostraPujada()) setTimeout(() => reacciona("celebra"), 120);
