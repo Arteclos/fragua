@@ -276,6 +276,28 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .rebuda-dia ul{margin:4px 0 0;padding:0;list-style:none}
 .rebuda-dia li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(197,123,55,.15);font-size:14px}
 .rebuda-dia li small{color:var(--fum);white-space:nowrap}
+/* l'importador: la càrrega (el yunque rep tres cops) i el resultat (importa.js, htmlLlegintImp i htmlResultatImp) */
+.imp-llegint{display:flex;flex-direction:column;align-items:center;padding:26px 0 18px}
+.imp-enclusa{position:relative;animation:impCop .48s cubic-bezier(.3,1.7,.5,1) 3 both}
+.imp-enclusa::after{content:"";position:absolute;left:50%;top:18%;width:120px;height:120px;margin-left:-60px;border-radius:50%;background:radial-gradient(circle,rgba(254,225,50,.55),transparent 65%);opacity:0;animation:impEspurna .48s ease-out .12s 3}
+.imp-passos{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.imp-passos li{opacity:0;color:var(--crema);font-size:15px;animation:pujaDe .3s ease-out calc(.15s + var(--i) * .48s) both}
+.imp-passos li::before{content:"✓";color:var(--verd);font-weight:700;margin-right:8px}
+@keyframes impCop{0%{transform:translateY(-10px) scale(1.04)}45%{transform:translateY(3px) scale(.97)}100%{transform:none}}
+@keyframes impEspurna{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.3)}}
+.imp-xifra{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:4px 0 2px}
+.imp-xifra b{font-family:var(--display);font-weight:900;font-size:54px;line-height:1}
+.imp-xifra span{color:var(--crema);font-size:16px}
+.imp-dies{text-align:center;color:var(--fum);font-size:14px;margin:4px 0 14px}
+.imp-rev{margin:0 0 8px}
+.imp-rev-dia{display:block;color:var(--fum-2);font-size:12px;margin:0 0 2px}
+.imp-tot-ok{text-align:center;color:var(--verd);margin:6px 0 12px}
+.imp-oks{margin:10px 0 0}
+.imp-oks>summary,.imp-ign>summary{cursor:pointer;color:var(--fum);padding:8px 0}
+.imp-aprendre{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(197,123,55,.35);background:rgba(197,123,55,.06);font-size:14px;line-height:1.35}
+.imp-aprendre input{margin-top:3px;width:20px;height:20px;flex:none;accent-color:#d8914a}
+.imp-torna{text-align:center;margin:12px 0 0}
+@media (prefers-reduced-motion:reduce){.imp-enclusa,.imp-enclusa::after,.imp-passos li{animation:none;opacity:1}}
 .r-accions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
 /* ---- supersèries i circuits, i la icona dels conceptes (27-09-2026) ---- */
 .info-boto{display:inline-grid;place-items:center;width:30px;height:30px;margin:-6px 0 -6px 2px;padding:0;border:0;border-radius:50%;background:none;color:#e6a45a;vertical-align:middle;cursor:pointer}
@@ -2372,8 +2394,12 @@ const Efectos = (() => {
   // lectura i sempre val 1. La parada abaixava el volum fins a zero abans de fer pause(), i a l'iPhone no hi
   // arribava mai. Ara, on el volum no es pot tocar, es para de cop; on sí, fos curt i pause() segur.
   // (No es passa per l'àudio de la pàgina: a l'iPhone amb l'interruptor de silenci, aquell no sona.)
+  // L'IPHONE, SEGONA PART (27-09, l'Albert, a mig entreno: «ha sigut passar a l'exercici 2 i ara es para la música cada
+  // vegada que surto de l'app»). La primera cançó dura uns 3 o 4 minuts: la segona la posa l'app sola, sense cap toc, i
+  // l'iPhone ja no l'acompanya en sortir. Ara la música es declara com a música (Media Session: el títol a la pantalla
+  // bloquejada i els seus botons), i en tornar a l'app a mig entreno, si s'ha aturat sense que ningú la parés, torna a sonar.
   const Musica = (() => {
-    let el = null, mode = null, ordre = [], i = 0, fos = null;
+    let el = null, mode = null, ordre = [], i = 0, fos = null, volia = false;
     const on = () => typeof S === "undefined" || S.musica !== false;
     const llista = m => (typeof MUSICA !== "undefined" && MUSICA[m]) || [];
     const base = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
@@ -2412,6 +2438,25 @@ const Efectos = (() => {
         el.addEventListener("loadedmetadata", salta);
       }
       const p = el.play(); if (p && p.catch) p.catch(() => {});
+      volia = true; sessioMedia();
+    }
+    function sessioMedia() {
+      if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({ title: titol(ordre[i]) || "KLONK", artist: "KLONK", album: mode === "entreno" ? "Entreno" : "La forja",
+          artwork: [{ src: base() + "icones/entreno.webp", sizes: "192x192", type: "image/webp" }] });
+        navigator.mediaSession.playbackState = "playing";
+        if (sessioMedia.fet) return;
+        sessioMedia.fet = true;
+        navigator.mediaSession.setActionHandler("play", () => { if (!el) return; volia = true; const p = el.play(); if (p && p.catch) p.catch(() => {}); navigator.mediaSession.playbackState = "playing"; });
+        navigator.mediaSession.setActionHandler("pause", () => { if (!el) return; volia = false; el.pause(); navigator.mediaSession.playbackState = "paused"; });
+        navigator.mediaSession.setActionHandler("nexttrack", () => { seguent(); });
+      } catch (e) {}
+    }
+    // En tornar a l'app: si havia de sonar i s'ha aturat sola (l'iPhone en sortir), continua on era.
+    function represa() {
+      if (!volia || !el || !el.paused || !on() || !el.src) return;
+      const p = el.play(); if (p && p.catch) p.catch(() => {});
     }
     // On cau el rellotge dins la llista: [cançó, segon]. Sense durades, la primera des del principi.
     function perHora(seg) {
@@ -2428,7 +2473,7 @@ const Efectos = (() => {
       if (!ll.length) return;   // sense cançons per a aquest moment: segueix la que sonava
       prepara();
       if (nou === mode && el.src) {   // la mateixa llista: si estava aturada, continua on era
-        if (el.paused) { volum(el, mode === "entreno" ? 0.55 : 0.32); const p = el.play(); if (p && p.catch) p.catch(() => {}); }
+        if (el.paused) { volum(el, mode === "entreno" ? 0.55 : 0.32); const p = el.play(); if (p && p.catch) p.catch(() => {}); volia = true; sessioMedia(); }
         return;
       }
       mode = nou; ordre = [...ll];
@@ -2442,7 +2487,7 @@ const Efectos = (() => {
       i = (i + 1) % ordre.length; toca(0);
       return titol(ordre[i]);
     }
-    function para() { clearInterval(fos); fos = apaga(el); }
+    function para() { clearInterval(fos); fos = apaga(el); volia = false; try { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused"; } catch (e) {} }
     const sona = () => !!el && !el.paused;
     // L'ambient de la fragua (cops, foc que crepita): fluix i en bucle quan la música és encesa però en
     // aquell moment no té cançons. Amb el botó de música apagat, silenci: ni música ni ambient.
@@ -2457,7 +2502,7 @@ const Efectos = (() => {
     }
     // En sortir de l'app o bloquejar el mòbil sense entreno: ni música ni ambient (l'Albert, 26-09-2026 nit)
     function silenci() { para(); apaga(amb); }
-    return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, silenci, seguent, sona, ambient,
+    return { posa: (m, des) => { posa(m, des); setTimeout(ambient, 700); }, para: () => { para(); ambient(); }, silenci, seguent, sona, ambient, represa,
       hiHa: m => llista(m).length > 0, titol: () => (ordre.length && el && el.src ? titol(ordre[i]) : "") };
   })();
   // EL VOCABULARI DE LES VIBRACIONS (bloc KLONK, 27-09-2026; l'Albert: «haptics les pots fabricar?»). Cada moment té
@@ -3334,14 +3379,15 @@ const ALIES_IMP = [
   ["Hack Squat", "hack squat|machine hack squat|hack squat machine"],
   ["Extensión de cuádriceps", "leg extension|leg extensions|quad extension|machine leg extension"],
   ["Press de gemelos en prensa", "leg press calf press|calf press|calf press on leg press|leg press calf raise"],
-  ["Elevación de gemelos", "standing calf raise|calf raise|calf raises|smith standing calf raise|smith calf raise|machine calf raise"],
+  ["Elevación de gemelos", "standing calf raise|calf raise|calf raises|machine calf raise"],
+  ["Elevación de gemelos en multipower", "smith standing calf raise|smith calf raise|smith machine calf raise"],
   ["Press militar en máquina", "machine shoulder press|shoulder press machine|machine overhead press"],
   ["Press de hombros en multipower", "smith machine shoulder press|smith shoulder press|smith overhead press"],
   ["Press de hombros con mancuernas", "dumbbell shoulder press|db shoulder press|seated dumbbell press|seated db shoulder press"],
   ["Curl a una mano de pie en polea", "bayesian cable curl|bayesian curl|behind the body cable curl"],
   ["Press francés con mancuernas", "seated db french press|db french press|dumbbell french press|seated french press|french press"],
   ["Curl de bíceps en banco con soporte", "preacher curl|constant tension preacher curl|ez bar preacher curl|machine preacher curl"],
-  ["Patada de tríceps con mancuernas", "tricep kickback|cable tricep kickback|dumbbell kickback|db kickback"],
+  ["Patada de tríceps con mancuernas", "tricep kickback|dumbbell kickback|db kickback"],
   ["Elevaciones laterales en polea", "cable lateral raise|cable y raise|y raise|cuffed lateral raise|cable side raise"],
   ["Elevaciones laterales con mancuernas", "lateral raise|dumbbell lateral raise|db lateral raise|side lateral raise|side raise"],
   ["Fondos", "dip|dips|assisted dip|assisted dips|machine dip|chest dip|tricep dip|weighted dip"],
@@ -3360,7 +3406,8 @@ const ALIES_IMP = [
   ["Press francés en polea", "cable skull crusher|cable skullcrusher|cable skull"],
   ["Press francés con barra Z", "skull crusher|skullcrusher|ez bar skull crusher|lying tricep extension"],
   ["Curl inclinado con mancuernas", "incline db stretch curl|incline curl|incline dumbbell curl|incline stretch curl"],
-  ["Curl de bíceps de pie en polea", "cable curl|standing cable curl|kneeling overhead cable curl|overhead cable curl"],
+  ["Curl de bíceps de pie en polea", "cable curl|standing cable curl"],
+  ["Curl en polea por encima de la cabeza", "kneeling overhead cable curl|overhead cable curl|high cable curl"],
   ["Sentadilla con barra", "squat|back squat|barbell squat|barbell back squat|high bar squat|low bar squat"],
   ["Press de banca con barra, agarre medio", "bench press|barbell bench press|flat bench press|flat barbell bench press"],
   ["Press inclinado con mancuernas", "incline dumbbell press|incline db press|low incline dumbbell press"],
@@ -3370,7 +3417,7 @@ const ALIES_IMP = [
   ["Dominadas", "pull up|pullup|pull ups|chin up|chin ups|weighted pull up"],
   ["Hip thrust con barra", "hip thrust|barbell hip thrust|machine hip thrust|smith hip thrust"],
   ["Sentadilla búlgara con mancuernas", "bulgarian split squat|split squat|db bulgarian split squat"],
-  ["Zancada con mancuernas", "lunge|lunges|walking lunge|dumbbell lunge|smith machine lunge|smith lunge|reverse lunge"],
+  ["Zancada con mancuernas", "lunge|lunges|walking lunge|dumbbell lunge|reverse lunge"],
   ["Curl martillo", "hammer curl|dumbbell hammer curl|db hammer curl|rope hammer curl"],
   ["Curl de bíceps con mancuernas", "dumbbell curl|db curl|bicep curl|biceps curl|alternating dumbbell curl"],
   ["Curl con barra", "barbell curl|ez bar curl|ez curl"],
@@ -3441,6 +3488,14 @@ function netejaNomEj(nom) {
     .replace(/\blow[- ]incline\b/gi, "incline").replace(/\s+/g, " ").trim();
   return n || String(nom || "").trim();
 }
+// Les paraules que concreten una variant (la postura, l'agafada, el material) i no l'exercici: si falten al nom de la
+// biblioteca, l'exercici encara és el mateix («Lying Paused Rope Face Pull» és un Face pull; «Inverse DB Zottman Curl», el
+// Curl Zottman). El material, a més, no pot contradir-se: una zancada «en multipower» no és la «con mancuernas».
+const MODIF_IMP = new Set(["lying", "seated", "standing", "kneeling", "sentado", "tumbado", "pie", "rodilla", "rope", "cuerda", "bar", "polea",
+  "mancuerna", "maquina", "multipower", "barra", "banda", "kettlebell", "single", "one", "arm", "unilateral", "mano", "alterno", "alternate",
+  "alternating", "inverse", "wide", "close", "narrow", "grip", "agarre", "neutral", "supino", "prono", "supported", "overhand", "underhand",
+  "ez", "plate", "disco", "weighted", "lastrado", "assisted", "asistido", "asistida", "paralela"]);
+const EQUIP_IMP = new Set(["polea", "mancuerna", "maquina", "multipower", "barra", "banda", "kettlebell"]);
 // {nom, conf 0-1, alts: els següents més semblants, sug: els que es proposen si no hi és}. La confiança baixa quan una
 // paraula del que ha escrit no hi és («Remo Meadows» no és «Remo en T»: com a molt, un suggeriment).
 function trobaEj(orig0) {
@@ -3449,21 +3504,25 @@ function trobaEj(orig0) {
   const P = poolImp(), no = netImp(orig), exacte = P.find(x => x.net === no || x.en === no);
   if (exacte) return { nom: exacte.n, conf: 1, alts: [] };
   const tk = tokImp(orig, true), clau = tk.join(" "), cont = tk.filter(w => !SOROLL_IMP.has(w));
-  const alies = aliesImp().get(clau) || aliesImp().get(cont.join(" "));
+  const nucli = cont.filter(w => !MODIF_IMP.has(w)), equipQ = cont.filter(w => EQUIP_IMP.has(w));
+  const alies = aliesImp().get(clau) || aliesImp().get(cont.join(" ")) || (nucli.length && nucli.length < cont.length ? aliesImp().get(nucli.join(" ")) : null);
+  // el material de l'exercici trobat, si en diu, ha de ser un dels que diu el nom llegit
+  const conflicte = n => { if (!equipQ.length) return false; const x = P.find(y => y.n === n); const eq = x ? [...x.tk].filter(w => EQUIP_IMP.has(w)) : []; return eq.length > 0 && !eq.some(w => equipQ.includes(w)); };
   const triQ = trigrames(clau);
   let plens = 0;
   const punts = P.map(x => {
-    let q = 0; cont.forEach(w => { if (x.tk.has(w)) q++; });
-    const qCov = cont.length ? q / cont.length : 0, cCov = x.tk.size ? q / x.tk.size : 0;
+    let q = 0, qN = 0; cont.forEach(w => { if (x.tk.has(w)) { q++; if (!MODIF_IMP.has(w)) qN++; } });
+    const qCov = cont.length ? q / cont.length : 0, qNuc = nucli.length ? qN / nucli.length : qCov, cCov = x.tk.size ? q / x.tk.size : 0;
     let s = 0.5 * qCov + 0.25 * Math.min(1, cCov * 1.6) + 0.25 * Math.max(diceImp(triQ, x.tri), x.triEn ? diceImp(triQ, x.triEn) : 0) + (x.casa ? 0.04 : 0) - (x.nivell >= 3 ? 0.04 : 0);
-    if (qCov < 1) s = Math.min(s, qCov >= 0.6 ? 0.7 : 0.5);
-    else plens++;
-    return { n: x.n, s, ple: qCov === 1 };
+    if (qNuc < 1) s = Math.min(s, qNuc >= 0.6 ? 0.7 : 0.5);
+    else { plens++; if (qCov < 1) s = Math.max(s, 0.62); }
+    return { n: x.n, s, ple: qNuc === 1 };
   }).sort((a, b) => b.s - a.s);
-  if (alies) return { nom: alies, conf: 0.97, alts: punts.filter(p => p.n !== alies).slice(0, 3).map(p => p.n) };
+  if (alies) return { nom: alies, conf: conflicte(alies) ? 0.72 : 0.97, alts: punts.filter(p => p.n !== alies).slice(0, 3).map(p => p.n) };
   const top = punts[0];
-  // si només un exercici té totes les paraules («Curl araña»), és aquest
-  const conf = Math.min(0.95, top.ple && plens === 1 ? Math.max(top.s, 0.85) : top.s);
+  // si només un exercici té totes les paraules del nucli («Curl araña»), és aquest
+  let conf = Math.min(0.95, top.ple && plens === 1 ? Math.max(top.s, 0.85) : top.s);
+  if (conflicte(top.n)) conf = Math.min(conf, 0.72);
   return { nom: top.n, conf, alts: punts.slice(1, 4).map(p => p.n), sug: punts.slice(0, 3).filter(p => p.s >= 0.3).map(p => p.n) };
 }
 // Un exercici que no tenim: gran si és d'aquests moviments (6 a 10 repeticions), aïllat si no.
@@ -3694,20 +3753,74 @@ const I_CREA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stro
 const I_PLANTILLA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4"/></svg>';
 const srTxt = c => `${c.series ? c.series + " × " : ""}${c.min ? (c.min === c.max ? c.min : c.min + "-" + c.max) : ""}`.replace(/ × $/, " series");
 
+/* ELS TRES PASSOS: 1) el text o el fitxer, i «LEER MI RUTINA»; 2) una càrrega curta (el yunque, i els dies, els exercicis
+   i les sèries, per aquest ordre); 3) «N de M reconocidos», només el que cal revisar a la vista, la resta plegat, i la
+   casella per enviar-nos els que no coneixem. D'allà, a l'editor. */
 function fullImporta() {
+  return `<div class="imp" id="imp-cos">${S.ui.impPas === "resultat" ? htmlResultatImp() : htmlTextImp()}</div>`;
+}
+function htmlTextImp() {
   const compte = teCompte();
-  return `<div class="imp">
-    <p class="suau petit" style="margin-top:0">Pégala tal como la tienes: de WhatsApp, de tus notas o de un PDF${compte ? ". También puedes subir una foto, una captura o un archivo" : ""}. La lees aquí abajo y la revisas en el editor antes de guardarla.</p>
+  return `
+    <p class="suau petit" style="margin-top:0">Pégala tal como la tienes: de WhatsApp, de tus notas o de un PDF${compte ? ". También puedes subir una foto, una captura o un archivo" : ""}. Te decimos qué hemos reconocido y la revisas en el editor antes de guardarla.</p>
     <label class="lector" for="imp-txt">Tu rutina</label>
     <textarea id="imp-txt" class="imp-txt" rows="8" spellcheck="false" autocomplete="off" placeholder="Día 1: Pecho y tríceps&#10;Press banca 4x8-10&#10;Aperturas 3x12&#10;Fondos 3x10&#10;&#10;Día 2: Pierna&#10;Sentadilla 4x6-8">${esc(S.ui.impTxt || "")}</textarea>
     ${compte ? `<div class="imp-fitxer"><label class="btn marc imp-fit-b">${I_FOTO}<span>Subir foto o archivo</span><input type="file" id="imp-fit" accept="image/*,.pdf,.xlsx,.docx,.txt,.csv,application/pdf,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden></label>
       <p class="petit suau" id="imp-e" aria-live="polite">Foto, captura, PDF, Excel o Word. No se guardan: se leen y se borran.</p></div>`
       : `<p class="petit suau" id="imp-e" aria-live="polite">Para leer fotos y archivos, entra en tu cuenta. El texto pegado funciona igual.</p>`}
-    <div id="imp-prev" aria-live="polite">${htmlPrevImp()}</div>
-  </div>`;
+    <div style="margin-top:14px">${botoForja('data-accion="imp-llegeix"', "LEER MI RUTINA", "Te decimos cuántos ejercicios reconocemos")}</div>`;
 }
-function filaImp(e, enGrup) {
+// 2 · la càrrega: el yunque que rep tres cops, un per pas
+function htmlLlegintImp() {
+  return `<div class="imp-llegint" role="status" aria-live="polite">
+    <div class="imp-enclusa"><img src="${ACTIUS}yunques/bronce.webp" alt="" width="104" height="104"></div>
+    <ol class="imp-passos">${["Buscando los días", "Reconociendo los ejercicios", "Mirando series y repeticiones"].map((p, i) => `<li style="--i:${i}">${p}</li>`).join("")}</ol></div>`;
+}
+const PAS_IMP_MS = 480;
+function llegeixImp() {
+  const t = $("#imp-txt"); if (t) S.ui.impTxt = t.value;
+  if (!(S.ui.impTxt || "").trim()) { avis("Pega primero tu rutina, o sube una foto.", true); return; }
+  const cos = $("#imp-cos"); if (!cos) return;
+  guardar();
+  const quiet = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (quiet) { S.ui.impPas = "resultat"; refrescaResultatImp(); return; }
+  cos.innerHTML = htmlLlegintImp();
+  [0, 1, 2].forEach(i => setTimeout(() => { Efectos.suena("tic"); Efectos.vibra("tic"); }, 120 + i * PAS_IMP_MS));
+  setTimeout(() => { if (!$("#imp-cos")) return; S.ui.impPas = "resultat"; refrescaResultatImp(); Efectos.suena("yunque"); Efectos.vibra("fet"); }, 120 + 3 * PAS_IMP_MS);
+}
+function refrescaResultatImp() {
+  const cos = $("#imp-cos"); if (!cos) return;
+  cos.innerHTML = S.ui.impPas === "resultat" ? htmlResultatImp() : htmlTextImp();
+  const capa = cos.closest("#capa") || cos.parentElement; if (capa && capa.scrollTo) capa.scrollTo({ top: 0 });
+  guardar();
+}
+// 3 · el resultat
+function htmlResultatImp() {
+  const r = llegeixRutinaApl(S.ui.impTxt || "");
+  r.dias.forEach(d => d.ej.forEach(e => { e.dia = d.t; }));
+  const tots = r.dias.flatMap(d => d.ej), ok = tots.filter(e => e.estat === "ok"), revisar = tots.filter(e => e.estat !== "ok");
+  const nous = [...new Set(tots.filter(e => e.estat === "nou" && !e.triat).map(e => e.orig))];
+  if (!tots.length) return `<p class="imp-buit">No vemos ejercicios con sus series. Pon uno por línea, así: «Press banca 4x10».</p>
+    <p class="imp-torna"><button class="enllac" data-accion="imp-torna">Volver a mi texto</button></p>`;
+  const perDia = r.dias.map((d, i) => `<section class="imp-dia"><b class="imp-dia-t">Día ${i + 1}: ${esc(d.t)}</b>${d.ej.map((e, j) => { const pg = posGrup(d.ej, j, x => x.g);
+      return (pg && pg.pos === 1 && pg.n > 1 ? `<div class="grup-cap"><b>${nomGrup(pg.n)}</b>${infoBoto(pg.n >= 3 ? "circuito" : "superserie")}<small>${pg.n} seguidos, sin descanso entre ellos</small></div>` : "") + filaImp(e, pg && pg.n > 1, true); }).join("")}</section>`).join("");
+  return `<div class="imp-res">
+    <div class="imp-xifra"><b class="or num">${ok.length}</b><span>de ${tots.length} ${tots.length === 1 ? "ejercicio reconocido" : "ejercicios reconocidos"}</span></div>
+    <p class="imp-dies">${esc(r.nombre || "Tu rutina")}: ${nDies(r.dias.length)}. ${r.dias.map(d => esc(d.t)).join(", ")}.</p>
+    ${revisar.length ? `<h3 class="imp-cap">${revisar.length === 1 ? "Uno para revisar" : `${revisar.length} para revisar`}</h3>
+      ${revisar.map(e => `<div class="imp-rev"><small class="imp-rev-dia">${esc(e.dia)}</small>${filaImp(e)}</div>`).join("")}` : `<p class="imp-tot-ok">Los hemos reconocido todos.</p>`}
+    <details class="imp-oks"><summary>Ver la rutina entera, día a día</summary>${perDia}</details>
+    ${r.ignorades.length ? `<details class="imp-ign"><summary>${r.ignorades.length === 1 ? "Una línea no la hemos entendido" : `${r.ignorades.length} líneas no las hemos entendido`}</summary>${r.ignorades.slice(0, 20).map(l => `<p>${esc(l)}</p>`).join("")}<p class="suau petit">Si es un ejercicio, ponle sus series en el texto: «Remo 3x12».</p></details>` : ""}
+    ${r.avisos.map(a => `<p class="petit al-foto-ull">${esc(a)}</p>`).join("")}
+    ${nous.length && teCompte() ? `<label class="imp-aprendre"><input type="checkbox" id="imp-comparteix"${S.ui.impComparteix ? " checked" : ""}><span>Enviar a KLONK ${nous.length === 1 ? "el ejercicio que no conocemos" : `los ${nous.length} ejercicios que no conocemos`}, solo el nombre, para añadirlos a la biblioteca.</span></label>` : ""}
+    <div style="margin-top:14px">${botoForja('data-accion="imp-obre"', "ABRIR EN EL EDITOR", "La revisas y la guardas")}</div>
+    <p class="imp-torna"><button class="enllac" data-accion="imp-torna">Cambiar el texto</button></p></div>`;
+}
+// compacte: a la llista sencera (plegada) del resultat, només el nom i les sèries; es revisa a dalt, a «para revisar»
+function filaImp(e, enGrup, compacte) {
   const k = esc(netImp(e.orig)), sr = srTxt(e);
+  if (compacte) { const foto = !e.propi && fotoEj(e.nom);
+    return `<div class="imp-ej ${e.estat}${enGrup ? " en-grup" : ""}"><div class="imp-ej-cap">${foto ? `<img src="${foto}" alt="" width="36" height="36" loading="lazy">` : '<span class="sense-foto"></span>'}<span class="imp-nom">${esc(e.nom)}</span>${sr ? `<span class="imp-sr num">${sr}</span>` : ""}</div>${e.estat !== "ok" ? '<small>Para revisar: arriba.</small>' : ""}</div>`; }
   const xip = n => `<button class="chip" data-accion="imp-tria" data-k="${k}" data-n="${esc(n)}">${esc(n)}</button>`;
   const pedit = (S.ui.impPedits || []).includes(netImp(e.orig));
   let sota = "";
@@ -3719,26 +3832,8 @@ function filaImp(e, enGrup) {
   const foto = !e.propi && fotoEj(e.nom);
   return `<div class="imp-ej ${e.estat}${enGrup ? " en-grup" : ""}"><div class="imp-ej-cap">${foto ? `<img src="${foto}" alt="" width="36" height="36" loading="lazy">` : '<span class="sense-foto"></span>'}<span class="imp-nom">${esc(e.nom)}</span>${sr ? `<span class="imp-sr num">${sr}</span>` : ""}</div>${sota}</div>`;
 }
-function htmlPrevImp() {
-  const txt = S.ui.impTxt || "";
-  if (!txt.trim()) return "";
-  const r = llegeixRutinaApl(txt), n = r.dias.reduce((a, d) => a + d.ej.length, 0);
-  if (!n) return `<p class="imp-buit">Aún no vemos ejercicios. Pon uno por línea, con sus series: «Press banca 4x10».</p>`;
-  const dubtes = r.dias.reduce((a, d) => a + d.ej.filter(e => e.estat !== "ok").length, 0);
-  return `<h3 class="imp-cap">${esc(r.nombre || "Tu rutina")}: ${nDies(r.dias.length)}, ${n} ${n === 1 ? "ejercicio" : "ejercicios"}</h3>
-    ${dubtes ? `<p class="petit suau" style="margin:0 0 8px">${dubtes === 1 ? "Hay uno para revisar" : `Hay ${dubtes} para revisar`}: están marcados.</p>` : ""}
-    ${r.dias.map((d, i) => `<section class="imp-dia"><b class="imp-dia-t">Día ${i + 1}: ${esc(d.t)}</b>${d.ej.map((e, j) => { const pg = posGrup(d.ej, j, x => x.g);
-      return (pg && pg.pos === 1 && pg.n > 1 ? `<div class="grup-cap"><b>${nomGrup(pg.n)}</b>${infoBoto(pg.n >= 3 ? "circuito" : "superserie")}<small>${pg.n} seguidos, sin descanso entre ellos</small></div>` : "") + filaImp(e, pg && pg.n > 1); }).join("")}</section>`).join("")}
-    ${r.ignorades.length ? `<details class="imp-ign"><summary>${r.ignorades.length === 1 ? "Una línea no la hemos entendido" : `${r.ignorades.length} líneas no las hemos entendido`}</summary>${r.ignorades.slice(0, 20).map(l => `<p>${esc(l)}</p>`).join("")}<p class="suau petit">Si es un ejercicio, ponle sus series en el texto: «Remo 3x12».</p></details>` : ""}
-    ${r.avisos.map(a => `<p class="petit al-foto-ull">${esc(a)}</p>`).join("")}
-    <div style="margin-top:14px">${botoForja('data-accion="imp-obre"', "ABRIR EN EL EDITOR", "La revisas y la guardas")}</div>`;
-}
 let tPrevImp = 0;
-function refrescaPrevImp(tard) {
-  clearTimeout(tPrevImp);
-  const fes = () => { const el = $("#imp-prev"); if (el) el.innerHTML = htmlPrevImp(); guardar(); };
-  if (tard) tPrevImp = setTimeout(fes, 250); else fes();
-}
+function refrescaPrevImp() { clearTimeout(tPrevImp); tPrevImp = setTimeout(guardar, 400); }
 
 async function importaFitxer(f) {
   const e = $("#imp-e"); if (!f || !e) return;
@@ -3758,10 +3853,10 @@ async function importaFitxer(f) {
     const t = $("#imp-txt"); if (!t) return;
     const nou = String(j.text || "").trim();
     t.value = t.value.trim() ? t.value.trim() + "\n\n" + nou : nou;
-    S.ui.impTxt = t.value; refrescaPrevImp(false);
+    S.ui.impTxt = t.value; guardar();
     const n = llegeixRutina(t.value).dias.reduce((a, d) => a + d.ej.length, 0);
     e.textContent = !n ? "Hemos leído el texto, pero no vemos ejercicios con series. Revísalo arriba."
-      : j.tipus === "imatge" ? "Leído de la foto. Revisa el texto: una foto puede confundir alguna letra." : "Leído. Revisa lo que hemos entendido.";
+      : j.tipus === "imatge" ? "Leído de la foto. Revisa el texto (una foto puede confundir alguna letra) y toca LEER MI RUTINA." : "Leído. Toca LEER MI RUTINA.";
     e.className = "petit " + (n ? "al-foto-ok" : "al-foto-ull");
     if (n) Efectos.vibra("fet");
   } catch (x) {
@@ -3778,8 +3873,16 @@ async function pideEj(nom, b) {
     Efectos.suena("triar"); avis("Pedido. Lo revisamos y, si encaja, lo añadimos a la biblioteca.");
   } catch (x) { avis(x.message, true); }
 }
+// Els que no coneixem, si ha marcat la casella: només el nom, com «Pídenos que lo añadamos», sense avisos ni esperes.
+function enviaNousImp(noms) {
+  const ja = new Set(S.ui.impPedits || []), falten = noms.filter(n => !ja.has(netImp(n))).slice(0, 10);
+  S.ui.impPedits = [...ja, ...falten.map(netImp)];
+  falten.reduce((p, n) => p.then(() => api("POST", "/ejercicios/pide", { nombre: String(n).slice(0, 60) }).catch(() => {})), Promise.resolve());
+}
 function obreImportada() {
   const r = llegeixRutinaApl(S.ui.impTxt || ""), dias = r.dias.filter(d => d.ej.length).slice(0, 14);
+  const ck = $("#imp-comparteix");
+  if (ck && ck.checked && teCompte()) enviaNousImp([...new Set(dias.flatMap(d => d.ej).filter(e => e.estat === "nou" && !e.triat).map(e => e.orig))]);
   if (!dias.length) { avis("Aún no vemos ejercicios: pon uno por línea, con sus series.", true); return; }
   const cfg = {};
   const d2 = dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.slice(0, 25).map(e => {
@@ -3792,7 +3895,7 @@ function obreImportada() {
   }) }));
   d2.forEach(normalitzaGrups);
   S.ui.edit = { id: nouId(), nombre: String(r.nombre || "Mi rutina").slice(0, 40), resumen: "Importada por ti.", dias: d2, cfgImport: cfg };
-  S.ui.edDia = null; guardar(); tancaFull(); veure("editor"); Efectos.suena("yunque");
+  S.ui.edDia = null; S.ui.impPas = "text"; guardar(); tancaFull(); veure("editor"); Efectos.suena("yunque");
   avis("Revísala y pulsa GUARDAR.");
 }
 // Els camins per començar (l'Albert, 27-09-2026: «jo no posaria tantes rutines només entrar... que posi comença la teva
@@ -3817,10 +3920,13 @@ function vistaEmpieza() {
 
 function accioImporta(acc, b) {
   switch (acc) {
-    case "rut-importa": obreFull(fullImporta(), "Importar tu rutina"); return true;
+    case "rut-importa": S.ui.impPas = "text"; obreFull(fullImporta(), "Importar tu rutina"); return true;
+    case "imp-llegeix": llegeixImp(); return true;
+    case "imp-torna": S.ui.impPas = "text"; refrescaResultatImp(); return true;
     case "rut-plantilles": obreFull(fullPlantilles(), "Plantillas de KLONK"); return true;
     case "rut-ver-full": tancaFull(); S.ui.rutVer = b.dataset.id; veure("rutina"); return true;
-    case "imp-tria": S.ui.impTria = { ...(S.ui.impTria || {}), [b.dataset.k]: b.dataset.n }; Efectos.suena("tap"); refrescaPrevImp(false); return true;
+    case "imp-tria": { const ck = $("#imp-comparteix"); if (ck) S.ui.impComparteix = ck.checked;
+      S.ui.impTria = { ...(S.ui.impTria || {}), [b.dataset.k]: b.dataset.n }; Efectos.suena("tap"); refrescaResultatImp(); return true; }
     case "imp-pide": pideEj(b.dataset.n, b); return true;
     case "imp-obre": obreImportada(); return true;
   }
@@ -5139,7 +5245,7 @@ function fullEjercicio(n) {
   const c = Stats.curvaEjercicio(S, n), vals = c.map(p => p.valor).slice(-16);
   const hist = S.ses.filter(s => s.fin && s.ej.some(e => e.n === n && e.sets.some(z => z.ok))).slice(-8).reverse();
   const lastre = x.x === "lastre";
-  return `${fotoEj(n) ? `<img class="ej-gran" src="${fotoEj(n)}" alt="" width="480" height="480" style="max-height:180px;object-fit:cover">` : ""}
+  return `${fotoEj(n) ? `<img class="ej-gran" src="${fotoEj(n)}" alt="${esc(n)}, cómo se hace" width="480" height="480">` : ""}
     ${vals.length >= 2 ? `<div class="r-graf panel" style="margin-top:10px">${grafTendencia(vals, 300, 130)}<small>Tu máximo estimado en cada entreno. La línea de puntos es la tendencia.</small></div>` : ""}
     <div class="r-tiles tres-t">${[[x.sesiones, "entrenos"], [x.series, "series"], lastre ? ["+" + kgTxt(x.lastre), "kg de lastre, lo máximo"] : [x.millor ? n0(x.millor.v) : "0", "kg máximo estimado"]].map(([v, t]) => `<div class="r-tile marc"><b class="or num">${v}</b><span>${t}</span></div>`).join("")}</div>
     ${(() => { const pc = typeof soc === "function" && soc().yo && soc().yo.percentils ? soc().yo.percentils[n] : null;
@@ -7668,7 +7774,7 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {});
   if (document.visibilityState === "visible") reintentaEntrenat();
-  if (activa()) return;
+  if (activa()) { if (document.visibilityState === "visible") Efectos.Musica.represa(); return; }     // a mig entreno, sona; si s'ha aturat sola, continua
   if (document.visibilityState === "hidden") Efectos.Musica.silenci();
   else if (musicaEngegada) musica();
 });
@@ -7894,7 +8000,7 @@ document.addEventListener("click", ev => {
     case "ej-foto": {
       const e = activa()?.ej[+b.dataset.i]; if (!e) break;
       if (EJERCICIOS[e.n]) { obreFull(`<img class="ej-gran" src="${fotoEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480"><p class="ej-com">${esc(EJERCICIOS[e.n][1])}</p>`, e.n); break; }
-      obreFull(`${fotoEj(e.n) ? `<img class="ej-gran" src="${fotoEj(e.n)}" alt="" width="480" height="480" style="max-height:200px;object-fit:cover">` : ""}<ol class="pasos" id="pasos"><li>Cargando…</li></ol>`, e.n);
+      obreFull(`${fotoEj(e.n) ? `<img class="ej-gran" src="${fotoEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480">` : ""}<ol class="pasos" id="pasos"><li>Cargando…</li></ol>`, e.n);
       pasosDe(e.n).then(p => { const o = $("#pasos"); if (o) o.innerHTML = p ? p.map(x => `<li>${esc(x)}</li>`).join("") : "<li>Sin instrucciones.</li>"; });
       break;
     }
