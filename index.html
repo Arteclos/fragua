@@ -251,6 +251,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .resum-pag.viva .r-medalla svg{animation:gira-medalla 1s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:inherit}
 @keyframes gira-medalla{from{transform:rotateY(180deg) scale(.4)}to{transform:none}}
 .r-nota{color:var(--fum);font-size:14px;line-height:1.5;margin:14px 6px 0}
+.r-accions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
 .r-graf{padding:10px 12px 10px;margin:10px 0;text-align:left}
 .r-graf svg{width:100%;height:auto;display:block}
 .r-graf small{color:var(--fum);font-size:12px}
@@ -680,6 +681,15 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .roba-preu{margin:0;display:grid;gap:2px;text-align:center}
 .roba-preu b{font-size:22px;color:#ffd27a}
 .roba-preu small{color:var(--fum);font-size:13px}
+/* ---- la targeta per compartir (27-09-2026) ---- */
+#capa.sobre .vel{z-index:56}
+#capa.sobre .full{z-index:57}
+.tg{display:grid;gap:12px}
+.tg-prev{display:grid;place-items:center;min-height:200px}
+.tg-prev img{width:min(100%,300px);height:auto;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.tg-que{margin:0;text-align:center}
+.tg-botons{display:grid;gap:8px}
+.tg-boto{display:inline-flex;align-items:center;gap:8px}
 .compra-oro-q{margin:0;display:grid;grid-template-columns:auto 1fr;column-gap:10px;align-items:center}
 .compra-oro-q .or{font-family:var(--display);font-size:24px}
 .compra-oro-q span{grid-column:2;color:var(--fum);font-size:14px}
@@ -3488,6 +3498,134 @@ document.addEventListener("drop", ev => {
 const ROBA_GRUPS = [["esenciales", "Esenciales"], ["nombre", "El nombre"], ["pump", "Pump covers"], ["sudaderas", "Sudaderas"], ["anime", "Anime"], ["edgy", "Edgy"], ["premium", "Premium"], ["bolsas", "Bolsas"], ["shakers", "Shakers"]];
 const ROBA = [["ess-1", "esenciales", "Camiseta ajustada negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-2", "esenciales", "Pump cover carbón", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-3", "esenciales", "Tirantes color hueso", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["ess-4", "esenciales", "Manga larga negra", 3495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-1", "nombre", "KLONK al pecho, negra", 2795, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-2", "nombre", "KLONK grande a la espalda", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-3", "nombre", "Crop con KLONK", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["nom-4", "nombre", "KLONK al pecho y la sigma en la manga", 2995, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-1", "pump", "Negra con la sigma en relieve", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-2", "pump", "Crema con la sigma bordada", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-3", "pump", "Gris con parche rojo", 4495, ["XS", "S", "M", "L", "XL", "XXL"]], ["pump-4", "pump", "Rojo forja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-1", "sudaderas", "Sudadera con KLONK al pecho", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-2", "sudaderas", "Sudadera crop crema", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-3", "sudaderas", "Cremallera con la sigma de fuego", 6495, ["XS", "S", "M", "L", "XL", "XXL"]], ["sud-4", "sudaderas", "Cremallera roja", 5995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-1", "anime", "El herrero, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-2", "anime", "La herrera, a la espalda", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-3", "anime", "La barra sobre el yunque", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["anime-4", "anime", "Lisa con la sigma naranja", 3995, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-1", "edgy", "Tirantes lavados, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-2", "edgy", "Crop rota, sigma de fuego", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-3", "edgy", "Stringer con alambre estampado", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["edgy-4", "edgy", "Oversize de pintura roja y negra", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-1", "premium", "Conjunto arena", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-2", "premium", "Negra de piqué, sigma bordada", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-3", "premium", "Conjunto oliva", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["prem-4", "premium", "Crema con la sigma en la nuca", null, ["XS", "S", "M", "L", "XL", "XXL"]], ["bolsa-1", "bolsas", "Bolsa de deporte", null, ["Única"]], ["bolsa-2", "bolsas", "Tote con la sigma", 2495, ["Única"]], ["bolsa-3", "bolsas", "Mochila con la sigma", null, ["Única"]], ["bolsa-4", "bolsas", "Bolsa de cuerdas", 1495, ["Única"]], ["shaker-1", "shakers", "Shaker negro y bronce", 1295, ["Única"]], ["shaker-2", "shakers", "Shaker transparente", 1295, ["Única"]], ["shaker-3", "shakers", "Shaker de acero", 1995, ["Única"]], ["shaker-4", "shakers", "Shaker con la sigma de fuego", 1295, ["Única"]]];
 
+/* KLONK · la targeta per compartir (27-09-2026, bloc KLONK; Hub 765).
+   L'Albert (via la capitana, [dig-97713]): «targeta-imatge per compartir el rang o l'entreno a les stories» (fins ara
+   només es compartia text). Es dibuixa aquí en un <canvas> de 1080 × 1920 (el format de les stories) i es comparteix com
+   a imatge amb el menú del mòbil, o es baixa a l'ordinador.
+   QUÈ HI SURT, i és a posta: l'àlies, el personatge, el rang i les xifres de l'entreno. NI el nom de debò, ni cap foto, ni
+   el gimnàs, ni les mesures del cos (són dades de salut). La targeta es fa al mòbil i no passa pel servidor.
+   Primer es pinta i s'ensenya a la fulla; el botó COMPARTIR és el segon toc: l'iPhone només deixa compartir un fitxer
+   dins d'un gest de la persona, i pintar la targeta (fonts i imatges) triga una mica. */
+"use strict";
+
+const TG_W = 1080, TG_H = 1920;
+const carregaImg = src => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error("img " + src)); i.src = src; });
+function tgCobreix(ctx, img, x, y, w, h) {
+  const s = Math.max(w / img.width, h / img.height), iw = img.width * s, ih = img.height * s;
+  ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+}
+function tgConte(ctx, img, x, y, w, h) {
+  const s = Math.min(w / img.width, h / img.height), iw = img.width * s, ih = img.height * s;
+  ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih), iw, ih);          // enganxat a baix, com si trepitgés el terra
+}
+function tgOr(ctx, y, mida) {
+  const g = ctx.createLinearGradient(0, y - mida, 0, y);
+  g.addColorStop(0, "#fff4d2"); g.addColorStop(0.45, "#f8d78d"); g.addColorStop(1, "#e2a04a");
+  return g;
+}
+function tgText(ctx, txt, x, y, mida, { pes = 900, font = "Cinzel", color = null, alinea = "center", ombra = true, max = TG_W - 120 } = {}) {
+  ctx.save();
+  let m = mida;
+  do { ctx.font = `${pes} ${m}px "${font}", Georgia, serif`; m -= 2; } while (ctx.measureText(txt).width > max && m > 18);
+  ctx.textAlign = alinea; ctx.textBaseline = "alphabetic";
+  if (ombra) { ctx.shadowColor = "rgba(0,0,0,.85)"; ctx.shadowBlur = 18; ctx.shadowOffsetY = 4; }
+  ctx.fillStyle = color || tgOr(ctx, y, m);
+  ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function tgRodo(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function tgRajola(ctx, x, y, w, h, valor, etiqueta) {
+  ctx.save();
+  tgRodo(ctx, x, y, w, h, 26);
+  ctx.fillStyle = "rgba(18,14,12,.86)"; ctx.fill();
+  const g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, "#d8914a"); g.addColorStop(0.5, "#8b4722"); g.addColorStop(1, "#b76c2f");
+  ctx.lineWidth = 5; ctx.strokeStyle = g; ctx.stroke();
+  ctx.restore();
+  tgText(ctx, valor, x + w / 2, y + h * 0.56, 92, { max: w - 30 });
+  tgText(ctx, etiqueta, x + w / 2, y + h * 0.84, 38, { pes: 700, font: "Noto Serif", color: "#e9d6b4", ombra: false, max: w - 30 });
+}
+const tgAlies = () => (typeof sessio !== "undefined" && sessio && sessio.nick) || (S.personaje && S.personaje.nombre) || "Herrero";
+
+// d = { tipus: "entreno" | "rang", ... } → un Blob PNG
+async function dibuixaTargeta(d) {
+  const cv = document.createElement("canvas"); cv.width = TG_W; cv.height = TG_H;
+  const ctx = cv.getContext("2d");
+  await Promise.all(['900 80px "Cinzel"', '700 40px "Noto Serif"'].map(f => document.fonts.load(f).catch(() => null)));
+  const tipo = (S.personaje && S.personaje.tipo) || "herrero";
+  const [fons, logo, pj] = await Promise.all([carregaImg(`${ACTIUS}fons.webp`), carregaImg(`${ACTIUS}logo.webp`), carregaImg(imgPersonaje(tipo)).catch(() => null)]);
+  // el fons de la forja, enfosquit perquè es llegeixi
+  tgCobreix(ctx, fons, 0, 0, TG_W, TG_H);
+  const v = ctx.createLinearGradient(0, 0, 0, TG_H);
+  v.addColorStop(0, "rgba(0,0,0,.55)"); v.addColorStop(0.45, "rgba(0,0,0,.15)"); v.addColorStop(1, "rgba(0,0,0,.88)");
+  ctx.fillStyle = v; ctx.fillRect(0, 0, TG_W, TG_H);
+  ctx.drawImage(logo, (TG_W - 520) / 2, 90, 520, 520 * logo.height / logo.width);
+  const xp = Stats.experienciaPj(S, tipo);
+  if (d.tipus === "entreno") {
+    tgText(ctx, "¡ENTRENO FORJADO!", TG_W / 2, 400, 92);
+    if (d.dia) tgText(ctx, d.dia, TG_W / 2, 470, 44, { pes: 700, font: "Noto Serif", color: "#f6e3b8" });
+    if (pj) tgConte(ctx, pj, 140, 500, TG_W - 280, 560);
+    const W2 = (TG_W - 120 - 30) / 2, H2 = 220, y0 = 1090;
+    [[d.min, "minutos"], [d.series, d.series === 1 ? "serie" : "series"], [n0(d.kg), "kg movidos"], [d.ejercicios, d.ejercicios === 1 ? "ejercicio" : "ejercicios"]]
+      .forEach(([val, et], i) => tgRajola(ctx, 60 + (i % 2) * (W2 + 30), y0 + Math.floor(i / 2) * (H2 + 30), W2, H2, String(val), et));
+    const r = d.records || 0;
+    tgText(ctx, r ? (r === 1 ? "Un récord hoy" : `${r} récords hoy`) : "La constancia también forja", TG_W / 2, y0 + 2 * H2 + 30 + 84, 54, { pes: 700 });
+  } else {
+    tgText(ctx, "MI YUNQUE", TG_W / 2, 400, 92);
+    const y = yunqueDe(d.poder), yim = await carregaImg(`${ACTIUS}yunques/${y.id}.webp`).catch(() => null);
+    if (pj) tgConte(ctx, pj, 60, 470, 620, 700);
+    if (yim) tgConte(ctx, yim, 600, 640, 420, 420);
+    tgText(ctx, y.nom, 810, 1140, 84, { max: 440 });
+    tgText(ctx, y.sense ? "Mi primer yunque" : `Temple ${n0(d.poder)}`, 810, 1215, 48, { pes: 700, font: "Noto Serif", color: "#f6e3b8", max: 440 });
+    const W2 = (TG_W - 120 - 30) / 2, H2 = 240, y0 = 1290;
+    [[`${xp.nivel}`, "nivel"], [n0(Stats.diasTotal(S)), Stats.diasTotal(S) === 1 ? "día de gym" : "días de gym"]]
+      .forEach(([val, et], i) => tgRajola(ctx, 60 + i * (W2 + 30), y0, W2, H2, val, et));
+    if (d.clan) tgText(ctx, d.clan, TG_W / 2, y0 + H2 + 110, 56, { pes: 700 });
+  }
+  // el peu: l'àlies i el nivell (res més de la persona) i on trobar-nos
+  tgText(ctx, `${tgAlies()} · NV ${xp.nivel}`, TG_W / 2, TG_H - 150, 58);
+  tgText(ctx, "klonk.fit", TG_W / 2, TG_H - 78, 40, { pes: 700, font: "Noto Serif", color: "#e6a45a" });
+  return new Promise((ok, ko) => cv.toBlob(b => b ? ok(b) : ko(new Error("No se ha podido crear la imagen.")), "image/png"));
+}
+
+let tgFitxer = null;
+async function obreTargeta(d) {
+  tgFitxer = null;
+  obreFull(`<div class="tg"><div class="tg-prev" id="tg-prev"><p class="suau petit">Forjando tu tarjeta…</p></div>
+    <p class="suau petit tg-que">Lleva tu nombre en KLONK, tu personaje${d.tipus === "entreno" ? " y los números del entreno" : " y tu rango"}. Nada más: ni tu nombre real, ni tu gimnasio, ni tu peso.</p>
+    <div class="tg-botons"><button class="btn clar marc" data-accion="tg-comparteix" disabled>COMPARTIR</button><button class="btn marc" data-accion="tg-desa" disabled>Guardar la imagen</button></div></div>`,
+    d.tipus === "entreno" ? "Tu entreno" : "Tu yunque", true);
+  try {
+    const blob = await dibuixaTargeta(d);
+    tgFitxer = new File([blob], d.tipus === "entreno" ? "klonk-entreno.png" : "klonk-yunque.png", { type: "image/png" });
+    const el = $("#tg-prev"); if (!el) return;
+    el.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="Tu tarjeta de KLONK" width="1080" height="1920">`;
+    document.querySelectorAll('[data-accion="tg-comparteix"],[data-accion="tg-desa"]').forEach(b => { b.disabled = false; });
+    if (!(navigator.canShare && navigator.canShare({ files: [tgFitxer] }))) { const b = document.querySelector('[data-accion="tg-comparteix"]'); if (b) b.hidden = true; }
+  } catch (e) { const el = $("#tg-prev"); if (el) el.innerHTML = `<p class="falta">${esc(e.message)}</p>`; }
+}
+function accioTargeta(acc, b) {
+  switch (acc) {
+    case "tg-entreno": { const R = resumActiu; if (!R) return true; const x = R.d;
+      obreTargeta({ tipus: "entreno", dia: `Día ${x.s.dia}${x.s.dt ? ", " + x.s.dt.toLowerCase() : ""}`, min: x.min, series: x.series, kg: x.kg, ejercicios: x.ejercicios, records: x.records.length }); return true; }
+    case "tg-rang": { const so = soc(), rr = so.rank && so.rank["rango|amigos|general"];
+      obreTargeta({ tipus: "rang", poder: so.yo ? so.yo.poder : null, clan: rr && rr.yo && rr.total > 1 ? `${rr.yo.pos}.º de ${rr.total} en mi clan` : "" }); return true; }
+    case "tg-comparteix":
+      if (tgFitxer) navigator.share({ files: [tgFitxer], text: "Forjado en KLONK · klonk.fit" }).catch(() => {});
+      return true;
+    case "tg-desa": {
+      if (!tgFitxer) return true;
+      const a = document.createElement("a"); a.href = URL.createObjectURL(tgFitxer); a.download = tgFitxer.name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 8000);
+      return true;
+    }
+  }
+  return false;
+}
+
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
    L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
    que necessites a cada exercici, per no haver de comptar si són 2 de 10 o 2 de 20 i 1,25... a Ajustes
@@ -4150,6 +4288,7 @@ function dadesResum(o) {
 }
 
 /* ---- les pàgines ---- */
+const I_TG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v8h14v-8"/></svg>';
 function pagEntreno(d) {
   const tiles = [[d.min, "minutos"], [d.series, d.series === 1 ? "serie" : "series"], [d.kg, "kg movidos"], [d.ejercicios, d.ejercicios === 1 ? "ejercicio" : "ejercicios"]];
   return `<div class="gran or entra" style="--d:.05s">¡ENTRENO FORJADO!</div>
@@ -4160,7 +4299,7 @@ function pagEntreno(d) {
       : d.primeres ? `<p class="r-nota entra" style="--d:1.8s">Has puesto tu marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}. Desde hoy, cada vez que la superes será un récord.</p>`
       : `<p class="r-nota entra" style="--d:1.8s">Hoy no has batido ninguno. La constancia también forja: los récords llegan.</p>`}
     ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}
-    ${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<p class="entra" style="--d:2.4s;text-align:center;margin:14px 0 0"><button class="btn marc" data-accion="clan-avisa">Avisar a mi clan</button></p>` : ""}`;
+    <p class="entra r-accions" style="--d:2.4s"><button class="btn marc tg-boto" data-accion="tg-entreno">${I_TG}<span>Compartir mi entreno</span></button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="btn marc" data-accion="clan-avisa">Avisar a mi clan</button>` : ""}</p>`;
 }
 function pagMejoras(d) {
   const amb = d.mejoras.filter(m => m.vals.length >= 2), sense = d.mejoras.filter(m => m.vals.length < 2);
@@ -4515,7 +4654,7 @@ function capSocial(so) {
   let rang = "";
   if (so.participa && gim) {
     const y = yunqueDe(yo.poder), dif = yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
-    rang = `<div class="perfil-rang">${!y.sense ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small></span>`
+    rang = `<div class="perfil-rang">${!y.sense ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small><button class="btn marc tg-boto" data-accion="tg-rang" style="margin-top:6px">${I_TG}<span>Compartir mi yunque</span></button></span>`
       : `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: Madera. Ver todos">${imgYunque(null, "gran")}</button><span><b class="or">Madera</b>${sessio && sessio.salut
         ? `<small>Tu primer yunque. Termina un entreno para tener temple y forjar el siguiente. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
         : `<small>Tu primer yunque. Sin permiso para guardar tu peso no hay temple. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</span>`}</div>`;
@@ -6731,8 +6870,10 @@ function fullCarta(t) {
 }
 
 /* ---------------------------------------------------------------- fulls */
-function obreFull(html, titol) {
+// `sobre`: per damunt del resum de l'entreno (la targeta per compartir, 27-09-2026)
+function obreFull(html, titol, sobre) {
   if (typeof paraEscaner === "function") paraEscaner();
+  $("#capa").classList.toggle("sobre", !!sobre);
   $("#capa").innerHTML = `<div class="vel" data-accion="tanca-full"></div><div class="full" tabindex="-1" role="dialog" aria-modal="true" aria-label="${esc(titol)}"><div class="dins"><div class="ansa"></div><div class="full-cap"><h2>${esc(titol)}</h2><button class="tanca" data-accion="tanca-full" aria-label="Cerrar">${I_X}</button></div>${html}</div></div>`;
 }
 const tancaFull = () => { if (typeof paraEscaner === "function") paraEscaner(); $("#capa").innerHTML = ""; };
@@ -7186,7 +7327,7 @@ document.addEventListener("click", ev => {
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
     default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
-      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b)) accioRutina(acc, b);
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
