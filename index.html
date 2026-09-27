@@ -965,6 +965,18 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .apat-cap[aria-expanded="true"] svg{transform:rotate(180deg)}
 .apat-cos{padding:4px 14px 14px}
 .item{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-bottom:1px solid rgba(197,123,55,.18)}
+/* ---- el buscador d'aliments i els teus (27-09-2026) ---- */
+.al-llista{display:grid;gap:2px;margin:8px 0 4px;max-height:46vh;overflow:auto}
+.al-fila{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;border-bottom:1px solid rgba(197,123,55,.18)}
+.al-fila.triat{background:rgba(179,32,10,.22);border-radius:8px}
+.al-tria{display:grid;gap:2px;padding:10px 6px;border:0;background:none;color:var(--crema);font:inherit;text-align:left;cursor:pointer}
+.al-tria b{font-size:16px}
+.al-tria small{color:var(--fum);font-size:12.5px}
+.al-teu{color:#f0a050;font-weight:700}
+.al-ed{width:44px;height:44px;border:0;background:none;color:#e6a45a;display:grid;place-items:center}
+.al-ed svg{width:20px;height:20px}
+.al-q{margin-top:10px;display:grid;gap:10px}
+.al-crea{text-align:center;margin:12px 0 0}
 .item .nom{font-size:15.5px}
 .item .q{font-weight:700;font-size:16px;text-align:right;font-variant-numeric:tabular-nums}
 .item .e{grid-column:1/-1;font-size:13px;color:var(--fum)}
@@ -1247,7 +1259,7 @@ const EQUIV = { hc: "c", prot: "p", grasa: "g", fruta: "c", dulce: "c" };
 /* ---------- estado (solo en este móvil) ---------- */
 const LLAVE = "fragua.v1";
 const BASE = () => ({ v: 1, personaje: null, sonido: true, xpVisto: 0, nivelVisto: 1, desbloq: ["herrero", "forjadora"], oroGastado: 0, oroComprado: 0, rutinas: [], rutinaActiva: null, rutinasDesbloq: [], perfil: { peso: null, altura: null, yogur: "natural", leche: "semi", horaEntreno: "18:00" }, sinStock: [],
-  ses: [], activa: null, cfg: {}, reg: {}, tipo: {}, hambre: {}, prop: {}, menus: [], ui: { tab: "hoy", abiertas: {} } });
+  ses: [], activa: null, cfg: {}, reg: {}, tipo: {}, hambre: {}, prop: {}, menus: [], alPropis: {}, alCache: {}, ui: { tab: "hoy", abiertas: {} } });
 let guardable = true;
 let S = cargar();
 // les sessions d'abans del nivell per personatge (27-09-2026) són del personatge que es tenia llavors
@@ -1274,8 +1286,11 @@ const hoy = () => clave();
 
 /* ---------- nutrición ---------- */
 const falta = a => S.sinStock.includes(a);
+// Un aliment de la llista fixa (AL), un de teu (S.alPropis, «u:…») o un de fora que ja has fet servir (S.alCache).
+// Si no es troba (un mòbil que encara no l'ha rebut), un aliment buit amb el nom que tingui: res no peta.
 function val(a) {
-  const x = AL[a];
+  const x = AL[a] || (S.alPropis || {})[a] || (S.alCache || {})[a];
+  if (!x) return { n: "Alimento", e: "", k: 0, p: 0, c: 0, g: 0, gr: "otro", perdut: true };
   if (x.tipo === "yogur") { const y = YOGUR[S.perfil.yogur] || YOGUR.natural; return { ...x, ...y, n: y.corto }; }
   if (x.tipo === "leche") { const l = LECHE[S.perfil.leche] || LECHE.semi; return { ...x, ...l, n: l.corto }; }
   return x;
@@ -1304,7 +1319,7 @@ function porcion(it, k) {
 }
 function sustituye(it) {
   if (!falta(it.a)) return it;
-  const nut = EQUIV[AL[it.a].gr];
+  const nut = EQUIV[(AL[it.a] || {}).gr];
   for (const b of ALTERN[it.a] || []) {
     if (falta(b)) continue;
     if (!nut) return { ...it, a: b, enLugar: it.a };
@@ -1406,7 +1421,7 @@ function propuesta(slot, k, n, combo) {
 const mismoCombo = (a, b) => !!a && !!b && a.prot === b.prot && a.hc === b.hc && a.t === b.t;
 function totales(items) {
   const t = { p: 0, c: 0, g: 0, k: 0, peso: 0 };
-  items.forEach(it => { if (it.op || it.sinAlternativa || AL[it.a].libre) return; const m = macrosDe(it); t.p += m.p; t.c += m.c; t.g += m.g; t.k += m.k; if (!it.postre) t.peso += pesoHecho(it); });
+  items.forEach(it => { if (it.op || it.sinAlternativa || (AL[it.a] || {}).libre) return; const m = macrosDe(it); t.p += m.p; t.c += m.c; t.g += m.g; t.k += m.k; if (!it.postre) t.peso += pesoHecho(it); });
   return t;
 }
 function cantidadTxt(it) {
@@ -1461,7 +1476,7 @@ function registrar(items, slot, k) {
   const lista = S.reg[k] || (S.reg[k] = []);
   const h = k === hoy() ? hora() : "";
   items.forEach(it => {
-    if (it.op || it.sinAlternativa || AL[it.a].libre) return;
+    if (it.op || it.sinAlternativa || (AL[it.a] || {}).libre) return;
     const m = macrosDe(it);
     lista.push({ id: uid(), a: it.a, q: it.q, modo: it.modo, comida: slot, hora: h, n: val(it.a).n, e: val(it.a).e, p: m.p, c: m.c, g: m.g, k: m.k });
   });
@@ -4896,6 +4911,9 @@ function fusiona(local, remot) {
   new Set([...Object.keys(local.reg || {}), ...Object.keys(remot.reg || {})]).forEach(d => { const l = unio((local.reg || {})[d], (remot.reg || {})[d]); if (l.length) nou.reg[d] = l; });
   if (local.medidas || remot.medidas) nou.medidas = unio(local.medidas, remot.medidas, "f");
   nou.desbloq = [...new Set([...(local.desbloq || []), ...(remot.desbloq || [])])];
+  // els aliments teus i els de fora que has fet servir: la unió (el més nou mana en cada un), menys els esborrats
+  ["alPropis", "alCache"].forEach(c => { const [vell, nouS] = (local.modificat || 0) >= (remot.modificat || 0) ? [remot, local] : [local, remot];
+    const u = { ...(vell[c] || {}), ...(nouS[c] || {}) }; esb.forEach(id => delete u[id]); nou[c] = u; });
   nou.esborrats = [...esb].slice(-500);
   NOMES_AQUI.forEach(k => { if (k in local) nou[k] = local[k]; else delete nou[k]; });
   // les dades de salut: si el servidor no les té (sense consentiment), es queden les del mòbil
@@ -5063,7 +5081,7 @@ function filaAliment(it, i) {
 let fullItems = [];
 function fullApat(slot, k, mode) {
   const p = propuestaDia(slot, k);
-  fullItems = p.items.filter(it => !it.sinAlternativa && !AL[it.a].libre).map(it => ({ a: it.a, q: it.q, modo: it.modo }));
+  fullItems = p.items.filter(it => !it.sinAlternativa && !(AL[it.a] || {}).libre).map(it => ({ a: it.a, q: it.q, modo: it.modo }));
   return cosFullApat(slot, k, mode);
 }
 function cosFullApat(slot, k, mode) {
@@ -5134,6 +5152,75 @@ function vistaMenu() {
       <div class="fila envolta" style="margin-top:8px"><button class="btn marc" data-accion="menu-edita" data-slot="${slot}">${m ? "Cambiar" : ambPla() ? "Poner el mío" : "Añadir"}</button>${m ? `<button class="enllac" data-accion="menu-auto" data-slot="${slot}">${ambPla() ? "Volver a automático" : "Vaciar"}</button>` : ""}</div></section>`;
   });
   return h;
+}
+
+/* ---- ELS ALIMENTS: buscar-los, i els teus (l'Albert, 26-09-2026: «la gent ha de poder fer-se lo seu: afegir els aliments
+   amb la info nutricional, poder editar si el seu producte varia a l'etiqueta, i afegir fàcilment els que no hi són»).
+   Els teus són a S.alPropis i viatgen amb el compte: es creen amb els números de l'etiqueta (per 100 g), o es corregeix
+   un de la llista i es desa com a teu. Els de fora (la base oberta i Open Food Facts) entraran pel mateix buscador. ---- */
+const normAl = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const r1Al = v => Math.round((v || 0) * 10) / 10;
+const macro100 = x => `${n0(x.k)} kcal · ${fmt(r1Al(x.p))} g prot · ${fmt(r1Al(x.c))} g hid · ${fmt(r1Al(x.g))} g grasa`;
+function cercaAliments(q) {
+  const n = normAl(q).trim();
+  const propis = Object.entries(S.alPropis || {}).map(([k, x]) => ({ k, x, propi: true }));
+  if (!n) return propis;
+  const fixos = Object.keys(AL).filter(k => !AL[k].libre).map(k => ({ k, x: val(k) }));
+  const cas = ({ x }) => normAl(x.n).includes(n);
+  return [...propis.filter(cas), ...fixos.filter(cas)].slice(0, 40);
+}
+function pintaAliments(q) {
+  const el = $("#n-res"); if (!el) return;
+  const res = cercaAliments(q);
+  el.innerHTML = res.length ? `<div class="al-llista">${res.map(({ k, x, propi }) => `<div class="al-fila${S.ui.alSel === k ? " triat" : ""}">
+      <button type="button" class="al-tria" data-accion="al-tria" data-k="${esc(k)}"><b>${esc(x.n)}</b><small>${esc(macro100(x))} por 100 g${propi ? " · <span class=\"al-teu\">tuyo</span>" : ""}</small></button>
+      <button type="button" class="al-ed" data-accion="al-edita" data-k="${esc(k)}" aria-label="${propi ? "Editar" : "Corregir con tu etiqueta"}: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>`
+    : `<p class="suau petit">${q.trim() ? "No está. Créalo con los números de su etiqueta." : "Busca por el nombre. Los que crees o corrijas saldrán aquí primero."}</p>`;
+}
+function fullAfegeix() {
+  S.ui.alSel = null;
+  return `<div class="form"><label>Busca el alimento<input id="n-cerca" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Arroz, pollo, tu yogur…"></label></div>
+    <div id="n-res"></div><div id="n-sel"></div>
+    <p class="al-crea"><button type="button" class="enllac" data-accion="al-nou">Crear un alimento con su etiqueta</button></p>`;
+}
+function triaAliment(k) {
+  S.ui.alSel = k; const x = val(k);
+  $("#n-sel").innerHTML = `<form class="form panel pad al-q" data-form="afegeix"><input type="hidden" id="n-a" value="${esc(k)}"><b class="or">${esc(x.n)}</b>
+    <div class="dos"><label><span id="n-u">Cantidad, en g</span><input id="n-q" inputmode="decimal" autocomplete="off" required></label>
+    <label>Comida<select id="n-c">${COMIDAS.map(([s, n]) => `<option value="${s}"${s === slotAhora() ? " selected" : ""}>${n}</option>`).join("")}</select></label></div>
+    <p class="suau petit" id="n-e"></p><button class="btn clar marc" type="submit">APUNTAR</button></form>`;
+  refrescaAfegeix(); pintaAliments(($("#n-cerca") || {}).value || "");
+  $("#n-sel").scrollIntoView({ behavior: "smooth", block: "nearest" }); $("#n-q").focus();
+}
+// Crear-ne un, o corregir-ne un amb l'etiqueta del teu producte: sempre es desa com a teu, per 100 g.
+function fullAlNou(k) {
+  const x = k ? val(k) : null, teu = k && (S.alPropis || {})[k];
+  const v = c => x ? fmt(r1Al(x[c])) : "";
+  return `<form class="form" data-form="al-desa" data-k="${teu ? esc(k) : ""}">
+    <label>Nombre<input id="al-n" maxlength="60" required autocomplete="off" value="${x ? esc(teu ? x.n : x.n + " (mi marca)") : ""}" placeholder="Yogur proteico de mi súper"></label>
+    <p class="suau petit">Copia la columna «por 100 g» de la etiqueta.</p>
+    <div class="dos"><label>Calorías (kcal)<input id="al-k" inputmode="decimal" required value="${v("k")}"></label><label>Proteínas (g)<input id="al-p" inputmode="decimal" required value="${v("p")}"></label></div>
+    <div class="dos"><label>Hidratos (g)<input id="al-c" inputmode="decimal" required value="${v("c")}"></label><label>Grasas (g)<input id="al-g" inputmode="decimal" required value="${v("g")}"></label></div>
+    <label>Una ración o unidad, en g (si la cuentas por unidades)<input id="al-ud" inputmode="decimal" value="${x && x.ud ? fmt(x.ud) : ""}" placeholder="Opcional"></label>
+    <button class="btn clar marc" type="submit">GUARDAR</button>
+    ${teu ? `<p style="text-align:center;margin:10px 0 0"><button type="button" class="enllac" data-accion="al-esborra" data-k="${esc(k)}">Borrar este alimento</button></p>` : ""}</form>`;
+}
+function desaAlPropi(f) {
+  const n = ($("#al-n").value || "").trim().slice(0, 60), k = num($("#al-k").value), p = num($("#al-p").value), c = num($("#al-c").value), g = num($("#al-g").value);
+  const ud = num($("#al-ud").value);
+  if (n.length < 2) { avis("Ponle un nombre.", true); return; }
+  if (![k, p, c, g].every(Number.isFinite) || [k, p, c, g].some(x => x < 0)) { avis("Pon los cuatro números de la etiqueta.", true); return; }
+  if (k > 900 || p + c + g > 100.5) { avis("Revisa los números: en 100 g no caben tantos (máximo 900 kcal y 100 g entre proteínas, hidratos y grasas).", true); return; }
+  const id = f.dataset.k || "u:" + uid();
+  S.alPropis = { ...(S.alPropis || {}), [id]: { n, e: "según su etiqueta", k, p, c, g, gr: "propio", propi: true, ...(ud > 0 ? { ud, udn: ["ración", "raciones"] } : {}) } };
+  guardar(); obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(n); triaAliment(id);
+  avis(f.dataset.k ? "Guardado." : "Guardado en tus alimentos.");
+}
+function esborraAlPropi(k) {
+  const x = (S.alPropis || {})[k]; if (!x) return;
+  const al = { ...S.alPropis }; delete al[k]; S.alPropis = al;
+  S.esborrats = [...(S.esborrats || []), k].slice(-500);
+  guardar(); obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(""); avis(`«${x.n}» borrado. Lo que ya apuntaste se queda.`);
 }
 
 /* FRAGUA · les pantalles i els gestos (26/09/2026).
@@ -5706,13 +5793,6 @@ function fullProductes() {
     <p class="suau petit" style="margin:-4px 0 0">Con la hora, la merienda se ajusta: algo ligero si entrenas pronto.</p>
     <button class="btn clar marc" type="submit">GUARDAR</button></form>`;
 }
-function fullAfegeix() {
-  const ops = GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k2, x]) => `<option value="${k2}">${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
-  return `<form class="form" data-form="afegeix"><label>Alimento<select id="n-a">${ops}</select></label>
-    <div class="dos"><label><span id="n-u">Cantidad, en g</span><input id="n-q" inputmode="decimal" autocomplete="off" required></label>
-    <label>Comida<select id="n-c">${COMIDAS.map(([s, n]) => `<option value="${s}"${s === slotAhora() ? " selected" : ""}>${n}</option>`).join("")}</select></label></div>
-    <p class="suau petit" id="n-e"></p><button class="btn clar marc" type="submit">APUNTAR</button></form>`;
-}
 function refrescaAfegeix() {
   const a = $("#n-a"); if (!a) return;
   const x = val(a.value);
@@ -5752,7 +5832,7 @@ function fullQueMenjar() {
     if (p.vacia || vistos.has(p.titulo)) continue;
     vistos.add(p.titulo);
     const t = totales(p.items);
-    h += `<div class="panel pad" style="margin-top:10px"><div style="font-weight:700;font-size:16px">${esc(p.titulo)}</div>${p.items.filter(it => !AL[it.a].libre).map(it => `<div class="item"><div class="nom">${esc(val(it.a).n)}</div><div class="q">${cantidadTxt(it)}</div><div class="e">${esc(estadoTxt(it))}</div></div>`).join("")}
+    h += `<div class="panel pad" style="margin-top:10px"><div style="font-weight:700;font-size:16px">${esc(p.titulo)}</div>${p.items.filter(it => !(AL[it.a] || {}).libre).map(it => `<div class="item"><div class="nom">${esc(val(it.a).n)}</div><div class="q">${cantidadTxt(it)}</div><div class="e">${esc(estadoTxt(it))}</div></div>`).join("")}
       <p class="suau petit">${n0(t.p)} g de proteína, unos ${n0(Math.round(t.peso / 10) * 10)} g ya preparado</p><button class="btn marc" data-accion="tria-apat" data-slot="${slot}" data-n="${n}">Esta</button></div>`;
   }
   return h;
@@ -6101,7 +6181,11 @@ document.addEventListener("click", ev => {
     case "afegeix-prot": { const obj = objetivoProt(); const o = candidatsProt(obj ? obj.lo - totalDia(k).p : 0)[+b.dataset.i]; if (o) { registrar([o.it], slotAhora(), k); guardar(); tancaFull(); render(); Efectos.suena("chisporroteo"); reacciona("menjar"); avis("Apuntado."); } break; }
     case "mucho": obreFull(TXT_MOLT, "He comido mucho"); break;
     case "hinchado": obreFull(TXT_INFLAT, "Me noto hinchado"); break;
-    case "afegeix": obreFull(fullAfegeix(), "Añadir alimento"); refrescaAfegeix(); break;
+    case "afegeix": obreFull(fullAfegeix(), "Añadir alimento"); pintaAliments(""); break;
+    case "al-tria": triaAliment(b.dataset.k); break;
+    case "al-nou": obreFull(fullAlNou(null), "Crear un alimento"); break;
+    case "al-edita": obreFull(fullAlNou(b.dataset.k), (S.alPropis || {})[b.dataset.k] ? "Tu alimento" : "Corregir con tu etiqueta"); break;
+    case "al-esborra": esborraAlPropi(b.dataset.k); break;
     case "treu": { const kk = diaReg || k; S.reg[kk] = (S.reg[kk] || []).filter(r => r.id !== b.dataset.id); guardar(); render(); break; }
     case "dia-reg": { const base = deClave(diaReg || k); base.setDate(base.getDate() + Number(b.dataset.d)); const nk = clave(base); if (nk <= k) { diaReg = nk === k ? null : nk; render(); } break; }
     case "tanca-full": tancaFull(); Efectos.suena("tancar"); break;
@@ -6137,6 +6221,7 @@ document.addEventListener("click", ev => {
 document.addEventListener("input", ev => {
   const t = ev.target;
   if (t.id === "tria-q") { S.ui.triaQ = t.value; refrescaTria(); return; }
+  if (t.id === "n-cerca") { pintaAliments(t.value); return; }
   if (t.id === "c-nick") { S.ui.clanNick = t.value; suggereix(t.value); return; }     // que un repintat no s'ho mengi, i l'autocompletar
   if (t.dataset && t.dataset.camp) {
     const s = activa(); if (!s) return;
@@ -6186,6 +6271,8 @@ document.addEventListener("submit", async ev => {
   } else if (tipus === "productes") {
     S.perfil = { ...S.perfil, yogur: $("#p-yogur").value, leche: $("#p-leche").value, horaEntreno: $("#p-hora").value || "18:00" };
     guardar(); tancaFull(); render(); avis("Guardado. Las comidas ya usan tus números.");
+  } else if (tipus === "al-desa") {
+    desaAlPropi(f);
   } else if (tipus === "afegeix") {
     const a = $("#n-a").value, x = val(a), q = num($("#n-q").value);
     if (!(q > 0)) { avis("Pon la cantidad."); return; }
