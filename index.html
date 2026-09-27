@@ -269,6 +269,35 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .ed-uneix[aria-pressed="true"]{color:#1a0e06;background:#f0a050;border-color:#f0a050}
 .ed-uneix:focus-visible{outline:2px solid #ffd84a}
 .imp-ej.en-grup{border-left-color:#f0a050}
+/* ---- l'enllaç d'invitació al clan (27-09-2026) ---- */
+.inv-panell .fila{align-items:center;gap:10px}
+.inv-estat{margin:0 0 10px;color:var(--crema)}
+.inv-veure{display:grid;justify-items:center;gap:8px;text-align:center}
+.inv-veure .avatar,.inv-veure img{width:96px;height:96px}
+.inv-veure p{margin:0}
+/* ---- el feed del clan (27-09-2026) ---- */
+.fd{margin:6px 0 14px}
+.fd-t{font-size:16px;margin:4px 2px 10px;color:#ffd27a}
+.fd-item{display:grid;gap:8px;margin-bottom:10px}
+.fd-cap{display:flex;align-items:center;gap:10px}
+.fd-cap span{display:grid}
+.fd-cap small{color:var(--fum);font-size:13px}
+.fd-xifres{margin:0;font-size:15px}
+.fd-xifres b{color:#ffd27a}
+.fd-rec{margin:0;display:flex;align-items:center;gap:6px;font-size:14px;color:#ffe2a8}
+.fd-rec svg{width:22px;height:22px;flex:none}
+.fd-ex{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:14px}
+.fd-ex small{display:block;color:var(--fum);font-size:12.5px}
+.fd-reaccions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.fd-r{display:inline-flex;align-items:center;gap:5px;min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--bronze-fil);background:rgba(20,17,15,.92);color:var(--crema);font-size:17px}
+button.fd-r{cursor:pointer}
+.fd-r b{font-size:14px}
+.fd-r.meva{background:#5a2a0c;border-color:#f0a050}
+.fd-qui{color:var(--fum);font-size:12.5px}
+.fd-pref{margin-top:6px}
+.aj-baixa{display:grid;gap:6px;margin:12px 0}
+.aj-baixa small{color:var(--fum);font-size:13px}
+.aj-baixa .fila{gap:8px}
 .r-graf{padding:10px 12px 10px;margin:10px 0;text-align:left}
 .r-graf svg{width:100%;height:auto;display:block}
 .r-graf small{color:var(--fum);font-size:12px}
@@ -3736,6 +3765,188 @@ function accioTargeta(acc, b) {
   return false;
 }
 
+/* KLONK · l'enllaç d'invitació al clan (27-09-2026, bloc KLONK; Hub 766). El servidor és de la capitana (servidor/clan.py).
+   L'Albert (via la capitana, [dig-97713]): «avui el clan només creix si l'altre et busca». L'enllaç NO fa entrar: fa la
+   mateixa sol·licitud de sempre, que qui convida accepta a la llista de «Quieren entrar en tu clan» (aquella acceptació és
+   la intervenció humana de l'art. 25.2 RGPD, skill menors §1). Dura 7 dies i serveix per a 10 persones; fer-ne un de nou
+   anul·la l'anterior. Si qui convida és menor, la vista prèvia no ensenya el seu nick.
+   L'enllaç: https://klonk.fit/#invita=<codi>. Si qui l'obre encara no té compte, el codi es guarda i s'ensenya en entrar. */
+"use strict";
+
+const I_ENLLAC = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+const dataCurta = s => { const d = new Date(s * 1000); return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`; };
+
+// El panell de la pestanya Clan
+function panellInvita() {
+  const inv = S.ui.invActiva;
+  if (teCompte() && !S.demo && S.ui.invAt === undefined) { S.ui.invAt = 0; setTimeout(carregaInvita, 0); }
+  return `<div class="panel pad inv-panell"><b class="clan-t">Invitar con un enlace</b>
+    <p class="suau petit" style="margin:4px 0 10px">Quien lo abra te pide entrar, y entra cuando tú aceptes. Vale 7 días y para 10 personas.</p>
+    ${inv ? `<p class="petit inv-estat">Tu enlace vale hasta el ${dataCurta(inv.caduca)}. Lo han usado ${inv.usos} de ${inv.max}.</p>
+      <div class="fila envolta"><button class="btn clar marc tg-boto" data-accion="inv-comparteix">${I_ENLLAC}<span>Compartir el enlace</span></button><button class="enllac" data-accion="inv-anula">Anularlo</button></div>`
+      : `<button class="btn clar marc tg-boto" data-accion="inv-nova">${I_ENLLAC}<span>Crear el enlace</span></button>`}</div>`;
+}
+async function carregaInvita() {
+  try { S.ui.invActiva = await api("GET", "/clan/invitacio"); S.ui.invAt = Date.now(); } catch (e) { S.ui.invAt = Date.now(); }
+  if (S.ui.vista === "social") render();
+}
+async function comparteixInvita(inv) {
+  const txt = `Entra en mi clan de KLONK: ${inv.url}`;
+  if (navigator.share) { try { await navigator.share({ text: txt }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(txt); avis("Enlace copiado: pégalo en WhatsApp."); } catch (e) { avis(inv.url); }
+}
+
+// L'enllaç que arriba: #invita=<codi>
+function mirarEnllacInvita() {
+  const m = location.hash.match(/^#invita=([A-Za-z0-9_-]{6,40})$/);
+  if (!m) return;
+  history.replaceState(null, "", location.pathname + location.search);
+  S.ui.invitaCodi = m[1]; guardar();
+  if (teCompte()) setTimeout(obreInvitacio, 400);
+}
+async function obreInvitacio() {
+  const codi = S.ui.invitaCodi; if (!codi || !teCompte() || S.ui.invitaObrint) return;
+  S.ui.invitaObrint = true;
+  obreFull('<p class="suau petit">Mirando la invitación…</p>', "Una invitación");
+  let d = null;
+  try {
+    const r = await fetch(`${API}/clan/invitacio/${encodeURIComponent(codi)}`);
+    if (r.status === 404 || r.status === 410) throw new Error("Esta invitación ya no vale: ha caducado, la han anulado o ya está llena. Pídele otra.");
+    if (!r.ok) throw new Error("No hemos podido ver la invitación. Prueba en un rato.");
+    d = await r.json();
+  } catch (e) {
+    S.ui.invitaCodi = null; S.ui.invitaObrint = false; guardar();
+    if ($("#capa").innerHTML) obreFull(`<p style="margin-top:0">${esc(e.message)}</p>`, "Una invitación");
+    return;
+  }
+  S.ui.invitaObrint = false;
+  const qui = d.nick ? esc(d.nick) : "Alguien de KLONK";
+  const estat = { tu: "Es tu propio enlace: pásalo a tus amigos.", amic: `Ya estáis en el mismo clan.`, enviada: "Ya le has pedido entrar: falta que acepte.", rebuda: "Te ha pedido entrar en tu clan: acéptalo en Social, Clan." }[d.estat];
+  obreFull(`<div class="inv-veure">${avatar(d.personatge, d.nivell)}<p><b class="or">${qui}</b> te invita a su clan de KLONK${d.nivell ? `, nivel ${n0(d.nivell)}` : ""}.</p>
+    ${estat ? `<p class="suau">${estat}</p>` : `<p class="suau petit">Le llega tu solicitud y entras cuando la acepte. Verá tu nickname.</p>${botoForja('data-accion="inv-demana"', "PEDIR ENTRAR", "")}`}
+    ${d.estat === "rebuda" ? `<p style="text-align:center"><button class="btn marc" data-accion="inv-al-clan">Ir a mi clan</button></p>` : ""}</div>`, "Una invitación");
+  if (estat) { S.ui.invitaCodi = null; guardar(); }
+}
+async function accioInvita(acc) {
+  switch (acc) {
+    case "inv-nova": {
+      try { const inv = await api("POST", "/clan/invitacio"); S.ui.invActiva = inv; guardar(); render(); Efectos.suena("triar"); comparteixInvita(inv); }
+      catch (e) { avis(/nick/i.test(e.message) ? "Para invitar, primero ponte un nickname en Social." : e.message, true); }
+      return true;
+    }
+    case "inv-comparteix": if (S.ui.invActiva) comparteixInvita(S.ui.invActiva); return true;
+    case "inv-anula": try { await api("DELETE", "/clan/invitacio"); S.ui.invActiva = null; guardar(); render(); avis("Enlace anulado: ya no vale."); } catch (e) { avis(e.message, true); } return true;
+    case "inv-demana": {
+      const codi = S.ui.invitaCodi; if (!codi) return true;
+      try {
+        const r = await api("POST", `/clan/invitacio/${encodeURIComponent(codi)}`);
+        S.ui.invitaCodi = null; guardar(); tancaFull(); Efectos.suena("triar");
+        avis(r.estat === "amic" ? `Ya estás en el clan de ${r.nom || "tu amigo"}.` : "Solicitud enviada: entrarás cuando la acepte.");
+        if (typeof carregaClan === "function") carregaClan(true);
+      } catch (e) { avis(/nick/i.test(e.message) ? "Primero ponte un nickname en Social: así sabrá quién eres." : e.message, true); }
+      return true;
+    }
+    case "inv-al-clan": tancaFull(); S.ui.socTab = "clan"; veure("social"); return true;
+  }
+  return false;
+}
+const ACC_INVITA = new Set(["inv-nova", "inv-comparteix", "inv-anula", "inv-demana", "inv-al-clan"]);
+function accioInvitaSync(acc) { if (!ACC_INVITA.has(acc)) return false; accioInvita(acc); return true; }
+
+/* KLONK · el feed del clan i la descàrrega de les teves dades (27-09-2026, bloc KLONK; Hub 770 i 769). El servidor és de
+   la capitana (servidor/clan.py i servidor/dades.py).
+   EL FEED (l'Albert, via la capitana, [dig-97713]): els entrenos dels del teu clan, amb tres reaccions fixes i res més:
+   - sense text lliure ni missatges: hi ha nois de 14 a 17 anys, i sense text no hi ha res a moderar;
+   - només els membres acceptats del clan, mai «tothom»;
+   - sense gimnàs, ni ubicació, ni hora.
+   Es pot deixar de compartir els teus. Una reacció per persona i entreno, i als teus no s'hi reacciona.
+   LES DADES (RGPD, art. 15 i 20): tot el que tenim de tu, en JSON, i els entrenos en CSV, des d'Ajustes → Tus datos. */
+"use strict";
+
+const REACCIONS = [["fuego", "🔥", "¡Fuego!"], ["buena", "👏", "¡Buena!"], ["fuerte", "💪", "¡Fuerte!"]];
+const diaFeed = d => { const avui = hoy(), ahir = (() => { const x = new Date(); x.setDate(x.getDate() - 1); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; })();
+  return d === avui ? "hoy" : d === ahir ? "ayer" : `el ${fechaCorta(d)}`; };
+const kgFeed = (t, lastre) => t ? `${lastre ? "+" : ""}${kgTxt(t.kg || 0)} kg × ${t.reps}` : "";
+
+function itemFeed(it) {
+  const re = it.reaccions || {};
+  const ex = (it.exercicis || []).slice(0, 3).map(e => `<li>${esc(e.nom)}<small>${e.series} ${e.series === 1 ? "serie" : "series"}${e.top ? `, mejor ${kgFeed(e.top, e.lastre)}` : ""}</small></li>`).join("");
+  const mes = (it.exercicis || []).length - 3;
+  const botons = REACCIONS.map(([k, em, nom]) => {
+    const n = re[k] || 0, meva = it.meva === k;
+    return it.yo ? (n ? `<span class="fd-r"><span aria-hidden="true">${em}</span><b class="num">${n}</b></span>` : "")
+      : `<button class="fd-r${meva ? " meva" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${k}" aria-pressed="${meva}" aria-label="${nom}${n ? `, ${n}` : ""}"><span aria-hidden="true">${em}</span>${n ? `<b class="num">${n}</b>` : ""}</button>`;
+  }).join("");
+  return `<article class="fd-item panel pad">
+    <div class="fd-cap">${avatar(it.personatge, it.nivell)}<span><b>${it.yo ? "Tú" : esc(it.nom)}</b><small>${diaFeed(it.dia)}</small></span></div>
+    <p class="fd-xifres"><b class="num">${it.minuts}</b> min, <b class="num">${it.series}</b> ${it.series === 1 ? "serie" : "series"}${it.volum ? `, <b class="num">${n0(it.volum)}</b> kg` : ""}</p>
+    ${(it.records || []).length ? `<p class="fd-rec">${I_MEDALLA}<span>${it.records.length === 1 ? `Récord en ${esc(it.records[0])}` : `${it.records.length} récords: ${it.records.map(esc).join(", ")}`}</span></p>` : ""}
+    ${ex ? `<ul class="fd-ex">${ex}${mes > 0 ? `<li class="suau">y ${mes} ${mes === 1 ? "ejercicio" : "ejercicios"} más</li>` : ""}</ul>` : ""}
+    <div class="fd-reaccions">${botons}${it.yo && (it.qui || []).length ? `<small class="fd-qui">${it.qui.slice(0, 4).map(q => `${esc(q.nom)} ${(REACCIONS.find(r => r[0] === q.tipus) || [0, ""])[1]}`).join(", ")}${it.qui.length > 4 ? "…" : ""}</small>` : ""}</div>
+  </article>`;
+}
+function panellFeed() {
+  const f = S.ui.feed;
+  if (teCompte() && !S.demo && (!f || Date.now() - (f.at || 0) > 60000) && !S.ui.feedCarregant) setTimeout(() => carregaFeed(false), 0);
+  const items = (f && f.items) || [];
+  return `<section class="fd">
+    <h3 class="fd-t">Lo que entrena tu clan</h3>
+    ${!f ? '<p class="suau petit">Cargando…</p>' : !items.length ? '<p class="suau petit">Aún no hay entrenos de tu clan esta temporada. Cuando entrenéis, saldrán aquí.</p>' : items.map(itemFeed).join("")}
+    ${f && f.seguent ? '<p style="text-align:center"><button class="btn marc" data-accion="fd-mes">Ver más</button></p>' : ""}
+    ${f ? `<div class="aj-fila fd-pref"><span>Mostrar mis entrenos a mi clan<small>Los ven solo los de tu clan: sin gimnasio, sin hora ni lugar.</small></span>${interruptor("fd-comparteixo", f.comparteixo !== false, "Mostrar mis entrenos a mi clan")}</div>` : ""}
+  </section>`;
+}
+async function carregaFeed(mes) {
+  S.ui.feedCarregant = true;
+  try {
+    const f = S.ui.feed || {};
+    const r = await api("GET", "/clan/feed" + (mes && f.seguent ? `?abans=${encodeURIComponent(f.seguent)}` : ""));
+    S.ui.feed = { items: mes ? [...(f.items || []), ...r.items] : r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() };
+  } catch (e) { S.ui.feed = { ...(S.ui.feed || {}), items: (S.ui.feed || {}).items || [], at: Date.now() }; }
+  S.ui.feedCarregant = false;
+  if (S.ui.vista === "social") render();
+}
+async function accioFeed(acc, b) {
+  switch (acc) {
+    case "fd-mes": carregaFeed(true); return;
+    case "fd-reacciona": {
+      const f = S.ui.feed, it = f && f.items.find(x => x.id === b.dataset.id); if (!it) return;
+      const nou = it.meva === b.dataset.k ? null : b.dataset.k, abans = it.meva;
+      // es pinta de seguida; si el servidor diu que no, es torna enrere
+      const re = { ...(it.reaccions || {}) };
+      if (abans) re[abans] = Math.max(0, (re[abans] || 1) - 1);
+      if (nou) re[nou] = (re[nou] || 0) + 1;
+      Object.assign(it, { meva: nou, reaccions: re }); render(); if (nou) { Efectos.suena("tap"); Efectos.vibra("tic"); }
+      try { const r = await api("POST", `/clan/feed/${encodeURIComponent(it.id)}/reaccio`, { tipus: nou }); if (r && r.reaccions) { it.reaccions = r.reaccions; render(); } }
+      catch (e) { Object.assign(it, { meva: abans }); carregaFeed(false); avis(e.message, true); }
+      return;
+    }
+    case "fd-comparteixo": {
+      const f = S.ui.feed || {}, nou = !(f.comparteixo !== false);
+      try { await api("POST", "/clan/feed/prefs", { comparteixo: nou }); S.ui.feed = { ...f, comparteixo: nou }; render(); avis(nou ? "Tu clan verá tus entrenos." : "Tu clan ya no verá tus entrenos."); }
+      catch (e) { avis(e.message, true); }
+      return;
+    }
+    case "dades-json": case "dades-csv": {
+      if (!teCompte()) { avis("Entra en tu cuenta para descargar tus datos.", true); return; }
+      const c = clauApi(), csv = acc === "dades-csv";
+      b.disabled = true;
+      try {
+        const r = await fetch(API + "/yo/dades" + (csv ? "?format=csv" : ""), { headers: { Authorization: `Bearer ${c.id}.${c.token}` } });
+        if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(typeof j.detail === "string" ? j.detail : "No se han podido descargar. Prueba en un rato."); }
+        const blob = await r.blob(), a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = `klonk-${csv ? "entrenos" : "mis-datos"}-${hoy()}.${csv ? "csv" : "json"}`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        avis(csv ? "Tus entrenos, descargados." : "Tus datos, descargados.");
+      } catch (e) { avis(e.message, true); }
+      b.disabled = false;
+      return;
+    }
+  }
+}
+const ACC_FEED = new Set(["fd-mes", "fd-reacciona", "fd-comparteixo", "dades-json", "dades-csv"]);
+function accioFeedSync(acc, b) { if (!ACC_FEED.has(acc)) return false; accioFeed(acc, b); return true; }
+
 /* FRAGUA · la càrrega: els discos del teu gimnàs, com es carrega cada exercici i la progressió (26/09/2026).
    L'Albert: «s'ha de posar sí o sí un esquema de com combinar els pesos per arribar a la quantitat de kg
    que necessites a cada exercici, per no haver de comptar si són 2 de 10 o 2 de 20 i 1,25... a Ajustes
@@ -4203,6 +4414,8 @@ function cosAj(k) {
   if (k === "datos") return `
     <div class="aj-fila"><span>Modo demostración<small>La app llena de entrenos y medidas de ejemplo, para enseñarla. Tus datos se guardan aparte y vuelven al apagarlo.</small></span>${interruptor("aj-demo", S.demo, "Modo demostración")}</div>
     <p class="suau petit">Tus datos se guardan en tu cuenta, y este móvil tiene una copia para cuando no hay red.</p>
+    ${teCompte() && !S.demo ? `<div class="aj-baixa"><b>Descargar tus datos</b><small>Todo lo que tenemos de ti, para guardarlo o llevarlo a otra app.</small>
+      <div class="fila envolta"><button class="btn marc" data-accion="dades-json">Todo, en JSON</button><button class="btn marc" data-accion="dades-csv">Mis entrenos, en CSV</button></div></div>` : ""}
     <p class="aj-legal"><a href="privacidad/" target="_blank" rel="noopener">Política de privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>
     <div style="margin-top:14px"><button class="btn marc" data-accion="esborra-veure">Borrar todo</button><div id="esborra"></div></div>`;
   if (k === "calcula") return `<div class="text-llarg">
@@ -4822,9 +5035,11 @@ function vistaClan(so) {
   const rx = pid => { const r = (cl.ratxes || {})[pid]; return r && r.setmanes ? ` <span class="rx-badge" title="${r.setmanes} ${r.setmanes === 1 ? "semana" : "semanas"} seguidas llegando los dos a vuestros días">${flama(true, "rx-f")}<b class="num">${r.setmanes}</b></span>` : ""; };
   const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}${rx(p.pid)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
   return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren entrar en tu clan</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
+    ${am.length ? panellFeed() : ""}
     <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
       <div id="c-sug" class="clan-sug" aria-live="polite"></div>
       <p class="suau petit" style="margin:0">Le llega una solicitud y entra en tu clan cuando la acepta. <button type="button" class="enllac" data-accion="clan-comparteix">Pasar mi nickname</button></p></form>
+    ${panellInvita()}
     ${env.length ? `<div class="panel pad"><b class="clan-t">Esperando respuesta</b>${env.map(p => fila(p, `<button class="enllac" data-accion="clan-cancela" data-p="${p.pid}">Cancelar</button>`)).join("")}</div>` : ""}
     ${(S.ui.clanNick || "").trim().length >= 2 ? (setTimeout(() => suggereix(S.ui.clanNick), 0), "") : ""}
     <div class="panel pad"><b class="clan-t">Tu clan${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
@@ -6624,6 +6839,8 @@ const botoForja = (attrs, titol, sub, cls = "") => `<div class="forja ${cls}"><b
 
 /* ---------------------------------------------------------------- l'entrada */
 function vistaInicio() {
+  // una invitació al clan que va arribar abans d'entrar al compte (src/invita.js): s'ensenya un cop
+  if (S.ui.invitaCodi && teCompte() && S.ui.invitaVist !== S.ui.invitaCodi) { S.ui.invitaVist = S.ui.invitaCodi; setTimeout(obreInvitacio, 500); }
   const p = S.personaje, xp = Stats.experienciaPj(S), racha = Stats.diasAno(S), foc = Stats.fuego(S);
   const act = activa(), dia = act ? act.dia : siguienteDia(), d = act ? { t: act.dt || (RUTINA[act.dia - 1] || {}).t || "" } : (diaRutina(dia) || { t: "" });
   const k = hoy(), obj = objetivoProt(), prot = totalDia(k).p;
@@ -7444,7 +7661,7 @@ document.addEventListener("click", ev => {
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
     default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
-      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b) && !accioGrups(acc, b)) accioRutina(acc, b);
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b) && !accioGrups(acc, b) && !accioInvitaSync(acc) && !accioFeedSync(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -7564,6 +7781,7 @@ document.addEventListener("touchend", ev => { if (x0 == null) return; const dx =
 if (S.ui.vista === "amic") S.ui.vista = S.ui.amicDe && S.ui.amicDe !== "amic" ? S.ui.amicDe : "social";
 mirarEnllacCompte();
 mirarEnllacAmic();
+mirarEnllacInvita();
 render();
 registraSW().then(() => revisaSubscripcio());
 reintentaEntrenat();
