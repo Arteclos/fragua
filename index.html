@@ -6483,14 +6483,17 @@ async function entraGoogle(tok, extra) {
 
 /* ---------------------------------------------------------------- entrar, crear, oblidar */
 const aparell = () => (/iPhone|iPad/.test(navigator.userAgent) ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Navegador").slice(0, 60);
-// Com api(), però amb l'estat i el cos a l'error (el 409 i el 428 en porten dades).
-async function apiCompte(met, ruta, cos) {
-  const c = clauApi();
-  let r;
+// Com api(), però amb l'estat i el cos a l'error (el 409 i el 428 en porten dades). Amb `ms`, una petició que no contesta
+// s'aborta i surt com a «sense xarxa» (status 0): una petició penjada no ha de poder bloquejar res.
+async function apiCompte(met, ruta, cos, ms) {
+  const c = clauApi(), ctl = ms && typeof AbortController === "function" ? new AbortController() : null;
+  const rellotge = ctl ? setTimeout(() => ctl.abort(), ms) : null;
+  let r, j;
   try {
-    r = await fetch(API + ruta, { method: met, headers: { "Content-Type": "application/json", ...(c ? { Authorization: `Bearer ${c.id}.${c.token}` } : {}) }, body: cos ? JSON.stringify(cos) : undefined });
+    r = await fetch(API + ruta, { method: met, headers: { "Content-Type": "application/json", ...(c ? { Authorization: `Bearer ${c.id}.${c.token}` } : {}) }, body: cos ? JSON.stringify(cos) : undefined, signal: ctl ? ctl.signal : undefined });
+    j = await r.json().catch(e => { if (ctl && ctl.signal.aborted) throw e; return {}; });
   } catch (e) { const er = new Error("Sin conexión con KLONK. Prueba en un rato."); er.status = 0; throw er; }
-  const j = await r.json().catch(() => ({}));
+  finally { if (rellotge) clearTimeout(rellotge); }
   if (!r.ok) { const er = new Error(typeof j.detail === "string" ? j.detail : "KLONK no ha podido hacerlo."); er.status = r.status; er.body = j; throw er; }
   return j;
 }
@@ -6588,44 +6591,60 @@ function fusiona(local, remot) {
   SALUT.forEach(([a, b]) => { if (b) { if (local[a] && local[a][b] != null && (!nou[a] || nou[a][b] == null)) nou[a] = { ...nou[a], [b]: local[a][b] }; } else if (local[a] && !nou[a]) nou[a] = local[a]; });
   return nou;
 }
-let pujaTimer = null, pujant = null, pendent = false, darrerPujat = null;
+let pujaTimer = null, pujant = null, pendent = false, darrerPujat = null, canvis = 0;
+let ESPERA_XARXA = 20000;          // ms: una petició de l'estat que no contesta, s'aborta (les proves l'escurcen)
 function programaPuja() {
   if (!teCompte() || S.demo) return;
-  pendent = true; clearTimeout(pujaTimer); pujaTimer = setTimeout(puja, 5000);
+  pendent = true; canvis++; clearTimeout(pujaTimer); pujaTimer = setTimeout(puja, 5000);
 }
+// EL PANY (27-09-2026). Fins avui el «no hi ha res de nou» era dins del cos async, sense cap await al davant: el cos
+// s'executava sencer dins de la crida, el `finally { pujant = null }` corria ABANS que `pujant = …` hi posés la promesa, i
+// el pany ja no s'obria mai més. L'app deixava de pujar l'estat fins que es tancava del tot, i l'Albert va acabar un
+// entreno i va veure 0 d'or: la sessió era al mòbil i el servidor no l'havia vista. Ara el «res de nou» es mira abans
+// d'agafar el pany, el pany només l'obre qui l'ha tancat, i una pujada que no contesta en 20 s s'aborta.
 async function puja(intents = 0) {
   if (!teCompte() || S.demo || !pendent) return;
   if (pujant) return pujant;
-  pujant = (async () => {
+  // cada toc de la pantalla crida guardar(): si el contingut no ha canviat, no es puja res
+  const cos = perPujar(), txt = JSON.stringify(cos), gen = canvis;
+  if (txt === darrerPujat && versio > 0) { pendent = false; return; }
+  const p = (async () => {
+    S.modificat = Date.now(); cos.modificat = S.modificat;
     try {
-      // cada toc de la pantalla crida guardar(): si el contingut no ha canviat, no es puja res
-      const cos = perPujar(), txt = JSON.stringify(cos);
-      if (txt === darrerPujat && versio > 0) { pendent = false; return; }
-      S.modificat = Date.now(); cos.modificat = S.modificat;
-      const r = await apiCompte("PUT", "/estat", { versio_base: versio, estat: cos });
-      darrerPujat = txt; desaVersio(r.versio); aplicaOr(r.or, r.desbloq); pendent = false; senseXarxa(false);
+      const r = await apiCompte("PUT", "/estat", { versio_base: versio, estat: cos }, ESPERA_XARXA);
+      darrerPujat = txt; desaVersio(r.versio); aplicaOr(r.or, r.desbloq); senseXarxa(false);
+      if (canvis === gen) pendent = false;               // el que ha canviat mentre pujava, puja a la següent
+      return "ok";
     } catch (e) {
       if (e.status === 409 && e.body && intents < 3) {        // l'altre aparell (o el servidor) en té una de més nova
-        S = fusiona(S, e.body.estat); desaVersio(e.body.versio); guardarYa(); pujant = null; return puja(intents + 1);
+        S = fusiona(S, e.body.estat); desaVersio(e.body.versio); guardarYa(); return "torna";
       }
-      if (e.status === 401) { desaSessio(null); render(); return; }
+      if (e.status === 401) { desaSessio(null); render(); return "fora"; }
       if (e.status === 0) senseXarxa(true); else avis(e.message, true);
-    } finally { pujant = null; }
+      return "error";
+    }
   })();
-  return pujant;
+  pujant = p;
+  let fet;
+  try { fet = await p; } finally { if (pujant === p) pujant = null; }
+  if (fet === "torna") return puja(intents + 1);
+  if (fet === "ok" && pendent) { clearTimeout(pujaTimer); pujaTimer = setTimeout(puja, 2000); }
 }
 // En obrir l'app i en entrar: el que té el servidor, fusionat amb el que hi ha al mòbil.
 async function baixaEstat(primer) {
   if (!teCompte() || S.demo) return;
   try {
-    const r = await apiCompte("GET", "/estat");
-    const abans = JSON.stringify(perPujar());
+    const r = await apiCompte("GET", "/estat", null, ESPERA_XARXA);
     if (r.estat && r.versio !== versio) { S = fusiona(S, r.estat); desaVersio(r.versio); guardarYa(); }
     else if (!r.estat) desaVersio(0);
-    aplicaOr(r.or, r.desbloq);
+    // L'or del servidor només val si el servidor ja té tot el que hi ha al mòbil. Si no (una sessió que encara no ha pujat,
+    // o la primera baixada d'aquesta obertura, que no sap què va pujar l'anterior), primer es puja i l'or arriba amb la
+    // resposta: si no, el saldo del servidor s'empassava l'or de l'entreno que encara no havia vist (27-09-2026).
+    const alDia = darrerPujat !== null && JSON.stringify(perPujar()) === darrerPujat;
+    aplicaOr(alDia ? r.or : null, r.desbloq);
     senseXarxa(false);
     if (typeof miraRebudes === "function") setTimeout(miraRebudes, 1200);      // una rutina que t'ha enviat un amic
-    if (primer || JSON.stringify(perPujar()) !== abans || !r.estat) { pendent = true; await puja(); }
+    if (primer || !alDia || !r.estat) { pendent = true; await puja(); }
   } catch (e) {
     if (e.status === 401) { desaSessio(null); render(); }
     else if (e.status === 0) senseXarxa(true);
@@ -8073,10 +8092,12 @@ document.addEventListener("click", ev => {
         salvada: false });
       S.pendentNivell = null;
       guardar();
+      // l'entreno acabat puja ara, no d'aquí a 5 s: és el que val or i el que el mòbil pot perdre si es tanca (27-09-2026)
+      setTimeout(() => { if (typeof puja === "function") puja(); }, 300);
       } catch (err) {
         // primer, que quedi acabat i desat; després, el missatge; i el repintat, l'últim i protegit (pot tornar a fallar)
         try { if (activa() && s.ej.some(e => e.sets.some(z => z.ok && z.reps))) { terminar(); S.ui.vista = "inicio"; } } catch (e2) { S.activa = null; S.ui.vista = "inicio"; }
-        try { guardarYa(); } catch (e3) {}
+        try { guardarYa(); if (typeof programaPuja === "function") { programaPuja(); setTimeout(puja, 300); } } catch (e3) {}
         avis("Entreno terminado. El resumen ha fallado: " + ((err && err.message) || "error"), true);
         try { musica(); marcaEntrenat(); render(); } catch (e4) {}
       }
