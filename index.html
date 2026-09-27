@@ -6754,6 +6754,104 @@ async function accioCompte(acc, b) {
 }
 const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut", "compte-google", "tanca-avis-correu", "compte-reenvia", "compte-comercial"]);
 
+/* L'ELO DE KLONK: la força respecte al pes, ancorada (28-09-2026).
+   L'Albert (27-09): «la puntuació més important del joc és l'ELO respecte al pes; s'ha de destacar». I el 28-09: «programa
+   lo de l'ELO pel mètode de pes». EL MÈTODE DE PES és el DOTS, la fórmula del powerlifting per comparar força entre
+   persones de pes i de sexe diferents. I L'ÀNCORA és OpenPowerlifting (domini públic): amb tres usuaris a la base, un
+   percentil entre usuaris dona 500 a tothom; ancorat, el número vol dir el mateix el primer dia que amb un milió.
+
+   COM ES CALCULA (servidor/dades-referencia/referencia_opl.py ho mesura i en surten els números de REF):
+   1. Per a la sentadilla, el press de banca i el pes mort AMB BARRA (els tres de competició; el sumo compta), l'e1RM
+      (Epley) de cada sessió de les últimes 8 setmanes, només amb sèries d'1 a 10 repeticions i sense escalfament ni
+      drop sets, i la mitjana de les DUES millors sessions (METODE.md §3.2: qui entrena més no ha de semblar més fort).
+   2. Punts = e1RM × el coeficient DOTS del teu pes i sexe.
+   3. z = com et separes del que aixeca un competidor RAW adult del teu sexe amb el teu pes: ln(punts) contra la recta
+      ln(punts) = a + b·(ln pes − ln pes_ref), en desviacions del residu. (La b corregeix el que el DOTS no treu del
+      pes en un sol aixecament: a la banca dels homes, +0,18.)
+   4. ELO de l'aixecament = 1000 + 200·z. **1000 és el competidor del mig.** L'ELO és la mitjana dels que tinguis.
+   Un 2,5 % més de força són uns +23 punts. Les divisions (els metalls) van de 150 en 150 (0,75 desviacions) i són una
+   tria de joc, no una dada: a 80 kg, un home entra a Bronze amb uns 81 kg de banca (1× el seu pes) i a Or amb 131.
+
+   QUI NO FA CAP DELS TRES, «sense classificar»: com les partides de classificació d'un joc, n'hi ha prou amb una sèrie
+   bona d'un d'ells. Les màquines no hi compten perquè un quilo d'una màquina no és el mateix a cada gimnàs.
+   Aquí és el càlcul al mòbil, per a la Beta. El rànquing entre persones l'ha de fer el servidor amb les sessions
+   acceptades (METODE.md §3.1); fins llavors, el Temple de sempre segueix fent el rànquing. */
+const Elo = (() => {
+  const DOTS = {
+    h: [[-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093], 40, 210],
+    m: [[-57.96288, 13.6175032, -0.1126655495, 0.0005158568, -0.0000010706], 40, 150],
+  };
+  // [a, b, ln pes_ref, desviació del residu] · OpenPowerlifting del 26-09-2026, RAW, 18-69 anys, el millor de cada persona
+  const REF = {
+    sentadilla: { h: [4.83954, 0.1275, 4.48639, 0.21705], m: [4.72274, -0.05845, 4.20663, 0.26006] },
+    banca: { h: [4.47013, 0.17621, 4.4847, 0.21484], m: [4.14401, -0.09399, 4.2002, 0.25992] },
+    peso_muerto: { h: [4.98311, -0.03082, 4.48413, 0.18958], m: [4.91209, -0.16871, 4.2032, 0.21418] },
+  };
+  const NOM = { sentadilla: "Sentadilla", banca: "Press de banca", peso_muerto: "Peso muerto" };
+  // els noms de l'app que són l'aixecament de competició (amb barra); qualsevol altre, encara que s'hi assembli, no
+  const ES = [
+    [/^(sentadilla|sentadilla con barra|sentadilla profunda con barra|sentadilla trasera|back squat|squat)$/i, "sentadilla"],
+    [/^(press de banca|press banca|press de banca con barra|press de banca con barra, agarre medio|press banca con barra|bench press|banca)$/i, "banca"],
+    [/^(peso muerto|peso muerto con barra|peso muerto sumo|peso muerto convencional|deadlift|sumo deadlift)$/i, "peso_muerto"],
+  ];
+  const DIVISIONS = [[0, "madera", "Madera", "#9a6a3c"], [300, "piedra", "Piedra", "#8f9296"], [450, "cobre", "Cobre", "#c7713f"],
+    [600, "bronce", "Bronce", "#b3813f"], [750, "hierro", "Hierro", "#6f7880"], [900, "acero", "Acero", "#8fb0c8"],
+    [1050, "oro", "Oro", "#f0b73a"], [1200, "obsidiana", "Obsidiana", "#5b4a78"], [1350, "criselefantino", "Criselefantino", "#e9dcc0"],
+    [1500, "estelar", "Estelar", "#7fd0ff"]];
+  const quin = n => { const t = String(n || "").trim(); for (const [rx, k] of ES) if (rx.test(t)) return k; return null; };
+  const ambBarra = n => typeof cargaDe !== "function" || cargaDe(n) === "barra";
+  function coefDots(pes, sexe) {
+    const [[a, b, c, d, e], lo, hi] = DOTS[sexe], x = Math.min(Math.max(pes, lo), hi);
+    return 500 / (a + b * x + c * x * x + d * x ** 3 + e * x ** 4);
+  }
+  const epley = (kg, reps) => kg * (1 + reps / 30);
+  // l'e1RM de cada aixecament fins a `fins` (ms): la mitjana de les dues millors sessions de les 8 setmanes d'abans
+  function marques(ses, fins) {
+    const des = fins - 56 * 864e5, per = {};
+    ses.forEach(s => {
+      if (!s.fin || s.fin > fins || s.fin < des) return;
+      s.ej.forEach(e => {
+        const k = quin(e.n); if (!k || !ambBarra(e.n)) return;
+        let m = 0;
+        e.sets.forEach(z => {
+          if (!z.ok || !(z.kg > 0) || !(z.reps >= 1 && z.reps <= 10)) return;
+          if (typeof serieCompta === "function" && !serieCompta(z)) return;
+          m = Math.max(m, epley(z.kg, z.reps));
+        });
+        if (m > 0) (per[k] = per[k] || []).push(m);
+      });
+    });
+    const out = {};
+    Object.entries(per).forEach(([k, v]) => { v.sort((x, y) => y - x); out[k] = v.length > 1 ? (v[0] + v[1]) / 2 : v[0]; });
+    return out;
+  }
+  function eloDe(k, e1rm, pes, sexe) {
+    const [a, b, lref, sd] = REF[k][sexe], pts = e1rm * coefDots(pes, sexe);
+    const z = (Math.log(pts) - (a + b * (Math.log(pes) - lref))) / sd;
+    return Math.round(1000 + 200 * z);
+  }
+  const divisioDe = elo => { let d = DIVISIONS[0]; DIVISIONS.forEach(t => { if (elo >= t[0]) d = t; }); return d; };
+  // el que es veu: l'ELO (o per què no n'hi ha), la divisió, el que falta per a la següent i el canvi de la setmana
+  function calcula(st = S, ara = Date.now()) {
+    const p = st.perfil || {}, pes = +p.peso, sexe = p.sexo === "m" ? "m" : p.sexo === "h" ? "h" : null;
+    if (!(pes > 30) || !sexe) return { elo: null, motiu: !(pes > 30) ? "pes" : "sexe" };
+    const fa = t => {
+      const m = marques(st.ses || [], t), per = {};
+      Object.entries(m).forEach(([k, v]) => { per[k] = { e1rm: Math.round(v * 10) / 10, elo: eloDe(k, v, pes, sexe) }; });
+      const vs = Object.values(per).map(x => x.elo);
+      return { per, elo: vs.length ? Math.round(vs.reduce((x, y) => x + y, 0) / vs.length) : null };
+    };
+    const ara_ = fa(ara), abans = fa(ara - 7 * 864e5);
+    if (ara_.elo == null) return { elo: null, motiu: "classificacio" };
+    const d = divisioDe(ara_.elo), i = DIVISIONS.indexOf(d), seg = DIVISIONS[i + 1] || null;
+    return { elo: ara_.elo, per: ara_.per, divisio: { id: d[1], nom: d[2], color: d[3], des: d[0] },
+      seguent: seg ? { nom: seg[2], falta: seg[0] - ara_.elo, des: seg[0] } : null,
+      setmana: abans.elo != null ? ara_.elo - abans.elo : null,
+      falten: Object.keys(REF).filter(k => !ara_.per[k]).map(k => NOM[k]), pes, sexe };
+  }
+  return { calcula, coefDots, eloDe, quin, DIVISIONS, NOM, divisioDe };
+})();
+
 /* ELS VERSIONS DE KLONK (28-09-2026): la Beta 1.0 es prova DINS de l'app que corre, sense tocar-la.
    L'Albert: «ho posaria un botó dins de KLONK per canviar entre versions... o bé al fer clic al logo. Així tenim la
    primera versió que es va fer, la segona i les que farem». Tres tocs ràpids al logo obren el selector. La tria es desa
@@ -6950,7 +7048,7 @@ const ForjaBeta = (() => {
     return new Set(S.ses.filter(s => s.fin && String(s.fecha || "").startsWith(pre)).map(s => +String(s.fecha).slice(8, 10)));
   }
   function fetsAquestaSetmana() { const lim = Date.now() - 7 * 864e5; return new Set(S.ses.filter(s => s.fin && s.fin >= lim).map(s => s.dia)); }
-  function elo() { try { const so = typeof soc === "function" ? soc() : null; const p = so && so.yo && so.yo.poder; return p != null ? Math.round(p) : null; } catch (e) { return null; } }
+  function elo() { try { return typeof Elo === "object" ? Elo.calcula() : { elo: null, motiu: "classificacio" }; } catch (e) { return { elo: null, motiu: "classificacio" }; } }
   function cartes() {
     const r = rutinaActual(), act = activa(), fets = fetsAquestaSetmana();
     const avui = act ? act.dia : siguienteDia();
@@ -6975,19 +7073,48 @@ const ForjaBeta = (() => {
   }
   function vista(e) {
     const d = ara(), dies = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), fets = diesEntrenats(), el = elo();
+    const eloTxt = el.elo != null ? n0(el.elo) : "?", eloCol = el.elo != null ? el.divisio.color : "var(--fb-suau)";
     const { llista, idx, act } = cartes();
     const clar = getComputedStyle(document.body).getPropertyValue("--fb-logo").trim() !== "fosc";
     const osques = Array.from({ length: dies }, (_, i) => `<i class="${fets.has(i + 1) ? "on" : ""}${i + 1 === d.getDate() ? " avui" : ""}"></i>`).join("");
     return `<section class="fb" data-estil="${e}">
       <header class="fb-cap">
         <img class="fb-logo" src="${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp" alt="KLONK">
-        <button class="fb-xip fb-elo" data-accion="vista" data-v="estadisticas" aria-label="Tu ELO">${I.enclusa}<small>ELO</small><b>${el != null ? n0(el) : "…"}</b></button>
+        <button class="fb-xip fb-elo" data-fb="elo" aria-label="${el.elo != null ? `Tu ELO: ${el.elo}, ${el.divisio.nom}` : "Tu ELO: sin clasificar"}"><span class="fb-elo-ic" style="color:${eloCol}">${I.enclusa}</span><small>ELO</small><b>${eloTxt}</b>${el.setmana > 0 ? `<i class="fb-puja">+${el.setmana}</i>` : ""}</button>
         <span class="fb-xip fb-or">${I.moneda}<b>${n0(oroTotal())}</b><button class="fb-botiga" data-accion="vista" data-v="tienda" aria-label="Tienda">${I.mes}</button></span>
       </header>
       <div class="fb-mes" aria-label="${MESOS[d.getMonth()]}: ${fets.size} días entrenados"><div class="fb-mes-cap"><b>${MESOS[d.getMonth()]}</b><span>${fets.size} ${fets.size === 1 ? "día" : "días"}</span></div><div class="fb-osques" style="--n:${dies}">${osques}</div></div>
       <div class="fb-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}<div class="fb-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "maestro" ? "pro" : ""}"></i>`).join("")}</div></div>
     </section>`;
   }
+
+  function fullElo() {
+    const e = elo(), pes = S.perfil && S.perfil.peso;
+    if (e.elo == null) {
+      const que = e.motiu === "pes" ? "Pon tu peso en Ajustes: el ELO es tu fuerza para tu peso."
+        : e.motiu === "sexe" ? "Elige tu sexo en Ajustes: cada uno se compara con los de su sexo."
+        : "Haz una serie de sentadilla, press de banca o peso muerto con barra (de 1 a 10 repeticiones) y tendrás tu ELO.";
+      return `<div class="fe"><div class="fe-cap"><span class="fe-ic" style="color:var(--fb-suau)">${I.enclusa}</span><b class="fe-num">?</b><span class="fe-div">Sin clasificar</span></div>
+        <p class="fe-que">${que}</p>${comEs}</div>`;
+    }
+    const d = e.divisio, sg = e.seguent, pct = sg ? Math.max(4, Math.min(100, Math.round(100 * (e.elo - d.des) / (sg.des - d.des)))) : 100;
+    const files = Object.entries(Elo.NOM).map(([k, nom]) => {
+      const x = e.per[k];
+      return x ? `<li><span>${nom}</span><small>1RM estimado ${String(x.e1rm).replace(".", ",")} kg</small><b style="color:${Elo.divisioDe(x.elo)[3]}">${n0(x.elo)}</b></li>`
+        : `<li class="fe-falta"><span>${nom}</span><small>Sin marca: súmala y afina tu ELO</small><b>?</b></li>`;
+    }).join("");
+    return `<div class="fe"><div class="fe-cap"><span class="fe-ic" style="color:${d.color}">${I.enclusa}</span><b class="fe-num">${n0(e.elo)}</b><span class="fe-div" style="color:${d.color}">${d.nom}</span></div>
+      ${e.setmana != null && e.setmana !== 0 ? `<p class="fe-set ${e.setmana > 0 ? "puja" : "baixa"}">${e.setmana > 0 ? "+" : ""}${e.setmana} esta semana</p>` : ""}
+      <div class="fe-barra" role="img" aria-label="${sg ? `Te faltan ${sg.falta} para ${sg.nom}` : "La división más alta"}"><i style="width:${pct}%;background:${d.color}"></i></div>
+      <p class="fe-que">${sg ? `Te faltan <b>${sg.falta}</b> para <b>${sg.nom}</b>` : "Estás en la división más alta"}</p>
+      <ul class="fe-lista">${files}</ul>${comEs}</div>`;
+  }
+  const comEs = `<p class="fe-com">1000 es lo que levanta, para su peso, quien está justo en medio de los que compiten en powerlifting sin equipo, de tu sexo. Cuentan la sentadilla, el press de banca y el peso muerto con barra: series de 1 a 10 repeticiones de las últimas 8 semanas, y la media de tus dos mejores días.</p><p class="fe-font">Fórmula DOTS · datos de OpenPowerlifting (openpowerlifting.org)</p>`;
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest('[data-fb="elo"]'); if (!b || typeof obreFull !== "function") return;
+    ev.preventDefault(); obreFull(fullElo(), "Tu ELO");
+    if (typeof Efectos === "object") { try { Efectos.suena("tap"); Efectos.vibra("toc"); } catch (e) {} }
+  });
 
   const CSS = `
 .fb{--fb-r:24px;position:relative;display:flex;flex-direction:column;height:calc(100vh - env(safe-area-inset-top,0px));height:calc(100svh - env(safe-area-inset-top,0px));
@@ -7005,7 +7132,32 @@ body.fb-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;bor
 .fb-xip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px 0 8px;border-radius:999px;border:0;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-tinta);font-weight:800;font-size:15px;line-height:1;font-family:inherit}
 .fb-xip svg{width:20px;height:20px;flex:none}
 .fb-xip small{font-size:10.5px;font-weight:800;color:var(--fb-suau);letter-spacing:.04em}
-.fb-elo svg{color:var(--fb-or)}
+.fb-elo-ic{display:grid}
+.fb-puja{font-style:normal;font-size:11px;font-weight:800;color:#2f9e5b;margin-left:1px}
+/* la fitxa de l'ELO i qualsevol full que s'obri des de la Forja, amb la pell de la versió */
+body.fb-actiu .vel{background:rgb(10 20 28 / .38)}
+body.fb-actiu .full{background:var(--fb-sup);color:var(--fb-tinta);border-top:0;border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif;box-shadow:0 -12px 40px -16px rgb(0 0 0 / .5);animation:fb-full .38s cubic-bezier(.2,.9,.25,1)}
+body.fb-actiu .full .ansa{background:var(--fb-enfonsat)}
+body.fb-actiu .full-cap h2{font-family:inherit;font-weight:900;font-size:20px;color:var(--fb-tinta)}
+body.fb-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta)}
+@keyframes fb-full{from{transform:translateY(100%)}}
+.fe-cap{display:flex;align-items:center;gap:10px}
+.fe-ic{display:grid;width:44px;height:44px}.fe-ic svg{width:44px;height:44px}
+.fe-num{font-size:48px;font-weight:900;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.fe-div{font-size:18px;font-weight:900}
+.fe-set{margin:8px 0 0;font-weight:800;font-size:14px}.fe-set.puja{color:#2f9e5b}.fe-set.baixa{color:var(--fb-suau)}
+.fe-barra{height:10px;margin:14px 0 6px;border-radius:99px;background:var(--fb-enfonsat);overflow:hidden}
+.fe-barra i{display:block;height:100%;border-radius:99px;transform-origin:left;animation:fe-omple .9s cubic-bezier(.2,.9,.25,1) .15s both}
+@keyframes fe-omple{from{transform:scaleX(0)}}
+.fe-que{margin:4px 0 0;font-size:15px;color:var(--fb-suau);font-weight:700}.fe-que b{color:var(--fb-tinta)}
+.fe-lista{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px}
+.fe-lista li{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;padding:12px 14px;border-radius:16px;background:var(--fb-enfonsat)}
+.fe-lista li span{font-weight:900}.fe-lista li small{grid-column:1;color:var(--fb-suau);font-weight:700}
+.fe-lista li b{grid-column:2;grid-row:1 / span 2;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.fe-lista li.fe-falta{opacity:.7}
+.fe-com{margin:18px 0 0;font-size:13.5px;line-height:1.45;color:var(--fb-suau)}
+.fe-font{margin:8px 0 0;font-size:12px;color:var(--fb-suau);opacity:.8}
+@media (prefers-reduced-motion:reduce){body.fb-actiu .full,.fe-barra i{animation:none}}
 .fb-or{padding-right:3px}
 .fb-botiga{display:grid;place-items:center;width:28px;height:28px;margin-left:3px;border-radius:50%;border:0;background:var(--fb-accio);color:var(--fb-accio-tinta);box-shadow:var(--fb-o1)}
 .fb-botiga svg{width:15px;height:15px}
