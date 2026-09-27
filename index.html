@@ -492,6 +492,16 @@ button.rk-fila .rk-nom{text-decoration:underline;text-decoration-color:rgba(255,
 .amic-nv .hexagon small{font-size:12px}.amic-nv .hexagon b{font-size:29px}
 .amic-nv .hexagon.dos-xifres small{font-size:11px}.amic-nv .hexagon.dos-xifres b{font-size:24px}
 .amic-xifres{margin-top:14px}
+/* ---- la ratxa compartida (27-09-2026) ---- */
+.rx-amic{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;margin-top:14px}
+.rx-amic small{display:block;color:var(--crema);font-size:14px;line-height:1.4;margin-top:2px}
+.rx-amic b.or{font-family:var(--display);font-weight:800;font-size:18px}
+.rx-em{position:relative;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 50% 64%,#962609 0%,#420e05 56%,#1c0805 100%);box-shadow:0 0 0 2px #b8702f}
+.rx-em svg{width:30px;height:36px}
+.rx-em b{position:absolute;bottom:2px;left:0;right:0;text-align:center;font:900 13px var(--display);color:#fff6da;text-shadow:0 1px 2px #5a1200}
+.rx-amic:not(.viva) .rx-em{filter:grayscale(.7);opacity:.75}
+.rx-badge{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:1px 7px 1px 4px;border-radius:999px;background:rgba(179,32,10,.35);border:1px solid rgba(240,160,80,.6);font-size:13px;vertical-align:2px}
+.rx-badge .rx-f{width:12px;height:15px}
 .amic-xifres.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .amic-xifres .mini{min-height:98px;justify-content:center;gap:5px;padding:12px 4px}
 .amic-xifres .gran{margin:0;font-size:27px}
@@ -3935,7 +3945,8 @@ function vistaRankings(so) {
 // El clan: les sol·licituds que t'arriben, a dalt i marcades; afegir pel nickname exacte; les que esperen; i el clan.
 function vistaClan(so) {
   const cl = so.clan || {}, reb = cl.rebudes || [], env = cl.enviades || [], am = cl.amics || [];
-  const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
+  const rx = pid => { const r = (cl.ratxes || {})[pid]; return r && r.setmanes ? ` <span class="rx-badge" title="${r.setmanes} ${r.setmanes === 1 ? "semana" : "semanas"} seguidas llegando los dos a vuestros días">${flama(true, "rx-f")}<b class="num">${r.setmanes}</b></span>` : ""; };
+  const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}${rx(p.pid)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
   return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren entrar en tu clan</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
     <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
       <div id="c-sug" class="clan-sug" aria-live="polite"></div>
@@ -4076,8 +4087,9 @@ function carregaYo() {
 }
 async function carregaClan(forca) {
   try {
-    const [s, a] = await Promise.all([api("GET", "/amigos/solicitudes"), api("GET", "/amigos")]);
+    const [s, a, rx] = await Promise.all([api("GET", "/amigos/solicitudes"), api("GET", "/amigos"), api("GET", "/amigos/ratxes").catch(() => [])]);
     const nou = { rebudes: s.rebudes || [], enviades: s.enviades || [], amics: a || [] }, cl = soc().clan || {};
+    nou.ratxes = Object.fromEntries((rx || []).map(r => [r.pid, r]));
     const canvia = JSON.stringify([cl.rebudes, cl.enviades, cl.amics]) !== JSON.stringify([nou.rebudes, nou.enviades, nou.amics]);
     const nouClan = JSON.stringify(cl.amics || []) !== JSON.stringify(nou.amics);     // algú ha entrat o sortit: els rànquings, de nou
     S.social = { ...soc(), clan: { ...nou, at: Date.now() }, ...(nouClan && cl.at ? { rank: {} } : {}) }; guardar();
@@ -4396,6 +4408,14 @@ function carregaAmic(pid) {
     .catch(e => { avis(e.message, true); if (S.ui.vista === "amic") veure(S.ui.amicDe || "social"); })
     .finally(() => { amicCarrega = null; });
 }
+// La ratxa compartida (l'Albert: «les ratxes compartides igual que el Duo»), per setmanes: compta la setmana en què tots
+// dos arribeu als vostres dies. Al perfil d'un del clan, la ratxa i com va aquesta setmana.
+function filaRatxa(r, nom) {
+  const dies = (n, m) => `${n} de ${m} ${m === 1 ? "día" : "días"}`;
+  const tit = r.setmanes ? `${r.setmanes} ${r.setmanes === 1 ? "semana" : "semanas"} seguidas juntos` : "Empezad una racha";
+  const sub = r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${dies(r.jo, r.meta_jo)}; ${esc(nom)}, ${dies(r.ell, r.meta_ell)}.`;
+  return `<div class="panel pad rx-amic${r.setmanes ? " viva" : ""}"><div class="rx-em">${flama(r.setmanes > 0)}${r.setmanes ? `<b class="num">${r.setmanes}</b>` : ""}</div><div><b class="or">${tit}</b><small>${sub}</small></div></div>`;
+}
 function obrePerfil(pid) {
   if (!pid) return;
   if ((S.ui.vista || "inicio") !== "amic") S.ui.amicDe = S.ui.vista || "social";
@@ -4430,6 +4450,7 @@ function vistaAmic() {
       <div class="amic-nv">${hexagon(p.nivell || 1)}</div>
     </div>
     <div class="tres amic-xifres${xifres.length === 2 ? " n2" : ""}">${xifres.map(([n, t]) => `<div class="mini marc"><b class="gran or num${n.length > 5 ? " petit" : ""}">${n}</b><span class="dada">${t}</span></div>`).join("")}</div>
+    ${p.ratxa ? filaRatxa(p.ratxa, nom) : ""}
     ${grups.length ? `<div class="grups-perfil amic-grups">${grups.map(([g, v]) => `<div>${imgYunque(v)}<small>${esc(g)}</small></div>`).join("")}</div>` : ""}
     ${gim || desde ? `<div class="amic-peu"><div class="linia"></div>
       ${gim ? `<p class="amic-gim">${I_PIN}${esc(gim)}</p>` : ""}
