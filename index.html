@@ -256,6 +256,26 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
   background:linear-gradient(180deg,rgba(254,225,50,.16),rgba(255,138,23,.08));border:1.5px solid rgba(254,225,50,.7);box-shadow:0 0 22px rgba(254,225,50,.28),inset 0 0 14px rgba(254,225,50,.12)}
 .r-perfecta b{font-family:var(--display);font-weight:900;font-size:21px;letter-spacing:.06em;color:var(--flama);text-shadow:0 0 12px rgba(254,225,50,.55)}
 .r-perfecta small{color:var(--crema);font-size:13px;line-height:1.35}
+/* una rutina que t'envia un amic: l'arribada (rutinas.js, mostraRebuda), amb un cop de martell al títol */
+.rebuda-arriba{position:fixed;inset:0;z-index:56;display:grid;place-items:center;overflow:auto;background:radial-gradient(ellipse at 50% 34%,rgba(92,38,6,.97),rgba(0,0,0,.985) 70%)}
+.rebuda-dins{width:min(100%,420px);padding:calc(28px + env(safe-area-inset-top,0px)) 20px calc(22px + env(safe-area-inset-bottom,0px));text-align:center;display:flex;flex-direction:column;align-items:center}
+.rebuda-pj{position:relative;margin-bottom:6px;animation:rebudaPj .9s cubic-bezier(.2,1.3,.4,1) both}
+.rebuda-pj::before{content:"";position:absolute;inset:-26px;border-radius:50%;background:radial-gradient(circle,rgba(254,225,50,.55),rgba(255,138,23,.18) 45%,transparent 70%);animation:rebudaLlum 1.6s ease-out .25s both}
+.rebuda-pj .avatar.gran{width:104px;height:104px}
+.rebuda-de{margin:6px 0 0;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.04em;color:var(--crema);animation:pujaDe .5s ease-out .45s both}
+.rebuda-t{font-family:var(--display);font-weight:900;font-size:31px;line-height:1.05;margin:4px 0 10px;animation:rebudaCop .7s cubic-bezier(.3,1.6,.5,1) .7s both}
+.rebuda-nom{font-family:var(--display);font-weight:800;font-size:20px;color:var(--flama);text-shadow:0 0 14px rgba(254,225,50,.45);animation:pujaDe .5s ease-out 1.1s both}
+.rebuda-dades{margin:4px 0 20px;color:var(--fum);animation:pujaDe .5s ease-out 1.25s both}
+.rebuda-dins .forja{width:100%;animation:pujaDe .5s ease-out 1.45s both}
+@keyframes rebudaPj{0%{transform:translateY(-60px) scale(.3);opacity:0}100%{transform:none;opacity:1}}
+@keyframes rebudaLlum{0%{transform:scale(.3);opacity:0}35%{opacity:1}100%{transform:scale(1.15);opacity:.55}}
+@keyframes rebudaCop{0%{transform:scale(2.4);opacity:0;filter:blur(6px)}55%{transform:scale(.92);opacity:1;filter:none}70%{transform:scale(1.04) rotate(-1deg)}85%{transform:scale(.99) rotate(.6deg)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.rebuda-pj,.rebuda-pj::before,.rebuda-de,.rebuda-t,.rebuda-nom,.rebuda-dades,.rebuda-dins .forja{animation:none}}
+.rebuda-dia{margin:10px 0 0;text-align:left}
+.rebuda-dia b{font-family:var(--display);font-size:15px;color:var(--crema)}
+.rebuda-dia ul{margin:4px 0 0;padding:0;list-style:none}
+.rebuda-dia li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(197,123,55,.15);font-size:14px}
+.rebuda-dia li small{color:var(--fum);white-space:nowrap}
 .r-accions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
 /* ---- supersèries i circuits, i la icona dels conceptes (27-09-2026) ---- */
 .info-boto{display:inline-grid;place-items:center;width:30px;height:30px;margin:-6px 0 -6px 2px;padding:0;border:0;border-radius:50%;background:none;color:#e6a45a;vertical-align:middle;cursor:pointer}
@@ -3002,7 +3022,14 @@ function afegeixPropi(i) {
 const APP_URL = "https://klonk.fit/";
 const b64u = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => { bin += String.fromCharCode(x); }); return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
 const deb64u = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0)));
-const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })) });
+const CLAUS_CFG = ["series", "min", "max", "esc", "drop", "fallo"];
+function cfgDeRutina(r) {
+  const cfg = {};
+  r.dias.forEach(d => d.ej.forEach(e => { const c = (S.cfg || {})[e[0]]; if (c && !cfg[e[0]]) { const x = {}; CLAUS_CFG.forEach(k => { if (c[k] != null && c[k] !== false) x[k] = c[k]; }); if (Object.keys(x).length) cfg[e[0]] = x; } }));
+  return cfg;
+}
+const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })),
+  cfg: cfgDeRutina(r) });
 // Una rutina que ve de fora (un enllaç o un amic) es mira abans de fer-la servir: noms curts, poques coses.
 function rutinaValida(x) {
   if (!x || typeof x.nombre !== "string" || !Array.isArray(x.dias) || !x.dias.length || x.dias.length > 14) return null;
@@ -3010,7 +3037,26 @@ function rutinaValida(x) {
     .filter(e => Array.isArray(e) && typeof e[0] === "string").map(e => { const x2 = ["lastre", "fino"].includes(e[2]) ? e[2] : "", g = typeof e[3] === "string" && /^[A-Z]$/.test(e[3]) ? e[3] : "";
       return g ? [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", x2, g] : [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", ...(x2 ? [x2] : [])]; }) }));
   dias.forEach(normalitzaGrups);
-  return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias };
+  // les sèries i repeticions de qui l'envia: només les dels seus exercicis, i només números dins de marge
+  const cfg = {}, noms = new Set(dias.flatMap(d => d.ej.map(e => e[0]))), dins = (v, a, b) => Number.isInteger(v) && v >= a && v <= b;
+  Object.entries(x.cfg && typeof x.cfg === "object" ? x.cfg : {}).slice(0, 120).forEach(([n, c]) => {
+    if (!noms.has(n) || !c || typeof c !== "object") return;
+    const y = {};
+    if (dins(c.series, 1, 10)) y.series = c.series;
+    if (dins(c.min, 1, 50) && dins(c.max, 1, 50) && c.min <= c.max) { y.min = c.min; y.max = c.max; }
+    if (dins(c.esc, 0, 3)) y.esc = c.esc;
+    if (c.drop === true) y.drop = true;
+    if (c.fallo === true) y.fallo = true;
+    if (Object.keys(y).length) cfg[n] = y;
+  });
+  return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias, ...(Object.keys(cfg).length ? { cfg } : {}) };
+}
+// En guardar una rutina que ve d'algú: les seves sèries i repeticions, per als exercicis que tu encara no tens configurats.
+function guardaRutinaDeFora(x) {
+  const { cfg, ...r } = x, nova = { ...r, id: nouId() };
+  Object.entries(cfg || {}).forEach(([n, c]) => { if (!(S.cfg || {})[n]) S.cfg = { ...(S.cfg || {}), [n]: c }; });
+  S.rutinas = [...(S.rutinas || []), nova];
+  return nova;
 }
 function fullCompartir(r) {
   const amics = (S.ui.amicsLlista || []);
@@ -3018,15 +3064,48 @@ function fullCompartir(r) {
   return `<p class="suau petit" style="margin:0">${esc(r.nombre)}: ${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana.</p>
     ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre KLONK")}
     <h3 class="grup-tria">A un amigo de tu clan</h3>
-    <div id="amics-comparteix">${teCompte() && soc().participa ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
+    <div id="amics-comparteix">${teCompte() && soc().participa ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
 }
 async function carregaAmics() {
   try { S.ui.amicsLlista = await api("GET", "/amigos"); } catch (e) { S.ui.amicsLlista = []; }
   const el = $("#amics-comparteix"), id = (document.querySelector('[data-accion="rut-enllac"]') || {}).dataset;
-  if (el && id) el.innerHTML = S.ui.amicsLlista.length ? S.ui.amicsLlista.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${id.id}" data-p="${a.pid}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Aún no tienes amigos en tu clan: pásales tu código desde Social.</p>';
+  if (el && id) el.innerHTML = S.ui.amicsLlista.length ? S.ui.amicsLlista.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${id.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Aún no tienes amigos en tu clan: pásales tu código desde Social.</p>';
 }
 async function carregaRebudes() {
-  try { S.recibidas = (await api("GET", "/rutinas/recibidas")).map(x => ({ ...x, rutina: rutinaValida(x.rutina) })).filter(x => x.rutina); guardar(); if (S.ui.vista === "rutinas") render(); } catch (e) {}
+  try { S.recibidas = (await api("GET", "/rutinas/recibidas")).map(x => ({ ...x, rutina: rutinaValida(x.rutina) })).filter(x => x.rutina); guardar(); if (S.ui.vista === "rutinas") render(); mostraRebuda(); } catch (e) {}
+}
+// En obrir KLONK o tornar-hi (compte.js, baixaEstat): si un amic t'ha enviat una rutina, com a molt un cop per minut.
+function miraRebudes() {
+  if (!teCompte() || S.demo || Date.now() - (S.ui.rebudesAt || 0) < 60000) return;
+  S.ui.rebudesAt = Date.now(); carregaRebudes();
+}
+/* L'ARRIBADA (l'Albert, 27-09-2026: «quan es loguegi hauria de veure una animació, rotllo "Arteclos te ha enviado una
+   rutina", guai, amb or o impacte, i que posi veure entreno»). Un cop per rutina rebuda (S.rebudesVistes), mai a mig
+   entreno ni a sobre d'un altre resum. */
+function mostraRebuda() {
+  const vistes = new Set(S.rebudesVistes || []), nova = (S.recibidas || []).find(x => !vistes.has(String(x.id)));
+  if (!nova || activa() || !$("#celebra") || $("#celebra").innerHTML.trim()) return;
+  S.rebudesVistes = [...vistes, String(nova.id)].slice(-60); guardar();
+  const r = nova.rutina, n = r.dias.reduce((a, d) => a + d.ej.length, 0);
+  $("#celebra").innerHTML = `<div class="rebuda-arriba" role="dialog" aria-modal="true" aria-label="Rutina recibida">
+    <div class="rebuda-dins">
+      <div class="rebuda-pj">${avatar(nova.personatge || "herrero", nova.nivell || 1, "gran")}</div>
+      <p class="rebuda-de">${esc(nova.de)}</p>
+      <div class="gran or rebuda-t">TE HA ENVIADO<br>UNA RUTINA</div>
+      <div class="rebuda-nom">«${esc(r.nombre)}»</div>
+      <p class="rebuda-dades">${nDies(r.dias.length)} y ${n} ${n === 1 ? "ejercicio" : "ejercicios"}</p>
+      ${botoForja(`data-accion="rebuda-veure" data-id="${esc(String(nova.id))}"`, "VER RUTINA", "Mírala y empieza cuando quieras")}
+      <p style="text-align:center;margin:12px 0 0"><button class="enllac" data-accion="rebuda-despres">Luego</button></p>
+    </div></div>`;
+  Efectos.suena("fanfarria"); Efectos.lluvia(1.4); Efectos.vibra("desbloqueig");
+}
+function fullRebuda(x) {
+  const r = x.rutina, cfg = r.cfg || {};
+  const sr = n => { const c = cfg[n] || (S.cfg || {})[n]; return c && (c.series || c.min) ? `<small class="ed-sr num">${srTxt(c)}</small>` : ""; };
+  return `<p style="margin-top:0">De <b>${esc(x.de)}</b>: ${nDies(r.dias.length)}.</p>
+    ${r.dias.map((d, i) => `<section class="rebuda-dia"><b>Día ${i + 1}: ${esc(d.t)}</b><ul>${d.ej.map(e => `<li><span>${esc(e[0])}</span>${sr(e[0])}</li>`).join("")}</ul></section>`).join("")}
+    <div style="margin-top:14px">${botoForja(`data-accion="rebuda-entrena" data-id="${esc(String(x.id))}"`, "GUARDAR Y ENTRENAR", "Pasa a ser tu rutina")}</div>
+    <p class="fila envolta" style="justify-content:center;gap:16px;margin:12px 0 0"><button class="enllac" data-accion="rut-guarda-rebuda" data-id="${esc(String(x.id))}">Solo guardarla</button><button class="enllac" data-accion="rut-descarta-rebuda" data-id="${esc(String(x.id))}">No la quiero</button></p>`;
 }
 // L enllaç: https://klonk.fit/#rutina=<la rutina en base64>. En obrir-lo, l app pregunta si la guardes.
 function mirarEnllacRutina() {
@@ -3059,19 +3138,43 @@ async function accioCompartir(acc, b) {
     }
     case "rut-a-amic": {
       if (!r) return true;
-      try { await api("POST", "/rutinas/compartir", { per: b.dataset.p, rutina: perCompartir(r) }); Efectos.suena("triar"); avis("Enviada. Le aparecerá en sus rutinas."); tancaFull(); }
-      catch (e) { avis(e.message, true); }
+      const nom = b.dataset.nom || "tu amigo";
+      obreFull(`<div class="rut-confirma"><p style="margin-top:0">¿Le envías <b>«${esc(r.nombre)}»</b> a <b>${esc(nom)}</b>?</p>
+        <p class="suau petit">${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana. Le llega un aviso y la ve al entrar en KLONK.</p>
+        ${botoForja(`data-accion="rut-a-amic-ok" data-id="${esc(r.id)}" data-p="${esc(b.dataset.p)}" data-nom="${esc(nom)}"`, "ENVIAR RUTINA", "")}
+        <p style="text-align:center;margin:10px 0 0"><button class="enllac" data-accion="rut-compartir" data-id="${esc(r.id)}">Mejor no</button></p></div>`, "Enviar a tu clan");
+      return true;
+    }
+    case "rut-a-amic-ok": {
+      if (!r || b.disabled) return true;
+      b.disabled = true;
+      try { await api("POST", "/rutinas/compartir", { per: b.dataset.p, rutina: perCompartir(r) }); Efectos.suena("triar"); Efectos.vibra("fet"); avis(`Enviada a ${b.dataset.nom || "tu amigo"}.`); tancaFull(); }
+      catch (e) { b.disabled = false; avis(e.message, true); }
       return true;
     }
     case "rut-guarda-enllac": case "rut-guarda-rebuda": {
       const x = acc === "rut-guarda-enllac" ? S.ui.rutEnllac : ((S.recibidas || []).find(y => String(y.id) === b.dataset.id) || {}).rutina;
       if (!x) return true;
-      S.rutinas = [...(S.rutinas || []), { ...x, id: nouId() }];
+      guardaRutinaDeFora(x);
       if (acc === "rut-guarda-rebuda") { S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); }
       S.ui.rutEnllac = null; guardar(); tancaFull(); Efectos.suena("yunque"); avis("Guardada en tus rutinas."); veure("rutinas");
       return true;
     }
-    case "rut-descarta-rebuda": S.recibidas = (S.recibidas || []).filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); guardar(); render(); return true;
+    case "rut-descarta-rebuda": S.recibidas = (S.recibidas || []).filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); guardar(); tancaFull(); render(); return true;
+    case "rebuda-despres": $("#celebra").innerHTML = ""; return true;
+    case "rebuda-veure": {
+      const x = (S.recibidas || []).find(y => String(y.id) === b.dataset.id); $("#celebra").innerHTML = "";
+      if (x) obreFull(fullRebuda(x), "«" + x.rutina.nombre + "»");
+      return true;
+    }
+    case "rebuda-entrena": {
+      const x = (S.recibidas || []).find(y => String(y.id) === b.dataset.id); if (!x) return true;
+      const nova = guardaRutinaDeFora(x.rutina);
+      S.rutinaActiva = nova.id;
+      S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {});
+      guardar(); tancaFull(); Efectos.suena("yunque"); Efectos.vibra("forja"); avis(`«${nova.nombre}» es tu rutina. A por el día 1.`); veure("entreno");
+      return true;
+    }
     case "rut-lapiz": {
       // el llapis de l'Entreno: si la rutina és teva, s'edita; si és una plantilla, se'n fa una còpia teva i s'edita.
       // El d'un dia porta l'editor a aquell dia, marcat.
@@ -3086,7 +3189,8 @@ async function accioCompartir(acc, b) {
   }
   return false;
 }
-const ACC_COMPARTIR = new Set(["rut-compartir", "rut-compartir-dia", "rut-enllac", "rut-a-amic", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz"]);
+const ACC_COMPARTIR = new Set(["rut-compartir", "rut-compartir-dia", "rut-enllac", "rut-a-amic", "rut-a-amic-ok", "rut-guarda-enllac", "rut-guarda-rebuda", "rut-descarta-rebuda", "rut-lapiz",
+  "rebuda-despres", "rebuda-veure", "rebuda-entrena"]);
 function accioRutinesSync(acc, b) { if (!ACC_COMPARTIR.has(acc)) return false; accioCompartir(acc, b); return true; }
 
 /* KLONK · importar una rutina (27-09-2026, bloc KLONK).
@@ -5447,6 +5551,7 @@ async function enviaSollicitud(nick) {
 // Un enllaç klonk.fit/#amigo=Nick (el que envia «Pasar mi nickname»): obre el clan amb el nickname posat.
 function mirarEnllacAmic() {
   if (location.hash === "#clan") { history.replaceState(null, "", location.pathname); S.ui.socTab = "clan"; S.ui.vista = "social"; guardar(); return; }
+  if (location.hash === "#rutinas") { history.replaceState(null, "", location.pathname); S.ui.vista = "rutinas"; S.ui.rebudesAt = 0; guardar(); return; }
   const m = location.hash.match(/^#amigo=([^&]+)/);
   if (!m) return;
   history.replaceState(null, "", location.pathname);
@@ -5825,6 +5930,7 @@ if ("serviceWorker" in navigator) {
     const d = ev.data || {};
     if (d.klonk !== "avis" || activa()) return;
     if (/#clan$/.test(d.url || "")) { S.ui.socTab = "clan"; S.ui.vista = "social"; guardar(); render(); }
+    if (/#rutinas$/.test(d.url || "")) { S.ui.rebudesAt = 0; miraRebudes(); }
   });
   try { navigator.serviceWorker.startMessages(); } catch (e) {}
 }
@@ -6371,6 +6477,7 @@ async function baixaEstat(primer) {
     else if (!r.estat) desaVersio(0);
     aplicaOr(r.or, r.desbloq);
     senseXarxa(false);
+    if (typeof miraRebudes === "function") setTimeout(miraRebudes, 1200);      // una rutina que t'ha enviat un amic
     if (primer || JSON.stringify(perPujar()) !== abans || !r.estat) { pendent = true; await puja(); }
   } catch (e) {
     if (e.status === 401) { desaSessio(null); render(); }
