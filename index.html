@@ -987,6 +987,12 @@ button.paquet{width:100%;color:var(--crema);text-align:left;font:inherit}
 .al-ed svg{width:20px;height:20px}
 .al-q{margin-top:10px;display:grid;gap:10px}
 .al-crea{text-align:center;margin:12px 0 0}
+/* ---- els del súper (la base de l'AESAN, 27-09-2026) ---- */
+.al-fora-t{margin:14px 0 2px;font:800 15px var(--display);color:#f0c27a}
+p.al-fora-t{font:inherit;color:var(--fum)}
+.al-marca{color:#e6c9a0}
+.al-font{margin:6px 2px 0;font-size:12px;line-height:1.45;color:var(--fum)}
+.al-font a{color:#e6a45a}
 /* ---- el judici de la dieta (27-09-2026) ---- */
 .jd{margin-top:28px}
 .jd-fila{display:grid;gap:3px;padding:10px 0 10px 14px;border-bottom:1px solid rgba(197,123,55,.15);position:relative}
@@ -5129,7 +5135,8 @@ function propuestaDia(slot, k) {
 const modoDe = a => { const x = val(a); return x.ud && x.gr !== "fruta" ? "ud" : "g"; };
 const uniDe = it => { const x = val(it.a); return it.modo === "ud" ? (x.udn ? x.udn[1] : "ud") : x.ml ? "ml" : "g"; };
 // els teus primer (27-09-2026): el que has creat o corregit amb la teva etiqueta també va al menú de la setmana
-const opcionsAliments = sel => (Object.keys(S.alPropis || {}).length ? `<optgroup label="Tus alimentos">${Object.entries(S.alPropis).map(([k, x]) => `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("")}</optgroup>` : "") + GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
+const grupOpcions = (nom, obj, sel) => Object.keys(obj || {}).length ? `<optgroup label="${nom}">${Object.entries(obj).map(([k, x]) => `<option value="${esc(k)}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("")}</optgroup>` : "";
+const opcionsAliments = sel => grupOpcions("Tus alimentos", S.alPropis, sel) + grupOpcions("Del súper", S.alCache, sel) + GRUPOS.map(([g, nom]) => `<optgroup label="${nom}">` + Object.entries(AL).filter(([, x]) => x.gr === g).map(([k, x]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(x.n)}</option>`).join("") + "</optgroup>").join("");
 function filaAliment(it, i) {
   return `<div class="ap-fila" data-fila="${i}"><span class="ap-nom">${esc(val(it.a).n)}</span>
     <span class="camp"><input inputmode="decimal" autocomplete="off" data-q="${i}" value="${fmt(it.q)}" aria-label="Cantidad de ${esc(val(it.a).n)}"><span class="u">${uniDe(it)}</span></span>
@@ -5215,7 +5222,9 @@ function vistaMenu() {
 /* ---- ELS ALIMENTS: buscar-los, i els teus (l'Albert, 26-09-2026: «la gent ha de poder fer-se lo seu: afegir els aliments
    amb la info nutricional, poder editar si el seu producte varia a l'etiqueta, i afegir fàcilment els que no hi són»).
    Els teus són a S.alPropis i viatgen amb el compte: es creen amb els números de l'etiqueta (per 100 g), o es corregeix
-   un de la llista i es desa com a teu. Els de fora (la base oberta i Open Food Facts) entraran pel mateix buscador. ---- */
+   un de la llista i es desa com a teu. Els de fora entren pel mateix buscador (27-09-2026): la base oberta de l'AESAN, al
+   nostre servidor (servidor/app.py, «ELS ALIMENTS DE FORA»), i el que en tries es queda a S.alCache perquè el vegis sense
+   xarxa i al menú de la setmana. ---- */
 const normAl = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const r1Al = v => Math.round((v || 0) * 10) / 10;
 const macro100 = x => `${n0(x.k)} kcal · ${fmt(r1Al(x.p))} g prot · ${fmt(r1Al(x.c))} g hid · ${fmt(r1Al(x.g))} g grasa`;
@@ -5223,22 +5232,80 @@ function cercaAliments(q) {
   const n = normAl(q).trim();
   const propis = Object.entries(S.alPropis || {}).map(([k, x]) => ({ k, x, propi: true }));
   if (!n) return propis;
+  const usats = Object.entries(S.alCache || {}).map(([k, x]) => ({ k, x, usat: true }));
   const fixos = Object.keys(AL).filter(k => !AL[k].libre).map(k => ({ k, x: val(k) }));
-  const cas = ({ x }) => normAl(x.n).includes(n);
-  return [...propis.filter(cas), ...fixos.filter(cas)].slice(0, 40);
+  // cada paraula, per separat i en qualsevol ordre: «pollo pechuga» troba «Pechuga de pollo»
+  const ps = n.split(/\s+/), cas = ({ x }) => { const t = normAl(x.n); return ps.every(p => t.includes(p)); };
+  return [...propis.filter(cas), ...usats.filter(cas), ...fixos.filter(cas)].slice(0, 40);
+}
+/* Els de fora: la cerca al servidor quan porta dues lletres, amb una pausa perquè no vagi lletra a lletra, i sense cap
+   capçalera (una petició simple: ni compte ni preflight). La resposta que arriba tard, si ja has escrit una altra cosa,
+   no es pinta. */
+let alFora = { q: "", items: [], font: null, estat: "" }, alForaT = 0, alForaN = 0;
+function buscaFora(q) {
+  const n = (q || "").trim();
+  clearTimeout(alForaT);
+  if (n.length < 2) { alForaN++; alFora = { ...alFora, q: n, items: [], estat: "" }; return; }
+  if (alFora.q === n && alFora.estat !== "error") return;
+  alFora = { ...alFora, q: n, items: [], estat: "cercant" };
+  alForaT = setTimeout(async () => {
+    const meu = ++alForaN;
+    try {
+      const r = await fetch(API + "/aliments/buscar?q=" + encodeURIComponent(n));
+      const j = r.ok ? await r.json() : Promise.reject(r.status);
+      if (meu !== alForaN) return;
+      alFora = { q: n, items: (j.items || []).slice(0, 25), font: j.font || alFora.font, estat: "" };
+    } catch (e) {
+      if (meu !== alForaN) return;
+      alFora = { ...alFora, items: [], estat: "error" };
+    }
+    pintaFora();
+  }, 280);
+}
+const nomFora = x => x.n + (x.marca ? " · " + x.marca : "");
+function pintaFora() {
+  const el = $("#n-fora"); if (!el) return;
+  const q = (($("#n-cerca") || {}).value || "").trim(), f = alFora;
+  if (q.length < 2) { el.innerHTML = ""; return; }
+  if (f.q !== q || f.estat === "cercant") { el.innerHTML = `<p class="suau petit al-fora-t">Buscando en el súper…</p>`; return; }
+  if (f.estat === "error") { el.innerHTML = `<p class="suau petit al-fora-t">Sin conexión: salen solo los de la app y los tuyos.</p>`; return; }
+  // el que ja tens a «ya lo usaste» i ja surt a dalt, no es repeteix
+  const dalt = new Set(cercaAliments(q).map(r => r.k)), items = f.items.map((x, i) => ({ x, i })).filter(({ x }) => !dalt.has(x.id));
+  if (!items.length) { el.innerHTML = /^\d{8,14}$/.test(q) && !f.items.length ? `<p class="suau petit al-fora-t">Ese código no está. Créalo con los números de su etiqueta.</p>` : ""; return; }
+  const ft = f.font || {};
+  el.innerHTML = `<h3 class="al-fora-t">En el súper</h3><div class="al-llista">${items.map(({ x, i }) => `<div class="al-fila${S.ui.alSel === x.id ? " triat" : ""}">
+      <button type="button" class="al-tria" data-accion="al-fora" data-i="${i}"><b>${esc(x.n)}</b><small>${x.marca ? `<span class="al-marca">${esc(x.marca)}</span> · ` : ""}${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}</small></button>
+      <button type="button" class="al-ed" data-accion="al-fora-ed" data-i="${i}" aria-label="Corregir con tu etiqueta: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>
+    <p class="al-font">Datos de sus etiquetas: <a href="${esc(ft.url || "https://www.aesan.gob.es")}" target="_blank" rel="noopener">AESAN</a>, alimentos vendidos en España (recogidos en ${esc(ft.any_dades || "2022")}; actualizado el ${esc(ft.data || "29-07-2025")}). Si tu envase dice otra cosa, corrígelo con el lápiz.</p>`;
+}
+// El que tries de fora es queda al mòbil (S.alCache): el veus sense xarxa, surt al menú de la setmana i viatja amb el
+// compte. Com a molt 400: si en sobren, se'n van els més vells que ja no surten a cap àpat ni a cap menú.
+function alDeFora(i) {
+  const x = alFora.items[i]; if (!x) return null;
+  S.alCache = { ...(S.alCache || {}), [x.id]: { n: nomFora(x), e: "tal como viene en el envase", k: x.k, p: x.p, c: x.c, g: x.g, gr: "fuera", ...(x.ml ? { ml: true } : {}), font: x.font, ean: x.ean, t: Date.now() } };
+  podaCache();
+  guardar();
+  return x.id;
+}
+function podaCache() {
+  const ks = Object.keys(S.alCache || {}); if (ks.length <= 400) return;
+  const usats = new Set([...Object.values(S.reg || {}).flat().map(r => r.a), ...Object.values(S.menu || {}).flatMap(d => Object.values(d || {})).flatMap(m => (m && m.it) || []).map(it => it.a)]);
+  const fora = ks.filter(k => !usats.has(k)).sort((a, b) => (S.alCache[a].t || 0) - (S.alCache[b].t || 0)).slice(0, ks.length - 400);
+  const nou = { ...S.alCache }; fora.forEach(k => delete nou[k]); S.alCache = nou;
 }
 function pintaAliments(q) {
   const el = $("#n-res"); if (!el) return;
   const res = cercaAliments(q);
-  el.innerHTML = res.length ? `<div class="al-llista">${res.map(({ k, x, propi }) => `<div class="al-fila${S.ui.alSel === k ? " triat" : ""}">
-      <button type="button" class="al-tria" data-accion="al-tria" data-k="${esc(k)}"><b>${esc(x.n)}</b><small>${esc(macro100(x))} por 100 g${propi ? " · <span class=\"al-teu\">tuyo</span>" : ""}</small></button>
+  buscaFora(q); pintaFora();
+  el.innerHTML = res.length ? `<div class="al-llista">${res.map(({ k, x, propi, usat }) => `<div class="al-fila${S.ui.alSel === k ? " triat" : ""}">
+      <button type="button" class="al-tria" data-accion="al-tria" data-k="${esc(k)}"><b>${esc(x.n)}</b><small>${esc(macro100(x))} por 100 ${x.ml ? "ml" : "g"}${propi ? " · <span class=\"al-teu\">tuyo</span>" : usat ? " · ya lo usaste" : ""}</small></button>
       <button type="button" class="al-ed" data-accion="al-edita" data-k="${esc(k)}" aria-label="${propi ? "Editar" : "Corregir con tu etiqueta"}: ${esc(x.n)}">${I_LLAPIS}</button></div>`).join("")}</div>`
-    : `<p class="suau petit">${q.trim() ? "No está. Créalo con los números de su etiqueta." : "Busca por el nombre. Los que crees o corrijas saldrán aquí primero."}</p>`;
+    : `<p class="suau petit">${q.trim().length > 1 ? "En la app no está: mira abajo lo del súper, o créalo con los números de su etiqueta." : q.trim() ? "" : "Busca por el nombre, la marca o el código de barras. Los que crees o corrijas saldrán aquí primero."}</p>`;
 }
 function fullAfegeix() {
   S.ui.alSel = null;
-  return `<div class="form"><label>Busca el alimento<input id="n-cerca" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Arroz, pollo, tu yogur…"></label></div>
-    <div id="n-res"></div><div id="n-sel"></div>
+  return `<div class="form"><label>Busca el alimento<input id="n-cerca" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Arroz, pollo, tu yogur, su código…"></label></div>
+    <div id="n-res"></div><div id="n-fora" aria-live="polite"></div><div id="n-sel"></div>
     <p class="al-crea"><button type="button" class="enllac" data-accion="al-nou">Crear un alimento con su etiqueta</button></p>`;
 }
 function triaAliment(k) {
@@ -6301,6 +6368,8 @@ document.addEventListener("click", ev => {
       S.agua = { ...(S.agua || {}), [kk]: n }; guardar(); render(); Efectos.vibra("tria"); if (Number(b.dataset.d) > 0) Efectos.suena("tap"); break; }
     case "al-nou": obreFull(fullAlNou(null), "Crear un alimento"); break;
     case "al-edita": obreFull(fullAlNou(b.dataset.k), (S.alPropis || {})[b.dataset.k] ? "Tu alimento" : "Corregir con tu etiqueta"); break;
+    case "al-fora": { const id = alDeFora(Number(b.dataset.i)); if (id) triaAliment(id); break; }
+    case "al-fora-ed": { const id = alDeFora(Number(b.dataset.i)); if (id) obreFull(fullAlNou(id), "Corregir con tu etiqueta"); break; }
     case "al-esborra": esborraAlPropi(b.dataset.k); break;
     case "treu": { const kk = diaReg || k; S.reg[kk] = (S.reg[kk] || []).filter(r => r.id !== b.dataset.id); guardar(); render(); break; }
     case "dia-reg": { const base = deClave(diaReg || k); base.setDate(base.getDate() + Number(b.dataset.d)); const nk = clave(base); if (nk <= k) { diaReg = nk === k ? null : nk; render(); } break; }
