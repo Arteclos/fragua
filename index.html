@@ -6751,6 +6751,129 @@ async function accioCompte(acc, b) {
 }
 const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte-esborra", "compte-salut", "compte-google", "tanca-avis-correu", "compte-reenvia", "compte-comercial"]);
 
+/* ELS VERSIONS DE KLONK (28-09-2026): la Beta 1.0 es prova DINS de l'app que corre, sense tocar-la.
+   L'Albert: «ho posaria un botó dins de KLONK per canviar entre versions... o bé al fer clic al logo. Així tenim la
+   primera versió que es va fer, la segona i les que farem». Tres tocs ràpids al logo obren el selector. La tria es desa
+   en aquest mòbil (localStorage): no toca el compte ni el servidor, i «la de sempre» és l'app sense cap canvi.
+
+   CADA VERSIÓ, EL SEU ESTIL, SENSE BARREJAR (l'Albert, 28-09: «aquest menú no encaixa amb l'estil original, per què el
+   poses allà? No vull que barregis»). La primera és l'app com la teníem amb el menú nou fet amb LES SEVES PECES (els
+   marcs de bronze i les icones pintades de sempre). La barra de l'estil Rumble espera la seva versió amb les seves
+   pantalles, que es faran pam a pam, pantalla a pantalla (BETA-1.0/actius/rumble). Cap text a l'enclusa del mig. */
+const Versions = (() => {
+  const LLISTA = [
+    { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
+    { id: "original", nom: "KLONK con el menú nuevo", desc: "La de siempre con la barra de abajo nueva. En pruebas." },
+  ];
+  const CLAU = "klonk-versio";
+  let actual = "actual";
+  try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
+  const teBarra = () => actual !== "actual";
+
+  // cada pantalla de l'app, a quin lloc de la barra pertany
+  const LLOC = { comer: "comer", registro: "comer", estadisticas: "progreso", inicio: "forja", entreno: "forja", rutinas: "forja",
+    rutina: "forja", editor: "forja", personaje: "forja", social: "gimnasios", gimnasios: "gimnasios", amic: "gimnasios", ajustes: "ajustes", tienda: "" };
+  // [lloc, pantalla, nom, icona de l'app de sempre]
+  const PESTANYES = [["comer", "comer", "Comer", "comer"], ["progreso", "estadisticas", "Progreso", "estadisticas"],
+    ["gimnasios", "social", "Gimnasios", "social"], ["ajustes", "ajustes", "Ajustes", "ajustes"]];
+  const A = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
+
+  const CSS = `
+#barra-nova{display:none}
+body.te-barra:not(.bb-entrada) #barra-nova{display:block;position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:min(100vw,440px);z-index:40;
+  padding:0 8px calc(8px + env(safe-area-inset-bottom));pointer-events:none}
+body.te-barra #barra-nova button{pointer-events:auto;-webkit-tap-highlight-color:transparent;cursor:pointer}
+body.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(118px + env(safe-area-inset-bottom))}
+body.te-barra .eines{display:none}
+body.te-barra .cap .enrere{visibility:hidden}
+body.te-barra:not(.bb-entrada) .toast{bottom:calc(118px + env(safe-area-inset-bottom,0px))}
+body.te-barra.descansant #barra-nova{display:none}
+/* LA BARRA DE L'ESTIL ORIGINAL: el mateix marc de bronze i les mateixes icones que la graella d'eines de l'inici */
+.bo-barra{--x:10px;--fons:linear-gradient(180deg,#221e1b,#141210);display:flex;align-items:flex-end;justify-content:space-between;height:74px;padding:0 6px 7px;
+  box-shadow:0 -8px 22px rgb(0 0 0 / .55)}
+.bo-tab{flex:1;display:grid;justify-items:center;gap:2px;padding:6px 0 0;background:none;border:0;color:#bfa987;
+  font:600 11.5px/1.1 'Cinzel','Cormorant Garamond',Georgia,serif;letter-spacing:.02em;text-shadow:0 1px 2px #000}
+.bo-tab img{width:38px;height:38px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7)) saturate(.75) brightness(.85);transition:transform .09s ease-out,filter .2s}
+.bo-tab.on{color:#f7c86a}
+.bo-tab.on img{filter:drop-shadow(0 0 7px rgb(255 150 50 / .75)) drop-shadow(0 2px 3px rgba(0,0,0,.7));animation:bo-pop .42s cubic-bezier(.3,1.7,.5,1)}
+.bo-tab:active img{transform:scale(.9) translateY(2px);animation:none}
+.bo-buit{flex:0 0 27%}
+.bo-forja{position:absolute;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));width:100px;height:96px;margin-left:-50px;background:none;border:0;padding:0}
+/* el pedestal, amb el bronze dels marcs però dibuixat aquí: la classe .marc de l'app el deixava a mida zero */
+.bo-plint{position:absolute;left:6px;right:6px;bottom:0;height:68px;background:linear-gradient(160deg,#e3a15a 0%,#b06a22 45%,#6e3a0c 100%);
+  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);transition:transform .09s ease-out;transform-origin:50% 100%;filter:drop-shadow(0 -2px 6px rgb(0 0 0 / .5))}
+.bo-plint::before{content:"";position:absolute;inset:2.5px 3px 2.5px 3px;background:linear-gradient(180deg,#2e2721,#161311);clip-path:polygon(14% 0,86% 0,100% 100%,0 100%)}
+.bo-plint::after{content:"";position:absolute;left:20%;right:20%;top:8px;height:7px;border-radius:50%;background:rgb(0 0 0 / .5);box-shadow:0 1px 0 rgb(227 161 90 / .35)}
+.bo-forja:active .bo-plint{transform:scale(1.03,.93)}
+.bo-brasa{position:absolute;left:10%;right:10%;bottom:50px;height:34px;border-radius:50%;opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse,rgb(255 150 60 / .7),rgb(255 110 30 / .2) 50%,rgb(255 110 30 / 0) 74%);mix-blend-mode:screen}
+.bo-forja.on .bo-brasa{animation:bo-respira 2.8s ease-in-out infinite}
+@keyframes bo-pop{0%{transform:scale(.8)}55%{transform:scale(1.16)}100%{transform:scale(1)}}
+@keyframes bo-respira{0%,100%{opacity:.4;transform:scaleX(.92)}50%{opacity:.95;transform:scaleX(1.05)}}
+@media (prefers-reduced-motion:reduce){.bo-tab.on img,.bo-forja.on .bo-brasa{animation:none}.bo-forja.on .bo-brasa{opacity:.7}}
+.vers-opc{display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;padding:14px;border-radius:14px;border:1.5px solid rgb(255 255 255 / .12);background:rgb(255 255 255 / .04);color:inherit;text-align:left;font:inherit;cursor:pointer}
+.vers-opc[aria-checked="true"]{border-color:#ffb55e;background:rgb(255 181 94 / .12)}
+.vers-opc b{display:block;font-size:16px}.vers-opc small{display:block;opacity:.75;margin-top:2px}`;
+
+  function estil() {
+    if (document.getElementById("estil-versions")) return;
+    const st = document.createElement("style"); st.id = "estil-versions"; st.textContent = CSS; document.head.appendChild(st);
+  }
+  function muntaOriginal() {
+    const tab = ([lloc, v, nom, ic]) => `<button class="bo-tab" data-lloc="${lloc}" data-accion="vista" data-v="${v}" aria-label="${nom}"><img src="${A()}icones/${ic}.webp" alt="">${nom}</button>`;
+    return `<div class="bo-barra marc">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
+      + `<button class="bo-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bo-brasa"></span><span class="bo-plint"></span></button>`;
+  }
+  const BARRES = { original: muntaOriginal };
+  function aplica() {
+    estil();
+    document.querySelectorAll("#barra-nova").forEach(n => n.remove());
+    LLISTA.forEach(v => document.body.classList.remove("v-" + v.id));
+    document.body.classList.add("v-" + actual);
+    document.body.classList.toggle("te-barra", teBarra());
+    if (!teBarra() || !BARRES[actual]) return;
+    const nav = document.createElement("nav"); nav.id = "barra-nova"; nav.setAttribute("aria-label", "Principal");
+    nav.innerHTML = BARRES[actual]();
+    document.body.appendChild(nav);
+  }
+  // després de cada render(): la pestanya del lloc on ets
+  function despresRender(vista) {
+    if (!teBarra()) return;
+    document.body.classList.toggle("bb-entrada", ["compte", "eleccion", "datos"].includes(vista));
+    const lloc = LLOC[vista] != null ? LLOC[vista] : "";
+    document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
+      const on = b.dataset.lloc === lloc;
+      if (on !== b.classList.contains("on")) b.classList.toggle("on", on);
+      b.setAttribute("aria-current", on ? "page" : "false");
+    });
+  }
+  function obreSelector() {
+    if (typeof obreFull !== "function") return;
+    obreFull(`<p class="suau petit">Solo en este móvil. No cambia nada de tu cuenta.</p>`
+      + LLISTA.map(v => `<button class="vers-opc" role="radio" aria-checked="${v.id === actual}" data-versio="${v.id}"><span><b>${v.nom}</b><small>${v.desc}</small></span></button>`).join(""), "Versión");
+  }
+  let tocs = [];
+  document.addEventListener("click", ev => {
+    const opc = ev.target.closest("[data-versio]");
+    if (opc) {
+      actual = opc.dataset.versio;
+      try { localStorage.setItem(CLAU, actual); } catch (e) {}
+      aplica(); if (typeof tancaFull === "function") tancaFull(); if (typeof render === "function") render();
+      return;
+    }
+    // tocar la pestanya on ja ets: tornar a dalt, sense tornar a pintar (l'Adrià: pujar amb el dit «és un pal»)
+    const actiu = ev.target.closest("#barra-nova .on");
+    if (actiu) { ev.preventDefault(); ev.stopPropagation(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    // tres tocs ràpids al logo obren el selector
+    if (ev.target.closest('img[src$="logo.webp"]')) {
+      const t = Date.now(); tocs = tocs.filter(x => t - x < 1000); tocs.push(t);
+      if (tocs.length >= 3) { tocs = []; obreSelector(); }
+    }
+  }, true);
+  aplica();
+  return { despresRender, actual: () => actual };
+})();
+
 /* FRAGUA · el menú de la setmana (26/09/2026).
    L'Albert (amb el seu germà): «el menjar és la part més difícil, perquè cadascú fa lo seu. Com a molt ha de
    ser un lloc on muntar-te la teva dieta, que puguis veure el setmanal... i cada dia el pots modificar.
@@ -7970,6 +8093,7 @@ function render() {
   // el foc de la ratxa, viu: més dies aquesta setmana, més foc (0 dies: la flama apagada i quieta)
   if (vista === "inicio") { const em = document.querySelector(".placa-foc .emblema"), fd = Stats.fuego(S).dias; if (em && fd > 0) Efectos.focViu(em, 0.6 + fd * 0.09); }
   document.dispatchEvent(new CustomEvent("fragua:heroe", { detail: h || null }));
+  if (typeof Versions === "object") Versions.despresRender(vista);   // la Beta 1.0 (src/versions.js): la pestanya del lloc on ets
   if (!guardable && !avisatDesa) { avisatDesa = true; avis("Este navegador no deja guardar en el móvil: tus datos se guardan en tu cuenta cuando hay red."); }
 }
 function veure(v) {
