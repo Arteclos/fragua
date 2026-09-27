@@ -269,6 +269,26 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .ed-uneix[aria-pressed="true"]{color:#1a0e06;background:#f0a050;border-color:#f0a050}
 .ed-uneix:focus-visible{outline:2px solid #ffd84a}
 .imp-ej.en-grup{border-left-color:#f0a050}
+/* ---- els tipus de sèrie (27-09-2026) ---- */
+.serie button.i{border:0;padding:0;font:inherit;cursor:pointer}
+.serie .i.tipus-c{filter:hue-rotate(160deg) saturate(.8)}
+.serie .i.tipus-d{filter:hue-rotate(250deg)}
+.serie .i.tipus-f{filter:hue-rotate(-25deg) saturate(1.6) brightness(1.1)}
+.tipus-llista{display:grid;gap:8px}
+.tipus-fila{display:flex;align-items:center;gap:6px}
+.tipus-tria{flex:1;display:flex;align-items:center;gap:12px;min-height:58px;padding:8px 12px;border-radius:12px;text-align:left}
+.tipus-tria span{display:grid}
+.tipus-tria small{color:var(--fum);font-size:12.5px;font-weight:400}
+.tipus-tria.actiu{border-color:#f0a050;background:#3a1d0c}
+.tipus-lletra{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#5a2e17;color:#ffd27a;font-size:15px}
+.tipus-lletra.tipus-c{background:#1f3b4d;color:#bfe3ff}
+.tipus-lletra.tipus-d{background:#3b2350;color:#e6c8ff}
+.tipus-lletra.tipus-f{background:#6a1a0a;color:#ffc2a8}
+.especials{display:grid;gap:8px;border:1px solid var(--bronze-fil);border-radius:10px;padding:10px 12px}
+.especials legend{padding:0 6px;color:var(--fum);font-size:14px;font-weight:700}
+.esp-fila{display:flex!important;align-items:center;justify-content:space-between;gap:10px}
+.esp-fila select{width:auto!important;height:42px!important}
+.concepte-txt{margin:4px 0 6px;padding:8px 10px;border-radius:8px;background:rgba(240,160,80,.08);color:var(--crema);font-size:13.5px;line-height:1.45}
 /* ---- l'enllaç d'invitació al clan (27-09-2026) ---- */
 .inv-panell .fila{align-items:center;gap:10px}
 .inv-estat{margin:0 0 10px;color:var(--crema)}
@@ -1699,7 +1719,7 @@ function empezar(dia) {
     const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
     const sets = p.sets ? p.sets.map(z => ({ kg: z.kg, reps: z.reps, ok: false }))
       : Array.from({ length: c.series }, () => ({ kg: x === "lastre" ? 0 : null, reps: null, ok: false }));
-    return { n, t, x, ...(g ? { g } : {}), sets };      // g: la supersèrie o el circuit (src/grups.js)
+    return { n, t, x, ...(g ? { g } : {}), sets: aplicaEspecials(sets, S.cfg[n], c) };      // g: la supersèrie o el circuit (src/grups.js); les especials, src/series.js
   });
   S.ses.push(s); S.activa = s.id; S.tipo[hoy()] = "entreno"; S.ui.tab = "entreno";
   guardar(); pedirPantalla(); render();
@@ -1722,9 +1742,9 @@ function terminar() {
     series += hechas.length;
     if (e.x === "lastre") return;
     hechas.forEach(z => volumen += (z.kg || 0) * z.reps);
-    const mejorHoy = Math.max(0, ...hechas.map(z => e1rm(z.kg || 0, z.reps)));
+    const mejorHoy = Math.max(0, ...hechas.filter(serieCompta).map(z => e1rm(z.kg || 0, z.reps)));
     let antes = 0;
-    S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(z => { if (z.ok) antes = Math.max(antes, e1rm(z.kg || 0, z.reps || 0)); }); });
+    S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(z => { if (z.ok && serieCompta(z)) antes = Math.max(antes, e1rm(z.kg || 0, z.reps || 0)); }); });
     if (antes && mejorHoy > antes + 0.01) records.push(e.n);
   });
   S.ultimoResumen = { id: s.id, dia: s.dia, series, volumen, records, min: Math.round((s.fin - s.inicio) / 60000) };
@@ -3617,7 +3637,7 @@ const nomGrup = n => n >= 3 ? "Circuito" : "Superserie";
 const CONCEPTES = {
   superserie: ["Superserie", "Dos ejercicios seguidos, sin descansar entre ellos. Haces una serie del primero, pasas al segundo y descansas al acabar los dos. Ahorra tiempo y funciona muy bien con músculos opuestos, como bíceps y tríceps."],
   circuito: ["Circuito", "Tres ejercicios o más seguidos, sin descanso entre ellos. Haces una vuelta entera y descansas al final; luego, la siguiente vuelta. Cansa más y se hace más rápido."],
-  calentamiento: ["Serie de calentamiento", "Una serie con poco peso antes de las de verdad, para que el músculo y las articulaciones entren en calor. No cuenta para tus récords ni para la experiencia."],
+  calentamiento: ["Serie de calentamiento", "Una serie con poco peso antes de las de verdad, para que el músculo y las articulaciones entren en calor. No cuenta para tus récords ni para subir el peso."],
   drop: ["Drop set", "Al terminar una serie, bajas el peso (más o menos un 20 o 30 %) y sigues sin descansar hasta que no puedas más. Sirve para cansar el músculo del todo; mejor al final y en ejercicios con máquina o mancuernas."],
   fallo: ["Al fallo", "Hacer repeticiones hasta que no puedes hacer ni una más con buena técnica. Cansa mucho: úsalo en la última serie, no en todas, y con cuidado en los ejercicios pesados."],
 };
@@ -3627,8 +3647,76 @@ const I_CADENA = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" st
 
 function accioGrups(acc, b) {
   switch (acc) {
-    case "concepte": { const c = CONCEPTES[b.dataset.k]; if (c) obreFull(`<p style="margin-top:0">${esc(c[1])}</p>`, c[0], !!$("#celebra").innerHTML); return true; }
+    case "concepte": {
+      const c = CONCEPTES[b.dataset.k]; if (!c) return true;
+      if (b.closest("#capa")) {                      // dins d'una fulla: s'explica allà mateix, sense perdre el que hi ha
+        const cont = b.closest(".tipus-fila, label, .grup-cap, fieldset, p, div"), ja = cont && cont.nextElementSibling;
+        if (ja && ja.classList.contains("concepte-txt")) ja.remove(); else if (cont) cont.insertAdjacentHTML("afterend", `<p class="concepte-txt"><b>${esc(c[0])}.</b> ${esc(c[1])}</p>`);
+        return true;
+      }
+      obreFull(`<p style="margin-top:0">${esc(c[1])}</p>`, c[0], !!$("#celebra").innerHTML); return true;
+    }
     case "ed-uneix": { llegeixEditor(); const d = S.ui.edit && S.ui.edit.dias[+b.dataset.i]; if (!d) return true; uneixSeguent(d, +b.dataset.j); guardar(); render(); Efectos.suena("tap"); Efectos.vibra("tria"); return true; }
+  }
+  return false;
+}
+
+/* KLONK · els tipus de sèrie: escalfament, drop set i al fallo (27-09-2026, bloc KLONK; Hub 768).
+   L'Albert (via la capitana, [dig-97713]): «tipus de sèrie a l'editor: escalfament i drop set (i fallada, si vols); molta
+   gent no sap què és: a cada concepte, una icona d'info que en clicar expliqui què és en paraules planeres».
+   - Cada sèrie de l'entreno pot portar `tipo`: "c" (calentamiento), "d" (drop set) o "f" (al fallo); sense, és normal.
+     Tocant el número de la sèrie es canvia, amb la ⓘ de cada concepte (CONCEPTES, a src/grups.js).
+   - A la configuració de l'exercici (S.cfg[nom]: esc, drop, fallo) es diu quantes d'escalfament, si acaba amb drop set i
+     si l'última va al fallo; cada entreno nou les porta soles (aplicaEspecials).
+   - L'escalfament i el drop set no compten per als rècords ni per a com puja el pes (carga.js, vegades); sí que compten com
+     a sèries fetes (experiència i or, com sempre). Abans d'un drop set no hi ha descans. */
+"use strict";
+
+const TIPUS_SERIE = [["", "Normal", "La de siempre."], ["c", "Calentamiento", "Con poco peso, antes de las de verdad."],
+  ["d", "Drop set", "Bajas el peso y sigues, sin descanso."], ["f", "Al fallo", "Hasta que no puedes ni una más."]];
+const CONCEPTE_TIPUS = { c: "calentamiento", d: "drop", f: "fallo" };
+const redona = (kg, f) => kg == null ? null : Math.max(0, Math.round(kg * f / 2.5) * 2.5);
+const serieCompta = z => z.tipo !== "c" && z.tipo !== "d";           // compta per als rècords i per a com puja el pes
+
+// Les sèries d'un exercici amb les especials de la seva configuració: n d'escalfament al davant, el drop set al final i
+// l'última de treball al fallo. Les que ja estan fetes no es toquen.
+function aplicaEspecials(sets, cfg, c) {
+  cfg = cfg || {};
+  let s = sets.slice();
+  const feina = s.filter(serieCompta), primer = feina[0] || {}, ultim = feina[feina.length - 1] || {};
+  // l'escalfament: al davant, amb la meitat del pes de la primera de treball
+  const esc = s.filter(z => z.tipo === "c"), vol = Math.max(0, Math.min(3, cfg.esc || 0));
+  if (esc.length < vol) s = [...Array.from({ length: vol - esc.length }, () => ({ kg: redona(primer.kg, 0.5), reps: c ? c.max : null, ok: false, tipo: "c" })), ...s];
+  else if (esc.length > vol) { let sobren = esc.length - vol; s = s.filter(z => !(z.tipo === "c" && !z.ok && sobren-- > 0)); }
+  // l'última de treball, al fallo
+  s.forEach(z => { if (z.tipo === "f" && !z.ok) delete z.tipo; });
+  const fw = s.filter(serieCompta);
+  if (cfg.fallo && fw.length && !fw[fw.length - 1].ok) fw[fw.length - 1].tipo = "f";
+  // el drop set: al final, amb tres quarts del pes de l'última
+  const drops = s.filter(z => z.tipo === "d");
+  if (cfg.drop && !drops.length) s.push({ kg: redona(ultim.kg, 0.75), reps: c ? c.max : null, ok: false, tipo: "d" });
+  if (!cfg.drop) s = s.filter(z => !(z.tipo === "d" && !z.ok));
+  return s;
+}
+// El número de la sèrie, o la lletra del seu tipus, que es toca per canviar-lo
+function botoTipus(z, i, j, n) {
+  const t = z.tipo || "", nom = (TIPUS_SERIE.find(x => x[0] === t) || TIPUS_SERIE[0])[1];
+  return `<button class="i tipus-${t || "n"}" data-accion="serie-tipus" data-i="${i}" data-j="${j}" aria-label="Serie ${n}: ${nom.toLowerCase()}. Cambiar el tipo">${t ? t.toUpperCase() : n}</button>`;
+}
+function fullTipusSerie(i, j) {
+  const z = activa().ej[i].sets[j];
+  return `<p class="suau petit" style="margin-top:0">¿Qué tipo de serie es? El calentamiento y el drop set no cuentan para tus récords ni para subir el peso.</p>
+    <div class="tipus-llista">${TIPUS_SERIE.map(([k, nom, des]) => `<div class="tipus-fila"><button class="chip tipus-tria${(z.tipo || "") === k ? " actiu" : ""}" data-accion="serie-tipus-tria" data-i="${i}" data-j="${j}" data-t="${k}" aria-pressed="${(z.tipo || "") === k}"><b class="tipus-lletra tipus-${k || "n"}">${k ? k.toUpperCase() : j + 1}</b><span><b>${nom}</b><small>${des}</small></span></button>${k ? infoBoto(CONCEPTE_TIPUS[k]) : ""}</div>`).join("")}</div>`;
+}
+function accioSeries(acc, b) {
+  switch (acc) {
+    case "serie-tipus": if (activa()) obreFull(fullTipusSerie(+b.dataset.i, +b.dataset.j), "Tipo de serie"); return true;
+    case "serie-tipus-tria": {
+      const s = activa(); if (!s) return true;
+      const z = s.ej[+b.dataset.i].sets[+b.dataset.j]; if (!z) return true;
+      if (b.dataset.t) z.tipo = b.dataset.t; else delete z.tipo;
+      guardar(); tancaFull(); render(); Efectos.suena("tap"); return true;
+    }
   }
   return false;
 }
@@ -4101,7 +4189,8 @@ function vegades(nombre, excepto, n) {
     const s = S.ses[i];
     if (s.id === excepto || !s.fin) continue;
     const e = s.ej.find(x => x.n === nombre);
-    if (e && e.sets.some(z => z.ok)) out.push({ fecha: s.fecha, sets: e.sets.filter(z => z.ok) });
+    // l'escalfament i el drop set no compten per a com puja el pes (src/series.js)
+    if (e && e.sets.some(z => z.ok && serieCompta(z))) out.push({ fecha: s.fecha, sets: e.sets.filter(z => z.ok && serieCompta(z)) });
   }
   return out;
 }
@@ -4595,8 +4684,8 @@ function dadesResum(o) {
   fetes.forEach(e => {
     if (e.x === "lastre") return;
     let abans = 0;
-    S.ses.forEach(x => { if (x.id === s.id || !x.fin || x.inicio > s.inicio) return; const xe = x.ej.find(q => q.n === e.n); if (xe) xe.sets.forEach(z => { if (z.ok && z.reps) abans = Math.max(abans, Stats.e1rm(z.kg || 0, z.reps)); }); });
-    const millor = e.sets.filter(z => z.ok && z.reps).reduce((m, z) => Stats.e1rm(z.kg || 0, z.reps) > Stats.e1rm(m.kg || 0, m.reps) ? z : m, { kg: 0, reps: 0 });
+    S.ses.forEach(x => { if (x.id === s.id || !x.fin || x.inicio > s.inicio) return; const xe = x.ej.find(q => q.n === e.n); if (xe) xe.sets.forEach(z => { if (z.ok && z.reps && serieCompta(z)) abans = Math.max(abans, Stats.e1rm(z.kg || 0, z.reps)); }); });
+    const millor = e.sets.filter(z => z.ok && z.reps && serieCompta(z)).reduce((m, z) => Stats.e1rm(z.kg || 0, z.reps) > Stats.e1rm(m.kg || 0, m.reps) ? z : m, { kg: 0, reps: 0 });
     const v = Stats.e1rm(millor.kg || 0, millor.reps);
     if (abans && v > abans + 0.01) records.push({ n: e.n, kg: millor.kg, reps: millor.reps, v, abans });
     if (!abans && v > 0) primeres++;
@@ -6969,9 +7058,9 @@ function vistaEntreno() {
     const foto = fotoEj(e.n), pgr = posGrup(s.ej, i, x => x.g);
     if (pgr && pgr.pos === 1) h += `<div class="grup-cap sessio"><b>${nomGrup(pgr.n)} ${esc(e.g)}</b>${infoBoto(pgr.n >= 3 ? "circuito" : "superserie")}<small>Sin descanso entre ellos: descansa al final de cada vuelta</small></div>`;
     h += `<section class="panel exercici${pgr ? " en-grup" : ""}" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
-      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
+      <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
-      ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}"><span class="i">${j + 1}</span>
+      ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, j + 1)}
         ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
         <span class="x">×</span>
         <label class="camp"><span class="lector">Repeticiones de la serie ${j + 1}</span><input inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-camp="reps" data-i="${i}" data-j="${j}" value="${z.reps ?? ""}" placeholder="${c.min}-${c.max}"><span class="u">rep</span></label>
@@ -7238,6 +7327,10 @@ function fullCfgEj(i) {
     <label>Repeticiones<select id="c-r">${(RANGS.some(([a, b]) => a === c.min && b === c.max) ? RANGS : [...RANGS, [c.min, c.max]].sort((x, y) => x[0] - y[0] || x[1] - y[1])).map(([a, b]) => `<option value="${a}-${b}"${a === c.min && b === c.max ? " selected" : ""}>${a === b ? a : `${a} a ${b}`}</option>`).join("")}</select></label></div>
     <fieldset class="cargues"><legend>Cómo se carga</legend>${ORDRE_CARGAS.map(k => `<label class="chip-r"><input type="radio" name="c-c" value="${k}"${k === carga ? " checked" : ""}><span>${CARGAS[k].nom}</span></label>`).join("")}</fieldset>
     <label id="c-p-l"${CARGAS[carga].paso ? "" : " hidden"}>Va de<select id="c-p"><option value="">lo de tu gimnasio (${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} en ${fmt(pasGim(CARGAS[carga].paso ? carga : "placas"))} kg)</option>${[1, 2, 2.5, 5, 10].map(v => `<option value="${v}"${cf.paso === v ? " selected" : ""}>${fmt(v)} en ${fmt(v)} kg</option>`).join("")}</select></label>
+    <fieldset class="especials"><legend>Series especiales</legend>
+      <label class="esp-fila"><span>Calentamiento ${infoBoto("calentamiento")}</span><select id="c-esc">${[0, 1, 2, 3].map(n => `<option value="${n}"${(cf.esc || 0) === n ? " selected" : ""}>${n ? (n === 1 ? "1 serie" : n + " series") : "Ninguna"}</option>`).join("")}</select></label>
+      <label class="casella"><input type="checkbox" id="c-fallo"${cf.fallo ? " checked" : ""}><span><b>La última, al fallo ${infoBoto("fallo")}</b></span></label>
+      <label class="casella"><input type="checkbox" id="c-drop"${cf.drop ? " checked" : ""}><span><b>Un drop set al final ${infoBoto("drop")}</b></span></label></fieldset>
     <button class="btn clar marc" type="submit">GUARDAR PARA ESTE EJERCICIO</button></form>`;
 }
 // Per què avui toca aquest pes: el que va fer l'última vegada i la regla, amb l'esquema dels discos.
@@ -7502,11 +7595,13 @@ document.addEventListener("click", ev => {
       if (z.ok) {
         // ¿rècord? el millor 1RM d'aquest exercici en entrenos anteriors
         let millor = 0;
-        S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(q => { if (q.ok && q.reps) millor = Math.max(millor, Stats.e1rm(q.kg || 0, q.reps)); }); });
-        record = millor > 0 && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre"; prAbans = millor;
+        S.ses.forEach(o => { if (o.id === s.id || !o.fin) return; const oe = o.ej.find(x => x.n === e.n); if (oe) oe.sets.forEach(q => { if (q.ok && q.reps && serieCompta(q)) millor = Math.max(millor, Stats.e1rm(q.kg || 0, q.reps)); }); });
+        record = millor > 0 && serieCompta(z) && Stats.e1rm(z.kg || 0, z.reps) > millor + 0.01 && e.x !== "lastre"; prAbans = millor;
         // supersèrie o circuit (src/grups.js): sense descans fins a l'últim del grup, i llavors es torna al primer
         const pgr = posGrup(s.ej, +b.dataset.i, x => x.g);
-        if (pgr && pgr.pos < pgr.n) setTimeout(() => { const el = document.getElementById("ej-" + (+b.dataset.i + 1)); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("toca-ara"); setTimeout(() => el.classList.remove("toca-ara"), 1800); } }, 260);
+        const segZ = e.sets[+b.dataset.j + 1];
+        if (segZ && segZ.tipo === "d" && !segZ.ok) { /* ve un drop set: sense descans */ }
+        else if (pgr && pgr.pos < pgr.n) setTimeout(() => { const el = document.getElementById("ej-" + (+b.dataset.i + 1)); if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("toca-ara"); setTimeout(() => el.classList.remove("toca-ara"), 1800); } }, 260);
         else {
           if (S.descansoOn !== false) empezarDescanso(pgr ? Math.max(...s.ej.slice(pgr.primer, pgr.ultim + 1).map(x => descansoDe(x.t))) : descansoDe(e.t));
           if (pgr && s.ej.slice(pgr.primer, pgr.ultim + 1).some(x => x.sets.some(q => !q.ok))) setTimeout(() => { const el = document.getElementById("ej-" + pgr.primer); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 420);
@@ -7661,7 +7756,7 @@ document.addEventListener("click", ev => {
     case "esborra-veure": $("#esborra").innerHTML = '<div class="fila envolta" style="margin-top:10px"><span class="suau petit">¿Seguro? No se puede deshacer.</span><button class="btn clar marc" data-accion="esborra">Sí, borrar todo</button></div>'; break;
     case "esborra": S = BASE(); S.ui.vista = "inicio"; try { localStorage.removeItem(LLAVE); } catch (e) {} guardarYa(); render(); break;
     default: if (ACC_COMPTE.has(acc)) { accioCompte(acc, b); break; }
-      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b) && !accioGrups(acc, b) && !accioInvitaSync(acc) && !accioFeedSync(acc, b)) accioRutina(acc, b);
+      if (!accioAjustes(acc, b) && !accioPagines(acc, b) && !accioServidor(acc, b) && !accioMenu(acc, b) && !accioRutinesSync(acc, b) && !accioImporta(acc, b) && !accioTargeta(acc, b) && !accioGrups(acc, b) && !accioInvitaSync(acc) && !accioFeedSync(acc, b) && !accioSeries(acc, b)) accioRutina(acc, b);
   }
 });
 document.addEventListener("input", ev => {
@@ -7756,9 +7851,17 @@ document.addEventListener("submit", async ev => {
   } else if (tipus === "cfg-ej") {
     const e = activa().ej[+f.dataset.i], series = Number($("#c-s").value), [mn, mx] = $("#c-r").value.split("-").map(Number);
     const carga = (f.querySelector('input[name="c-c"]:checked') || {}).value, paso = num($("#c-p") ? $("#c-p").value : "");
-    S.cfg[e.n] = { series, min: mn, max: mx, ...(carga ? { carga } : {}), ...(paso > 0 ? { paso } : {}) };
-    while (e.sets.length < series) { const u = e.sets[e.sets.length - 1] || {}; e.sets.push({ kg: u.kg ?? null, reps: null, ok: false }); }
-    while (e.sets.length > series && !e.sets[e.sets.length - 1].ok) e.sets.pop();
+    const esc2 = Number($("#c-esc") ? $("#c-esc").value : 0) || 0, fallo = !!($("#c-fallo") && $("#c-fallo").checked), drop = !!($("#c-drop") && $("#c-drop").checked);
+    S.cfg[e.n] = { series, min: mn, max: mx, ...(carga ? { carga } : {}), ...(paso > 0 ? { paso } : {}), ...(esc2 ? { esc: esc2 } : {}), ...(fallo ? { fallo } : {}), ...(drop ? { drop } : {}) };
+    // les de treball (sense l'escalfament ni el drop set): n'afegeix o en treu de les que no estan fetes
+    for (let feina = e.sets.filter(serieCompta); feina.length < series; feina = e.sets.filter(serieCompta)) {
+      const u = feina[feina.length - 1] || {}, on = u.kg !== undefined ? e.sets.indexOf(u) + 1 : e.sets.length;
+      e.sets.splice(on, 0, { kg: u.kg ?? null, reps: null, ok: false });
+    }
+    for (let feina = e.sets.filter(serieCompta); feina.length > series; feina = e.sets.filter(serieCompta)) {
+      const treu = [...feina].reverse().find(z => !z.ok); if (!treu) break; e.sets.splice(e.sets.indexOf(treu), 1);
+    }
+    e.sets = aplicaEspecials(e.sets, S.cfg[e.n], { series, min: mn, max: mx });
     guardar(); tancaFull(); render();
   } else if (tipus === "restaura") {
     let txt = $("#r-txt").value.trim();
