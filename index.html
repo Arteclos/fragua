@@ -251,6 +251,11 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .resum-pag.viva .r-medalla svg{animation:gira-medalla 1s cubic-bezier(.2,.9,.3,1.3) both;animation-delay:inherit}
 @keyframes gira-medalla{from{transform:rotateY(180deg) scale(.4)}to{transform:none}}
 .r-nota{color:var(--fum);font-size:14px;line-height:1.5;margin:14px 6px 0}
+/* el dia complet: la insígnia «FORJA PERFECTA» del resum (Stats.completa) */
+.r-perfecta{display:flex;flex-direction:column;align-items:center;gap:2px;margin:12px auto 4px;padding:9px 18px 8px;max-width:320px;border-radius:14px;text-align:center;
+  background:linear-gradient(180deg,rgba(254,225,50,.16),rgba(255,138,23,.08));border:1.5px solid rgba(254,225,50,.7);box-shadow:0 0 22px rgba(254,225,50,.28),inset 0 0 14px rgba(254,225,50,.12)}
+.r-perfecta b{font-family:var(--display);font-weight:900;font-size:21px;letter-spacing:.06em;color:var(--flama);text-shadow:0 0 12px rgba(254,225,50,.55)}
+.r-perfecta small{color:var(--crema);font-size:13px;line-height:1.35}
 .r-accions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0}
 /* ---- supersèries i circuits, i la icona dels conceptes (27-09-2026) ---- */
 .info-boto{display:inline-grid;place-items:center;width:30px;height:30px;margin:-6px 0 -6px 2px;padding:0;border:0;border-radius:50%;background:none;color:#e6a45a;vertical-align:middle;cursor:pointer}
@@ -1806,8 +1811,17 @@ const xpParaSubir = nivel => 100 + 50 * (nivel - 1);
 // qui es va fer (s.pj) i la seva XP va a ell. Les d'abans, al personatge que es tenia quan va arribar el canvi (S.pjOrigen).
 // El que és del COMPTE no canvia: el total, els rècords i l'or (que el servidor calcula igual, servidor/sincro.py).
 const pjDe = (S, s) => s.pj || S.pjOrigen || (S.personaje && S.personaje.tipo) || "herrero";
+// EL DIA COMPLET («FORJA PERFECTA»; l'Albert, 27-09-2026: «si fan tots els exercicis, dona més XP i or, i un badge en
+// acabar; però com a mínim cal guardar una sèrie»): totes les sèries de treball de l'entreno fetes (l'escalfament i el drop
+// set no compten: són opcionals) i com a mínim COMPLET_MIN, perquè una rutina d'un exercici no el cobri cada dia. Dona
+// +50 XP (aquí) i +15 d'or (ORO.completo, a app.js). El servidor ho compta igual: servidor/sincro.py, completa().
+const COMPLET_MIN = 6;
+function completa(s) {
+  const feina = s.ej.flatMap(e => e.sets.filter(z => z.tipo !== "c" && z.tipo !== "d"));
+  return feina.length >= COMPLET_MIN && feina.every(z => z.ok && z.reps > 0);
+}
 function experiencia(S) {
-  let xp = 0, records = 0, series = 0, sesiones = 0;
+  let xp = 0, records = 0, series = 0, sesiones = 0, completos = 0;
   const mejor = {}, punt = puntuables(S), perPj = {};
   finSesiones(S).sort((a, b) => a.inicio - b.inicio).forEach(s => {
     const puntua = punt.has(s.id), xp0 = xp, pj = pjDe(S, s);
@@ -1824,10 +1838,11 @@ function experiencia(S) {
         mejor[e.n] = Math.max(mejor[e.n] || 0, v);
       });
     });
+    if (puntua && completa(s)) { xp += 50; completos++; }
     perPj[pj] = (perPj[pj] || 0) + (xp - xp0);
   });
   const nv = nivellDe(xp);
-  return { xp, nivel: nv.nivel, enNivel: nv.enNivel, paraSubir: nv.paraSubir, titulo: nv.titulo, records, series, sesiones, perPj };
+  return { xp, nivel: nv.nivel, enNivel: nv.enNivel, paraSubir: nv.paraSubir, titulo: nv.titulo, records, series, sesiones, completos, perPj };
 }
 function nivellDe(xp) {
   let nivel = 1, resto = xp;
@@ -2030,7 +2045,7 @@ function semana(S, ahora = new Date()) {
   });
 }
 
-return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, e1rm, puntuables, experiencia, experienciaPj, nivellDe, nivellMaxPj, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, metaValida, metes, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
+return { TITULOS, GRUPO, GRUPOS, MAX_SERIES, COMPLET_MIN, completa, e1rm, puntuables, experiencia, experienciaPj, nivellDe, nivellMaxPj, xpParaSubir, fuego, volumenSemanal, armadura, fuerza, curvaEjercicio, records, constancia, racha, mejorRacha, descansosSemana, HITOS, bolsa, proximoHito, metaValida, metes, semana, setmanesDe, diasPorSemana, tendenciaGrupos, diasTotal, diasAno, mediaSemanaAno };
 })();
 
 /* Generat per prepara_sons.py: quins sons d'Artlist hi ha a assets/sons/. No s'edita a mà. */
@@ -4835,7 +4850,9 @@ function dadesResum(o) {
   });
   const hitos = Stats.HITOS.filter(h => h > o.mrAbans && h <= o.mrDes);
   return { s, min: Math.max(1, Math.round((s.fin - s.inicio) / 60000)), series, kg: Math.round(kg), ejercicios: fetes.length, records, primeres, mejoras,
-    hitos, meta: o.meta, puntua: Stats.puntuables(S).has(s.id), ...o };
+    hitos, meta: o.meta, puntua: Stats.puntuables(S).has(s.id), completa: Stats.completa(s),
+    // les sèries de treball que s'han quedat per fer (per dir-li quantes, si l'entreno dona per al dia complet)
+    feina: s.ej.reduce((a, e) => a + e.sets.filter(serieCompta).length, 0), perFer: s.ej.reduce((a, e) => a + e.sets.filter(z => serieCompta(z) && !(z.ok && z.reps > 0)).length, 0), ...o };
 }
 
 /* ---- les pàgines ---- */
@@ -4844,12 +4861,14 @@ function pagEntreno(d) {
   const tiles = [[d.min, "minutos"], [d.series, d.series === 1 ? "serie" : "series"], [d.kg, "kg movidos"], [d.ejercicios, d.ejercicios === 1 ? "ejercicio" : "ejercicios"]];
   return `<div class="gran or entra" style="--d:.05s">¡ENTRENO FORJADO!</div>
     <div class="r-sub entra" style="--d:.2s">Día ${d.s.dia}, ${esc((d.s.dt || "").toLowerCase())}</div>
+    ${d.completa ? `<div class="r-perfecta entra" style="--d:.3s" data-so="record" data-quan="500"><b>FORJA PERFECTA</b><small>Día completo: no te has dejado nada${d.puntua ? ". +50 XP y +15 de oro" : ""}.</small></div>` : ""}
     <div class="r-tiles">${tiles.map(([v, et], i) => `<div class="r-tile marc entra" style="--d:${(0.45 + i * 0.28).toFixed(2)}s"><b class="or num" data-compta="${v}" data-quan="${450 + i * 280}">0</b><span>${et}</span></div>`).join("")}</div>
     <h3 class="r-h entra" style="--d:1.6s">${d.records.length ? (d.records.length === 1 ? "Un récord" : `${d.records.length} récords`) : d.primeres ? "Primeras marcas" : "Récords"}</h3>
     ${d.records.length ? `<div class="r-recs">${d.records.map((r, i) => `<div class="r-rec entra" style="--d:${(1.8 + i * 0.3).toFixed(2)}s" data-so="record" data-quan="${1800 + i * 300}" data-n="${esc(r.n)}"><span class="r-medalla">${I_MEDALLA}</span><span class="r-rec-t"><b>${esc(r.n)}</b><small>${kgTxt(r.kg)} kg × ${r.reps}. Tu máximo estimado: ${n0(r.v)} kg (${n0(r.abans)} antes)</small></span></div>`).join("")}</div>`
       : d.primeres ? `<p class="r-nota entra" style="--d:1.8s">Has puesto tu marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}. Desde hoy, cada vez que la superes será un récord.</p>`
       : `<p class="r-nota entra" style="--d:1.8s">Hoy no has batido ninguno. La constancia también forja: los récords llegan.</p>`}
     ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}
+    ${!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="r-nota entra" style="--d:2.3s">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo, «Forja perfecta»: +50 XP y +15 de oro.</p>` : ""}
     <p class="entra r-accions" style="--d:2.4s"><button class="btn marc tg-boto" data-accion="tg-entreno">${I_TG}<span>Compartir mi entreno</span></button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="btn marc" data-accion="clan-avisa">Avisar a mi clan</button>` : ""}</p>`;
 }
 function pagMejoras(d) {
@@ -6930,7 +6949,7 @@ const nivelOk = t => Stats.nivellMaxPj(S) >= (PERSONAJES[t].nivel || 1);
 // L'or que has guanyat surt del que has fet (com l'XP): 25 per entreno, 2 per sèrie, 10 per rècord, 3 per
 // cada àpat apuntat (6 al dia com a molt) i 40 per nivell pujat. Així no es pot inflar marcant i
 // desmarcant; al total s'hi suma el comprat i se li resta el gastat.
-const ORO = { entreno: 25, serie: 2, record: 10, comida: 3, nivel: 40 };
+const ORO = { entreno: 25, serie: 2, record: 10, comida: 3, nivel: 40, completo: 15 };   // completo: el dia complet (Stats.completa)
 // Només el que puntua (un entreno al dia) dona or; i cada fita de ratxa, la seva bossa, una sola vegada.
 function oroGanado() {
   const xp = Stats.experiencia(S);
@@ -6939,7 +6958,7 @@ function oroGanado() {
   const dt = Stats.diasTotal(S);
   const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0)
     + Stats.metes(S).fetes.reduce((a, m) => a + Stats.bolsa(m.dies), 0);
-  return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
+  return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.completo * xp.completos + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
 }
 // Amb compte, el saldo el mana el servidor (src/compte.js, oroServidor); sense, el càlcul del mòbil.
 const oroTotal = () => { const sv = typeof oroServidor === "function" ? oroServidor() : null; return sv != null ? sv : Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0)); };
