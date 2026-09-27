@@ -276,6 +276,11 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:10
 .rebuda-dia ul{margin:4px 0 0;padding:0;list-style:none}
 .rebuda-dia li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(197,123,55,.15);font-size:14px}
 .rebuda-dia li small{color:var(--fum);white-space:nowrap}
+/* la roba que es desbloqueja (Hub 774): el cadenat de la botiga i el que falta a la fitxa */
+.roba-lock{position:absolute;left:6px;bottom:6px;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:9px;font-size:11.5px;font-weight:700;
+  color:var(--flama);background:rgba(0,0,0,.72);border:1px solid rgba(254,225,50,.45)}
+.roba-tancada{display:flex;gap:10px;align-items:flex-start;margin:0;padding:12px 14px;border-radius:12px;background:rgba(254,225,50,.06);border:1px solid rgba(254,225,50,.35);line-height:1.4}
+.roba-tancada svg{flex:none;margin-top:3px;color:var(--flama);width:18px;height:18px}
 /* l'importador: la càrrega (el yunque rep tres cops) i el resultat (importa.js, htmlLlegintImp i htmlResultatImp) */
 .imp-llegint{display:flex;flex-direction:column;align-items:center;padding:26px 0 18px}
 .imp-enclusa{position:relative;animation:impCop .48s cubic-bezier(.3,1.7,.5,1) 3 both}
@@ -4331,7 +4336,7 @@ function itemFeed(it) {
   }).join("");
   return `<article class="fd-item panel pad">
     <div class="fd-cap">${avatar(it.personatge, it.nivell)}<span><b>${it.yo ? "Tú" : esc(it.nom)}</b><small>${diaFeed(it.dia)}</small></span></div>
-    <p class="fd-xifres"><b class="num">${it.minuts}</b> min, <b class="num">${it.series}</b> ${it.series === 1 ? "serie" : "series"}${it.volum ? `, <b class="num">${n0(it.volum)}</b> kg` : ""}</p>
+    <p class="fd-xifres">${it.minuts != null ? `<b class="num">${it.minuts}</b> min, ` : ""}<b class="num">${it.series}</b> ${it.series === 1 ? "serie" : "series"}${it.volum ? `, <b class="num">${n0(it.volum)}</b> kg` : ""}</p>
     ${(it.records || []).length ? `<p class="fd-rec">${I_MEDALLA}<span>${it.records.length === 1 ? `Récord en ${esc(it.records[0])}` : `${it.records.length} récords: ${it.records.map(esc).join(", ")}`}</span></p>` : ""}
     ${ex ? `<ul class="fd-ex">${ex}${mes > 0 ? `<li class="suau">y ${mes} ${mes === 1 ? "ejercicio" : "ejercicios"} más</li>` : ""}</ul>` : ""}
     <div class="fd-reaccions">${botons}${it.yo && (it.qui || []).length ? `<small class="fd-qui">${it.qui.slice(0, 4).map(q => `${esc(q.nom)} ${(REACCIONS.find(r => r[0] === q.tipus) || [0, ""])[1]}`).join(", ")}${it.qui.length > 4 ? "…" : ""}</small>` : ""}</div>
@@ -6230,6 +6235,28 @@ const MATERIAL = ROBA.map(r => [r[0], r[2]]);
 const TALLES_MAT = Object.fromEntries(ROBA.map(r => [r[0], r[4]]));
 const robaDe = k => ROBA.find(r => r[0] === k);
 const preuRoba = c => c == null ? "Precio pronto" : (c / 100).toFixed(2).replace(".", ",") + " €";
+// LA ROBA QUE ES DESBLOQUEJA (Hub 774; l'Albert: «m'encanta que puguis comprar samarretes segons XP, segons poder o segons
+// or»). El mateix que el servidor (servidor/sincro.py, ROBA_REQ), que és qui mana: `obertes` arriba amb /material.
+const ROBA_REQ = { pump: ["nivel", 5], prem: ["nivel", 12], edgy: ["temple", 400], anime: ["oro", 300] }, TEMPLE_ALT = 10;
+const I_CANDAU = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const liniaRoba = k => String(k).split("-")[0];
+function robaOberta(k) {
+  const l = liniaRoba(k), req = ROBA_REQ[l]; if (!req) return true;
+  const ob = (S.ui.material || {}).obertes;
+  if (Array.isArray(ob)) return ob.includes(l);
+  const nv = Stats.experiencia(S).nivel, tp = (soc().yo || {}).poder;
+  if (req[0] === "nivel") return nv >= req[1];
+  if (req[0] === "temple") return (tp || 0) >= req[1] || (tp == null && nv >= TEMPLE_ALT);
+  return false;
+}
+const reqRoba = k => { const q = ROBA_REQ[liniaRoba(k)]; return !q ? "" : q[0] === "nivel" ? `Nivel ${q[1]}` : q[0] === "temple" ? `Temple ${q[1]}` : `${q[1]} de oro`; };
+function fullRobaTancada(k) {
+  const q = ROBA_REQ[liniaRoba(k)], nv = Stats.experiencia(S).nivel, tp = (soc().yo || {}).poder, saldo = oroTotal();
+  if (q[0] === "nivel") return `<p class="roba-tancada">${I_CANDAU}<span>Se desbloquea en el <b>nivel ${q[1]}</b>. Vas por el ${nv}: entrena y es tuya.</span></p>`;
+  if (q[0] === "temple") return `<p class="roba-tancada">${I_CANDAU}<span>Se desbloquea con <b>Temple ${q[1]}</b>${tp != null ? ` (tienes ${tp})` : `, o en el <b>nivel ${TEMPLE_ALT}</b> si no compartes tu peso (vas por el ${nv})`}. Es la ropa de los fuertes.</span></p>`;
+  return `<p class="roba-tancada">${I_CANDAU}<span>La línea anime se desbloquea con <b>${q[1]} de oro</b>, una sola vez. Tienes ${saldo}.</span></p>
+    ${saldo >= q[1] ? botoForja(`data-accion="mat-desbloq" data-k="${k}"`, `DESBLOQUEAR POR ${q[1]} DE ORO`, "Toda la línea, para siempre") : `<p class="suau petit" style="margin:0;text-align:center">Te faltan ${q[1] - saldo} de oro: entrenando los tienes.</p>`}`;
+}
 async function carregaMaterial() {
   try { S.ui.material = { ...(await api("GET", "/material")), at: Date.now() }; guardar(); if (S.ui.vista === "tienda") render(); } catch (e) {}
 }
@@ -6241,8 +6268,8 @@ function fullMaterial(k) {
   const tria = S.ui.matTalla || meva || (talles.length === 1 ? talles[0] : null);
   return `<div class="mat-full">${figura}
     <p class="roba-preu"><b>${preuRoba(r[3])}</b><small>${r[3] != null ? "IVA incluido. Envío 4,95 €, gratis desde 75 €." : "Aún sin precio: te lo decimos antes de que decidas."}</small></p>
-    ${talles.length > 1 ? `<div><b>Tu talla</b><div class="fila envolta talles">${talles.map(t => `<button class="chip" data-accion="mat-talla" data-t="${t}" aria-pressed="${tria === t}">${t}</button>`).join("")}</div></div>` : ""}
-    ${botoForja(`data-accion="mat-reserva" data-k="${k}"`, meva ? "CAMBIAR LA RESERVA" : "RESERVAR", "No pagas nada")}
+    ${!robaOberta(k) && !meva ? fullRobaTancada(k) : `${talles.length > 1 ? `<div><b>Tu talla</b><div class="fila envolta talles">${talles.map(t => `<button class="chip" data-accion="mat-talla" data-t="${t}" aria-pressed="${tria === t}">${t}</button>`).join("")}</div></div>` : ""}
+    ${botoForja(`data-accion="mat-reserva" data-k="${k}"`, meva ? "CAMBIAR LA RESERVA" : "RESERVAR", "No pagas nada")}`}
     ${meva ? `<p style="text-align:center;margin:0"><button class="enllac" data-accion="mat-anula" data-k="${k}">Anular la reserva</button></p>` : ""}
     <p class="suau petit" style="margin:0">Te avisamos por correo cuando esté a la venta y entonces decides.${q ? ` ${q === 1 ? "Ya lo ha reservado 1 persona." : `Ya lo han reservado ${q} personas.`}` : ""}</p></div>`;
 }
@@ -6259,13 +6286,23 @@ async function accioMaterial(acc, b) {
       catch (e) { avis(e.message, true); }
       return;
     }
+    case "mat-desbloq": {
+      if (S.demo) { avis("En el modo demostración no se envía nada.", true); return; }
+      try {
+        const r = await api("POST", "/or/roba", { linia: liniaRoba(k) });
+        S.ui.material = { ...(S.ui.material || {}), obertes: r.obertes }; aplicaOr(r.or); guardar();
+        obreFull(fullMaterial(k), nom); render(); Efectos.suena("fanfarria"); Efectos.vibra("desbloqueig"); Efectos.lluvia(1);
+        avis("¡Línea anime desbloqueada! Ya puedes reservarla.");
+      } catch (e) { avis(e.message, true); }
+      return;
+    }
     case "mat-anula":
       try { S.ui.material = { ...(await api("DELETE", "/material/reserva/" + k)), at: Date.now() }; guardar(); tancaFull(); render(); avis("Reserva anulada."); }
       catch (e) { avis(e.message, true); }
       return;
   }
 }
-const ACC_MAT = new Set(["mat-obre", "mat-talla", "mat-reserva", "mat-anula"]);
+const ACC_MAT = new Set(["mat-obre", "mat-talla", "mat-reserva", "mat-anula", "mat-desbloq"]);
 function accioServidor(acc, b) {
   if (ACC_AVISOS.has(acc)) { accioAvisos(acc, b); return true; }
   if (ACC_MAT.has(acc)) { accioMaterial(acc, b); return true; }
@@ -7169,7 +7206,7 @@ function oroGanado() {
   let menjars = 0;
   Object.values(S.reg).forEach(ll => { menjars += Math.min(6, new Set(ll.map(r => r.comida)).size); });
   const dt = Stats.diasTotal(S);
-  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0)
+  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).filter(y => /^[0-9]{4}$/.test(String(y))).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0)
     + Stats.metes(S).fetes.reduce((a, m) => a + Stats.bolsa(m.dies), 0);
   return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.completo * xp.completos + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
 }
@@ -7630,7 +7667,7 @@ function vistaTienda() {
     const mt = S.ui.material || {};
     if (teCompte() && !S.demo && Date.now() - (mt.at || 0) > 60000) setTimeout(carregaMaterial, 0);
     const peca = r => { const k = r[0], t = (mt.meves || {})[k];
-      return `<button class="carta marc material${t ? " reservat" : ""}" data-accion="mat-obre" data-k="${k}"><span class="roba-foto"><img src="${ACTIUS}roba/${k}.webp" alt="" loading="lazy" width="600" height="600"><span class="roba-ia">IA</span></span><span class="carta-nom">${esc(r[2])}</span>${esMenor() ? "" : `<span class="roba-p">${preuRoba(r[3])}</span><span class="aviat">${t ? (t === "Única" ? "Reservado" : `Reservada, talla ${t}`) : "Reservar"}</span>`}</button>`; };
+      return `<button class="carta marc material${t ? " reservat" : ""}" data-accion="mat-obre" data-k="${k}"><span class="roba-foto"><img src="${ACTIUS}roba/${k}.webp" alt="" loading="lazy" width="600" height="600"><span class="roba-ia">IA</span>${!esMenor() && !t && !robaOberta(k) ? `<span class="roba-lock">${I_CANDAU}${reqRoba(k)}</span>` : ""}</span><span class="carta-nom">${esc(r[2])}</span>${esMenor() ? "" : `<span class="roba-p">${preuRoba(r[3])}</span><span class="aviat">${t ? (t === "Única" ? "Reservado" : `Reservada, talla ${t}`) : "Reservar"}</span>`}</button>`; };
     h += `<p class="suau petit roba-av">${esMenor() ? "La ropa de KLONK, para ir al gimnasio con tu clan. Las fotos y los modelos están creados con IA." : "La ropa de KLONK, para ir al gimnasio con tu clan. Resérvala con tu talla: no pagas nada y te avisamos cuando esté a la venta. Las fotos y los modelos están creados con IA."}</p>
       ${ROBA_GRUPS.map(([g, gn]) => `<h3 class="roba-g">${esc(gn)}</h3><div class="botiga">${ROBA.filter(r => r[1] === g).map(peca).join("")}</div>`).join("")}`;
   } else {
