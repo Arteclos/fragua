@@ -8183,6 +8183,8 @@ const Nit = (() => {
   }
   document.addEventListener("click", ev => {
     if (!esNit()) return;
+    const sx = ev.target.closest('[data-accion="serie"]');
+    if (sx && typeof activa === "function") { const s = activa(), e = s && s.ej[+sx.dataset.i], j = +sx.dataset.j; if (e && e.sets[j] && !e.sets[j].ok && e.sets.every((q, k) => q.ok || k === j)) obrintFet = +sx.dataset.i; }
     const tipus = ev.target.closest('[data-accion="serie-tipus"]');
     if (tipus) { ev.preventDefault(); ev.stopPropagation(); obreTipus(tipus); return; }
     const op = ev.target.closest(".nt-rt-op");
@@ -8192,6 +8194,15 @@ const Nit = (() => {
     const cg = ev.target.closest("#barra-nova .nt-centre");
     if (cg) {
       ev.preventDefault(); ev.stopPropagation();
+      // MENTRE ENTRENES, LA PORTADA ÉS L'ENTRENO (l'Albert, 28-09 nit: el menú es queda perquè l'entreno dura una hora i
+      // hi ha qui parla o compara; el botó del mig et torna on eres, amb el seu klonk)
+      if (typeof activa === "function" && activa()) {
+        so();
+        if (!quiet() && cg.animate) cg.animate([{ transform: "scale(1)" }, { transform: "scale(1.08,.86)", offset: .2 }, { transform: "scale(.96,1.07)", offset: .5 }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.9,.3,1)" });
+        if (S.ui.vista === "entreno") { const x = document.querySelector(".ne-ej.ara") || document.querySelector(".ne-fi"); if (x) x.scrollIntoView({ behavior: quiet() ? "auto" : "smooth", block: "start" }); }
+        else ves("entreno");
+        return;
+      }
       if (document.querySelector(".nt") && (S.ui.vista || "inicio") === "inicio") { klonk(cg); return; }
       so();
       if (!quiet() && cg.animate) cg.animate([{ transform: "scale(1)" }, { transform: "scale(1.08,.86)", offset: .2 }, { transform: "scale(.96,1.07)", offset: .5 }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.9,.3,1)" });
@@ -8226,7 +8237,7 @@ const Nit = (() => {
     const kl = ev.target.closest(".ns-klonk");
     if (kl && !kl.classList.contains("fet")) { so(); klonkPendent = kl.dataset.id; }
     const fo = ev.target.closest('[data-accion="nt-focus"]');
-    if (fo) { ev.preventDefault(); ev.stopPropagation(); posaFocus(+fo.dataset.i, true); return; }
+    if (fo) { ev.preventDefault(); ev.stopPropagation(); obreFet(+fo.dataset.i); return; }
     const b = ev.target.closest('[data-accion="nt-ves"], [data-accion="nt-menu"]');
     if (b) {
       ev.preventDefault(); ev.stopPropagation();
@@ -8410,7 +8421,7 @@ const Nit = (() => {
   const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}urba.webp" alt="" draggable="false"></div>`;
 
   // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
-  const LLOC = { inicio: "centre", personaje: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
+  const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
     ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu" };
   const ORDRE = ["tu", "social", "centre", "nutri", "menu"];
   let llocAbans = "";
@@ -8556,11 +8567,6 @@ const Nit = (() => {
      desar, descansar, els rècords i l'or funcionen igual que abans. */
   const ANELL = 2 * Math.PI * 25;
   const acabat = e => e.sets.length > 0 && e.sets.every(z => z.ok);
-  function focusDe(s) {
-    let f = S.ui.ntFocus;
-    if (!(f >= 0 && f < s.ej.length) || S.ui.ntFocusSes !== s.id) { f = s.ej.findIndex(e => !acabat(e)); if (f < 0) f = 0; S.ui.ntFocus = f; S.ui.ntFocusSes = s.id; }
-    return f;
-  }
   const grupDe = n => (typeof Stats === "object" && Stats.GRUPO && Stats.GRUPO[n]) || "";
   function filaSerie(z, i, j, lastre, ambLastre, c) {
     return `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, j + 1)}
@@ -8569,60 +8575,76 @@ const Nit = (() => {
       <label class="camp"><span class="lector">Repeticiones de la serie ${j + 1}</span><input inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-camp="reps" data-i="${i}" data-j="${j}" value="${z.reps ?? ""}" placeholder="${c.min}-${c.max}"><span class="u">rep</span></label>
       <button class="xec" data-accion="serie" data-i="${i}" data-j="${j}" aria-pressed="${!!z.ok}" aria-label="Serie ${j + 1} hecha">${I_CHECK}</button></div>`;
   }
-  function vistaEntreno() {
-    const s = activa();
-    if (!s) return vista();
-    const f = focusDe(s), fets = s.ej.filter(acabat).length, t = s.dt || (RUTINA[s.dia - 1] || {}).t || "";
-    const e = s.ej[f], i = f, c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
-    const foto = fotoAnime(e.n), pgr = posGrup(s.ej, i, x => x.g), g = grupDe(e.n);
-    const cap = `<header class="ne-cap" data-in="ne"><div class="ne-dia"><small>Día ${s.dia}</small><b>${esc(t)}</b></div>
-      <div class="ne-anell" role="img" aria-label="${fets} de ${s.ej.length} ejercicios"><svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="25" class="ne-a-f"/><circle cx="30" cy="30" r="25" class="ne-a-p" style="stroke-dashoffset:${(ANELL * (1 - fets / s.ej.length)).toFixed(1)}"/></svg><span><b>${fets}/${s.ej.length}</b><small>ejercicios</small></span></div>
-      <div class="ne-musica">${botoMusica()}</div></header>`;
-    const heroi = `<section class="ne-ej exercici" id="ej-${i}" data-in="ne">
+  /* TOTS DESPLEGATS (l'Albert, 28-09 nit, amb la captura: «m'agradava abans, que estaven els exercicis tots desplegats en
+     comptes del sistema d'ara. Vull que es vegi l'ordre. No mola clicar de més»). Tots els exercicis, en ordre i oberts; el
+     que toca ara, amb el fil de menta. El que acabes es plega en una fila amb el ✓ (i si la toques, s'obre per corregir-lo). */
+  const PISTA = `<span class="ne-pista"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.8v6M12 7.4v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Toca el número para cambiar el tipo de serie</span>`;
+  // l'exercici que s'està acabant ara mateix (el segell): segueix obert fins que es plega
+  let obrintFet = -1;
+  function blocEj(s, e, i, esAra) {
+    const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
+    const foto = fotoAnime(e.n), pgr = posGrup(s.ej, i, x => x.g), g = grupDe(e.n), fet = acabat(e);
+    return `<section class="ne-ej exercici${esAra ? " ara" : ""}${fet ? " fet" : ""}" id="ej-${i}" data-in="ne" style="view-transition-name:ne-${i}">
       <div class="ne-ej-cap">${foto ? `<button class="ne-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" draggable="false"></button>` : `<span class="ne-foto ne-foto-buit">${ic("manuella")}</span>`}
         <div class="ne-nom"><b>${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</b>
-          <div class="ne-xips">${g ? `<span class="ne-grup">${esc(g)}</span>` : ""}${chipProg(p, i)}</div>
+          <div class="ne-xips">${g ? `<span class="ne-grup">${esc(g)}</span>` : ""}${fet ? `<button class="ne-plega" data-accion="nt-focus" data-i="${i}" aria-label="Hecho. Plegarlo">${I_CHECK}Hecho</button>` : chipProg(p, i)}</div>
           ${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
         <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div>
       <div class="ne-series series">${e.sets.map((z, j) => filaSerie(z, i, j, lastre, ambLastre, c)).join("")}</div>
-      <div class="ne-peu">${S.ui.ntRodetaVista ? "" : `<span class="ne-pista"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 10.8v6M12 7.4v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Toca el número para cambiar el tipo de serie</span>`}
+      <div class="ne-peu">${esAra && !S.ui.ntRodetaVista ? PISTA : ""}
         <button class="btn" data-accion="mes-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Añadir serie</button>${e.sets.length > 1 ? `<button class="btn" data-accion="menys-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>Quitar la última</button>` : ""}</div>
     </section>`;
-    const resta = s.ej.map((x, k) => ({ x, k })).filter(({ k }) => k !== f).map(({ x, k }) => {
-      const fx2 = fotoAnime(x.n), cx = cfgEj(x.n, x.t), gx = grupDe(x.n), fet = acabat(x), fetes = x.sets.filter(z => z.ok).length;
-      return `<button class="ne-fila${fet ? " fet" : ""}" data-accion="nt-focus" data-i="${k}" data-in="ne" aria-label="${esc(x.n)}: ${fetes} de ${x.sets.length} series">
-        ${fx2 ? `<img src="${fx2}" alt="" draggable="false">` : `<i class="ne-fila-buit">${ic("manuella")}</i>`}<span class="ne-fila-n">${esc(x.n)}</span>${gx ? `<span class="ne-grup g-${slug(gx)}">${esc(gx)}</span>` : ""}
-        <span class="ne-obj">${x.sets.filter(serieCompta).length} × ${cx.min === cx.max ? cx.min : cx.min + "-" + cx.max}</span><i class="ne-estat" aria-hidden="true">${fet ? I_CHECK : fetes ? `<b>${fetes}</b>` : ""}</i></button>`;
-    }).join("");
-    return `<section class="ne">${cap}${heroi}<div class="ne-resta">${resta}</div>
-      <button class="nt-boto ne-fi" data-accion="terminar" data-in="ne">Terminar entreno</button>
+  }
+  function filaFeta(x, k) {
+    const fx2 = fotoAnime(x.n), cx = cfgEj(x.n, x.t), gx = grupDe(x.n), n = x.sets.filter(z => z.ok).length;
+    return `<button class="ne-fila fet" id="ej-${k}" data-accion="nt-focus" data-i="${k}" data-in="ne" style="view-transition-name:ne-${k}" aria-label="${esc(x.n)}: hecho, ${n} ${n === 1 ? "serie" : "series"}. Tócalo para verlo">
+      ${fx2 ? `<img src="${fx2}" alt="" draggable="false">` : `<i class="ne-fila-buit">${ic("manuella")}</i>`}<span class="ne-fila-n">${esc(x.n)}</span>${gx ? `<span class="ne-grup g-${slug(gx)}">${esc(gx)}</span>` : ""}
+      <span class="ne-obj">${x.sets.filter(serieCompta).length} × ${cx.min === cx.max ? cx.min : cx.min + "-" + cx.max}</span><i class="ne-estat" aria-hidden="true">${I_CHECK}</i></button>`;
+  }
+  function vistaEntreno() {
+    const s = activa();
+    if (!s) return vista();
+    const fets = s.ej.filter(acabat).length, t = s.dt || (RUTINA[s.dia - 1] || {}).t || "";
+    const ara = s.ej.findIndex(e => !acabat(e)), ob = S.ui.ntObertSes === s.id ? S.ui.ntObert : null;
+    const cap = `<header class="ne-cap" data-in="ne"><div class="ne-dia"><small>Día ${s.dia}</small><b>${esc(t)}</b></div>
+      <div class="ne-anell" role="img" aria-label="${fets} de ${s.ej.length} ejercicios"><svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="25" class="ne-a-f"/><circle cx="30" cy="30" r="25" class="ne-a-p" style="stroke-dashoffset:${(ANELL * (1 - fets / s.ej.length)).toFixed(1)}"/></svg><span><b>${fets}/${s.ej.length}</b><small>ejercicios</small></span></div>
+      <div class="ne-musica">${botoMusica()}</div></header>`;
+    const llista = s.ej.map((e, k) => acabat(e) && k !== ob && k !== obrintFet ? filaFeta(e, k) : blocEj(s, e, k, k === ara)).join("");
+    return `<section class="ne">${cap}<div class="ne-llista">${llista}</div>
+      <button class="nt-boto ne-fi${ara < 0 ? " encès" : ""}" data-accion="terminar" data-in="ne">Terminar entreno</button>
       <p class="ne-descarta"><button class="enllac" data-accion="descartar">Descartar este entreno</button></p></section>`;
   }
-  // canviar d'exercici al davant: el nou entra, i la pàgina torna a dalt
-  function posaFocus(i, anim) {
-    S.ui.ntFocus = i; if (typeof guardar === "function") guardar();
-    if (typeof render === "function") render();
-    window.scrollTo({ top: 0, behavior: quiet() ? "auto" : "smooth" });
-    if (anim && !quiet()) {
-      document.querySelectorAll(".ne-fila.fet .ne-estat").forEach((x, k) => { if (k === 0 || true) { try { x.animate([{ transform: "scale(.5)" }, { transform: "scale(1.2)", offset: .6 }, { transform: "scale(1)" }], { duration: 420, delay: 160, easing: "cubic-bezier(.2,.9,.3,1)" }); } catch (e) {} } });
-      const h = document.querySelector(".ne-ej");
-      if (h) h.animate([{ opacity: 0, transform: "translateY(18px) scale(.98)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.9,.25,1)" });
-      fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.05, volum: .3 }); E.vibra("tria"); });
-    }
+  // repintar amb la transició de vistes (Safari 18, Chrome 111): el bloc es plega en la seva fila i els de sota pugen sols
+  function repinta(despres) {
+    const fes = () => { if (typeof render === "function") render(); };
+    const fi = () => { if (despres) despres(); };
+    if (document.startViewTransition && !quiet()) { try { const vt = document.startViewTransition(fes); vt.finished.then(fi, fi); return; } catch (e) {} }
+    fes(); fi();
   }
-  /* ACABAR UN EXERCICI (l'Albert, 28-09: «et faltaran les transicions de completar exercici»). Quan cau l'última sèrie de
-     l'exercici del davant: sobre la targeta surt el segell de menta amb «¡Ejercicio completado!», sona el «Cute Notification
-     Sparkling» del seu lot, vibra la «cosa bona» (fet), l'anell de dalt avança, i al cap d'un moment la targeta es plega cap
-     a la llista i el següent exercici entra. Si era l'últim, el botó de Terminar s'encén i la pàgina hi baixa. */
+  // tocar un exercici acabat l'obre per corregir-lo; tocar-ne el «Hecho» el torna a plegar
+  function obreFet(i) {
+    const s = activa(); if (!s) return;
+    const obert = S.ui.ntObertSes === s.id && S.ui.ntObert === i;
+    S.ui.ntObert = obert ? null : i; S.ui.ntObertSes = s.id;
+    fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: obert ? .9 : 1.08, volum: .26 }); E.vibra("tria"); });
+    repinta(() => { const el = document.getElementById("ej-" + i); if (el) el.scrollIntoView({ behavior: quiet() ? "auto" : "smooth", block: "nearest" }); });
+  }
+  /* ACABAR UN EXERCICI (l'Albert, 28-09: «et faltaran les transicions de completar exercici»). Quan cau l'última sèrie d'un
+     exercici: sobre la targeta surt el segell de menta amb «¡Ejercicio completado!», sona el «Cute Notification Sparkling»
+     del seu lot, vibra la «cosa bona» (fet) i l'anell de dalt avança. Al cap d'un moment la targeta es plega en la seva fila
+     i la pàgina baixa fins al següent, que s'encén. Si era l'últim, el botó de Terminar s'encén i la pàgina hi baixa. */
   const SO_FET = () => R() + "so-completat.mp3";
   function potser(i, esperat) {
+    i = +i;
     const s = activa(); if (!s) return;
-    const e = s.ej[+i]; if (!e || !acabat(e) || +i !== S.ui.ntFocus) return;
+    const e = s.ej[i]; if (!e) return;
+    if (!acabat(e)) { if (obrintFet === i) obrintFet = -1; return; }
     if (!esperat) { setTimeout(() => potser(i, true), 380); return; }            // el rècord (app.js) surt als 350 ms
     if (esperat === true && document.querySelector(".pop-record")) { setTimeout(() => potser(i, 2), 1900); return; }
-    const seg = s.ej.findIndex((x, k) => k > +i && !acabat(x)), alt = seg >= 0 ? seg : s.ej.findIndex(x => !acabat(x));
-    const card = document.querySelector(".ne-ej");
+    const card = document.getElementById("ej-" + i);
+    if (!card || !card.classList.contains("ne-ej")) { obrintFet = -1; return; }
+    const seg = s.ej.findIndex((x, k) => k > i && !acabat(x)), alt = seg >= 0 ? seg : s.ej.findIndex(x => !acabat(x));
     fx(E => { if (!E.mostra || !E.mostra(SO_FET(), { volum: .5 })) E.suena("xp"); E.vibra("fet"); });
     // l'anell de dalt: del valor d'abans al d'ara
     const a = document.querySelector(".ne-a-p");
@@ -8631,7 +8653,7 @@ const Nit = (() => {
       a.animate([{ strokeDashoffset: abans + "px" }, { strokeDashoffset: ara + "px" }], { duration: 700, delay: 250, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" });
       const an = a.closest(".ne-anell"); if (an) an.animate([{ transform: "scale(1)" }, { transform: "scale(1.12)", offset: .4 }, { transform: "scale(1)" }], { duration: 520, delay: 300 });
     }
-    if (card && !quiet()) {
+    if (!quiet()) {
       const segell = document.createElement("div"); segell.className = "ne-segell";
       segell.innerHTML = `<i class="ne-segell-o"></i><i class="ne-segell-o dos"></i><span class="ne-segell-c">${I_CHECK}</span><b>¡Ejercicio completado!</b>`;
       card.appendChild(segell);
@@ -8641,24 +8663,19 @@ const Nit = (() => {
         segell.querySelector("b").animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 380, delay: 160, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" });
         segell.querySelectorAll(".ne-segell-o").forEach((o, k) => o.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: .9 }, { transform: "translate(-50%,-50%) scale(2.6)", opacity: 0 }], { duration: 900, delay: 120 + k * 160, easing: "cubic-bezier(.15,.8,.3,1)", fill: "backwards" }));
       } catch (er) {}
-      const r = card.getBoundingClientRect(); esclat(r.left + r.width / 2, r.top + r.height * .45, 16, 70);
+      const r = card.getBoundingClientRect(); esclat(r.left + r.width / 2, r.top + Math.min(r.height * .45, 220), 16, 70);
     }
-    if (alt >= 0 && alt !== +i) {
-      // la targeta es plega (cap avall, cap a la llista) i entra el següent; també durant el descans, que és quan el vols veure
-      setTimeout(() => {
-        if (activa() !== s || S.ui.ntFocus !== +i) return;
-        const c = document.querySelector(".ne-ej");
-        if (c && c.animate && !quiet()) c.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(40px) scale(.9)", opacity: 0 }], { duration: 300, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = () => posaFocus(alt, true);
-        else posaFocus(alt, true);
-      }, 1300);
-    } else if (alt < 0) {
-      // era l'últim: el botó de Terminar s'encén i la pàgina hi baixa
-      setTimeout(() => {
-        const t = document.querySelector(".ne-fi"); if (!t) return;
-        t.scrollIntoView({ behavior: quiet() ? "auto" : "smooth", block: "center" });
-        t.classList.add("encès");
-      }, 1200);
-    }
+    setTimeout(() => {
+      obrintFet = -1;
+      if (activa() !== s || !acabat(e)) return;
+      if (S.ui.ntObert === i) S.ui.ntObert = null;
+      repinta(() => {
+        const n = alt >= 0 ? document.getElementById("ej-" + alt) : document.querySelector(".ne-fi");
+        if (!n) return;
+        n.scrollIntoView({ behavior: quiet() ? "auto" : "smooth", block: alt >= 0 ? "start" : "center" });
+        if (alt >= 0 && !quiet() && n.animate) n.animate([{ boxShadow: "var(--fb-o2),0 0 0 1.5px rgb(134 217 198 / .42)" }, { boxShadow: "var(--fb-o2),0 0 0 3px rgb(134 217 198 / .9),0 0 44px -8px rgb(134 217 198 / .55)", offset: .35 }, { boxShadow: "var(--fb-o2),0 0 0 1.5px rgb(134 217 198 / .42)" }], { duration: 1100, delay: 280, easing: "ease-out" });
+      });
+    }, quiet() ? 300 : 1300);
   }
   /* LA BARRA DE DISCOS de la Noche: el mateix càlcul de sempre (carga.js: discosLado, mesAprop), dibuixat nou. La barra
      vista de costat, els discos de cada costat amb el més pesat tocant al collarí, cadascun amb el color del seu pes dins
@@ -8953,6 +8970,47 @@ const Nit = (() => {
         <h2 class="nb2-t" data-in="nb">Cómo se gana</h2>
         <div class="nb2-guanya">${GUANYA.map(([n, q, i]) => `<div data-in="nb"><i>${i}</i><span>${n}</span><b>+${q}</b></div>`).join("")}</div>
       </section>`;
+  }
+
+
+  /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
+     menta; el que esborra, a sota i en corall. Es tanca tocant fora o amb Escape; el «sí» dispara l'acció de sempre. */
+  const I_PAPERERA = '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12.5a1.5 1.5 0 0 0 1.5 1.4h5a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function confirma(o) {
+    if (document.querySelector(".nq")) return;
+    const el = document.createElement("div");
+    el.className = "nq"; el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "nq-t");
+    el.innerHTML = `<div class="nq-vel" data-nq="no"></div><div class="nq-p">
+      <i class="nq-ic" aria-hidden="true">${I_PAPERERA}</i><b id="nq-t">${esc(o.titol)}</b>${o.text ? `<p>${esc(o.text)}</p>` : ""}
+      <button class="nq-no" data-nq="no">${esc(o.no || "Cancelar")}</button><button class="nq-si" data-nq="si">${esc(o.si || "Aceptar")}</button></div>`;
+    document.body.appendChild(el);
+    fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: .8, volum: .26 }); E.vibra("tria"); });
+    const p = el.querySelector(".nq-p"), vel = el.querySelector(".nq-vel");
+    if (!quiet() && p.animate) {
+      vel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 });
+      p.animate([{ opacity: 0, transform: "translateY(34px) scale(.96)" }, { opacity: 1, transform: "none" }], { duration: 400, easing: "cubic-bezier(.2,.9,.25,1.12)" });
+    }
+    let fet = false;
+    const tecla = ev => { if (ev.key === "Escape") tanca(false); };
+    function tanca(si) {
+      if (fet) return; fet = true;
+      document.removeEventListener("keydown", tecla);
+      const fi = () => {
+        el.remove();
+        if (si && o.accio) { const b = document.createElement("button"); b.hidden = true; b.dataset.accion = o.accio; document.body.appendChild(b); b.click(); b.remove(); }
+      };
+      if (si || quiet() || !p.animate) { fi(); return; }
+      vel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: "forwards" });
+      p.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(22px) scale(.97)" }], { duration: 200, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = fi;
+    }
+    el.addEventListener("click", ev => {
+      const t = ev.target.closest("[data-nq]"); if (!t) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (t.dataset.nq === "no") fx(E => E.suena("tap"));
+      tanca(t.dataset.nq === "si");
+    });
+    document.addEventListener("keydown", tecla);
+    setTimeout(() => { const b = el.querySelector(".nq-no"); if (b) b.focus({ preventScroll: true }); }, 60);
   }
 
   /* LA RODETA DEL TIPUS DE SÈRIE (l'Albert, 28-09: «a l'esquerra tenies el número de la sèrie i, fent clic, la podies
@@ -9592,6 +9650,38 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 .nb2-guanya span{flex:1;font-size:13px;font-weight:800;line-height:1.2}
 .nb2-guanya b{font-size:15px;font-weight:900;color:var(--nt-or)}
 @media (prefers-reduced-motion:reduce){.nb2-or img{animation:none}}
+
+/* ======================= L'ENTRENO, TOTS DESPLEGATS ======================= */
+.ne-llista{display:grid;gap:12px}
+.ne-ej,.ne-fila{scroll-margin-top:calc(12px + env(safe-area-inset-top))}
+.ne-ej.ara{box-shadow:var(--fb-o2),0 0 0 1.5px rgb(134 217 198 / .42)}
+.ne-plega{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 12px 0 9px;border:0;border-radius:999px;cursor:pointer;
+  background:rgb(134 217 198 / .14);color:var(--nt-menta);font:900 13px/1 'Nunito',system-ui,sans-serif}
+.ne-plega svg{width:14px;height:14px}
+::view-transition-group(*){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.9,.25,1)}
+::view-transition-image-pair(*){overflow:clip}
+/* ======================= L'AVÍS ======================= */
+body.v-nit #toast{background:#1c242e;color:#e7edf2;border:0;border-radius:999px;padding:12px 20px;font:800 14.5px/1.3 'Nunito',system-ui,sans-serif;letter-spacing:0;text-transform:none;
+  box-shadow:0 16px 34px -14px rgb(0 0 0 / .9),0 0 0 1px rgb(134 217 198 / .3)}
+body.v-nit #toast:not([hidden]){animation:nt-toast .34s cubic-bezier(.2,.9,.25,1.15)}
+body.v-nit #toast{bottom:calc(92px + max(6px,calc(env(safe-area-inset-bottom) - 16px)))}
+body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inset-bottom) - 16px)))}
+@keyframes nt-toast{from{opacity:0;transform:translateY(12px) scale(.96)}}
+/* ======================= CONFIRMAR ======================= */
+.nq{position:fixed;inset:0;z-index:90;display:grid;align-items:end;justify-items:center;padding:0 12px calc(16px + env(safe-area-inset-bottom));font-family:'Nunito',system-ui,sans-serif;touch-action:none}
+.nq-vel{position:absolute;inset:0;background:rgb(6 9 13 / .74)}
+.nq-p{position:relative;width:min(100%,420px);display:grid;justify-items:center;gap:8px;padding:22px 18px 16px;border-radius:28px;text-align:center;color:#e7edf2;
+  background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:0 30px 60px -20px rgb(0 0 0 / .9),inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(255 255 255 / .06)}
+.nq-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:18px;background:rgb(236 154 154 / .12);color:#ec9a9a;margin-bottom:4px}
+.nq-ic svg{width:26px;height:26px}
+.nq-p b{font-size:19px;font-weight:900;line-height:1.2}
+.nq-p p{margin:0 0 8px;font-size:14px;font-weight:700;color:#8b98a4;line-height:1.4}
+.nq-no,.nq-si{width:100%;height:52px;border:0;border-radius:999px;font:900 16px/1 'Nunito',system-ui,sans-serif;cursor:pointer;transition:transform .12s}
+.nq-no{color:#0d2a24;background:linear-gradient(180deg,#a6ecdb,#86d9c6 60%,#6cc4b1);box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),0 10px 20px -12px rgb(134 217 198 / .6)}
+.nq-si{color:#ec9a9a;background:#10171e;box-shadow:inset 0 0 0 1.5px rgb(236 154 154 / .35)}
+.nq-no:active,.nq-si:active{transform:scale(.97)}
+.nq-no:focus-visible,.nq-si:focus-visible{outline:2px solid #e7edf2;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){body.v-nit #toast:not([hidden]){animation:none}}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
@@ -9678,7 +9768,7 @@ body.v-nit .serie{position:relative}
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, confirma, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -11578,11 +11668,22 @@ function pintaDescans() {
   if (queden <= 0 && desc.int) { pararDescanso(); if (!Efectos.suena("campana")) Efectos.suena("yunque"); Efectos.vibra("descans", true); avis("¡A por la siguiente serie!"); return; }
   if (queden <= 3 && queden > 0 && ticFet !== queden) { ticFet = queden; Efectos.suena("tic"); Efectos.vibra("tic", true); }
   if (!desc.int) return;
+  // UN SOL COP (l'Albert, 28-09 nit: «la barra de descanso es torna boja, és com que respawneja infinit»). Abans es tornava
+  // a escriure sencera quatre cops per segon, i a la Noche cada escriptura en tornava a fer l'animació d'entrada (i un toc
+  // a «+15» podia caure en un botó que ja no existia). Ara s'escriu quan apareix, o quan «Saltar» passa a «Terminar», i
+  // després només canvien el número i la barra.
+  const temps = `${Math.floor(queden / 60)}:${String(queden % 60).padStart(2, "0")}`, pct = (queden / desc.total * 100).toFixed(1) + "%", fi = totFet() ? "1" : "0";
+  const caixa = b.querySelector(".caixa");
+  if (!b.hidden && caixa && caixa.dataset.fi === fi) {
+    const t = caixa.querySelector(".temps"); if (t && t.textContent !== temps) t.textContent = temps;
+    const i = caixa.querySelector(".barra i"); if (i) i.style.width = pct;
+    return;
+  }
   b.hidden = false; document.body.classList.add("descansant");
-  b.innerHTML = `<div class="caixa panel"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#ffb030" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>
-    <div><div class="suau petit">Descanso</div><div class="temps or">${Math.floor(queden / 60)}:${String(queden % 60).padStart(2, "0")}</div></div>
-    <div class="accions"><button data-accion="desc-menys" aria-label="Quitar 15 segundos">−15</button><button data-accion="desc-mes" aria-label="Añadir 15 segundos">+15</button>${totFet() ? '<button data-accion="terminar" class="desc-fi">Terminar</button>' : '<button data-accion="desc-salta">Saltar</button>'}</div>
-    <div class="barra"><i style="width:${(queden / desc.total * 100).toFixed(1)}%"></i></div></div>`;
+  b.innerHTML = `<div class="caixa panel" data-fi="${fi}"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#ffb030" stroke-width="1.8" stroke-linecap="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>
+    <div><div class="suau petit">Descanso</div><div class="temps or">${temps}</div></div>
+    <div class="accions"><button data-accion="desc-menys" aria-label="Quitar 15 segundos">−15</button><button data-accion="desc-mes" aria-label="Añadir 15 segundos">+15</button>${fi === "1" ? '<button data-accion="terminar" class="desc-fi">Terminar</button>' : '<button data-accion="desc-salta">Saltar</button>'}</div>
+    <div class="barra"><i style="width:${pct}"></i></div></div>`;
 }
 let bloqueig = null;
 async function pedirPantalla() { try { if ("wakeLock" in navigator && !bloqueig) { bloqueig = await navigator.wakeLock.request("screen"); bloqueig.addEventListener("release", () => { bloqueig = null; }); } } catch (e) { bloqueig = null; } }
@@ -11715,8 +11816,9 @@ function veure(v) {
   S.ui.vista = v; S.ui.triaIniciada = false; diaReg = null; guardar(); render(); window.scrollTo({ top: 0 });
   if (!Efectos.suena("obrir-" + v)) Efectos.suena("pantalla");
 }
-// La música segons on ets: la llista «warrior» mentre hi ha un entreno en marcha, la de l'entrada si no.
-function musica() { const a = activa(); Efectos.Musica.posa(a ? "entreno" : "entrada", a ? a.inicio : null); }
+// La música només sona entrenant: la llista «warrior». La de l'entrada (i l'ambient de la fragua) fora (l'Albert, 28-09
+// nit: «la música del joc treu-la ara, dic la del login només»): fora de l'entreno, silenci.
+function musica() { const a = activa(); if (a) Efectos.Musica.posa("entreno", a.inicio); else Efectos.Musica.silenci(); }
 const I_MUSICA = on => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>${on ? "" : '<path d="M3 3l18 18"/>'}</svg>`;
 // Passar cançó (26/09, l'Albert: «un botó per passar la música, petit al costat del símbol de música»).
 const I_SEGUENT = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M5 5.6v12.8c0 .8.9 1.3 1.6.8l9-6.4c.6-.4.6-1.2 0-1.6l-9-6.4C5.9 4.3 5 4.8 5 5.6z"/><rect x="17" y="5" width="2.6" height="14" rx="1.1"/></svg>`;
@@ -11871,7 +11973,17 @@ document.addEventListener("click", ev => {
       } else if (!mostraPujada()) setTimeout(() => reacciona("celebra"), 120);
       break;
     }
-    case "descartar": { const s = activa(); if (s) { S.ses = S.ses.filter(x => x.id !== s.id); S.activa = null; guardar(); soltarPantalla(); pararDescanso(); render(); Efectos.suena("apaga"); musica(); avis("Entreno descartado."); } break; }
+    // DESCARTAR ES PREGUNTA (l'Albert, 28-09 nit: «per descartar un entreno, després del clic no t'hauria de preguntar
+    // confirmació?»): un toc s'enduia l'entreno sencer.
+    case "descartar": {
+      const s = activa(); if (!s) break;
+      const fetes = s.ej.reduce((n, e) => n + e.sets.filter(z => z.ok).length, 0);
+      const txt = fetes ? `Se borran las ${fetes} ${fetes === 1 ? "serie" : "series"} que has hecho hoy.` : "Aún no has hecho ninguna serie.";
+      if (typeof Nit === "object" && Nit.activa() && Nit.confirma) { Nit.confirma({ titol: "¿Descartar este entreno?", text: txt, si: "Descartar", no: "Seguir entrenando", accio: "descartar-si" }); break; }
+      obreFull(`<p style="margin-top:0">${txt}</p>${botoForja('data-accion="descartar-si"', "DESCARTAR", "")}<p style="text-align:center;margin:10px 0 0"><button class="enllac" data-accion="tanca-full">Seguir entrenando</button></p>`, "¿Descartar este entreno?");
+      break;
+    }
+    case "descartar-si": { tancaFull(); const s = activa(); if (s) { S.ses = S.ses.filter(x => x.id !== s.id); S.activa = null; guardar(); soltarPantalla(); pararDescanso(); render(); Efectos.suena("apaga"); musica(); avis("Entreno descartado."); } break; }
     case "desc-mes": desc.fin += 15000; desc.total += 15; pintaDescans(); break;
     case "desc-menys": desc.fin -= 15000; pintaDescans(); break;
     case "desc-salta": pararDescanso(); break;
@@ -11974,9 +12086,17 @@ document.addEventListener("input", ev => {
   if (t.id === "c-nick") { S.ui.clanNick = t.value; suggereix(t.value); return; }     // que un repintat no s'ho mengi, i l'autocompletar
   if (t.dataset && t.dataset.camp) {
     const s = activa(); if (!s) return;
-    const z = s.ej[+t.dataset.i].sets[+t.dataset.j];
+    const ej = s.ej[+t.dataset.i], j = +t.dataset.j, z = ej.sets[j], abans = z[t.dataset.camp];
     const v = t.value.trim() === "" ? null : num(t.value);
     z[t.dataset.camp] = Number.isFinite(v) ? v : null;
+    // ELS QUILOS SEGUEIXEN (l'Albert, 28-09 nit: «una vegada ja has començat, que se't calculi sol i només donis ok»): si
+    // canvies el pes d'una sèrie, les següents que encara no has fet i portaven el mateix pes agafen el nou. Les
+    // repeticions no: sovint baixen de sèrie en sèrie a propòsit.
+    if (t.dataset.camp === "kg" && z.kg != null) ej.sets.forEach((q, k) => {
+      if (k <= j || q.ok || q.kg !== abans) return;
+      q.kg = z.kg;
+      const inp = document.querySelector(`input[data-camp="kg"][data-i="${t.dataset.i}"][data-j="${k}"]`); if (inp) inp.value = fmt(q.kg);
+    });
     guardar();
     if (t.dataset.camp === "kg") { const e = s.ej[+t.dataset.i], l = document.getElementById("carga-" + t.dataset.i); if (l) l.innerHTML = htmlCarga(kgEsquema(e), cargaDe(e.n, e.x)); }
   }
