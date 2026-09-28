@@ -7258,6 +7258,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       if (v === "comer") return () => Nit.vistaComer();
       if (v === "ajustes") return () => Nit.vistaAjustes();
       if (v === "rutinas") return () => Nit.vistaRutinas();
+      if (v === "tienda") return () => Nit.vistaTienda();
       if (v === "gimnasios") { S.ui.vista = "social"; S.ui.socDins = "gimnasios"; S.ui.socTab = "gimnasios"; return () => Nit.vistaSocial(); }
       // l'entreno sense cap sessió en marxa és la portada (les cartes ja són els dies per començar)
       if (v === "entreno") { if (typeof activa === "function" && activa()) return () => Nit.vistaEntreno(); S.ui.vista = "inicio"; return () => Nit.vista(); }
@@ -8436,6 +8437,7 @@ const Nit = (() => {
       if (vista === "social") entra([...v.querySelectorAll('[data-in="ns"]')], 40);
       if (vista === "ajustes") entra([...v.querySelectorAll('[data-in="na"]')], 30);
       if (vista === "rutinas") entra([...v.querySelectorAll('[data-in="nr"]')], 35);
+      if (vista === "tienda") { entra([...v.querySelectorAll('[data-in="nb"]')], 35); const n = v.querySelector(".nb2-n"); if (n) compta(n); }
       if (vista === "comer" || vista === "registro") {
         entra([...v.querySelectorAll('[data-in="nc"]')], 40);
         const a = v.querySelector(".nc-a-p"); if (a) a.animate([{ strokeDashoffset: ANELL_PROT + "px" }, { strokeDashoffset: getComputedStyle(a).strokeDashoffset }], { duration: 1000, easing: "cubic-bezier(.2,.9,.25,1)" });
@@ -8915,6 +8917,31 @@ const Nit = (() => {
       <div class="np-cos">${Object.entries(c).map(([t, n]) => `<div class="np-g${n ? "" : " buit"}" style="--f:${(n / max).toFixed(2)}"><img src="${R()}musculs-${t}.webp" alt="" draggable="false"><b>${n}</b><small>${NOM[t]}</small></div>`).join("")}</div>
       <div class="np-xifres"><div><b>${dies}</b><small>de 7 días</small></div><div><b>${series}</b><small>series</small></div><div><b>${rec}</b><small>récords este mes</small></div></div>
     </section>`;
+  }
+
+
+  /* ======================= TIENDA (referencies/nx-tienda) =======================
+     El teu or a dalt, amb la pila de monedes; els tres paquets com a cartes, cadascun amb el seu tresor (la bossa, el cofre
+     i el tresor del rei), i «Cómo se gana» en xips. La compra és la de sempre (app.js, compra-oro), i al menor no se li
+     ensenya res que es pagui. El PRO i els looks de l'Urbà de la referència esperen que es puguin comprar de debò: un botó
+     que no compra res no hi ha de ser. La pestanya Material (la roba) és la de sempre. */
+  function vistaTienda() {
+    const tab = S.ui.tiendaTab === "material" ? "material" : "oro";
+    if (tab === "material") return window.vistaTienda();
+    const oro = oroTotal();
+    const PAQ = [["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]];
+    const GUANYA = [["Cada serie", ORO.serie, I_TU.man], ["Entreno terminado", ORO.entreno, I_TU.est], ["Cada récord", ORO.record, I_TU.prog], ["Comida apuntada", ORO.comida, I_NC.gota], ["Subir de nivel", ORO.nivel, I_TU.pj]];
+    return `<h1 class="titol-pag">Tienda</h1>
+      <section class="nb2">
+        <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
+        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="true">Oro</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="false">Material</button></div>
+        ${esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
+        <div class="nb2-paq">${PAQ.map(([k, n, q, e]) => `<article class="nb2-p" data-in="nb"><img src="${R()}or-${k}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${n0(q)}</b><small>de oro</small><span class="nb2-p-n">${n}</span><em>${e}</em><button class="nb2-compra" data-accion="compra-oro" data-p="${k}">Comprar</button></article>`).join("")}</div>
+        <p class="nb2-av">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
+        <p class="nb2-av">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>`}
+        <h2 class="nb2-t" data-in="nb">Cómo se gana</h2>
+        <div class="nb2-guanya">${GUANYA.map(([n, q, i]) => `<div data-in="nb"><i>${i}</i><span>${n}</span><b>+${q}</b></div>`).join("")}</div>
+      </section>`;
   }
 
   /* LA RODETA DEL TIPUS DE SÈRIE (l'Albert, 28-09: «a l'esquerra tenies el número de la sèrie i, fent clic, la podies
@@ -9525,6 +9552,34 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 .np-xifres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .np-xifres div{display:grid;justify-items:center;padding:8px 4px;border-radius:14px;background:#10171e}
 .np-xifres b{font-size:20px;font-weight:900;color:var(--nt-menta);font-variant-numeric:tabular-nums}.np-xifres small{font-size:11px;font-weight:800;color:var(--nt-suau);text-align:center}
+
+/* ======================= TIENDA ======================= */
+.nb2{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nb2-or{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:110px;padding:14px 18px;border-radius:24px;overflow:hidden;
+  background:radial-gradient(70% 90% at 85% 50%,rgb(226 194 122 / .22),transparent 70%),linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(226 194 122 / .3)}
+.nb2-or span{display:grid}.nb2-or small{font-size:13px;font-weight:800;color:var(--nt-suau)}
+.nb2-or b{font-size:40px;font-weight:900;color:var(--nt-or);font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgb(226 194 122 / .35)}
+.nb2-or img{height:96px;width:auto;filter:drop-shadow(0 8px 12px rgb(0 0 0 / .5));animation:nb2-sura 4s ease-in-out infinite}
+@keyframes nb2-sura{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.nb2-paq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.nb2-p{display:grid;justify-items:center;gap:2px;padding:12px 8px 10px;border-radius:20px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1),0 0 0 1px rgb(226 194 122 / .18);text-align:center}
+.nb2-p img{width:74px;height:64px;object-fit:contain;filter:drop-shadow(0 6px 10px rgb(0 0 0 / .5))}
+.nb2-p b{font-size:22px;font-weight:900;color:var(--nt-or);line-height:1;margin-top:4px}
+.nb2-p small{font-size:11px;font-weight:800;color:var(--nt-suau)}
+.nb2-p-n{font-size:11.5px;font-weight:800;color:var(--nt-suau);margin-top:2px}
+.nb2-p em{font-style:normal;font-size:16px;font-weight:900;margin:4px 0 6px}
+.nb2-compra{width:100%;height:36px;border:0;border-radius:999px;cursor:pointer;font:900 13.5px/1 'Nunito',system-ui,sans-serif;color:#0d2a24;
+  background:linear-gradient(180deg,#a6ecdb,var(--nt-menta) 60%,#6cc4b1);box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),0 8px 16px -10px var(--nt-menta-glow);transition:transform .12s}
+.nb2-compra:active{transform:scale(.95)}
+.nb2-av{margin:0;font-size:12px;font-weight:700;color:var(--nt-suau);text-align:center;line-height:1.4}
+.nb2-av a{color:var(--nt-menta)}
+.nb2-t{margin:4px 2px 0;font-size:18px;font-weight:900}
+.nb2-guanya{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nb2-guanya div{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nb2-guanya i{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#10171e;color:var(--nt-lila);flex:none}.nb2-guanya i svg{width:18px;height:18px}
+.nb2-guanya span{flex:1;font-size:13px;font-weight:800;line-height:1.2}
+.nb2-guanya b{font-size:15px;font-weight:900;color:var(--nt-or)}
+@media (prefers-reduced-motion:reduce){.nb2-or img{animation:none}}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
@@ -9611,7 +9666,7 @@ body.v-nit .serie{position:relative}
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
