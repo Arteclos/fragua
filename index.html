@@ -8215,22 +8215,87 @@ const Nit = (() => {
   const esNit = () => typeof Versions === "object" && Versions.actual() === "nit";
   const I_AJUST = '<svg viewBox="0 0 24 24" class="nt-ic" aria-hidden="true"><g fill="none" stroke="#b9c4ce" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></g></svg>';
   function ves(v, b) {
+    if (cal) { tancaMenu(() => ves(v, b)); return; }
     if (typeof tancaFull === "function") { try { tancaFull(); } catch (e) {} }
+    if (b && b.dataset.soc && v === "social") S.ui.socTab = b.dataset.soc;
     if (b && b.dataset.t && v === "tienda") S.ui.tiendaTab = b.dataset.t;
     if (b && b.dataset.tab && v === "estadisticas") S.ui.statsTab = b.dataset.tab;
     // a la botiga de la Noche no hi ha els personatges d'abans (els nans): s'hi entra per l'or
     if (v === "tienda" && (!S.ui.tiendaTab || S.ui.tiendaTab === "personajes")) S.ui.tiendaTab = "oro";
     if (typeof veure === "function") veure(v);
   }
-  // EL MENÚ (≡): el que no és a la barra, un toc més avall
+  /* EL MENÚ LATERAL (≡). L'Albert, 28-09, amb la captura del Pokémon TCG Pocket: «quan apretes la burger vull un menú lateral
+     així». Surt per la dreta com una targeta amb les cantonades de l'esquerra rodones, el que hi ha darrere es desenfoca i
+     s'enfosqueix, i cada fila entra al seu temps. A dalt, l'ID per al suport (amb el botó de copiar), el teu perfil i el PRO;
+     després la botiga i les rutines; i després la resta. Es tanca tocant fora, amb la ✕ o fent-lo lliscar cap a la dreta. */
+  const I_MENU = {
+    bossa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>',
+    rut: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 11h7M8.5 15h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    prog: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V13M10 20V8M16 20V4M2.5 20.5h19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    gim: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.3s-6.6-6.1-6.6-11.2a6.6 6.6 0 0 1 13.2 0c0 5.1-6.6 11.2-6.6 11.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>',
+    inv: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="9" width="17" height="11.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M2.5 9h19v-1.5a1 1 0 0 0-1-1h-17a1 1 0 0 0-1 1zM12 6.5v14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 6.5c-1.5-3.2-5-3.3-5-1.2 0 1.4 2.3 1.2 5 1.2zm0 0c1.5-3.2 5-3.3 5-1.2 0 1.4-2.3 1.2-5 1.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    ajust: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    copia: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+    fle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  let cal = null;
   function obreMenu() {
-    if (typeof obreFull !== "function") return;
-    const F = [["rutinas", "Mis rutinas", ic("manuella")], ["estadisticas", "Progreso", ic("flama-on")], ["gimnasios", "Gimnasios", ic("cresta")],
-      ["tienda", "Tienda", ic("moneda")], ["ajustes", "Ajustes", I_AJUST]];
-    obreFull(`<nav class="nt-menu" aria-label="Menú">${F.map(([v, n, i]) => `<button class="nt-menu-f" data-accion="nt-ves" data-v="${v}"><span class="nt-menu-ic">${i}</span><b>${n}</b><i aria-hidden="true">›</i></button>`).join("")}</nav>`, "Menú");
-    if (!quiet()) document.querySelectorAll(".nt-menu-f").forEach((f, i) => { try { f.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 360, delay: 60 + i * 45, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (e) {} });
-    fx(E => E.suena("tap"));
+    if (cal) return;
+    const id = (typeof sessio !== "undefined" && sessio && sessio.id) ? String(sessio.id).slice(0, 10) : "";
+    const nom = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "Tú";
+    const fila = (v, n, i, extra = "") => `<button class="nt-cal-f" data-accion="nt-ves" data-v="${v}"${extra}>${i}<span>${n}</span></button>`;
+    const el = document.createElement("div");
+    el.className = "nt-cal"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Menú");
+    el.innerHTML = `<div class="nt-cal-vel" data-cal="tanca"></div>
+      <nav class="nt-cal-p">
+        ${id ? `<div class="nt-cal-id" data-cal-in><small>ID de soporte</small><button class="nt-cal-idb" data-cal="copia" aria-label="Copiar el ID de soporte"><b>${esc(id)}</b>${I_MENU.copia}</button></div>` : ""}
+        <button class="nt-cal-perfil" data-accion="nt-ves" data-v="personaje" data-cal-in><img src="${CARA()}" alt="" draggable="false"><b>${esc(nom)}</b>${I_MENU.fle}</button>
+        <button class="nt-cal-pro" data-accion="nt-ves" data-v="tienda" data-t="oro" data-cal-in>${ic("medalla")}<span>KLONK PRO</span></button>
+        <i class="nt-cal-sep" data-cal-in></i>
+        <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
+        <i class="nt-cal-sep" data-cal-in></i>
+        <div class="nt-cal-grup">${fila("estadisticas", "Progreso", I_MENU.prog, " data-cal-in")}${fila("gimnasios", "Gimnasios", I_MENU.gim, " data-cal-in")}${fila("social", "Invitar amigos", I_MENU.inv, ' data-soc="clan" data-cal-in')}${fila("ajustes", "Ajustes", I_MENU.ajust, " data-cal-in")}</div>
+      </nav>`;
+    document.body.appendChild(el);
+    cal = el;
+    const p = el.querySelector(".nt-cal-p"), vel = el.querySelector(".nt-cal-vel");
+    fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: .82, volum: .26, costat: .35 }); E.vibra("tria"); });
+    if (quiet() || !p.animate) return;
+    vel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: "ease-out" });
+    p.animate([{ transform: "translateX(104%)" }, { transform: "translateX(-1.5%)", offset: .72 }, { transform: "none" }], { duration: 460, easing: "cubic-bezier(.2,.9,.25,1)" });
+    [...el.querySelectorAll("[data-cal-in]")].forEach((x, i) => { try { x.animate([{ opacity: 0, transform: "translateX(26px)" }, { opacity: 1, transform: "none" }], { duration: 380, delay: 90 + i * 38, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (e) {} });
+    // lliscar cap a la dreta el tanca
+    let x0 = null, dx = 0;
+    p.addEventListener("pointerdown", ev => { x0 = ev.clientX; dx = 0; });
+    p.addEventListener("pointermove", ev => { if (x0 == null) return; dx = Math.max(0, ev.clientX - x0); if (dx > 6) p.style.transform = `translateX(${dx}px)`; });
+    const deixa = () => { if (x0 == null) return; x0 = null; if (dx > p.offsetWidth * .28) tancaMenu(); else { p.style.transform = ""; if (dx > 6 && p.animate) p.animate([{ transform: `translateX(${dx}px)` }, { transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.9,.25,1)" }); } };
+    p.addEventListener("pointerup", deixa); p.addEventListener("pointercancel", deixa);
   }
+  function tancaMenu(despres) {
+    if (!cal) { if (despres) despres(); return; }
+    const el = cal; cal = null;
+    const p = el.querySelector(".nt-cal-p"), vel = el.querySelector(".nt-cal-vel");
+    if (quiet() || !p.animate) { el.remove(); if (despres) despres(); return; }
+    const des = getComputedStyle(p).transform;
+    vel.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: "forwards" });
+    p.animate([{ transform: des === "none" ? "none" : des }, { transform: "translateX(104%)" }], { duration: 260, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = () => el.remove();
+    if (despres) setTimeout(despres, 150);
+  }
+  document.addEventListener("click", ev => {
+    if (!cal) return;
+    const t = ev.target.closest("[data-cal]");
+    if (!t) return;
+    ev.preventDefault(); ev.stopPropagation();
+    if (t.dataset.cal === "tanca") { tancaMenu(); fx(E => E.suena("tap")); return; }
+    if (t.dataset.cal === "copia") {
+      const id = (typeof sessio !== "undefined" && sessio && sessio.id) || "";
+      try { navigator.clipboard.writeText(String(id)); } catch (e) {}
+      if (typeof avis === "function") avis("ID de soporte copiado.");
+      fx(E => { E.suena("tap"); E.vibra("toc"); });
+      if (t.animate && !quiet()) t.animate([{ transform: "scale(1)" }, { transform: "scale(.94)", offset: .3 }, { transform: "scale(1)" }], { duration: 260 });
+    }
+  }, true);
+  document.addEventListener("keydown", ev => { if (cal && ev.key === "Escape") tancaMenu(); });
 
   // TÚ: el perfil, amb l'Urbà (el builder del personatge vindrà aquí dins, com el Duolingo)
   function marques() {
@@ -8489,20 +8554,61 @@ const Nit = (() => {
     if (typeof render === "function") render();
     window.scrollTo({ top: 0, behavior: quiet() ? "auto" : "smooth" });
     if (anim && !quiet()) {
+      document.querySelectorAll(".ne-fila.fet .ne-estat").forEach((x, k) => { if (k === 0 || true) { try { x.animate([{ transform: "scale(.5)" }, { transform: "scale(1.2)", offset: .6 }, { transform: "scale(1)" }], { duration: 420, delay: 160, easing: "cubic-bezier(.2,.9,.3,1)" }); } catch (e) {} } });
       const h = document.querySelector(".ne-ej");
       if (h) h.animate([{ opacity: 0, transform: "translateY(18px) scale(.98)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.2,.9,.25,1)" });
       fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.05, volum: .3 }); E.vibra("tria"); });
     }
   }
-  // l'exercici del davant, acabat: al cap d'un moment passa el següent que falta
-  function potser(i) {
+  /* ACABAR UN EXERCICI (l'Albert, 28-09: «et faltaran les transicions de completar exercici»). Quan cau l'última sèrie de
+     l'exercici del davant: sobre la targeta surt el segell de menta amb «¡Ejercicio completado!», sona el «Cute Notification
+     Sparkling» del seu lot, vibra la «cosa bona» (fet), l'anell de dalt avança, i al cap d'un moment la targeta es plega cap
+     a la llista i el següent exercici entra. Si era l'últim, el botó de Terminar s'encén i la pàgina hi baixa. */
+  const SO_FET = () => R() + "so-completat.mp3";
+  function potser(i, esperat) {
     const s = activa(); if (!s) return;
     const e = s.ej[+i]; if (!e || !acabat(e) || +i !== S.ui.ntFocus) return;
+    if (!esperat) { setTimeout(() => potser(i, true), 380); return; }            // el rècord (app.js) surt als 350 ms
+    if (esperat === true && document.querySelector(".pop-record")) { setTimeout(() => potser(i, 2), 1900); return; }
     const seg = s.ej.findIndex((x, k) => k > +i && !acabat(x)), alt = seg >= 0 ? seg : s.ej.findIndex(x => !acabat(x));
-    // també durant el descans: és just quan vols veure què ve
-    if (alt >= 0 && alt !== +i) setTimeout(() => { if (activa() === s && S.ui.ntFocus === +i) posaFocus(alt, true); }, 1100);
+    const card = document.querySelector(".ne-ej");
+    fx(E => { if (!E.mostra || !E.mostra(SO_FET(), { volum: .5 })) E.suena("xp"); E.vibra("fet"); });
+    // l'anell de dalt: del valor d'abans al d'ara
+    const a = document.querySelector(".ne-a-p");
+    if (a && a.animate && !quiet()) {
+      const fets = s.ej.filter(acabat).length, ara = ANELL * (1 - fets / s.ej.length), abans = ANELL * (1 - (fets - 1) / s.ej.length);
+      a.animate([{ strokeDashoffset: abans + "px" }, { strokeDashoffset: ara + "px" }], { duration: 700, delay: 250, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" });
+      const an = a.closest(".ne-anell"); if (an) an.animate([{ transform: "scale(1)" }, { transform: "scale(1.12)", offset: .4 }, { transform: "scale(1)" }], { duration: 520, delay: 300 });
+    }
+    if (card && !quiet()) {
+      const segell = document.createElement("div"); segell.className = "ne-segell";
+      segell.innerHTML = `<i class="ne-segell-o"></i><i class="ne-segell-o dos"></i><span class="ne-segell-c">${I_CHECK}</span><b>¡Ejercicio completado!</b>`;
+      card.appendChild(segell);
+      try {
+        segell.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, fill: "forwards" });
+        segell.querySelector(".ne-segell-c").animate([{ transform: "scale(.2) rotate(-40deg)" }, { transform: "scale(1.15) rotate(6deg)", offset: .6 }, { transform: "scale(1) rotate(0)" }], { duration: 520, easing: "cubic-bezier(.2,.9,.3,1)" });
+        segell.querySelector("b").animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 380, delay: 160, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" });
+        segell.querySelectorAll(".ne-segell-o").forEach((o, k) => o.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: .9 }, { transform: "translate(-50%,-50%) scale(2.6)", opacity: 0 }], { duration: 900, delay: 120 + k * 160, easing: "cubic-bezier(.15,.8,.3,1)", fill: "backwards" }));
+      } catch (er) {}
+      const r = card.getBoundingClientRect(); esclat(r.left + r.width / 2, r.top + r.height * .45, 16, 70);
+    }
+    if (alt >= 0 && alt !== +i) {
+      // la targeta es plega (cap avall, cap a la llista) i entra el següent; també durant el descans, que és quan el vols veure
+      setTimeout(() => {
+        if (activa() !== s || S.ui.ntFocus !== +i) return;
+        const c = document.querySelector(".ne-ej");
+        if (c && c.animate && !quiet()) c.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(40px) scale(.9)", opacity: 0 }], { duration: 300, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = () => posaFocus(alt, true);
+        else posaFocus(alt, true);
+      }, 1300);
+    } else if (alt < 0) {
+      // era l'últim: el botó de Terminar s'encén i la pàgina hi baixa
+      setTimeout(() => {
+        const t = document.querySelector(".ne-fi"); if (!t) return;
+        t.scrollIntoView({ behavior: quiet() ? "auto" : "smooth", block: "center" });
+        t.classList.add("encès");
+      }, 1200);
+    }
   }
-
   /* LA BARRA DE DISCOS de la Noche: el mateix càlcul de sempre (carga.js: discosLado, mesAprop), dibuixat nou. La barra
      vista de costat, els discos de cada costat amb el més pesat tocant al collarí, cadascun amb el color del seu pes dins
      la paleta (lila i menta, plata i or els petits), els quilos de cada costat a sota i el total al mig. */
@@ -8980,6 +9086,56 @@ body.v-nit .descans .barra i{background:linear-gradient(90deg,var(--nt-lila),var
 body.v-nit .descans:not([hidden]) .caixa{animation:ne-descans .42s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes ne-descans{from{opacity:0;transform:translateY(16px) scale(.94)}}
 @media (prefers-reduced-motion:reduce){.ne-a-p{transition:none}body.v-nit .descans:not([hidden]) .caixa{animation:none}}
+
+/* EL MENÚ LATERAL */
+.nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
+.nt-cal-p{position:absolute;right:0;top:calc(env(safe-area-inset-top) + 58px);bottom:calc(92px + max(6px,calc(env(safe-area-inset-bottom) - 16px)));width:min(80vw,340px);
+  display:flex;flex-direction:column;gap:12px;padding:20px 18px 18px 22px;border-radius:30px 0 0 30px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;
+  background:linear-gradient(180deg,rgb(30 39 50 / .96),rgb(21 28 36 / .97));box-shadow:-24px 0 50px -18px rgb(0 0 0 / .9),inset 1px 1px 0 rgb(255 255 255 / .07)}
+.nt-cal-id{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.nt-cal-id small{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nt-cal-idb{display:flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border:0;border-radius:999px;background:#10171e;color:var(--nt-tinta);font:inherit;cursor:pointer;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
+.nt-cal-idb b{font-size:13px;font-weight:800;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.nt-cal-idb svg{width:22px;height:22px;padding:3px;border-radius:8px;background:#1b242e;color:var(--nt-suau)}
+.nt-cal-perfil{display:flex;align-items:center;gap:12px;width:100%;padding:8px 14px 8px 8px;border:0;border-radius:999px;color:inherit;font:inherit;text-align:left;cursor:pointer;
+  background:linear-gradient(180deg,#232d38,#1a222b);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(255 255 255 / .06),0 10px 20px -14px rgb(0 0 0 / .9)}
+.nt-cal-perfil img{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgb(168 155 224 / .6)}
+.nt-cal-perfil b{flex:1;font-size:19px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-cal-perfil svg{width:18px;height:18px;color:var(--nt-suau)}
+.nt-cal-pro{display:flex;align-items:center;justify-content:center;gap:10px;height:48px;border:0;border-radius:999px;cursor:pointer;font:900 15.5px/1 'Nunito',system-ui,sans-serif;color:#e9e4ff;letter-spacing:.03em;
+  background:linear-gradient(180deg,#3a3165,#2a2450);box-shadow:inset 0 1px 0 rgb(255 255 255 / .12),0 0 0 1px rgb(168 155 224 / .45),0 10px 22px -12px rgb(168 155 224 / .5);text-shadow:var(--nt-text-o)}
+.nt-cal-pro .nt-ic{width:26px;height:26px}
+.nt-cal-sep{display:block;height:1px;margin:4px 6px;background:linear-gradient(90deg,transparent,rgb(255 255 255 / .1),transparent)}
+.nt-cal-grup{display:grid;gap:2px}
+.nt-cal-f{display:flex;align-items:center;gap:16px;width:100%;padding:12px 8px;border:0;border-radius:16px;background:none;color:var(--nt-tinta);font:inherit;text-align:left;cursor:pointer;transition:background .15s,transform .12s}
+.nt-cal-f:active{background:rgb(255 255 255 / .05);transform:scale(.98)}
+.nt-cal-f svg{width:26px;height:26px;flex:none;color:#b9c4ce}
+.nt-cal-f span{font-size:17px;font-weight:800}
+.nt-cal-grup.gran .nt-cal-f svg{width:30px;height:30px;color:var(--nt-lila)}
+.nt-cal-grup.gran .nt-cal-f span{font-size:19px;font-weight:900}
+/* EL RÈCORD (app.js, popRecord), de la Noche: els raigs lila, la targeta fosca amb la vora lila i el títol en or */
+body.v-nit .pop-record .pr-raig{background:repeating-conic-gradient(rgb(168 155 224 / .32) 0 10deg,transparent 10deg 24deg)}
+body.v-nit .pop-record .pr-cos{padding:16px 26px 14px;border-radius:22px;border:1.5px solid rgb(168 155 224 / .7);font-family:'Nunito',system-ui,sans-serif;
+  background:linear-gradient(180deg,#252f3b,#161d25);box-shadow:0 0 44px -6px rgb(168 155 224 / .65),0 22px 40px -16px rgb(0 0 0 / .9)}
+body.v-nit .pop-record .pr-t{font-family:inherit;font-size:25px;font-weight:900;color:var(--nt-or);background:none;-webkit-text-fill-color:currentColor;filter:none;text-shadow:0 0 18px rgb(226 194 122 / .5)}
+body.v-nit .pop-record .pr-ej{color:var(--nt-tinta);font-weight:800}
+body.v-nit .pop-record .pr-n{color:var(--nt-suau);font-weight:800}
+body.v-nit .pop-record .pr-n b{font-family:inherit;font-weight:900;color:var(--nt-menta);background:none;-webkit-text-fill-color:currentColor;filter:none}
+body.v-nit .pop-record .pr-peu{color:var(--nt-suau);font-weight:700}
+/* ACABAR UN EXERCICI: el segell de menta sobre la targeta */
+.ne-ej{position:relative}
+.ne-segell{position:absolute;inset:0;z-index:5;display:grid;place-content:center;justify-items:center;gap:12px;border-radius:inherit;opacity:0;pointer-events:none;
+  background:radial-gradient(60% 45% at 50% 45%,rgb(134 217 198 / .22),rgb(16 23 30 / .78) 70%)}
+.ne-segell-c{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;color:#0d2a24;background:radial-gradient(circle at 40% 35%,#c8f5ea,var(--nt-menta) 60%,#5fb9a5);
+  box-shadow:0 0 0 6px rgb(134 217 198 / .18),0 0 40px -4px var(--nt-menta-glow),inset 0 2px 0 rgb(255 255 255 / .6)}
+.ne-segell-c svg{width:44px;height:44px}
+.ne-segell b{font-size:22px;font-weight:900;text-shadow:0 2px 8px rgb(0 0 0 / .6)}
+.ne-segell-o{position:absolute;left:50%;top:44%;width:84px;height:84px;border-radius:50%;border:2px solid var(--nt-menta);transform:translate(-50%,-50%)}
+.ne-segell-o.dos{border-color:var(--nt-lila)}
+.ne-fi.encès{animation:ne-encen 1.6s ease-in-out 3}
+@keyframes ne-encen{0%,100%{box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),inset 0 -2px 0 rgb(0 0 0 / .12),0 10px 22px -10px var(--nt-menta-glow)}50%{box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),0 0 0 4px rgb(134 217 198 / .35),0 0 34px 2px var(--nt-menta-glow)}}
+@media (prefers-reduced-motion:reduce){.ne-fi.encès{animation:none}}
 /* Nutrición: sense el personatge, el panell de la proteïna torna a una columna; l'aigua, en lila */
 body.v-nit.bt-pell .panel.macros{display:block}
 body.v-nit.bt-pell .panel.macros .macro{margin-bottom:10px}
