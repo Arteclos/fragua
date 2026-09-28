@@ -6865,16 +6865,17 @@ const Elo = (() => {
    marcs de bronze i les icones pintades de sempre). La barra de l'estil Rumble espera la seva versió amb les seves
    pantalles, que es faran pam a pam, pantalla a pantalla (BETA-1.0/actius/rumble). Cap text a l'enclusa del mig. */
 const Versions = (() => {
+  /* 28-09-2026, nit: l'Albert, «elimina les altres betes, només vull veure aquesta». Queden la de sempre i la Beta Noche
+     (src/nit.js), que de moment és només la pantalla principal d'entrenar. Les versions d'abans (neta, marró, rumble,
+     anime i l'original amb el menú nou) ja no surten al selector; el seu codi es queda aquí per si se'n vol reprendre res. */
   const LLISTA = [
     { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
-    { id: "original", nom: "KLONK con el menú nuevo", desc: "La de siempre con la barra de abajo nueva. En pruebas." },
-    { id: "neta", nom: "Beta · Neta", desc: "Clara y limpia, estilo Nintendo, sin personajes." },
-    { id: "marro", nom: "Beta · Marrón", desc: "La forja limpia, en carbón y bronce." },
-    { id: "rumble", nom: "Beta · Rumble", desc: "Pintada y con volumen, como un juego: la forja al estilo Warcraft Rumble." },
-    { id: "anime", nom: "Beta · Anime", desc: "Tinta, diagonales y cel-shading: la forja en manga." },
+    { id: "nit", nom: "Beta · Noche", desc: "Oscura y limpia. De momento, solo la pantalla de entrenar." },
   ];
-  // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
-  const AMB_FORJA = ["neta", "marro", "rumble", "anime"];
+  // les versions que porten una pantalla principal nova (src/nit.js)
+  const AMB_FORJA = ["nit"];
+  // les pantalles que la Beta Noche no tapa: l'entrada (fer-te el compte, triar el personatge, les dades)
+  const ENTRADA_NIT = ["compte", "datos", "eleccion"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
   const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor", "compte", "eleccion", "datos"];
   const CLAU = "klonk-versio";
@@ -7092,6 +7093,15 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     // sense la barra no hi havia manera de tornar enrere
     const entrada = vista === "compte" || vista === "datos" || (vista === "eleccion" && (typeof S !== "object" || !S.personaje || S.ui.nickPendent));
     document.body.classList.toggle("bb-entrada", entrada);
+    // la Beta Noche és una sola pantalla: la d'entrenar, sigui quina sigui la vista (menys l'entrada)
+    if (actual === "nit") {
+      const nit = !ENTRADA_NIT.includes(vista) && typeof Nit === "object";
+      document.body.classList.toggle("fb-actiu", nit);
+      document.body.classList.toggle("sense-ambient", nit);
+      document.body.classList.remove("bt-pell", "bt-actiu", "bt-entreno");
+      if (nit) Nit.despresPintar();
+      return;
+    }
     const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && (vista === "progreso" || vista === "espejo");
     const entr = AMB_FORJA.includes(actual) && vista === "entreno";
     // LA PELL DE LA BETA a les pantalles de sempre, NOMÉS a les que ja s'han revisat una per una (l'Albert: «pam a pam»)
@@ -7162,8 +7172,8 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       }
       return;
     }
-    // tres tocs ràpids al logo obren el selector
-    if (ev.target.closest('img[src$="logo.webp"], .fb-logo')) {
+    // tres tocs ràpids al logo obren el selector (a la Beta Noche no hi ha logo: tres tocs a l'ELO)
+    if (ev.target.closest('img[src$="logo.webp"], .fb-logo, .nt-elo')) {
       const t = Date.now(); tocs = tocs.filter(x => t - x < 1000); tocs.push(t);
       if (tocs.length >= 3) { tocs = []; obreSelector(); }
     }
@@ -7180,6 +7190,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   // la pantalla que aquesta versió pinta al lloc de la de sempre (de moment, només l'inici: la Forja)
   function vista(v) {
     if (!AMB_FORJA.includes(actual)) return null;
+    if (actual === "nit") return !ENTRADA_NIT.includes(v) && typeof Nit === "object" ? () => Nit.vista() : null;
     if (v === "inicio" && typeof ForjaBeta === "object") return () => ForjaBeta.vista(actual);
     // PROGRESO és un lloc (el cos forjat, src/progreso.js); el mirall hi és un objecte, i té la seva pròpia vista
     if (v === "progreso" && typeof Progreso === "object") return () => Progreso.vista();
@@ -7705,6 +7716,495 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
   }, true);
   estil();
   return { vista, despresPintar, cap };
+})();
+
+/* LA BETA · NOCHE (28-09-2026): la pantalla principal d'entrenar, i prou. L'Albert, aquest vespre:
+   - «el fruity aquest però en fosc, com havia dit ell [l'Adrià], no el saturis»: el Frutiger Aero de nit, amb una base
+     negra blavosa, un sol accent menta suau, el lila per als músculs i els botons de píndola amb relleu i una ombra fina
+     darrere del text (el que l'Adrià va ensenyar de Pokémon Pocket);
+   - «abandona la nomenclatura forja»: aquí no hi ha ni forja, ni enclusa, ni mestre ferrer;
+   - «fes que no es puguin clicar els botons: només l'animació del klonk i una molt bona animació per lliscar les
+     cartes», i «ojo que a vegades fa scroll en girar les cartes»: la pantalla és fixa, no es mou;
+   - «asset a asset, cadascun amb la seva animació, i el klonk guapo, com els pros».
+   Les cartes són les rutines de debò de qui entra (rutinaActual), i cada una porta la il·lustració dels músculs que
+   treballa, feta amb el ChatGPT en el nostre estil (assets/beta/nit). A dalt, l'ELO, la ratxa, l'or i el Pro; la setmana;
+   la guerra del teu gimnàs contra el que tens al davant al rànquing de la teva ciutat (dades de debò de /gimnasios/ranking),
+   i un amic del clan per fer-li KLσNK (el feed del clan de sempre). */
+const Nit = (() => {
+  const A = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
+  const R = () => A() + "beta/nit/";
+  const LLETRES = ["L", "M", "X", "J", "V", "S", "D"];
+  const quiet = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const ic = (nom, cls = "") => `<img class="nt-ic ${cls}" src="${R()}ic-${nom}.webp" alt="" draggable="false">`;
+
+  // QUIN TIPUS DE DIA ÉS, per triar-ne la il·lustració: primer pel nom del dia, després pels exercicis
+  const TIPUS_NOM = [[/push|empuje|pecho|torso/i, "empuje"], [/pull|tir[oó]n|espalda/i, "tiron"], [/leg|pierna|gl[uú]te|inferior/i, "pierna"],
+    [/arm|brazo|b[ií]ceps|tr[ií]ceps/i, "brazos"], [/full|cuerpo|completo/i, "cuerpo"]];
+  const TIPUS_EJ = [
+    [/press (de )?(banca|pecho|plano|inclinad|declinad)|press (inclinado|plano)|aperturas|peck ?deck|contractora|cruce|flexiones|fondos|press militar|press de hombros|laterales|elevaci[oó]n en y|tr[ií]ceps|katana|franc[eé]s/i, "empuje"],
+    [/dominad|jal[oó]n|pull|remo|face ?pull|p[aá]jaros|encogimient|lumbar|peso muerto|curl(?! femoral)/i, "tiron"],
+    [/sentadilla|squat|hack|prensa|zancad|bulgar|cu[aá]driceps|femoral|n[oó]rdic|aducci|abducci|gemel|hip ?thrust|gl[uú]teo/i, "pierna"],
+  ];
+  function tipusDeNoms(noms) {
+    const c = { empuje: 0, tiron: 0, pierna: 0 };
+    noms.forEach(n => { for (const [re, t] of TIPUS_EJ) if (re.test(n)) { c[t]++; break; } });
+    const tot = c.empuje + c.tiron + c.pierna;
+    if (!tot) return "cuerpo";
+    const [top, n] = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+    return n / tot >= .6 ? top : "cuerpo";
+  }
+  function tipusDia(d) {
+    for (const [re, t] of TIPUS_NOM) if (re.test(d.t || "")) return t;
+    return tipusDeNoms((d.ej || []).map(e => e[0]));
+  }
+  const QUE = { empuje: "pecho y hombro", tiron: "espalda", pierna: "pierna", brazos: "brazos", cuerpo: "" };
+
+  // LES DADES DE DEBÒ
+  const eloDe = () => { try { return typeof Elo === "object" ? Elo.calcula() : { elo: null }; } catch (e) { return { elo: null }; } };
+  // el número del foc és el de tota l'app: els dies de gimnàs d'aquest any (Albert, 26-09: «la ratxa mai es trenca»)
+  const ratxa = () => { try { return Stats.diasAno(S) || 0; } catch (e) { return 0; } };
+  const fetAvui = () => { const k = hoy(); return S.ses.some(s => s.fin && s.fecha === k); };
+  // ELS ÚLTIMS SET DIES, amb avui a la dreta. Amb la setmana de dilluns a diumenge, el dilluns amagava l'entreno del
+  // diumenge (l'Albert, 28-09, dilluns: «marca'm com a fet l'entreno d'ahir, que el vaig fer»: era fet i guardat, però
+  // no es veia enlloc).
+  function setmana() {
+    const avui = new Date(), fets = new Set(S.ses.filter(s => s.fin).map(s => s.fecha));
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(avui.getFullYear(), avui.getMonth(), avui.getDate() - 6 + i);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return { l: LLETRES[(d.getDay() + 6) % 7], n: d.getDate(), fet: fets.has(k), avui: i === 6 };
+    });
+  }
+  function cartes() {
+    const r = rutinaActual(), act = activa(), lim = Date.now() - 7 * 864e5;
+    const fets = new Set(S.ses.filter(s => s.fin && s.fin >= lim).map(s => s.dia));
+    const avui = act ? act.dia : siguienteDia();
+    const llista = r.dias.map((d, i) => ({ tipus: "dia", n: i + 1, t: d.t, ej: d.ej, feta: fets.has(i + 1) && i + 1 !== avui, avui: i + 1 === avui, mm: tipusDia(d) }));
+    llista.push({ tipus: "pro" }, { tipus: "nova" });
+    return { llista, idx: Math.max(0, avui - 1), act };
+  }
+
+  // LES PECES
+  function carta(c, act) {
+    if (c.tipus === "pro") return `<div class="nt-carta nt-pro" data-in="carta"><span class="nt-pro-ic">${ic("medalla")}</span><b>Plan personalizado</b><span class="nt-sub">Tu rutina, hecha para ti</span><span class="nt-xip-pro">PRO</span></div>`;
+    if (c.tipus === "nova") return `<div class="nt-carta nt-nova" data-in="carta"><span class="nt-mes">${ic("mes")}</span><b>Nueva rutina</b></div>`;
+    const min = Math.round(c.ej.length * 6.5 / 5) * 5;
+    const fotos = c.ej.slice(0, 5).map(x => { const f = fotoEj(x[0]); return f ? `<img src="${f}" alt="" loading="lazy" draggable="false">` : `<i class="nt-ej-buit"></i>`; }).join("");
+    const boto = act && act.dia === c.n ? "Seguir" : "Empezar";
+    return `<div class="nt-carta${c.feta ? " nt-feta" : ""}${c.avui ? " nt-avui" : ""}" data-n="${c.n}" data-in="carta">
+      <div class="nt-carta-cap">${c.avui && !act ? `<span class="nt-hoy">Hoy</span>` : ""}<span class="nt-dia">Día ${c.n}</span><b class="nt-tit">${esc(c.t)}</b></div>
+      <div class="nt-il"><img src="${R()}musculs-${c.mm}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nt-brill"></i></div>
+      ${c.feta ? `<span class="nt-ok" aria-label="Hecho">${ic("check")}</span>` : ""}
+      <div class="nt-ejs">${fotos}${c.ej.length > 5 ? `<i class="nt-mas">+${c.ej.length - 5}</i>` : ""}</div>
+      <p class="nt-meta">${c.ej.length} ejercicios · ${min} min</p>
+      <span class="nt-boto nt-press" role="button" aria-disabled="true">${boto}</span>
+    </div>`;
+  }
+  function cap() {
+    const e = eloDe(), foc = fetAvui();
+    return `<header class="nt-cap">
+      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${e.divisio.nom}` : "Tu ELO: sin clasificar"}">${ic("medalla", "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
+      <span class="nt-xip nt-ratxa nt-press${foc ? " on" : ""}" data-in="cap" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
+      <span class="nt-buit"></span>
+      <span class="nt-xip nt-or nt-press" data-in="cap">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
+      <span class="nt-xip nt-pro-x nt-press" data-in="cap">PRO</span>
+    </header>`;
+  }
+  function vista() {
+    const { llista, idx, act } = cartes();
+    const set = setmana();
+    return `<section class="nt" aria-label="Entrenar">
+      <div class="nt-fons" aria-hidden="true"><i class="nt-bloom"></i></div>
+      ${cap()}
+      <div class="nt-set" aria-label="Los últimos 7 días">${set.map(d => `<span class="nt-dia-s${d.fet ? " fet" : ""}${d.avui ? " avui" : ""}" data-in="set"><small>${d.l}</small><i></i><b>${d.n}</b></span>`).join("")}</div>
+      <div class="nt-guerra" hidden></div>
+      <div class="nt-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}
+        <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
+      <div class="nt-amic" hidden></div>
+      <nav class="nt-barra" aria-label="Principal">
+        <span class="nt-tab nt-press" data-in="barra" aria-label="Tú" aria-disabled="true"><img class="nt-av" src="${imgPersonaje(pjBo(S.personaje))}" alt="" draggable="false"></span>
+        <span class="nt-tab nt-press" data-in="barra" aria-label="Social" aria-disabled="true">${ic("escut")}</span>
+        <button class="nt-centre" data-in="barra" aria-label="KLONK">${ic("manuella", "nt-manuella")}<i class="nt-anell"></i></button>
+        <span class="nt-tab nt-press" data-in="barra" aria-label="Nutrición" aria-disabled="true">${ic("shaker")}</span>
+        <span class="nt-tab nt-press" data-in="barra" aria-label="Menú" aria-disabled="true">${ic("menu")}</span>
+      </nav>
+      <div class="nt-fx" aria-hidden="true"></div>
+    </section>`;
+  }
+
+  // LA GUERRA: el teu gimnàs contra el que tens al davant (o al darrere, si vas primer) al rànquing de la ciutat
+  async function carregaGuerra(sec) {
+    const el = sec.querySelector(".nt-guerra");
+    if (!el) return;
+    let meu = null, riv = null;
+    if (typeof api === "function" && typeof teCompte === "function" && teCompte() && !S.demo) {
+      let d = S.ui.ntGuerra;
+      if (!d || Date.now() - d.at > 300000) { try { d = S.ui.ntGuerra = { at: Date.now(), r: await api("GET", "/gimnasios/ranking?ambit=ciudad") }; } catch (e) { d = null; } }
+      const r = d && d.r;
+      meu = r && r.meu;
+      riv = meu && r.llista && (r.llista.find(x => x.pos === meu.pos - 1) || r.llista.find(x => x.pos === meu.pos + 1));
+    }
+    // L'Albert (28-09 nit): «simula de moment els dos que hi ha; cada setmana, batalla de gyms de la zona». Mentre el
+    // servidor no porti la batalla setmanal, la línia ensenya el seu gimnàs contra el Vivagym amb una xifra d'exemple.
+    if (!meu || !riv) { meu = { nom: "Aiguajoc", xp: 62 }; riv = { nom: "Vivagym", xp: 38 }; }
+    const tot = (meu.xp || 0) + (riv.xp || 0) || 1, pc = Math.round(100 * (meu.xp || 0) / tot);
+    el.innerHTML = `<span class="nt-g nt-g-meu">${ic("cresta")}<span><small>${esc(meu.nom)}</small><b>${pc} %</b></span></span>
+      <span class="nt-g-barra"><i style="--p:${pc}%"></i><small>Tu entreno de hoy suma</small></span>
+      <span class="nt-g nt-g-riv"><span><small>${esc(riv.nom)}</small><b>${100 - pc} %</b></span>${ic("cresta-riv")}</span>`;
+    el.hidden = false;
+    entra([el], 0);
+    const i = el.querySelector(".nt-g-barra i");
+    if (i && i.animate && !quiet()) i.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 900, easing: "cubic-bezier(.2,.9,.25,1)", delay: 120, fill: "backwards" });
+  }
+  // UN AMIC DEL CLAN per fer-li KLσNK: l'últim entreno que no és teu
+  async function carregaAmic(sec) {
+    const el = sec.querySelector(".nt-amic");
+    if (!el || typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
+    let f = S.ui.feed;
+    if (!f || Date.now() - (f.at || 0) > 60000) {
+      try { const r = await api("GET", "/clan/feed"); f = S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; } catch (e) { return; }
+    }
+    const it = (f.items || []).find(x => !x.yo);
+    if (!it) return;
+    const que = QUE[tipusDeNoms((it.exercicis || []).map(e => e.nom))];
+    const quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
+    el.innerHTML = `<img class="nt-amic-av" src="${imgPersonaje(pjBo(it.personatge))}" alt="" draggable="false">
+      <span class="nt-amic-t"><b>${esc(it.nom)}</b> ${que ? `ha entrenado ${que}` : "ha entrenado"}${quan && quan !== "hoy" ? ` <small>${quan}</small>` : ""}</span>
+      <button class="nt-klonk-amic">KLσNK!</button>`;
+    el.hidden = false;
+    entra([el], 0);
+  }
+
+  // L'ENTRADA: cada peça arriba al seu temps (skill moviment §4: 8-24 px, 40-80 ms entre germanes, tot per sota de 1,2 s)
+  function entra(peces, des = 0) {
+    if (quiet()) return;
+    peces.forEach((x, i) => { try { x.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }],
+      { duration: 520, delay: des + i * 55, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (e) {} });
+  }
+  function entrada(sec) {
+    if (quiet()) return;
+    entra([...sec.querySelectorAll('[data-in="cap"]')], 0);
+    sec.querySelectorAll('[data-in="set"]').forEach((x, i) => {
+      try { x.animate([{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }], { duration: 420, delay: 140 + i * 40, easing: "cubic-bezier(.3,1.5,.5,1)", fill: "backwards" }); } catch (e) {}
+    });
+    const roda = sec.querySelector(".nt-roda");
+    if (roda) try { roda.animate([{ opacity: 0, transform: "translateY(26px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: 700, delay: 220, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (e) {}
+    entra([...sec.querySelectorAll('[data-in="barra"]')], 300);
+  }
+
+  /* LA RODA DE CARTES. Es mou amb el dit sense que la pàgina es mogui gens (la pantalla és fixa i el gest és seu), i en
+     deixar-la segueix amb la velocitat que duia fins a la carta on aniria a parar, amb una molla una mica viva (ζ 0,78: un
+     sobrepàs de no res). Mentre la mous, les cartes s'inclinen amb la velocitat i la il·lustració es queda una mica
+     enrere (paral·laxi), i la brillantor passa per la carta. Als extrems, goma. Tot és interrompible. */
+  function colloca(roda, p, v = 0) {
+    const cs = roda.querySelectorAll(".nt-carta"), punts = roda.querySelectorAll(".nt-punts i"), ara = Math.round(p);
+    punts.forEach((e, i) => { if ((i === ara) !== e.classList.contains("on")) e.classList.toggle("on", i === ara); });
+    const incl = Math.max(-5, Math.min(5, v * 1.6));
+    for (let i = 0; i < cs.length; i++) {
+      const c = cs[i], d = i - p, a = Math.abs(d);
+      c.style.transform = `translate3d(calc(-50% + ${(d * 64).toFixed(2)}%),${(a * 8).toFixed(1)}px,${(-a * 64).toFixed(1)}px) rotateY(${Math.max(-44, Math.min(44, -d * 22)).toFixed(2)}deg) rotateZ(${(incl * Math.max(0, 1 - a)).toFixed(2)}deg) scale(${(1 - Math.min(a, 2.2) * .09).toFixed(4)})`;
+      c.style.opacity = a > 2.4 ? "0" : (1 - a * .24).toFixed(3);
+      c.style.zIndex = String(100 - Math.round(a * 10));
+      c.style.setProperty("--d", d.toFixed(3));
+      const davant = a < .5;
+      if (davant !== c.classList.contains("davant")) c.classList.toggle("davant", davant);
+    }
+  }
+  function activaRoda(roda) {
+    const n = roda.querySelectorAll(".nt-carta").length;
+    let pos = Math.min(n - 1, Math.max(0, +roda.dataset.idx || 0)), vel = 0, objectiu = pos, anim = 0;
+    let dit = null, x0 = 0, p0 = 0, mogut = false, mostres = [], ultim = Math.round(pos);
+    const pas = () => Math.max(140, roda.clientWidth * .56);
+    const tic = senseGest => {
+      const r = Math.max(0, Math.min(n - 1, Math.round(pos)));
+      if (r === ultim) return;
+      ultim = r;
+      if (typeof Efectos === "object") { try { Efectos.suena("tap"); Efectos.vibra("tria", senseGest); } catch (e) {} }
+    };
+    const atura = () => { if (anim) cancelAnimationFrame(anim); anim = 0; };
+    function molla() {
+      atura();
+      if (quiet()) { pos = objectiu; vel = 0; colloca(roda, pos); tic(true); return; }
+      let t = performance.now();
+      const k = 210, c = 2 * .78 * Math.sqrt(k);
+      const fes = ara => {
+        const dt = Math.min(.034, Math.max(.001, (ara - t) / 1000));
+        t = ara;
+        vel += (-k * (pos - objectiu) - c * vel) * dt;
+        pos += vel * dt;
+        colloca(roda, pos, vel); tic(true);
+        if (Math.abs(pos - objectiu) < .0012 && Math.abs(vel) < .015) { pos = objectiu; vel = 0; colloca(roda, pos); anim = 0; return; }
+        anim = requestAnimationFrame(fes);
+      };
+      anim = requestAnimationFrame(fes);
+    }
+    colloca(roda, pos);
+    roda.addEventListener("pointerdown", ev => {
+      if (dit !== null) return;
+      atura(); dit = ev.pointerId; x0 = ev.clientX; p0 = pos; mogut = false; mostres = [[performance.now(), pos]];
+    });
+    roda.addEventListener("pointermove", ev => {
+      if (dit !== ev.pointerId) return;
+      const dx = ev.clientX - x0;
+      if (!mogut) { if (Math.abs(dx) < 5) return; mogut = true; try { roda.setPointerCapture(ev.pointerId); } catch (e) {} }
+      let cru = p0 - dx / pas();
+      if (cru < 0) cru = -(1 - 1 / (1 - cru * 1.6)) / 1.6 * .5;
+      else if (cru > n - 1) { const o = cru - (n - 1); cru = n - 1 + (1 - 1 / (1 + o * 1.6)) / 1.6 * .5; }
+      const ara = performance.now();
+      mostres.push([ara, cru]);
+      while (mostres.length > 2 && ara - mostres[0][0] > 90) mostres.shift();
+      const [ta, pa] = mostres[0], dt = (ara - ta) / 1000;
+      pos = cru; colloca(roda, pos, dt > .004 ? (pos - pa) / dt : 0); tic(false);
+    });
+    const deixa = ev => {
+      if (dit !== ev.pointerId) return;
+      dit = null;
+      if (!mogut) {
+        const c = ev.target.closest(".nt-carta"), i = c ? [...roda.querySelectorAll(".nt-carta")].indexOf(c) : -1;
+        if (i >= 0 && i !== Math.round(pos)) { objectiu = i; vel = 0; molla(); }
+        return;
+      }
+      const [ta, pa] = mostres[0], dt = (performance.now() - ta) / 1000;
+      vel = dt > .004 ? (pos - pa) / dt : 0;
+      vel = Math.max(-14, Math.min(14, vel));
+      const on = Math.round(pos), lluny = Math.round(pos + vel * .2);
+      objectiu = Math.max(0, Math.min(n - 1, Math.max(on - 2, Math.min(on + 2, lluny))));
+      molla();
+    };
+    roda.addEventListener("pointerup", deixa);
+    roda.addEventListener("pointercancel", deixa);
+    roda.tabIndex = 0;
+    roda.addEventListener("keydown", ev => {
+      if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
+      ev.preventDefault();
+      objectiu = Math.max(0, Math.min(n - 1, Math.round(objectiu) + (ev.key === "ArrowRight" ? 1 : -1)));
+      vel = 0; molla();
+    });
+  }
+
+  /* EL KLONK. Un sol moment orquestrat (skill moviment): la manuella fa el cop (s'aixafa, gira i torna), en surt una
+     ona de llum que s'escampa per la pantalla i encén cada peça quan hi arriba (primer la barra, després la carta, la
+     setmana i la barra de dalt), el fons s'il·lumina per darrere i salten espurnes. Tot amb transform, opacity i filter;
+     amb el moviment reduït, només el so i un flaix. */
+  function so() {
+    try { const s = new Audio(A() + "sons/klonk.mp3"); s.volume = .9; s.play().catch(() => {}); } catch (e) {}
+    try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
+  }
+  function klonk(boto) {
+    const sec = boto.closest(".nt"); if (!sec) return;
+    so();
+    const fx = sec.querySelector(".nt-fx"), r0 = sec.getBoundingClientRect(), rb = boto.getBoundingClientRect();
+    const cx = rb.left + rb.width / 2 - r0.left, cy = rb.top + rb.height / 2 - r0.top;
+    if (quiet()) { try { boto.animate([{ filter: "brightness(1.6)" }, { filter: "none" }], { duration: 300 }); } catch (e) {} return; }
+    const man = boto.querySelector(".nt-manuella");
+    boto.animate([{ transform: "scale(1)" }, { transform: "scale(1.08,.86)", offset: .16 }, { transform: "scale(.96,1.07)", offset: .42 }, { transform: "scale(1.02,.99)", offset: .7 }, { transform: "scale(1)" }],
+      { duration: 620, easing: "cubic-bezier(.2,.9,.3,1)" });
+    if (man) man.animate([{ transform: "rotate(0) scale(1)", filter: "brightness(1)" }, { transform: "rotate(-24deg) scale(.9)", filter: "brightness(1.9)", offset: .16 },
+      { transform: "rotate(14deg) scale(1.14)", filter: "brightness(1.4)", offset: .42 }, { transform: "rotate(-5deg) scale(1)", offset: .7 }, { transform: "rotate(0) scale(1)", filter: "brightness(1)" }],
+      { duration: 700, easing: "cubic-bezier(.2,.9,.3,1)" });
+    // les ones i la llum de darrere, al punt del cop
+    const posa = (cls, css) => { const x = document.createElement("i"); x.className = cls; Object.assign(x.style, css); fx.appendChild(x); return x; };
+    [[0, "var(--nt-menta)"], [130, "var(--nt-lila)"]].forEach(([dl, col]) => {
+      const o = posa("nt-ona", { left: cx + "px", top: cy + "px", borderColor: col });
+      o.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: .75 }, { transform: "translate(-50%,-50%) scale(5.2)", opacity: 0 }],
+        { duration: 900, delay: dl, easing: "cubic-bezier(.15,.8,.3,1)", fill: "backwards" }).onfinish = () => o.remove();
+    });
+    const bl = sec.querySelector(".nt-bloom");
+    if (bl) { bl.style.left = cx + "px"; bl.style.top = cy + "px";
+      bl.animate([{ transform: "translate(-50%,-50%) scale(.2)", opacity: 0 }, { transform: "translate(-50%,-50%) scale(1)", opacity: .9, offset: .25 }, { transform: "translate(-50%,-50%) scale(1.6)", opacity: 0 }],
+        { duration: 1300, easing: "cubic-bezier(.2,.8,.3,1)" }); }
+    // les espurnes: daurades i menta, en corona, cadascuna amb el seu angle i la seva distància
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + (i % 2 ? .18 : -.1), dist = 46 + (i % 3) * 18;
+      const e = posa("nt-espurna" + (i % 3 === 0 ? " menta" : ""), { left: cx + "px", top: cy + "px" });
+      e.animate([{ transform: "translate(-50%,-50%) scale(.3) rotate(0)", opacity: 1 },
+        { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px),calc(-50% + ${Math.sin(a) * dist - 10}px)) scale(1) rotate(${i % 2 ? 90 : -90}deg)`, opacity: 1, offset: .55 },
+        { transform: `translate(calc(-50% + ${Math.cos(a) * dist * 1.25}px),calc(-50% + ${Math.sin(a) * dist * 1.25}px)) scale(.2) rotate(${i % 2 ? 180 : -180}deg)`, opacity: 0 }],
+        { duration: 760, delay: i * 8, easing: "cubic-bezier(.15,.85,.3,1)" }).onfinish = () => e.remove();
+    }
+    // l'ona de llum: cada peça s'encén quan l'ona hi arriba, per la distància al cop
+    const peces = sec.querySelectorAll(".nt-tab, .nt-carta.davant, .nt-carta.davant .nt-il img, .nt-dia-s, .nt-xip, .nt-g, .nt-g-barra, .nt-amic");
+    peces.forEach(p => {
+      const r = p.getBoundingClientRect(), dx = r.left + r.width / 2 - rb.left - rb.width / 2, dy = r.top + r.height / 2 - rb.top - rb.height / 2;
+      const dl = Math.hypot(dx, dy) * .75;
+      const carta = p.classList.contains("nt-carta");
+      try { p.animate(carta
+        ? [{ boxShadow: "var(--nt-o2)" }, { boxShadow: "0 0 0 1.5px var(--nt-menta), 0 0 38px -6px var(--nt-menta-glow), var(--nt-o2)", offset: .35 }, { boxShadow: "var(--nt-o2)" }]
+        : [{ filter: "brightness(1)" }, { filter: "brightness(1.55) drop-shadow(0 0 8px var(--nt-menta-glow))", offset: .35 }, { filter: "brightness(1)" }],
+        { duration: 560, delay: dl, easing: "ease-out" }); } catch (e) {}
+    });
+  }
+  // el KLσNK a un amic: el mateix gest, petit (demo: no s'envia res encara)
+  function klonkAmic(b) {
+    so();
+    if (quiet()) return;
+    b.animate([{ transform: "scale(1)" }, { transform: "scale(1.1,.86)", offset: .2 }, { transform: "scale(.96,1.05)", offset: .5 }, { transform: "scale(1)" }], { duration: 520, easing: "cubic-bezier(.2,.9,.3,1)" });
+    const sec = b.closest(".nt"), fx = sec && sec.querySelector(".nt-fx"); if (!fx) return;
+    const r0 = sec.getBoundingClientRect(), rb = b.getBoundingClientRect(), cx = rb.left + rb.width / 2 - r0.left, cy = rb.top + rb.height / 2 - r0.top;
+    const o = document.createElement("i"); o.className = "nt-ona"; Object.assign(o.style, { left: cx + "px", top: cy + "px", borderColor: "var(--nt-menta)" }); fx.appendChild(o);
+    o.animate([{ transform: "translate(-50%,-50%) scale(.5)", opacity: .7 }, { transform: "translate(-50%,-50%) scale(2.6)", opacity: 0 }], { duration: 650, easing: "cubic-bezier(.15,.8,.3,1)" }).onfinish = () => o.remove();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2, e = document.createElement("i"); e.className = "nt-espurna" + (i % 2 ? " menta" : "");
+      Object.assign(e.style, { left: cx + "px", top: cy + "px" }); fx.appendChild(e);
+      e.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * 48}px),calc(-50% + ${Math.sin(a) * 26}px)) scale(.9) rotate(90deg)`, opacity: 0 }],
+        { duration: 620, easing: "cubic-bezier(.15,.85,.3,1)" }).onfinish = () => e.remove();
+    }
+    const av = sec.querySelector(".nt-amic-av");
+    if (av) av.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.5) drop-shadow(0 0 10px var(--nt-menta-glow))", offset: .3 }, { filter: "brightness(1)" }], { duration: 700 });
+  }
+  // cada peça respon al dit (sense fer res més: és una demostració)
+  function premsa(p) {
+    if (quiet() || !p.animate) return;
+    p.animate([{ transform: "scale(1)" }, { transform: "scale(.9)", offset: .3 }, { transform: "scale(1.04)", offset: .65 }, { transform: "scale(1)" }], { duration: 360, easing: "cubic-bezier(.2,.9,.3,1)" });
+    try { if (typeof Efectos === "object") Efectos.suena("tap"); } catch (e) {}
+  }
+  document.addEventListener("click", ev => {
+    const sec = ev.target.closest(".nt"); if (!sec) return;
+    const c = ev.target.closest(".nt-centre"), a = ev.target.closest(".nt-klonk-amic"), p = ev.target.closest(".nt-press");
+    if (!c && !a && !p) return;
+    ev.preventDefault(); ev.stopPropagation();
+    if (c) klonk(c); else if (a) klonkAmic(a); else premsa(p);
+  }, true);
+
+  // LA PANTALLA NO ES MOU: ni scroll, ni rebot, ni estirar per recarregar, mentre la Beta Noche és a la vista
+  document.addEventListener("touchmove", ev => { if (ev.target.closest && ev.target.closest(".nt")) ev.preventDefault(); }, { passive: false });
+
+  const CSS = `
+.nt{--nt-fons:#0d1217;--nt-fons-2:#131b22;--nt-sup:#19212a;--nt-sup-2:#212b35;--nt-vora:rgb(255 255 255 / .07);--nt-tinta:#e7edf2;--nt-suau:#8b98a4;
+  --nt-apagat:#2b3540;--nt-menta:#86d9c6;--nt-menta-glow:rgb(134 217 198 / .45);--nt-lila:#a89be0;--nt-or:#e2c27a;
+  --nt-o1:0 8px 20px -14px rgb(0 0 0 / .9),inset 0 1px 0 rgb(255 255 255 / .05);--nt-o2:0 22px 40px -22px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .06);
+  --nt-text-o:0 1px 2px rgb(0 0 0 / .55);
+  position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;overflow:hidden;touch-action:none;overscroll-behavior:none;
+  padding:calc(8px + env(safe-area-inset-top)) 16px 0;color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;
+  background:radial-gradient(120% 60% at 50% 0%,#18222c 0%,rgb(24 34 44 / 0) 60%),linear-gradient(180deg,var(--nt-fons-2),var(--nt-fons));
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.nt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>")}
+html:has(body.v-nit.fb-actiu),body.v-nit.fb-actiu{overflow:hidden;overscroll-behavior:none;height:100%}
+body.v-nit.fb-actiu{background:#0d1217}
+body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
+.nt img{-webkit-user-drag:none;pointer-events:none}
+.nt-fons{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.nt-bloom{position:absolute;left:50%;top:92%;width:620px;height:620px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgb(134 217 198 / .5) 0%,rgb(168 155 224 / .22) 32%,rgb(168 155 224 / 0) 66%);mix-blend-mode:screen}
+.nt > *:not(.nt-fons){position:relative;z-index:1}
+.nt-fx{position:absolute !important;inset:0;pointer-events:none;z-index:50 !important}
+.nt-ona{position:absolute;width:64px;height:64px;border-radius:50%;border:2px solid;box-shadow:0 0 24px -2px var(--nt-menta-glow);pointer-events:none}
+.nt-espurna{position:absolute;width:13px;height:13px;background:url(${A()}beta/nit/ic-espurna.webp) center/contain no-repeat;pointer-events:none;filter:drop-shadow(0 0 6px rgb(226 194 122 / .8))}
+.nt-espurna.menta{background-image:url(${A()}beta/nit/ic-espurna-menta.webp);filter:drop-shadow(0 0 6px var(--nt-menta-glow))}
+.nt-ic{display:block;width:22px;height:22px;object-fit:contain}
+/* LA BARRA DE DALT: xips petits amb relleu; a l'ELO, una brillantor passa de tant en tant */
+.nt-cap{display:flex;align-items:center;gap:7px;height:40px;flex:none}
+.nt-buit{flex:1}
+.nt-xip{position:relative;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px 0 7px;border-radius:999px;overflow:hidden;
+  background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:var(--nt-o1),0 0 0 1px var(--nt-vora);font-weight:800;font-size:14px;line-height:1;text-shadow:var(--nt-text-o)}
+.nt-xip b{font-variant-numeric:tabular-nums}
+.nt-sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgb(255 255 255 / .16) 45%,transparent 60%);transform:translateX(-120%);animation:nt-sheen 7s ease-in-out 2s infinite}
+@keyframes nt-sheen{0%,86%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.nt-ratxa.on .nt-flama{animation:nt-flama 1.6s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes nt-flama{0%,100%{transform:scale(1) rotate(0)}30%{transform:scale(1.07,.95) rotate(-3deg)}65%{transform:scale(.96,1.06) rotate(2deg)}}
+.nt-ratxa:not(.on) b{color:var(--nt-suau)}
+.nt-mesor{display:grid;place-items:center;width:22px;height:22px;margin-left:2px;margin-right:-6px}
+.nt-mesor .nt-ic{width:20px;height:20px}
+.nt-pro-x{padding:0 11px;color:var(--nt-lila);box-shadow:var(--nt-o1),0 0 0 1px rgb(168 155 224 / .35);font-size:12.5px;letter-spacing:.06em}
+/* LA SETMANA: set dies, els fets amb menta, avui amb l'anella que respira */
+.nt-set{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;flex:none}
+.nt-dia-s{display:grid;justify-items:center;gap:5px;color:var(--nt-suau);font-weight:800}
+.nt-dia-s small{font-size:10.5px;letter-spacing:.04em}
+.nt-dia-s b{font-size:12px;font-variant-numeric:tabular-nums}
+.nt-dia-s i{position:relative;width:9px;height:9px;border-radius:50%;background:var(--nt-apagat);box-shadow:inset 0 1px 1px rgb(0 0 0 / .5)}
+.nt-dia-s.fet i{background:radial-gradient(circle at 35% 30%,#c7f1e7,var(--nt-menta) 60%);box-shadow:0 0 10px -1px var(--nt-menta-glow)}
+.nt-dia-s.fet b{color:var(--nt-tinta)}
+.nt-dia-s.avui b{color:var(--nt-tinta)}
+.nt-dia-s.avui i::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid var(--nt-lila);animation:nt-anella 2.8s ease-in-out infinite}
+@keyframes nt-anella{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+/* LA GUERRA, en una línia */
+.nt-guerra{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:12px;padding:8px 12px;border-radius:16px;flex:none;
+  background:linear-gradient(180deg,rgb(255 255 255 / .035),rgb(255 255 255 / .015));box-shadow:0 0 0 1px var(--nt-vora)}
+.nt-guerra[hidden]{display:none}
+.nt-g{display:flex;align-items:center;gap:7px}.nt-g .nt-ic{width:26px;height:26px}
+.nt-g span{display:grid;line-height:1.1}.nt-g small{font-size:10.5px;color:var(--nt-suau);font-weight:800;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-g b{font-size:15px;font-weight:900;text-shadow:var(--nt-text-o)}
+.nt-g-meu b{color:var(--nt-menta)}.nt-g-riv{text-align:right}.nt-g-riv span{justify-items:end}.nt-g-riv b{color:var(--nt-lila)}
+.nt-g-barra{display:grid;gap:4px;justify-items:center}
+.nt-g-barra i{display:block;width:100%;height:6px;border-radius:99px;transform-origin:left;
+  background:linear-gradient(90deg,var(--nt-menta) 0 var(--p),var(--nt-lila) var(--p) 100%);box-shadow:0 0 12px -3px var(--nt-menta-glow)}
+.nt-g-barra small{font-size:10px;color:var(--nt-suau);font-weight:800}
+/* LA RODA I LES CARTES */
+.nt-roda{position:relative;flex:1 1 auto;min-height:280px;margin:12px -16px 0;perspective:1100px;touch-action:none;container-type:size;outline:0}
+.nt-carta{--w:min(276px,70vw);--ch:min(470px,60vh);position:absolute;left:50%;top:6px;width:var(--w);height:var(--ch);display:flex;flex-direction:column;
+  border-radius:26px;padding:14px 14px 12px;color:var(--nt-tinta);will-change:transform,opacity;transform-style:preserve-3d;
+  background:linear-gradient(180deg,rgb(255 255 255 / .06),rgb(255 255 255 / .015) 40%),var(--nt-sup);box-shadow:var(--nt-o2),0 0 0 1px var(--nt-vora)}
+/* la carta, al mig de l'espai que queda i tan alta com hi cap; els punts, just a sota */
+@supports (height:1cqh){.nt-carta,.nt-punts{--w:min(268px,66cqw);--ch:min(470px,100cqh - 46px)}.nt-carta{top:calc((100cqh - var(--ch)) / 2 - 10px)}.nt-punts{top:calc((100cqh + var(--ch)) / 2 + 4px);bottom:auto}}
+.nt-carta::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgb(255 255 255 / .07) 50%,transparent 65%);background-size:260% 100%;
+  background-position:calc(50% + var(--d,0) * 90%) 0}
+.nt-carta.davant{box-shadow:var(--nt-o2),0 0 0 1px rgb(134 217 198 / .28)}
+.nt-carta-cap{display:grid;gap:2px;justify-items:center;text-align:center}
+.nt-hoy{justify-self:center;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:900;color:#0d2a24;background:linear-gradient(180deg,#a8ecdc,var(--nt-menta));
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),0 4px 10px -4px var(--nt-menta-glow);margin-bottom:3px}
+.nt-dia{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nt-tit{font-size:19px;font-weight:900;line-height:1.15;text-shadow:var(--nt-text-o);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nt-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:grid;place-items:center;overflow:hidden;border-radius:18px}
+.nt-il img{max-width:100%;max-height:100%;object-fit:contain;transform:translateX(calc(var(--d,0) * -22px));filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45))}
+.nt-carta.davant .nt-il img{animation:nt-respira 3.6s ease-in-out infinite}
+@keyframes nt-respira{0%,100%{filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45)) drop-shadow(0 0 0 rgb(168 155 224 / 0))}50%{filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45)) drop-shadow(0 0 10px rgb(168 155 224 / .35))}}
+.nt-brill{position:absolute;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 50% 45%,rgb(168 155 224 / .12),transparent 70%)}
+.nt-ok{position:absolute;right:12px;top:12px}.nt-ok .nt-ic{width:26px;height:26px}
+.nt-feta{filter:saturate(.7) brightness(.9)}
+.nt-ejs{display:flex;gap:5px;justify-content:center;flex:none}
+.nt-ejs img,.nt-ej-buit,.nt-mas{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(255 255 255 / .08)}
+.nt-mas{display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:900;color:var(--nt-suau)}
+.nt-meta{margin:7px 0 9px;text-align:center;font-size:12px;font-weight:800;color:var(--nt-suau);flex:none}
+.nt-boto{display:grid;place-items:center;height:46px;flex:none;border-radius:999px;font-weight:900;font-size:17px;color:#0d2a24;
+  text-shadow:0 1px 0 rgb(255 255 255 / .4);background:linear-gradient(180deg,#a6ecdb 0%,var(--nt-menta) 55%,#6cc4b1 100%);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),inset 0 -2px 0 rgb(0 0 0 / .12),0 10px 22px -10px var(--nt-menta-glow)}
+.nt-carta:not(.davant) .nt-boto{opacity:.35}
+.nt-pro,.nt-nova{justify-content:center;align-items:center;gap:10px;text-align:center}
+.nt-pro b,.nt-nova b{font-size:17px;font-weight:900}
+.nt-pro .nt-sub{font-size:12.5px;color:var(--nt-suau);font-weight:700}
+.nt-pro-ic .nt-ic{width:64px;height:64px}
+.nt-xip-pro{padding:3px 11px;border-radius:8px;font-size:12px;font-weight:900;color:var(--nt-lila);box-shadow:0 0 0 1px rgb(168 155 224 / .4)}
+.nt-nova{background:transparent;box-shadow:none;outline:2px dashed rgb(255 255 255 / .12);outline-offset:-4px;color:var(--nt-suau)}
+.nt-mes{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--nt-sup-2);box-shadow:var(--nt-o1)}
+.nt-mes .nt-ic{width:30px;height:30px}
+.nt-punts{position:absolute;left:0;right:0;bottom:4px;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.nt-punts i{width:6px;height:6px;border-radius:99px;background:var(--nt-apagat);transition:width .28s cubic-bezier(.2,.9,.3,1),background .28s}
+.nt-punts i.on{width:20px;background:var(--nt-menta)}
+.nt-punts i.pro{background:rgb(168 155 224 / .5)}.nt-punts i.pro.on{background:var(--nt-lila)}
+/* L'AMIC */
+.nt-amic{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:8px 8px 8px 10px;border-radius:18px;flex:none;
+  background:linear-gradient(180deg,rgb(255 255 255 / .04),rgb(255 255 255 / .015));box-shadow:0 0 0 1px var(--nt-vora)}
+.nt-amic[hidden]{display:none}
+.nt-amic-av{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(134 217 198 / .35)}
+.nt-amic-t{flex:1;font-size:13.5px;color:var(--nt-suau);font-weight:700;line-height:1.25}.nt-amic-t b{color:var(--nt-tinta)}
+.nt-amic-t small{font-size:11px;opacity:.8}
+.nt-klonk-amic{height:34px;padding:0 14px;border-radius:999px;border:0;font:900 13.5px/1 inherit;font-family:inherit;color:var(--nt-menta);letter-spacing:.02em;
+  background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(134 217 198 / .3),0 6px 14px -8px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o)}
+/* LA BARRA DE BAIX: cinc llocs, el del mig és el botó del KLONK */
+.nt-barra{display:flex;align-items:center;justify-content:space-around;height:66px;margin:10px -16px 0;padding:0 8px env(safe-area-inset-bottom);flex:none;box-sizing:content-box;
+  background:linear-gradient(180deg,rgb(255 255 255 / .045),rgb(255 255 255 / .01));box-shadow:0 -1px 0 var(--nt-vora),0 -18px 30px -24px rgb(0 0 0 / .9);border-radius:26px 26px 0 0}
+.nt-tab{display:grid;place-items:center;width:52px;height:52px;opacity:.78}
+.nt-tab .nt-ic{width:28px;height:28px}
+.nt-av{width:34px;height:34px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgb(134 217 198 / .45),0 0 0 4px rgb(134 217 198 / .08)}
+.nt-centre{position:relative;display:grid;place-items:center;width:70px;height:70px;margin-top:-26px;border:0;border-radius:50%;padding:0;cursor:pointer;
+  background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%);box-shadow:0 0 0 1.5px rgb(134 217 198 / .5),0 14px 26px -12px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .1)}
+.nt-centre .nt-manuella{width:40px;height:40px;filter:drop-shadow(0 4px 6px rgb(0 0 0 / .5))}
+.nt-anell{position:absolute;inset:-5px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgb(134 217 198 / .25),0 0 22px -4px var(--nt-menta-glow);animation:nt-respira-c 3.2s ease-in-out infinite}
+@keyframes nt-respira-c{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.nt-sheen,.nt-ratxa.on .nt-flama,.nt-dia-s.avui i::after,.nt-carta.davant .nt-il img,.nt-anell{animation:none}}
+`;
+  function estil() { if (document.getElementById("estil-nit")) return; const s = document.createElement("style"); s.id = "estil-nit"; s.textContent = CSS; document.head.appendChild(s); }
+  function despresPintar() {
+    estil();
+    const sec = document.querySelector(".nt"); if (!sec) return;
+    const roda = sec.querySelector(".nt-roda"); if (roda) activaRoda(roda);
+    entrada(sec);
+    carregaGuerra(sec); carregaAmic(sec);
+  }
+  estil();
+  return { vista, despresPintar, tipusDia };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
