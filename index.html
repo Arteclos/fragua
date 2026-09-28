@@ -6876,7 +6876,7 @@ const Versions = (() => {
   // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
   const AMB_FORJA = ["neta", "marro", "rumble", "anime"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
-  const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor"];
+  const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor", "compte", "eleccion", "datos"];
   const CLAU = "klonk-versio";
   let actual = "actual";
   try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
@@ -7415,6 +7415,29 @@ body.bt-entreno .descans .accions button{border:0;background:var(--fb-enfonsat);
 body.bt-entreno #descans .accions button.desc-fi{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta)}
 body.bt-entreno .descans .temps{color:var(--fb-tinta)}
 body.bt-entreno .grup-cap{color:var(--fb-tinta)}
+/* L'ENTRADA (crear el compte, triar el personatge, les dades), revisada amb captures com la resta. Els camps que no són
+   dins d'un panell (el nick) van sobre el fons: a la neta el gris enfonsat s'hi confonia, i porten la superfície i una
+   línia. La brillantor de darrere del Kragg de la portada acabava en sec (el degradat no arribava a transparent abans de la
+   vora de la capsa i es veia un requadre): ara s'acaba dins la capsa, i a les clares no hi és (fons en calma). */
+body.bt-pell .form:not(.panel) input{background:var(--fb-sup);box-shadow:inset 0 0 0 1.5px var(--fb-linia)}
+body.bt-pell .kragg-3d .brillo{bottom:4%;height:66%;width:96%;background:radial-gradient(closest-side,var(--fb-brasa-glow),transparent);opacity:.6;animation:none}
+body.v-neta.bt-pell .kragg-3d .brillo,body.v-anime.bt-pell .kragg-3d .brillo{display:none}
+body.bt-pell .porta-entra{color:var(--fb-tinta);text-shadow:none}
+body.bt-pell .llegenda,body.bt-pell .o-separador{color:var(--fb-suau)}
+body.bt-pell .o-separador::before,body.bt-pell .o-separador::after{background:var(--fb-linia)}
+body.bt-pell .casella b{color:var(--fb-tinta)}
+body.bt-pell .casella small{color:var(--fb-suau)}
+body.bt-pell .casella a,body.bt-pell .compte-legal a,body.bt-pell #vista .enllac{color:var(--fb-accio-text)}
+/* les caselles, pròpies de la versió: la nativa sortia com un quadrat negre a la neta. L'interruptor natiu (switch) no es toca */
+body.bt-pell input[type=checkbox]:not([switch]){-webkit-appearance:none;appearance:none;width:24px;height:24px;flex:none;margin:0;border-radius:7px;border:2px solid var(--fb-suau);background:var(--fb-sup);display:grid;place-content:center;cursor:pointer;transition:background-color .15s,border-color .15s}
+body.bt-pell input[type=checkbox]:not([switch])::after{content:"";width:11px;height:6px;border:solid var(--fb-accio-tinta);border-width:0 0 3px 3px;transform:translateY(-1px) rotate(-45deg) scale(0);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+body.bt-pell input[type=checkbox]:not([switch]):checked{background:var(--fb-accio);border-color:var(--fb-accio)}
+body.bt-pell input[type=checkbox]:not([switch]):checked::after{transform:translateY(-1px) rotate(-45deg) scale(1)}
+body.bt-pell input[type=checkbox]:not([switch]):focus-visible{outline:3px solid var(--fb-accio);outline-offset:2px}
+body.v-anime.bt-pell input[type=checkbox]:not([switch]){border:3px solid #0a0a0a;border-radius:0}
+body.v-rumble.bt-pell input[type=checkbox]:not([switch])::after{border-color:#3a1d00}
+/* les versions clares demanen els controls natius clars (desplegables, calendaris, barres de scroll) */
+html:has(body.v-neta.bt-actiu),html:has(body.v-anime.bt-actiu){color-scheme:light}
 /* el logo de dalt: el pla de la Beta en lloc del pintat (i els tres tocs hi continuen funcionant) */
 body.v-anime.bt-pell img[src$="logo.webp"],body.v-neta.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-fosc.webp);height:auto;max-height:24px;width:auto}
 body.v-marro.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-clar.webp);height:auto;max-height:24px;width:auto}
