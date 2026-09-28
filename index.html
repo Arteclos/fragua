@@ -7878,7 +7878,7 @@ const Nit = (() => {
   function cap() {
     const e = eloDe(), foc = fetAvui();
     return `<header class="nt-cap">
-      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${e.divisio.nom}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
+      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${nomRang(e.divisio.id, e.divisio.nom)}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
       <span class="nt-xip nt-ratxa${foc ? " on" : ""}" data-in="cap" role="button" data-accion="nt-ves" data-v="estadisticas" data-tab="racha" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
       <span class="nt-buit"></span>
       <span class="nt-xip nt-or" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro" aria-label="Tu oro: ${n0(oroTotal())}. Tienda">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
@@ -8248,6 +8248,10 @@ const Nit = (() => {
   // LA SIGMA DE L'ELO (l'Albert, 28-09: «en comptes d'enclusos per a l'ELO, una sigma 3D amb els mateixos materials»):
   // la σ de KLσNK en el material de la teva divisió (src/elo.js: fusta, pedra, coure, bronze, ferro, acer, or, obsidiana,
   // criselefantí i estel·lar). Sense classificar, la de fusta, apagada.
+  // el nom del rang és la sigma del seu material (l'Albert, 28-09: «posa "Sigma de oro" al text»); la sigma és femenina
+  const NOM_SIGMA = { madera: "Sigma de madera", piedra: "Sigma de piedra", cobre: "Sigma de cobre", bronce: "Sigma de bronce", hierro: "Sigma de hierro",
+    acero: "Sigma de acero", oro: "Sigma de oro", obsidiana: "Sigma de obsidiana", criselefantino: "Sigma criselefantina", estelar: "Sigma estelar" };
+  const nomRang = (id, nom) => NOM_SIGMA[id] || nom;
   const sigma = (e, cls = "") => `<img class="nt-sigma ${cls}${e && e.elo != null ? "" : " apagada"}" src="${R()}sigma-${(e && e.elo != null && e.divisio && e.divisio.id) || "madera"}.webp" alt="" draggable="false">`;
   const I_TU = {
     cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><g fill="currentColor"><rect x="7" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="14.4" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="7" y="16" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="16" width="2.6" height="2.4" rx=".6"/></g></svg>',
@@ -8272,7 +8276,7 @@ const Nit = (() => {
           <div class="nt-tu-fitxa" data-in="tu"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
             <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
-          <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(e.divisio.nom) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
+          <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
           <div class="nt-tu-xifres" data-in="tu">
             <div><b>${ratxa()}</b><i>${I_TU.cal}</i><small>días de gym este año</small></div>
             <div><b>${fets}</b><i>${I_TU.man}</i><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
@@ -8294,7 +8298,7 @@ const Nit = (() => {
   function obreRangs() {
     if (typeof obreFull !== "function" || typeof Elo !== "object") return;
     const e = eloDe(), ara = e.elo != null ? e.divisio.id : null;
-    obreFull(`<div class="nt-rangs">${Elo.DIVISIONS.map(([min, id, nom]) => `<div class="nt-rang${id === ara ? " es-meu" : ""}"><img src="${R()}sigma-${id}.webp" alt="" draggable="false"><span><b>${esc(nom)}</b><small>desde ${n0(min)} de ELO</small></span>${id === ara ? `<em>Tú</em>` : ""}</div>`).join("")}</div>`, "Rangos");
+    obreFull(`<div class="nt-rangs">${Elo.DIVISIONS.map(([min, id, nom]) => `<div class="nt-rang${id === ara ? " es-meu" : ""}"><img src="${R()}sigma-${id}.webp" alt="" draggable="false"><span><b>${esc(nomRang(id, nom))}</b><small>desde ${n0(min)} de ELO</small></span>${id === ara ? `<em>Tú</em>` : ""}</div>`).join("")}</div>`, "Rangos");
     if (!quiet()) document.querySelectorAll(".nt-rang").forEach((r, i) => { try { r.animate([{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }], { duration: 320, delay: 40 + i * 35, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (er) {} });
     fx(E => E.suena("tap"));
   }
