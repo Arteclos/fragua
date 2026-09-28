@@ -8372,6 +8372,7 @@ const Nit = (() => {
     pj: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4" fill="currentColor"/><path d="M4 20.5c.6-4.2 3.8-6.8 8-6.8s7.4 2.6 8 6.8" fill="currentColor"/></svg>',
     rut: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5" fill="currentColor"/><path d="M8.5 11h7M8.5 15h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     prog: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1.3"/><rect x="10" y="7.5" width="4" height="12.5" rx="1.3"/><rect x="16" y="3.5" width="4" height="16.5" rx="1.3"/></g></svg>',
+    scan: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="8.6" r="2.3" fill="currentColor"/><path d="M8.3 17.2c.4-2.9 1.9-4.7 3.7-4.7s3.3 1.8 3.7 4.7z" fill="currentColor"/></svg>',
     bot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>',
     fle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
@@ -8379,7 +8380,7 @@ const Nit = (() => {
   function vistaTu() {
     let xp = { nivel: 1, enNivel: 0, paraSubir: 1 };
     try { xp = Stats.experienciaPj(S); } catch (e) {}
-    const e = eloDe(), nom = (S.personaje && S.personaje.nombre) || "Tú", fets = S.ses.filter(s => s.fin).length, m = marques().slice(0, 3);
+    const e = eloDe(), nom = (S.personaje && S.personaje.nombre) || "Tú", fets = S.ses.filter(s => s.fin).length, r = rutinaActual();
     let rec = 0; try { rec = Stats.records(S); } catch (er) {}
     const pc = Math.min(1, xp.enNivel / Math.max(1, xp.paraSubir)), kg = v => (typeof fmt === "function" ? fmt(v) : String(v));
     return `<section class="nt-tu">
@@ -8396,11 +8397,16 @@ const Nit = (() => {
           </div>
         </div>
       </div>
-      ${m.length ? `<div class="nt-tu-marques-c" data-in="tu"><h2 class="nt-tu-t">Tus mejores marcas</h2><div class="nt-tu-marques">${m.map(x => { const f = fotoAnime(x.n);
-        return `<button class="nt-tu-m" data-accion="nt-ves" data-v="estadisticas" data-tab="ejercicios">${f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`}<span><b>${esc(x.n)}</b><small>${kg(x.kg)} kg × ${x.reps}</small></span><em>${n0(x.v)} kg<small>1RM</small></em><i class="nt-tu-fle">${I_TU.fle}</i></button>`; }).join("")}</div></div>` : ""}
+      <div class="nt-tu-mazo" data-in="tu">
+        <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="rutinas">Mis rutinas</button></div>
+        <button class="nt-tu-mazo-b" data-accion="nt-ves" data-v="rutinas"><span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span><span><b>${esc(r.nombre)}</b><small>${r.dias.length} ${r.dias.length === 1 ? "carta" : "cartas"}, en uso</small></span>${I_TU.fle}</button>
+      </div>
+      <div class="nt-tu-venta" data-in="tu">
+        <button class="nt-tu-pro" data-accion="nt-ves" data-v="tienda" data-t="oro"><span class="nt-tu-v-ic">${ic("medalla")}</span><b>KLONK PRO</b><small>Tu plan, hecho para ti</small></button>
+        <button class="nt-tu-scan" data-accion="nt-ves" data-v="espejo"><span class="nt-tu-v-ic">${I_TU.scan}</span><b>Escáner de cuerpo</b><small>Mira cómo cambia tu cuerpo</small></button>
+      </div>
       <div class="nt-tu-bot" data-in="tu">
         <button data-accion="nt-editapj">${I_TU.pj}<b>Editar personaje</b>${I_TU.fle}</button>
-        <button data-accion="nt-ves" data-v="rutinas">${I_TU.rut}<b>Mis rutinas</b>${I_TU.fle}</button>
         <button data-accion="nt-ves" data-v="estadisticas">${I_TU.prog}<b>Progreso</b>${I_TU.fle}</button>
         <button data-accion="nt-ves" data-v="tienda" data-t="oro">${I_TU.bot}<b>Tienda</b>${I_TU.fle}</button>
       </div>
@@ -8424,7 +8430,7 @@ const Nit = (() => {
   const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}urba.webp" alt="" draggable="false"></div>`;
 
   // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
-  const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
+  const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", espejo: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
     ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu" };
   const ORDRE = ["tu", "social", "centre", "nutri", "menu"];
   let llocAbans = "";
@@ -9561,6 +9567,34 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-tu-m em small{display:block;font-size:10.5px;color:var(--nt-suau);font-weight:800}
 .nt-tu-fle{display:grid;width:16px;height:16px;color:var(--nt-suau)}.nt-tu-fle svg{width:16px;height:16px}
 .nt-tu-bot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nt-tu-bot button:first-child{grid-column:span 2}
+/* TÚ, 29-09: el mazo amunt i, on hi havia «Tus mejores marcas», el PRO i l'escàner */
+.nt-tu-mazo{display:grid;gap:4px}
+.nt-tu-mazo-c{display:flex;align-items:center;justify-content:space-between}
+.nt-tu-mazo-c .nt-tu-t{margin-bottom:4px}
+.nt-tu-mazo-c button{border:0;background:none;color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer;padding:8px 2px}
+.nt-tu-mazo-b{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;padding:10px 16px 10px 8px;border:0;border-radius:22px;cursor:pointer;color:var(--nt-tinta);font:inherit;text-align:left;
+  background:radial-gradient(80% 120% at 0% 50%,rgb(168 155 224 / .16),transparent 60%),linear-gradient(180deg,#1f2733,#181f28);box-shadow:var(--fb-o2),0 0 0 1px rgb(168 155 224 / .22);transition:transform .12s}
+.nt-tu-mazo-b:active{transform:scale(.98)}
+.nt-tu-mini{position:relative;width:82px;height:80px;flex:none}
+.nt-tu-mini i{position:absolute;left:21px;top:6px;width:40px;height:64px;border-radius:8px;background:#10171e center/contain no-repeat;box-shadow:0 0 0 1.5px rgb(168 155 224 / .5),0 8px 14px -8px rgb(0 0 0 / .9)}
+.nt-tu-mini i:nth-child(1){transform:rotate(-14deg) translateX(-12px)}
+.nt-tu-mini i:nth-child(3){transform:rotate(14deg) translateX(12px)}
+.nt-tu-mazo-b > span:not(.nt-tu-mini){display:grid;gap:3px;min-width:0}
+.nt-tu-mazo-b b{font-size:17px;font-weight:900;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-tu-mazo-b small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-mazo-b > svg{width:16px;height:16px;color:var(--nt-suau)}
+.nt-tu-venta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nt-tu-venta button{position:relative;display:grid;align-content:end;gap:3px;min-height:128px;padding:14px;border:0;border-radius:22px;cursor:pointer;text-align:left;font:inherit;color:var(--nt-tinta);overflow:hidden;transition:transform .12s}
+.nt-tu-venta button:active{transform:scale(.97)}
+.nt-tu-pro{background:radial-gradient(90% 90% at 100% 0%,rgb(226 194 122 / .28),transparent 60%),linear-gradient(160deg,#2a2618,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(226 194 122 / .35)}
+.nt-tu-scan{background:radial-gradient(90% 90% at 100% 0%,rgb(134 217 198 / .22),transparent 60%),linear-gradient(160deg,#16262a,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(134 217 198 / .3)}
+.nt-tu-v-ic{position:absolute;top:12px;right:12px;width:46px;height:46px;display:grid;place-items:center}
+.nt-tu-v-ic img,.nt-tu-v-ic svg,.nt-tu-v-ic .nt-ic{width:42px;height:42px}
+.nt-tu-scan .nt-tu-v-ic svg{color:var(--nt-menta)}
+.nt-tu-venta b{font-size:16px;font-weight:900;line-height:1.15}
+.nt-tu-pro b{color:var(--nt-or)}
+.nt-tu-venta small{font-size:12px;font-weight:800;color:var(--nt-suau);line-height:1.3}
 .nt-tu-bot button{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 12px;border:0;border-radius:18px;color:var(--nt-tinta);font:inherit;cursor:pointer;
   background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(168 155 224 / .28),0 10px 20px -14px rgb(0 0 0 / .9);transition:transform .12s}
 .nt-tu-bot button:active{transform:scale(.97)}
