@@ -7759,6 +7759,14 @@ const Nit = (() => {
   }
   const QUE = { empuje: "pecho y hombro", tiron: "espalda", pierna: "pierna", brazos: "brazos", cuerpo: "" };
 
+  // L'ANIME (l'Albert, 28-09: «has de substituir les imatges del nan pel nostre personatge anime» i «adapta tot el que surt
+  // com a herrero»): el personatge és l'Urbà, i cada exercici de la rutina té la seva miniatura feta amb el ChatGPT
+  // (lot 39, talla_nit.py ej). Un exercici que encara no en té porta la manuella, no el nan.
+  const EJ_ANIME = new Set(["elevaciones-laterales-en-polea", "press-inclinado-en-smith", "peck-deck", "extension-de-triceps-tras-nuca-en-polea", "extension-de-triceps", "crunch-en-polea-alta", "lat-pull-around-en-polea", "peso-muerto-rumano", "remo-isolateral-en-maquina-de-palanca", "jalon-con-brazos-rectos-en-polea", "curl-martillo-en-banco-scott", "face-pull", "curl-femoral-sentado", "aduccion-de-cadera-en-maquina", "hack-squat", "extension-de-cuadriceps", "press-de-gemelos-en-prensa", "press-militar-en-maquina", "curl-a-una-mano-de-pie-en-polea", "press-frances-con-mancuernas", "curl-en-banco-scott-con-barra", "patada-de-triceps-en-polea", "elevacion-de-piernas-en-paralelas", "elevacion-en-y-en-polea", "fondos", "aperturas-inclinadas-con-mancuernas", "extension-de-triceps-tipo-katana-en-polea", "rueda-abdominal", "remo-sentado-en-polea-baja", "extension-lumbar", "jalon-al-pecho", "curl-zottman", "pajaros-en-polea", "encogimientos-en-polea", "curl-femoral-tumbado", "prensa-de-piernas", "zancada-en-multipower", "elevacion-de-gemelos-en-multipower", "nordico-inverso", "press-de-hombros-en-multipower", "press-frances-en-polea", "curl-en-polea-por-encima-de-la-cabeza", "extension-de-triceps-en-polea-con-cuerda", "curl-inclinado-con-mancuernas"]);
+  const slug = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const fotoAnime = nom => EJ_ANIME.has(slug(nom)) ? `${R()}ej/${slug(nom)}.webp` : null;
+  const CARA = () => R() + "cara-urba.webp";
+
   // LES DADES DE DEBÒ
   const eloDe = () => { try { return typeof Elo === "object" ? Elo.calcula() : { elo: null }; } catch (e) { return { elo: null }; } };
   // el número del foc és el de tota l'app: els dies de gimnàs d'aquest any (Albert, 26-09: «la ratxa mai es trenca»)
@@ -7789,7 +7797,7 @@ const Nit = (() => {
     if (c.tipus === "pro") return `<div class="nt-carta nt-pro" data-in="carta"><span class="nt-pro-ic">${ic("medalla")}</span><b>Plan personalizado</b><span class="nt-sub">Tu rutina, hecha para ti</span><span class="nt-xip-pro">PRO</span></div>`;
     if (c.tipus === "nova") return `<div class="nt-carta nt-nova" data-in="carta"><span class="nt-mes">${ic("mes")}</span><b>Nueva rutina</b></div>`;
     const min = Math.round(c.ej.length * 6.5 / 5) * 5;
-    const fotos = c.ej.slice(0, 5).map(x => { const f = fotoEj(x[0]); return f ? `<img src="${f}" alt="" loading="lazy" draggable="false">` : `<i class="nt-ej-buit"></i>`; }).join("");
+    const fotos = c.ej.slice(0, 5).map(x => { const f = fotoAnime(x[0]); return f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`; }).join("");
     const boto = act && act.dia === c.n ? "Seguir" : "Empezar";
     return `<div class="nt-carta${c.feta ? " nt-feta" : ""}${c.avui ? " nt-avui" : ""}" data-n="${c.n}" data-in="carta">
       <div class="nt-carta-cap">${c.avui && !act ? `<span class="nt-hoy">Hoy</span>` : ""}<span class="nt-dia">Día ${c.n}</span><b class="nt-tit">${esc(c.t)}</b></div>
@@ -7822,7 +7830,7 @@ const Nit = (() => {
         <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
       <div class="nt-amic" hidden></div>
       <nav class="nt-barra" aria-label="Principal">
-        <span class="nt-tab nt-press" data-in="barra" aria-label="Tú" aria-disabled="true"><img class="nt-av" src="${imgPersonaje(pjBo(S.personaje))}" alt="" draggable="false"></span>
+        <span class="nt-tab nt-press" data-in="barra" aria-label="Tú" aria-disabled="true"><img class="nt-av" src="${CARA()}" alt="" draggable="false"></span>
         <span class="nt-tab nt-press" data-in="barra" aria-label="Social" aria-disabled="true">${ic("escut")}</span>
         <button class="nt-centre" data-in="barra" aria-label="KLONK">${ic("manuella", "nt-manuella")}<i class="nt-anell"></i></button>
         <span class="nt-tab nt-press" data-in="barra" aria-label="Nutrición" aria-disabled="true">${ic("shaker")}</span>
@@ -7868,7 +7876,7 @@ const Nit = (() => {
     if (!it) return;
     const que = QUE[tipusDeNoms((it.exercicis || []).map(e => e.nom))];
     const quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
-    el.innerHTML = `<img class="nt-amic-av" src="${imgPersonaje(pjBo(it.personatge))}" alt="" draggable="false">
+    el.innerHTML = `<img class="nt-amic-av" src="${CARA()}" alt="" draggable="false">
       <span class="nt-amic-t"><b>${esc(it.nom)}</b> ${que ? `ha entrenado ${que}` : "ha entrenado"}${quan && quan !== "hoy" ? ` <small>${quan}</small>` : ""}</span>
       <button class="nt-klonk-amic">KLσNK!</button>`;
     el.hidden = false;
@@ -7897,23 +7905,29 @@ const Nit = (() => {
      sobrepàs de no res). Mentre la mous, les cartes s'inclinen amb la velocitat i la il·lustració es queda una mica
      enrere (paral·laxi), i la brillantor passa per la carta. Als extrems, goma. Tot és interrompible. */
   function colloca(roda, p, v = 0) {
-    const cs = roda.querySelectorAll(".nt-carta"), punts = roda.querySelectorAll(".nt-punts i"), ara = Math.round(p);
-    punts.forEach((e, i) => { if ((i === ara) !== e.classList.contains("on")) e.classList.toggle("on", i === ara); });
+    const cs = roda._cs || (roda._cs = [...roda.querySelectorAll(".nt-carta")]);
+    const punts = roda._punts || (roda._punts = [...roda.querySelectorAll(".nt-punts i")]), ara = Math.round(p);
+    if (roda._ara !== ara) { roda._ara = ara; punts.forEach((e, i) => e.classList.toggle("on", i === ara)); }
     const incl = Math.max(-5, Math.min(5, v * 1.6));
     for (let i = 0; i < cs.length; i++) {
-      const c = cs[i], d = i - p, a = Math.abs(d);
+      const c = cs[i], d = i - p, a = Math.abs(d), lluny = a > 2.6;
+      // les cartes que no es veuen no es pinten (i no ocupen memòria de gràfics al mòbil)
+      if (c._lluny !== lluny) { c._lluny = lluny; c.style.visibility = lluny ? "hidden" : ""; }
+      if (lluny) continue;
       c.style.transform = `translate3d(calc(-50% + ${(d * 64).toFixed(2)}%),${(a * 8).toFixed(1)}px,${(-a * 64).toFixed(1)}px) rotateY(${Math.max(-44, Math.min(44, -d * 22)).toFixed(2)}deg) rotateZ(${(incl * Math.max(0, 1 - a)).toFixed(2)}deg) scale(${(1 - Math.min(a, 2.2) * .09).toFixed(4)})`;
       c.style.opacity = a > 2.4 ? "0" : (1 - a * .24).toFixed(3);
-      c.style.zIndex = String(100 - Math.round(a * 10));
-      c.style.setProperty("--d", d.toFixed(3));
+      const z = 100 - Math.round(a * 2);
+      if (c._z !== z) { c._z = z; c.style.zIndex = z; }
+      if (c._img === undefined) c._img = c.querySelector(".nt-il img");
+      if (c._img) c._img.style.transform = `translate3d(${(-d * 22).toFixed(1)}px,0,0)`;
       const davant = a < .5;
-      if (davant !== c.classList.contains("davant")) c.classList.toggle("davant", davant);
+      if (davant !== c._davant) { c._davant = davant; c.classList.toggle("davant", davant); }
     }
   }
   function activaRoda(roda) {
     const n = roda.querySelectorAll(".nt-carta").length;
     let pos = Math.min(n - 1, Math.max(0, +roda.dataset.idx || 0)), vel = 0, objectiu = pos, anim = 0;
-    let dit = null, x0 = 0, p0 = 0, mogut = false, mostres = [], ultim = Math.round(pos);
+    let dit = null, x0 = 0, p0 = 0, mogut = false, mostres = [], ultim = Math.round(pos), pintaDit = 0, velDit = 0;
     const pas = () => Math.max(140, roda.clientWidth * .56);
     const tic = senseGest => {
       const r = Math.max(0, Math.min(n - 1, Math.round(pos)));
@@ -7954,7 +7968,8 @@ const Nit = (() => {
       mostres.push([ara, cru]);
       while (mostres.length > 2 && ara - mostres[0][0] > 90) mostres.shift();
       const [ta, pa] = mostres[0], dt = (ara - ta) / 1000;
-      pos = cru; colloca(roda, pos, dt > .004 ? (pos - pa) / dt : 0); tic(false);
+      pos = cru; velDit = dt > .004 ? (pos - pa) / dt : 0; tic(false);
+      if (!pintaDit) pintaDit = requestAnimationFrame(() => { pintaDit = 0; if (dit !== null) colloca(roda, pos, velDit); });
     });
     const deixa = ev => {
       if (dit !== ev.pointerId) return;
@@ -8078,7 +8093,7 @@ const Nit = (() => {
   padding:calc(8px + env(safe-area-inset-top)) 16px 0;color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;
   background:radial-gradient(120% 60% at 50% 0%,#18222c 0%,rgb(24 34 44 / 0) 60%),linear-gradient(180deg,var(--nt-fons-2),var(--nt-fons));
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-.nt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+.nt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.03;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>")}
 html:has(body.v-nit.fb-actiu),body.v-nit.fb-actiu{overflow:hidden;overscroll-behavior:none;height:100%}
 body.v-nit.fb-actiu{background:#0d1217}
@@ -8086,7 +8101,7 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt img{-webkit-user-drag:none;pointer-events:none}
 .nt-fons{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .nt-bloom{position:absolute;left:50%;top:92%;width:620px;height:620px;border-radius:50%;opacity:0;
-  background:radial-gradient(circle,rgb(134 217 198 / .5) 0%,rgb(168 155 224 / .22) 32%,rgb(168 155 224 / 0) 66%);mix-blend-mode:screen}
+  background:radial-gradient(circle,rgb(134 217 198 / .42) 0%,rgb(168 155 224 / .18) 32%,rgb(168 155 224 / 0) 66%)}
 .nt > *:not(.nt-fons){position:relative;z-index:1}
 .nt-fx{position:absolute !important;inset:0;pointer-events:none;z-index:50 !important}
 .nt-ona{position:absolute;width:64px;height:64px;border-radius:50%;border:2px solid;box-shadow:0 0 24px -2px var(--nt-menta-glow);pointer-events:none}
@@ -8133,13 +8148,12 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 /* LA RODA I LES CARTES */
 .nt-roda{position:relative;flex:1 1 auto;min-height:280px;margin:12px -16px 0;perspective:1100px;touch-action:none;container-type:size;outline:0}
 .nt-carta{--w:min(276px,70vw);--ch:min(470px,60vh);position:absolute;left:50%;top:6px;width:var(--w);height:var(--ch);display:flex;flex-direction:column;
-  border-radius:26px;padding:14px 14px 12px;color:var(--nt-tinta);will-change:transform,opacity;transform-style:preserve-3d;
+  border-radius:26px;padding:14px 14px 12px;color:var(--nt-tinta);will-change:transform,opacity;backface-visibility:hidden;
   background:linear-gradient(180deg,rgb(255 255 255 / .06),rgb(255 255 255 / .015) 40%),var(--nt-sup);box-shadow:var(--nt-o2),0 0 0 1px var(--nt-vora)}
 /* la carta, al mig de l'espai que queda i tan alta com hi cap; els punts, just a sota */
 @supports (height:1cqh){.nt-carta,.nt-punts{--w:min(268px,66cqw);--ch:min(470px,100cqh - 46px)}.nt-carta{top:calc((100cqh - var(--ch)) / 2 - 10px)}.nt-punts{top:calc((100cqh + var(--ch)) / 2 + 4px);bottom:auto}}
 .nt-carta::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  background:linear-gradient(115deg,transparent 35%,rgb(255 255 255 / .07) 50%,transparent 65%);background-size:260% 100%;
-  background-position:calc(50% + var(--d,0) * 90%) 0}
+  background:linear-gradient(115deg,transparent 35%,rgb(255 255 255 / .05) 50%,transparent 65%)}
 .nt-carta.davant{box-shadow:var(--nt-o2),0 0 0 1px rgb(134 217 198 / .28)}
 .nt-carta-cap{display:grid;gap:2px;justify-items:center;text-align:center}
 .nt-hoy{justify-self:center;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:900;color:#0d2a24;background:linear-gradient(180deg,#a8ecdc,var(--nt-menta));
@@ -8147,14 +8161,17 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-dia{font-size:12px;font-weight:800;color:var(--nt-suau)}
 .nt-tit{font-size:19px;font-weight:900;line-height:1.15;text-shadow:var(--nt-text-o);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .nt-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:grid;place-items:center;overflow:hidden;border-radius:18px}
-.nt-il img{max-width:100%;max-height:100%;object-fit:contain;transform:translateX(calc(var(--d,0) * -22px));filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45))}
-.nt-carta.davant .nt-il img{animation:nt-respira 3.6s ease-in-out infinite}
-@keyframes nt-respira{0%,100%{filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45)) drop-shadow(0 0 0 rgb(168 155 224 / 0))}50%{filter:drop-shadow(0 10px 14px rgb(0 0 0 / .45)) drop-shadow(0 0 10px rgb(168 155 224 / .35))}}
-.nt-brill{position:absolute;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 50% 45%,rgb(168 155 224 / .12),transparent 70%)}
+.nt-il img{position:relative;z-index:1;max-width:100%;max-height:100%;object-fit:contain;will-change:transform}
+/* el lila que respira darrere dels músculs: una llum a part que canvia d'opacitat (el filtre que hi havia repintava la
+   il·lustració a cada fotograma i feia anar la roda a batzegades) */
+.nt-brill{position:absolute;inset:0;pointer-events:none;opacity:.55;background:radial-gradient(55% 48% at 50% 48%,rgb(168 155 224 / .2),transparent 70%)}
+.nt-carta.davant .nt-brill{animation:nt-respira 3.6s ease-in-out infinite;will-change:opacity}
+@keyframes nt-respira{0%,100%{opacity:.55}50%{opacity:1}}
 .nt-ok{position:absolute;right:12px;top:12px}.nt-ok .nt-ic{width:26px;height:26px}
-.nt-feta{filter:saturate(.7) brightness(.9)}
+.nt-feta .nt-il img{opacity:.72}
 .nt-ejs{display:flex;gap:5px;justify-content:center;flex:none}
-.nt-ejs img,.nt-ej-buit,.nt-mas{width:30px;height:30px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(255 255 255 / .08)}
+.nt-ejs img,.nt-ej-buit,.nt-mas{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(168 155 224 / .45)}
+.nt-ej-buit{display:grid;place-items:center}.nt-ej-buit .nt-ic{width:18px;height:18px;opacity:.6}
 .nt-mas{display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:900;color:var(--nt-suau)}
 .nt-meta{margin:7px 0 9px;text-align:center;font-size:12px;font-weight:800;color:var(--nt-suau);flex:none}
 .nt-boto{display:grid;place-items:center;height:46px;flex:none;border-radius:999px;font-weight:900;font-size:17px;color:#0d2a24;
@@ -8177,23 +8194,25 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-amic{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:8px 8px 8px 10px;border-radius:18px;flex:none;
   background:linear-gradient(180deg,rgb(255 255 255 / .04),rgb(255 255 255 / .015));box-shadow:0 0 0 1px var(--nt-vora)}
 .nt-amic[hidden]{display:none}
-.nt-amic-av{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(134 217 198 / .35)}
+.nt-amic-av{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(168 155 224 / .5)}
 .nt-amic-t{flex:1;font-size:13.5px;color:var(--nt-suau);font-weight:700;line-height:1.25}.nt-amic-t b{color:var(--nt-tinta)}
 .nt-amic-t small{font-size:11px;opacity:.8}
 .nt-klonk-amic{height:34px;padding:0 14px;border-radius:999px;border:0;font:900 13.5px/1 inherit;font-family:inherit;color:var(--nt-menta);letter-spacing:.02em;
   background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(134 217 198 / .3),0 6px 14px -8px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o)}
 /* LA BARRA DE BAIX: cinc llocs, el del mig és el botó del KLONK */
-.nt-barra{display:flex;align-items:center;justify-content:space-around;height:66px;margin:10px -16px 0;padding:0 8px env(safe-area-inset-bottom);flex:none;box-sizing:content-box;
+/* més avall (l'Albert, 28-09, al mòbil: «el menú queda una mica per sobre d'on hauria d'estar»): les icones entren
+   una mica a la zona de la ratlla de l'iPhone, com a les apps de debò */
+.nt-barra{display:flex;align-items:center;justify-content:space-around;height:60px;margin:10px -16px 0;padding:0 8px max(6px,calc(env(safe-area-inset-bottom) - 16px));flex:none;box-sizing:content-box;
   background:linear-gradient(180deg,rgb(255 255 255 / .045),rgb(255 255 255 / .01));box-shadow:0 -1px 0 var(--nt-vora),0 -18px 30px -24px rgb(0 0 0 / .9);border-radius:26px 26px 0 0}
 .nt-tab{display:grid;place-items:center;width:52px;height:52px;opacity:.78}
 .nt-tab .nt-ic{width:28px;height:28px}
-.nt-av{width:34px;height:34px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgb(134 217 198 / .45),0 0 0 4px rgb(134 217 198 / .08)}
-.nt-centre{position:relative;display:grid;place-items:center;width:70px;height:70px;margin-top:-26px;border:0;border-radius:50%;padding:0;cursor:pointer;
+.nt-av{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 2px rgb(168 155 224 / .6),0 0 0 4px rgb(168 155 224 / .1)}
+.nt-centre{position:relative;display:grid;place-items:center;width:70px;height:70px;margin-top:-22px;border:0;border-radius:50%;padding:0;cursor:pointer;
   background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%);box-shadow:0 0 0 1.5px rgb(134 217 198 / .5),0 14px 26px -12px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .1)}
 .nt-centre .nt-manuella{width:40px;height:40px;filter:drop-shadow(0 4px 6px rgb(0 0 0 / .5))}
 .nt-anell{position:absolute;inset:-5px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgb(134 217 198 / .25),0 0 22px -4px var(--nt-menta-glow);animation:nt-respira-c 3.2s ease-in-out infinite}
 @keyframes nt-respira-c{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
-@media (prefers-reduced-motion:reduce){.nt-sheen,.nt-ratxa.on .nt-flama,.nt-dia-s.avui i::after,.nt-carta.davant .nt-il img,.nt-anell{animation:none}}
+@media (prefers-reduced-motion:reduce){.nt-sheen,.nt-ratxa.on .nt-flama,.nt-dia-s.avui i::after,.nt-carta.davant .nt-brill,.nt-anell{animation:none}}
 `;
   function estil() { if (document.getElementById("estil-nit")) return; const s = document.createElement("style"); s.id = "estil-nit"; s.textContent = CSS; document.head.appendChild(s); }
   function despresPintar() {
