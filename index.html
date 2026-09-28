@@ -7373,9 +7373,10 @@ body.bt-pell .preu{color:var(--fb-accio-text);font-family:inherit}
 body.bt-pell .preu-c{background:var(--fb-sup);border-color:var(--fb-accio)}
 body.bt-pell svg text[fill="#f6e3b8"]{fill:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
 /* SOCIAL (Gimnasios): els selectors de dues opcions, la caixa que explica, el feed del clan, el rànquing i la cerca */
-body.bt-pell .seg{border:0;border-radius:999px;background:var(--fb-enfonsat);padding:3px;gap:3px}
-body.bt-pell .seg button{border:0 !important;border-radius:999px;background:transparent;color:var(--fb-tinta);font-family:inherit;font-weight:800}
-body.bt-pell .seg button[aria-pressed="true"]{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);box-shadow:var(--fb-o-accio)}
+body.bt-pell .seg,body.bt-pell .seg-llast{border:0;border-radius:999px;background:var(--fb-enfonsat);padding:3px;gap:3px}
+body.bt-pell .seg-llast button{min-height:32px}
+body.bt-pell .seg button,body.bt-pell .seg-llast button{border:0 !important;border-radius:999px;background:transparent;color:var(--fb-tinta);font-family:inherit;font-weight:800}
+body.bt-pell .seg button[aria-pressed="true"],body.bt-pell .seg-llast button[aria-pressed="true"]{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);box-shadow:var(--fb-o-accio)}
 body.bt-pell .porta-social p,body.bt-pell .intro-gim{background:var(--fb-sup);color:var(--fb-tinta);border-radius:20px;box-shadow:var(--fb-o1)}
 body.bt-pell .fd-t{color:var(--fb-tinta);font-weight:900}
 body.bt-pell .fd-xifres b,body.bt-pell .fd-rec{color:var(--fb-accio-text)}
@@ -7445,7 +7446,7 @@ body.bt-pell .btn-forja small{color:var(--fb-accio-tinta);text-shadow:none;font-
 /* ANIME: la forja en manga. Paper, tinta negra de 3 px, l'ombra dura desplaçada del còmic (sense difuminar), el vermell
    de la forja als botons tallats en diagonal, i els títols en Anton inclinats amb el cop de vermell al darrere. */
 body.v-anime .fb-carta,body.v-anime .fb-mes,body.v-anime .fb-xip,body.v-anime .mp-elo,body.v-anime .mp-mirall,body.v-anime .mp-stats,body.v-anime .fb-fin,
-body.v-anime.bt-pell #vista .panel,body.v-anime.bt-pell #vista .marc,body.v-anime.bt-resum .resum .r-tile,body.v-anime.bt-pell .chip,body.v-anime.bt-pell .seg{border:3px solid #0a0a0a;border-radius:6px}
+body.v-anime.bt-pell #vista .panel,body.v-anime.bt-pell #vista .marc,body.v-anime.bt-resum .resum .r-tile,body.v-anime.bt-pell .chip,body.v-anime.bt-pell .seg,body.v-anime.bt-pell .seg-llast{border:3px solid #0a0a0a;border-radius:6px}
 body.v-anime .fb-fin{border-radius:3px}
 body.v-anime .fb-boto,body.v-anime .mp-boto,body.v-anime.bt-pell #vista .btn.clar,body.v-anime.bt-pell .btn-forja{border:3px solid #0a0a0a !important;border-radius:0 !important;
   clip-path:polygon(4% 0,100% 0,96% 100%,0 100%);box-shadow:none !important;background:#ff2d2d !important}
@@ -7456,7 +7457,7 @@ body.v-anime .fb-tit{text-shadow:2px 2px 0 #ff2d2d}
 body.v-anime .fb-carta.davant::before{box-shadow:0 0 0 3px #ff2d2d;animation:none;opacity:1}
 body.v-anime .fb-hoy,body.v-anime .fb-pro{border-radius:0;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);background:#0a0a0a;color:#fff}
 body.v-anime .fb-osques i{border-radius:0;transform:skewX(-14deg)}
-body.v-anime.bt-pell .chip[aria-pressed="true"],body.v-anime.bt-pell .seg button[aria-pressed="true"]{background:#0a0a0a;color:#fff}
+body.v-anime.bt-pell .chip[aria-pressed="true"],body.v-anime.bt-pell .seg button[aria-pressed="true"],body.v-anime.bt-pell .seg-llast button[aria-pressed="true"]{background:#0a0a0a;color:#fff}
 body.v-anime.bt-actiu .toast{background:#0a0a0a;color:#fff;border:3px solid #ff2d2d;border-radius:0}
 body.v-anime .fb-logo{height:22px}
 /* RUMBLE: el volum del joc (contorns gruixuts i foscos, una llum a dalt, el botó amb el gruix de sota) i els títols en
@@ -7473,7 +7474,7 @@ body.v-rumble .mp-elo-n,body.v-rumble.bt-resum .resum h1,body.v-rumble.bt-resum 
 body.v-rumble .fb-fin{border:3px solid #120f0d}
 body.v-rumble .fb-logo-pintat{height:34px}
 body.v-rumble.bt-actiu .toast{background:#1b1e28;color:#fdf3e1;border:2px solid #caa05a}
-body.v-rumble.bt-pell .chip[aria-pressed="true"],body.v-rumble.bt-pell .seg button[aria-pressed="true"],body.v-rumble .fb-hoy,body.v-rumble .fb-pro{text-shadow:0 1px 0 rgb(120 50 0 / .85)}
+body.v-rumble.bt-pell .chip[aria-pressed="true"],body.v-rumble.bt-pell .seg button[aria-pressed="true"],body.v-rumble.bt-pell .seg-llast button[aria-pressed="true"],body.v-rumble .fb-hoy,body.v-rumble .fb-pro{text-shadow:0 1px 0 rgb(120 50 0 / .85)}
 /* ELS ESTILS: només colors, ombres i fons (calmats) */
 body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-1:#e5eff6;--fb-logo:fosc;--fb-tinta:#1f2f38;--fb-suau:#5d6f79;--fb-sup:#ffffff;--fb-enfonsat:#e3ecf3;
   --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
