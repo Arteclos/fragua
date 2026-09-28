@@ -7911,7 +7911,6 @@ const Nit = (() => {
       <div class="nt-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}
         <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
       <div class="nt-amic" hidden></div>
-      <nav class="nt-barra" aria-label="Principal">${botonsBarra()}</nav>
       <div class="nt-fx" aria-hidden="true"></div>
     </section>`;
   }
@@ -8114,9 +8113,9 @@ const Nit = (() => {
     try { const s = new Audio(A() + "sons/klonk.mp3"); s.volume = .9; s.play().catch(() => {}); } catch (e) {}
     try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
   }
-  function klonk(boto) {
-    const sec = boto.closest(".nt"); if (!sec) return;
-    so();
+  function klonk(boto, senseSo) {
+    const sec = boto.closest(".nt") || document.querySelector(".nt"); if (!sec) return;
+    if (!senseSo) so();
     const fx = sec.querySelector(".nt-fx"), r0 = sec.getBoundingClientRect(), rb = boto.getBoundingClientRect();
     const cx = rb.left + rb.width / 2 - r0.left, cy = rb.top + rb.height / 2 - r0.top;
     if (quiet()) { try { boto.animate([{ filter: "brightness(1.6)" }, { filter: "none" }], { duration: 300 }); } catch (e) {} return; }
@@ -8147,7 +8146,7 @@ const Nit = (() => {
         { duration: 760, delay: i * 8, easing: "cubic-bezier(.15,.85,.3,1)" }).onfinish = () => e.remove();
     }
     // l'ona de llum: cada peça s'encén quan l'ona hi arriba, per la distància al cop
-    const peces = sec.querySelectorAll(".nt-tab, .nt-carta.davant, .nt-carta.davant .nt-il img, .nt-dia-s, .nt-xip, .nt-g, .nt-g-barra, .nt-amic");
+    const peces = [...sec.querySelectorAll(".nt-carta.davant, .nt-carta.davant .nt-il img, .nt-dia-s, .nt-xip, .nt-g, .nt-g-barra, .nt-amic"), ...document.querySelectorAll("#barra-nova .nt-tab")];
     peces.forEach(p => {
       const r = p.getBoundingClientRect(), dx = r.left + r.width / 2 - rb.left - rb.width / 2, dy = r.top + r.height / 2 - rb.top - rb.height / 2;
       const dl = Math.hypot(dx, dy) * .75;
@@ -8188,6 +8187,18 @@ const Nit = (() => {
     if (tipus) { ev.preventDefault(); ev.stopPropagation(); obreTipus(tipus); return; }
     const op = ev.target.closest(".nt-rt-op");
     if (op) { ev.preventDefault(); ev.stopPropagation(); triaTipus(op); return; }
+    // el botó del mig fa SEMPRE el KLONK (l'Albert, 28-09: «sempre fa klonk»): a la portada, el sencer; des de qualsevol
+    // altra pàgina, el cop i el so, et porta a la portada i allà s'encén l'ona de llum
+    const cg = ev.target.closest("#barra-nova .nt-centre");
+    if (cg) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (document.querySelector(".nt") && (S.ui.vista || "inicio") === "inicio") { klonk(cg); return; }
+      so();
+      if (!quiet() && cg.animate) cg.animate([{ transform: "scale(1)" }, { transform: "scale(1.08,.86)", offset: .2 }, { transform: "scale(.96,1.07)", offset: .5 }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.9,.3,1)" });
+      ves("inicio");
+      setTimeout(() => { const c = document.querySelector("#barra-nova .nt-centre"); if (c && document.querySelector(".nt")) klonk(c, true); }, 90);
+      return;
+    }
     const sec = ev.target.closest(".nt");
     if (sec) {
       const roda = sec.querySelector(".nt-roda"), carta = ev.target.closest(".nt-carta");
@@ -9014,7 +9025,7 @@ const Nit = (() => {
   --nt-o1:0 8px 20px -14px rgb(0 0 0 / .9),inset 0 1px 0 rgb(255 255 255 / .05);--nt-o2:0 22px 40px -22px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .06);
   --nt-text-o:0 1px 2px rgb(0 0 0 / .55);
   position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;overflow:hidden;touch-action:none;overscroll-behavior:none;
-  padding:calc(8px + env(safe-area-inset-top)) 16px 0;color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;
+  padding:calc(8px + env(safe-area-inset-top)) 16px calc(70px + max(6px,calc(env(safe-area-inset-bottom) - 16px)));color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;
   background:radial-gradient(120% 60% at 50% 0%,#18222c 0%,rgb(24 34 44 / 0) 60%),linear-gradient(180deg,var(--nt-fons-2),var(--nt-fons));
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .nt::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.03;
@@ -9170,7 +9181,8 @@ body.v-nit.bt-pell .chip[aria-pressed="true"]{text-shadow:0 1px 0 rgb(255 255 25
 body.v-nit #barra-nova .nt-barra{position:relative;display:flex;align-items:center;justify-content:space-around;margin:0;pointer-events:auto;height:60px;
   padding:0 8px max(6px,calc(env(safe-area-inset-bottom) - 16px));box-sizing:content-box;background:linear-gradient(180deg,#171f28,#10171d);
   box-shadow:0 -1px 0 var(--nt-vora),0 -18px 30px -24px rgb(0 0 0 / .9);border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif}
-body.v-nit.fb-actiu #barra-nova{display:none}
+/* la portada fa servir la mateixa barra que la resta (l'Albert, 28-09, al mòbil: «el menú surt alçat aquí i a les altres
+   pestanyes bé»): la que portava a dins quedava alçada a l'iPhone */
 body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
 .nt-barra button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nt-barra .nt-centre{background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%)}
