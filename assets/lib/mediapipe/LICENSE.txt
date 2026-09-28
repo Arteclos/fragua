@@ -1,0 +1,2 @@
+MediaPipe Tasks Vision 1.0.1 (@mediapipe/tasks-vision) i el model pose_landmarker_full (BlazePose GHUM): Apache License 2.0, Google LLC.
+https://github.com/google-ai-edge/mediapipe · https://www.apache.org/licenses/LICENSE-2.0

@@ -6877,7 +6877,7 @@ const Versions = (() => {
 
   // cada pantalla de l'app, a quin lloc de la barra pertany
   const LLOC = { comer: "comer", registro: "comer", estadisticas: "progreso", inicio: "forja", entreno: "forja", rutinas: "forja",
-    rutina: "forja", editor: "forja", personaje: "forja", social: "gimnasios", gimnasios: "gimnasios", amic: "gimnasios", ajustes: "ajustes", tienda: "" };
+    rutina: "forja", editor: "forja", personaje: "forja", progreso: "progreso", social: "gimnasios", gimnasios: "gimnasios", amic: "gimnasios", ajustes: "ajustes", tienda: "" };
   // [lloc, pantalla, nom, icona de l'app de sempre]
   const PESTANYES = [["comer", "comer", "Comer", "comer"], ["progreso", "estadisticas", "Progreso", "estadisticas"],
     ["gimnasios", "social", "Gimnasios", "social"], ["ajustes", "ajustes", "Ajustes", "ajustes"]];
@@ -6956,7 +6956,8 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     + '<ellipse cx="52" cy="12.6" rx="25" ry="2.6" style="fill:var(--fb-ped-3)" opacity=".5"/></svg>';
   // LA BARRA DIBUIXADA AMB CODI (neta i marró): icones de línia, només l'activa porta nom, i el pedestal buit al mig
   function muntaVector() {
-    const tab = ([lloc, v, nom]) => `<button class="bv-tab" data-lloc="${lloc}" data-accion="vista" data-v="${v}" aria-label="${nom}"><span class="bv-ic">${IC[lloc]}</span><span class="bv-nom">${nom}</span></button>`;
+    // a la Beta, Progreso és l'espai nou (src/mirall.js: l'ELO i el mirall); les estadístiques de sempre hi són a dins
+    const tab = ([lloc, v, nom]) => `<button class="bv-tab" data-lloc="${lloc}" data-accion="vista" data-v="${lloc === "progreso" ? "progreso" : v}" aria-label="${nom}"><span class="bv-ic">${IC[lloc]}</span><span class="bv-nom">${nom}</span></button>`;
     return `<div class="bv-barra">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
       + `<button class="bv-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bv-brasa"></span><span class="bv-plint">${PEDESTAL}</span></button>`;
   }
@@ -6970,7 +6971,7 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     estil();
     document.querySelectorAll("#barra-nova").forEach(n => n.remove());
     // el que la versió d'abans hagués deixat posat (si no, en tornar a «la de sempre» quedaria el fons de la Forja)
-    document.body.classList.remove("fb-actiu", "sense-ambient", "bb-entrada");
+    document.body.classList.remove("fb-actiu", "bt-actiu", "sense-ambient", "bb-entrada");
     if (typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     LLISTA.forEach(v => document.body.classList.remove("v-" + v.id));
     document.body.classList.add("v-" + actual);
@@ -6984,11 +6985,13 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
   function despresRender(vista) {
     if (!teBarra()) return;
     document.body.classList.toggle("bb-entrada", ["compte", "eleccion", "datos"].includes(vista));
-    const forja = AMB_FORJA.includes(actual) && vista === "inicio";
+    const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && vista === "progreso";
     document.body.classList.toggle("fb-actiu", forja);
-    document.body.classList.toggle("sense-ambient", forja);
+    document.body.classList.toggle("bt-actiu", forja || prog);
+    document.body.classList.toggle("sense-ambient", forja || prog);
     if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
-    else if (typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
+    if (prog && typeof Mirall === "object") Mirall.pintaMirall();
+    if (!forja && !prog && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
     document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
@@ -7021,7 +7024,12 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
   }, true);
   aplica();
   // la pantalla que aquesta versió pinta al lloc de la de sempre (de moment, només l'inici: la Forja)
-  function vista(v) { return AMB_FORJA.includes(actual) && v === "inicio" && typeof ForjaBeta === "object" ? () => ForjaBeta.vista(actual) : null; }
+  function vista(v) {
+    if (!AMB_FORJA.includes(actual)) return null;
+    if (v === "inicio" && typeof ForjaBeta === "object") return () => ForjaBeta.vista(actual);
+    if (v === "progreso" && typeof Mirall === "object") return () => Mirall.vista();
+    return null;
+  }
   return { despresRender, vista, actual: () => actual };
 })();
 
@@ -7120,13 +7128,13 @@ const ForjaBeta = (() => {
 .fb{--fb-r:24px;position:relative;display:flex;flex-direction:column;height:calc(100vh - env(safe-area-inset-top,0px));height:calc(100svh - env(safe-area-inset-top,0px));
   margin:0 -12px;padding:10px 16px 0;color:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
 /* el fons de la Forja, calmat: ni la pintura de la farga, ni el foc i la boira de l'ambient, ni el vel fosc de sota */
-body.fb-actiu .fons{background:var(--fb-fons) !important}
-body.fb-actiu .fons::after,body.fb-actiu .ambient{display:none}
-body.fb-actiu{background:var(--fb-fons-1)}
+body.bt-actiu .fons{background:var(--fb-fons) !important}
+body.bt-actiu .fons::after,body.bt-actiu .ambient{display:none}
+body.bt-actiu{background:var(--fb-fons-1)}
 body.fb-actiu .app,body.te-barra.fb-actiu:not(.bb-entrada) #vista{padding-bottom:0}
 /* la Forja no fa scroll: ocupa la pantalla i prou, perquè girar la roda no mogui la pàgina (l'Albert, 28-09) */
 html:has(body.fb-actiu),body.fb-actiu{overflow:hidden;overscroll-behavior:none}
-body.fb-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;border-radius:999px;padding:11px 18px;font:800 14px/1.3 'Nunito',system-ui,sans-serif;box-shadow:var(--fb-o2)}
+body.bt-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;border-radius:999px;padding:11px 18px;font:800 14px/1.3 'Nunito',system-ui,sans-serif;box-shadow:var(--fb-o2)}
 .fb-cap{display:flex;align-items:center;gap:8px;height:48px}
 .fb-logo{height:20px;width:auto;margin-right:auto}
 .fb-xip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px 0 8px;border-radius:999px;border:0;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-tinta);font-weight:800;font-size:15px;line-height:1;font-family:inherit}
@@ -7135,11 +7143,11 @@ body.fb-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;bor
 .fb-elo-ic{display:grid}
 .fb-puja{font-style:normal;font-size:11px;font-weight:800;color:#2f9e5b;margin-left:1px}
 /* la fitxa de l'ELO i qualsevol full que s'obri des de la Forja, amb la pell de la versió */
-body.fb-actiu .vel{background:rgb(10 20 28 / .38)}
-body.fb-actiu .full{background:var(--fb-sup);color:var(--fb-tinta);border-top:0;border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif;box-shadow:0 -12px 40px -16px rgb(0 0 0 / .5);animation:fb-full .38s cubic-bezier(.2,.9,.25,1)}
-body.fb-actiu .full .ansa{background:var(--fb-enfonsat)}
-body.fb-actiu .full-cap h2{font-family:inherit;font-weight:900;font-size:20px;color:var(--fb-tinta)}
-body.fb-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta)}
+body.bt-actiu .vel{background:rgb(10 20 28 / .38)}
+body.bt-actiu .full{background:var(--fb-sup);color:var(--fb-tinta);border-top:0;border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif;box-shadow:0 -12px 40px -16px rgb(0 0 0 / .5);animation:fb-full .38s cubic-bezier(.2,.9,.25,1)}
+body.bt-actiu .full .ansa{background:var(--fb-enfonsat)}
+body.bt-actiu .full-cap h2{font-family:inherit;font-weight:900;font-size:20px;color:var(--fb-tinta)}
+body.bt-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta)}
 @keyframes fb-full{from{transform:translateY(100%)}}
 .fe-cap{display:flex;align-items:center;gap:10px}
 .fe-ic{display:grid;width:44px;height:44px}.fe-ic svg{width:44px;height:44px}
@@ -7157,7 +7165,7 @@ body.fb-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta
 .fe-lista li.fe-falta{opacity:.7}
 .fe-com{margin:18px 0 0;font-size:13.5px;line-height:1.45;color:var(--fb-suau)}
 .fe-font{margin:8px 0 0;font-size:12px;color:var(--fb-suau);opacity:.8}
-@media (prefers-reduced-motion:reduce){body.fb-actiu .full,.fe-barra i{animation:none}}
+@media (prefers-reduced-motion:reduce){body.bt-actiu .full,.fe-barra i{animation:none}}
 .fb-or{padding-right:3px}
 .fb-botiga{display:grid;place-items:center;width:28px;height:28px;margin-left:3px;border-radius:50%;border:0;background:var(--fb-accio);color:var(--fb-accio-tinta);box-shadow:var(--fb-o1)}
 .fb-botiga svg{width:15px;height:15px}
@@ -7338,6 +7346,592 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
   }, true);
   estil();
   return { vista, despresPintar };
+})();
+
+/* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
+   l'app (el mirall Pro de KLONK): quan la skill diu que una cosa es detecta, és que l'app la detecta. SKILL.md §3.
+
+   Entra: la màscara de la persona (probabilitat 0..1, W x H) i els 33 punts de MediaPipe Pose (x, y normalitzats).
+   Surt: si hi ha una persona sencera, la qualitat de la foto (inclinació, gir, enquadrament, la pose), el PERFIL (l'amplada
+   de la silueta cada 2 % del tors, en unitats de tors) i les MIDES amb nom. La unitat és L, el tors esquelètic (del mig de
+   les espatlles al mig dels malucs): no canvia amb el múscul ni amb el greix, i així la distància de la càmera no compta.
+   LES VORES, en dos passos: la màscara diu on és la persona (però el model la fa a 256 px i la reescala: a 1080 px de
+   foto, la vora és borrosa uns 4 px), i la FOTO diu on és la vora de debò: al voltant de la de la màscara, on la llum
+   canvia més de pressa, amb subpíxel (una paràbola sobre el màxim del gradient). Sense la foto, només la màscara. */
+const Anatomia = (() => {
+  const L = { nas: 0, esp_e: 11, esp_d: 12, colze_e: 13, colze_d: 14, canell_e: 15, canell_d: 16,
+    maluc_e: 23, maluc_d: 24, genoll_e: 25, genoll_d: 26, turmell_e: 27, turmell_d: 28 };
+  const mig = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const graus = r => r * 180 / Math.PI;
+  // l'angle entre dos vectors, en graus
+  const angle = (a, b) => graus(Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(...a) * Math.hypot(...b) || 1)))));
+  function mostra(m, W, H, x, y) {
+    if (x < 0 || y < 0 || x > W - 1 || y > H - 1) return 0;
+    const x0 = x | 0, y0 = y | 0, x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1), fx = x - x0, fy = y - y0;
+    const a = m[y0 * W + x0], b = m[y0 * W + x1], c = m[y1 * W + x0], d = m[y1 * W + x1];
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+  }
+  // la lluminància de la foto (RGBA) en un punt, bilineal
+  function llum(img, x, y) {
+    const { data, W, H } = img;
+    if (x < 0 || y < 0 || x > W - 1 || y > H - 1) return null;
+    const x0 = x | 0, y0 = y | 0, x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1), fx = x - x0, fy = y - y0;
+    const l = (i) => 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    const a = l((y0 * W + x0) * 4), b = l((y0 * W + x1) * 4), c = l((y1 * W + x0) * 4), d = l((y1 * W + x1) * 4);
+    return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+  }
+  // la vora de debò, a prop de la de la màscara: el màxim del gradient de la foto dins de ±R px, amb una paràbola
+  function afina(img, p, d, s0, R = 6) {
+    if (!img) return s0;
+    const pas = 0.5, v = [];
+    for (let s = s0 - R - 1; s <= s0 + R + 1 + 1e-9; s += pas) v.push(llum(img, p[0] + d[0] * s, p[1] + d[1] * s));
+    if (v.some(x => x == null)) return s0;
+    let mi = -1, mg = 0;
+    for (let i = 2; i < v.length - 2; i++) { const g = Math.abs(v[i + 2] - v[i - 2]) / 2; if (g > mg) { mg = g; mi = i; } }
+    if (mi < 3 || mi > v.length - 4 || mg < 6) return s0;      // cap vora clara a la foto: la de la màscara
+    const g = i => Math.abs(v[i + 2] - v[i - 2]) / 2, y0 = g(mi - 1), y1 = g(mi), y2 = g(mi + 1);
+    const dx = (y0 - 2 * y1 + y2) !== 0 ? 0.5 * (y0 - y2) / (y0 - 2 * y1 + y2) : 0;
+    return s0 - R - 1 + (mi + Math.max(-0.5, Math.min(0.5, dx))) * pas;
+  }
+  // des del punt p, cap a la direcció d, fins que la màscara baixa de 0,5: la distància amb subpíxel (o null)
+  function vora(m, W, H, p, d, max, img, pas = 0.5) {
+    let prev = mostra(m, W, H, p[0], p[1]);
+    if (prev < 0.5) return null;
+    for (let s = pas; s <= max; s += pas) {
+      const v = mostra(m, W, H, p[0] + d[0] * s, p[1] + d[1] * s);
+      if (v < 0.5) return afina(img, p, d, s - pas + pas * (prev - 0.5) / (prev - v));
+      prev = v;
+    }
+    return null;
+  }
+  // l'amplada del tram de silueta que conté c, en la direcció n (tots dos costats)
+  function amplada(m, W, H, c, n, max, img) {
+    const a = vora(m, W, H, c, n, max, img), b = vora(m, W, H, c, [-n[0], -n[1]], max, img);
+    return a == null || b == null ? null : { w: a + b, a, b };
+  }
+  const POSES = {
+    // A: frontal, braços en A (uns 30° del cos), colzes estirats. És la pose de mesura.
+    A: { braç: [15, 65], colze: [150, 181] },
+    // C: doble bíceps de frontal: el braç gairebé horitzontal i el colze doblegat, amb el canell per sobre del colze
+    C: { braç: [60, 120], colze: [20, 110] },
+  };
+  function graella(m, W, H, lm, pose = "A", img = null) {
+    const P = i => [lm[i].x * W, lm[i].y * H], vis = i => (lm[i].visibility == null ? 1 : lm[i].visibility);
+    const q = { avisos: [] };
+    // 1 · una persona sencera? (el gall dindi, fora)
+    const clau = [L.esp_e, L.esp_d, L.maluc_e, L.maluc_d, L.genoll_e, L.genoll_d, L.turmell_e, L.turmell_d];
+    q.visibilitat = Math.min(...clau.map(vis));
+    let cob = 0;
+    for (let i = 0; i < m.length; i += 7) cob += m[i] > 0.5 ? 1 : 0;
+    q.cobertura = (cob * 7) / m.length;
+    if (!(q.visibilitat > 0.5 && q.cobertura > 0.03)) return { ok: false, motiu: "persona", qualitat: q };
+    const S = mig(P(L.esp_e), P(L.esp_d)), Hh = mig(P(L.maluc_e), P(L.maluc_d)), T = dist(S, Hh);
+    const u = [(Hh[0] - S[0]) / T, (Hh[1] - S[1]) / T], n = [-u[1], u[0]];
+    // 2 · la qualitat: tort, girat, massa a prop o lluny, i la pose
+    q.inclinacio = graus(Math.atan2(u[0], u[1]));
+    q.espatlles_articulacions = dist(P(L.esp_e), P(L.esp_d)) / T;
+    const peus = Math.max(P(L.turmell_e)[1], P(L.turmell_d)[1]), cap = Math.min(P(L.nas)[1], S[1] - 0.6 * T);
+    q.alcada = (peus - cap) / H;
+    q.tors_px = T;
+    if (Math.abs(q.inclinacio) > 4) q.avisos.push("tort");
+    if (q.alcada < 0.5) q.avisos.push("lluny");
+    if (q.alcada > 0.95 || peus > H * 0.99) q.avisos.push("a-prop");
+    const cfg = POSES[pose] || POSES.A;
+    const braçE = angle([P(L.colze_e)[0] - P(L.esp_e)[0], P(L.colze_e)[1] - P(L.esp_e)[1]], u);
+    const braçD = angle([P(L.colze_d)[0] - P(L.esp_d)[0], P(L.colze_d)[1] - P(L.esp_d)[1]], u);
+    const colze = (a, b, c) => angle([P(a)[0] - P(b)[0], P(a)[1] - P(b)[1]], [P(c)[0] - P(b)[0], P(c)[1] - P(b)[1]]);
+    const colzeE = colze(L.esp_e, L.colze_e, L.canell_e), colzeD = colze(L.esp_d, L.colze_d, L.canell_d);
+    q.pose = { braç: [Math.round(braçE), Math.round(braçD)], colze: [Math.round(colzeE), Math.round(colzeD)] };
+    const dins = (v, [a, b]) => v >= a && v <= b;
+    q.pose.encaixa = dins(braçE, cfg.braç) && dins(braçD, cfg.braç) && dins(colzeE, cfg.colze) && dins(colzeD, cfg.colze);
+    if (!q.pose.encaixa) q.avisos.push("pose");
+    // 3 · el perfil: una llesca cada 2 % del tors, de 0,6 T per sobre de les espatlles fins a 2,5 T (els turmells)
+    const perfil = [];
+    for (let k = -30; k <= 125; k++) {
+      const t = k / 50, c = [S[0] + u[0] * t * T, S[1] + u[1] * t * T];
+      const r = amplada(m, W, H, c, n, 1.6 * T, img);
+      perfil.push([t, r ? r.w / T : null]);
+    }
+    const tram = (a, b) => perfil.filter(([t, w]) => t >= a - 1e-9 && t <= b + 1e-9 && w != null);
+    const extrem = (a, b, mes) => { const v = tram(a, b); return v.length ? v.reduce((x, y) => (mes ? y[1] > x[1] : y[1] < x[1]) ? y : x) : null; };
+    const a = (t) => { const v = perfil.find(x => Math.abs(x[0] - t) < 1e-6); return v && v[1] != null ? v : null; };
+    // 4 · les extremitats: la MEDIANA de l'amplada perpendicular a l'os a la panxa del múscul (f0..f1 de l'os). No el
+    // màxim: el màxim del braç queia sempre a la vora de l'aixella (el deltoide), i no veia créixer el bíceps.
+    function extremitat(i0, i1, f0, f1) {
+      const A = P(i0), B = P(i1), l = dist(A, B);
+      if (!(l > 4)) return null;
+      const e = [(B[0] - A[0]) / l, (B[1] - A[1]) / l], p = [-e[1], e[0]];
+      let millor = null; const pf = [];
+      for (let f = f0; f <= f1 + 1e-9; f += 0.025) {
+        const r = amplada(m, W, H, [A[0] + e[0] * f * l, A[1] + e[1] * f * l], p, 0.6 * T, img);
+        pf.push([Math.round(f * 1000) / 1000, r ? Math.round(r.w / T * 10000) / 10000 : null]);
+        if (r && r.w < 0.5 * T && (!millor || r.w > millor.w)) millor = { w: r.w, f };
+      }
+      membres.push([i0, i1, pf]);
+      const vs = pf.map(x => x[1]).filter(x => x != null && x < 0.5).sort((x, y) => x - y);
+      if (vs.length < 3) return null;
+      const mig = vs.length >> 1;
+      return vs.length % 2 ? vs[mig] : (vs[mig - 1] + vs[mig]) / 2;
+    }
+    const mides = {}, membres = [];
+    const posa = (k, v) => { if (v != null) mides[k] = Math.round(v * 10000) / 10000; };
+    if (pose === "A") {
+      // L'AIXELLA: on el tram del tors deixa de portar els braços (l'amplada cau de cop). Just a sota hi ha el DORSAL, l'ample
+      // de l'esquena i el pit sota les aixelles: el perfil hi és pla, i per això no el mou el tremolor dels punts del model.
+      // (A la línia de les espatlles el perfil és tan costerut que un tremolor de 5 px movia l'amplada un 3 %.)
+      let aix = null;
+      for (let i = 1; i < perfil.length; i++) {
+        const [t0, w0] = perfil[i - 1], [t1, w1] = perfil[i];
+        if (t1 > 0 && t1 < 0.7 && w0 != null && w1 != null && w1 < 0.8 * w0) { aix = t1; break; }
+      }
+      q.aixella = aix;
+      const dor = aix != null ? tram(aix + 0.04, aix + 0.12) : [], cin = extrem(0.5, 0.95, false), mal = extrem(0.9, 1.2, true);
+      const dorsal = dor.length ? dor.reduce((x, y) => x + y[1], 0) / dor.length : null;
+      posa("dorsal", dorsal); posa("cintura", cin && cin[1]); posa("maluc", mal && mal[1]);
+      if (dorsal && cin) posa("v", dorsal / cin[1]);
+      if (aix == null) q.avisos.push("braços-enganxats");
+      // la panxa de cada múscul: el bíceps a la meitat de l'húmer, l'avantbraç sota el colze, la cuixa al mig i el bessó dalt
+      posa("braç_e", extremitat(L.esp_e, L.colze_e, 0.45, 0.72)); posa("braç_d", extremitat(L.esp_d, L.colze_d, 0.45, 0.72));
+      posa("avantbraç_e", extremitat(L.colze_e, L.canell_e, 0.15, 0.4)); posa("avantbraç_d", extremitat(L.colze_d, L.canell_d, 0.15, 0.4));
+      posa("cuixa_e", extremitat(L.maluc_e, L.genoll_e, 0.35, 0.6)); posa("cuixa_d", extremitat(L.maluc_d, L.genoll_d, 0.35, 0.6));
+      posa("bessó_e", extremitat(L.genoll_e, L.turmell_e, 0.2, 0.42)); posa("bessó_d", extremitat(L.genoll_d, L.turmell_d, 0.2, 0.42));
+    } else {
+      const cin = extrem(0.55, 0.95, false);
+      posa("pit", a(0.4) && a(0.4)[1]); posa("cintura", cin && cin[1]);
+      posa("braç_e", extremitat(L.esp_e, L.colze_e, 0.45, 0.8)); posa("braç_d", extremitat(L.esp_d, L.colze_d, 0.45, 0.8));
+      posa("avantbraç_e", extremitat(L.colze_e, L.canell_e, 0.15, 0.45)); posa("avantbraç_d", extremitat(L.colze_d, L.canell_d, 0.15, 0.45));
+    }
+    // la simetria: la diferència entre esquerra i dreta, en tant per u de la mitjana
+    ["braç", "cuixa"].forEach(k => { const e = mides[k + "_e"], d = mides[k + "_d"]; if (e && d) mides["simetria_" + k] = Math.round((e - d) / ((e + d) / 2) * 10000) / 10000; });
+    return { ok: true, pose, qualitat: q, eix: { S, H: Hh, T, u, n }, perfil: perfil.map(([t, w]) => [t, w == null ? null : Math.round(w * 10000) / 10000]), membres, mides };
+  }
+  // LA REVISIÓ RÀPIDA, per al vídeo en directe del fotomatón (sense màscara): hi ets sencer, a quina alçada del quadre,
+  // tort o no, i si la pose encaixa. Retorna el primer que falla ("persona", "lluny", "a-prop", "tort", "pose") o "ok".
+  function revisa(lm, W, H, pose = "A") {
+    if (!lm || lm.length < 29) return { estat: "persona" };
+    const P = i => [lm[i].x * W, lm[i].y * H], vis = i => (lm[i].visibility == null ? 1 : lm[i].visibility);
+    if (Math.min(...[11, 12, 23, 24, 25, 26, 27, 28].map(vis)) < 0.5) return { estat: "persona" };
+    const S = mig(P(11), P(12)), Hh = mig(P(23), P(24)), T = dist(S, Hh);
+    const u = [(Hh[0] - S[0]) / T, (Hh[1] - S[1]) / T];
+    const peus = Math.max(P(27)[1], P(28)[1]), cap = Math.min(P(0)[1], S[1] - 0.6 * T), alcada = (peus - cap) / H;
+    if (alcada < 0.5) return { estat: "lluny", alcada };
+    if (alcada > 0.93 || peus > H * 0.985 || cap < H * 0.015) return { estat: "a-prop", alcada };
+    const incl = graus(Math.atan2(u[0], u[1]));
+    if (Math.abs(incl) > 4) return { estat: "tort", inclinacio: incl };
+    const cfg = POSES[pose] || POSES.A;
+    const ang = (a, b) => angle([P(b)[0] - P(a)[0], P(b)[1] - P(a)[1]], u);
+    const colze = (a, b, c) => angle([P(a)[0] - P(b)[0], P(a)[1] - P(b)[1]], [P(c)[0] - P(b)[0], P(c)[1] - P(b)[1]]);
+    const dins = (v, [x, y]) => v >= x && v <= y;
+    const ok = dins(ang(11, 13), cfg.braç) && dins(ang(12, 14), cfg.braç) && dins(colze(11, 13, 15), cfg.colze) && dins(colze(12, 14, 16), cfg.colze)
+      && (pose !== "C" || (P(15)[1] < P(13)[1] && P(16)[1] < P(14)[1]));
+    return { estat: ok ? "ok" : "pose", alcada, S, T };
+  }
+  // la transformació de semblança que porta l'eix d'una foto (S, H) sobre el d'una altra: per alinear l'abans i el després
+  function alinea(de, a) {
+    const s = a.T / de.T, r = Math.atan2(a.u[0], a.u[1]) - Math.atan2(de.u[0], de.u[1]);
+    return { s, r: -r, tx: a.S[0], ty: a.S[1], ox: de.S[0], oy: de.S[1] };
+  }
+  return { graella, revisa, alinea, L, POSES };
+})();
+if (typeof module !== "undefined") module.exports = Anatomia;
+
+/* EL MIRALL (Pro) · la Beta de KLONK (28-09-2026). L'Albert: «quan algú li fem penjar una foto amb una pose i demanem que
+   apreti múscul, li posem silueta de la pose que ha de fer i li fem la foto que guarda el sistema... el sistema hauria de
+   processar amb animació de càrrega... fixar un grid gairebé micromètric de píxels i veure exactament si ha augmentat
+   estèticament el cos. Es pot fer amb el pla Pro. Posant màxim intents per setmana. I la clau és que comparis vs totes
+   les fotos que tens, perquè potser respecte ahir no es veu res però sí vs el primer dia.»
+
+   El mètode és la skill ANATOMISTA (ars-core/.claude/skills/anatomista): el fotomatón amb la silueta i el mòbil recolzat,
+   una ràfega de tres fotos (la diferència entre elles és el soroll d'aquell dia), la graella del cos normalitzada pel
+   tors (src/anatomia.js, el MATEIX fitxer que la skill), i cada canvi comparat amb el canvi mínim detectable. Les fotos es
+   queden en aquest mòbil (IndexedDB) i no es pugen enlloc. MediaPipe (Apache-2.0) es baixa només quan s'obre el mirall.
+   El Pro encara no existeix a l'app: el mirall surt segellat amb el Maestro i, a la Beta, es pot provar. */
+const Mirall = (() => {
+  const A = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/");
+  const MAX_SETMANA = 3;                                   // anàlisis per setmana (la xifra la decideix l'Albert)
+  const PROVA = "klonk-mirall-beta";
+  const POSES = {
+    A: { nom: "De frente, brazos abiertos", curt: "De frente", sil: "silueta-A.png", diu: "Brazos abiertos, como la silueta" },
+    C: { nom: "Doble bíceps", curt: "Doble bíceps", sil: "silueta-C.png", diu: "Sube los brazos y aprieta" },
+  };
+  const NOMS = { dorsal: "Espalda", cintura: "Cintura", maluc: "Cadera", v: "La V (espalda / cintura)", braç: "Brazos", avantbraç: "Antebrazos", cuixa: "Muslos", bessó: "Gemelos" };
+  const ORDRE = ["v", "dorsal", "braç", "cintura", "maluc", "cuixa", "avantbraç", "bessó"];
+  const MILLOR = { v: 1, dorsal: 1, braç: 1, cintura: -1, maluc: 0, cuixa: 1, avantbraç: 1, bessó: 1 };   // cap on és millor
+  const DIA = 864e5;
+  const pot = () => { try { return localStorage.getItem(PROVA) === "1"; } catch (e) { return false; } };
+
+  /* ---------- les fotos, al mòbil (IndexedDB) ---------- */
+  let dbp = null;
+  function db() {
+    if (dbp) return dbp;
+    dbp = new Promise((ok, ko) => {
+      const r = indexedDB.open("klonk-mirall", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("fotos", { keyPath: "id" });
+      r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+    });
+    return dbp;
+  }
+  async function desa(reg) { const d = await db(); return new Promise((ok, ko) => { const t = d.transaction("fotos", "readwrite"); t.objectStore("fotos").put(reg); t.oncomplete = ok; t.onerror = () => ko(t.error); }); }
+  async function totes() {
+    const d = await db();
+    return new Promise((ok, ko) => { const r = d.transaction("fotos").objectStore("fotos").getAll(); r.onsuccess = () => ok(r.result.sort((a, b) => a.quan - b.quan)); r.onerror = () => ko(r.error); });
+  }
+  const aquestaSetmana = llista => llista.filter(r => r.quan > Date.now() - 7 * DIA).length;
+
+  /* ---------- MediaPipe, quan cal ---------- */
+  let motorP = null;
+  function motor() {
+    if (motorP) return motorP;
+    motorP = (async () => {
+      const mod = await import(new URL(A() + "lib/mediapipe/vision_bundle.mjs", location.href).href);
+      const fs = await mod.FilesetResolver.forVisionTasks(new URL(A() + "lib/mediapipe/wasm", location.href).href);
+      const model = new URL(A() + "lib/mediapipe/pose_landmarker_full.task", location.href).href;
+      const fes = async (mode, masc, delegate) => mod.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: model, delegate },
+        runningMode: mode, numPoses: 1, outputSegmentationMasks: masc });
+      let quiet, viu;
+      try { quiet = await fes("IMAGE", true, "GPU"); viu = await fes("VIDEO", false, "GPU"); }
+      catch (e) { quiet = await fes("IMAGE", true, "CPU"); viu = await fes("VIDEO", false, "CPU"); }
+      return { quiet, viu };
+    })();
+    motorP.catch(() => { motorP = null; });
+    return motorP;
+  }
+
+  /* ---------- l'espai de Progreso de la Beta: l'ELO i el mirall ---------- */
+  function vista() {
+    const e = typeof Elo === "object" ? Elo.calcula() : { elo: null };
+    const elo = e.elo != null
+      ? `<button class="mp-elo" data-fb="elo"><span class="mp-elo-n" style="--c:${e.divisio.color}">${n0(e.elo)}</span><span><b>${e.divisio.nom}</b><small>${e.seguent ? `Te faltan ${e.seguent.falta} para ${e.seguent.nom}` : "La división más alta"}</small></span></button>`
+      : `<button class="mp-elo" data-fb="elo"><span class="mp-elo-n">?</span><span><b>Sin clasificar</b><small>Una serie de sentadilla, banca o peso muerto con barra</small></span></button>`;
+    return `<section class="mp"><header class="mp-cap"><h1>Progreso</h1></header>${elo}
+      <div class="mp-mirall" id="mp-mirall">${pot() ? `<p class="mp-carrega">Abriendo tu espejo…</p>` : segellat()}</div>
+      <button class="mp-stats" data-accion="vista" data-v="estadisticas">Tus estadísticas<span aria-hidden="true">›</span></button></section>`;
+  }
+  const segellat = () => `<div class="mp-drap"><span class="fb-segell mp-segell">${SEGELL}</span><b>Tu espejo</b>
+      <p>Una foto con la pose guiada y el análisis de lo que ha crecido, semana a semana, contra todas tus fotos.</p>
+      <span class="fb-pro">PRO</span><button class="mp-boto" disabled>Muy pronto con PRO</button>
+      <button class="mp-link" data-mirall="prova">Probarlo en la beta</button></div>`;
+  const SEGELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6.5h15.5c.5 0 1 .4 1 1 0 2.5-2 4.3-4.3 4.6l-.6 2.4H16c.6 0 1 .4 1 1V18H7v-2.5c0-.6.4-1 1-1h1.4l-.5-2.1C6 12 4 10 3 7.9z"/></svg>';
+  async function pintaMirall() {
+    const el = document.getElementById("mp-mirall"); if (!el || !pot()) return;
+    let llista = [];
+    try { llista = await totes(); } catch (e) {}
+    const queden = Math.max(0, MAX_SETMANA - aquestaSetmana(llista)), ult = llista[llista.length - 1];
+    const polzes = llista.slice(-6).reverse().map(r => `<button class="mp-polze" data-mirall="veure" data-id="${r.id}" aria-label="Foto del ${new Date(r.quan).toLocaleDateString("es-ES")}"><img alt="" data-id="${r.id}"></button>`).join("");
+    el.innerHTML = `<div class="mp-obert"><div class="mp-obert-cap"><b>Tu espejo</b><small>${llista.length ? `${llista.length} ${llista.length === 1 ? "foto" : "fotos"} · ` : ""}${queden ? `Te quedan ${queden} esta semana` : "Esta semana ya no quedan"}</small></div>
+      ${ult ? `<div class="mp-polzes">${polzes}</div>` : `<p class="mp-primera">La primera foto es tu punto de partida. Desde la segunda, verás qué ha cambiado.</p>`}
+      <div class="mp-poses">${Object.entries(POSES).map(([k, p]) => `<button class="mp-boto" data-mirall="nova" data-pose="${k}"${queden ? "" : " disabled"}>${p.curt}</button>`).join("")}</div>
+      <p class="mp-priv">Tus fotos se quedan en este móvil. No se suben a ningún sitio.</p></div>`;
+    for (const r of llista.slice(-6)) {
+      const img = el.querySelector(`img[data-id="${r.id}"]`);
+      if (img && r.foto) { img.src = URL.createObjectURL(r.foto); img.onload = () => URL.revokeObjectURL(img.src); }
+    }
+  }
+
+  /* ---------- el fotomatón ---------- */
+  let cap = null;
+  const MISSATGES = { persona: "Colócate entero dentro de la silueta", lluny: "Acércate un poco", "a-prop": "Aléjate: tienen que verse los pies y la cabeza",
+    tort: "Pon el móvil recto", pose: null, ok: "¡Quieto así!", mobil: "Apoya el móvil recto, de pie" };
+  async function obre(pose) {
+    tanca();
+    const d = document.createElement("div"); d.id = "mirall-cap"; d.className = "mc"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Tu espejo");
+    d.innerHTML = `<video class="mc-video" playsinline muted autoplay></video>
+      <div class="mc-sil" style="--sil:url('${A()}beta/${POSES[pose].sil}')"></div>
+      <div class="mc-dalt"><button class="mc-tanca" data-mirall="tanca" aria-label="Cerrar">✕</button><b>${POSES[pose].nom}</b></div>
+      <p class="mc-msg" aria-live="polite">Preparando la cámara…</p><div class="mc-compte" aria-hidden="true"></div><div class="mc-flash"></div>`;
+    document.body.appendChild(d);
+    cap = { d, pose, stream: null, raf: 0, ok0: 0, compte: null, inclinat: null, fotos: [] };
+    try {
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        try { await DeviceOrientationEvent.requestPermission(); } catch (e) {}
+      }
+      addEventListener("deviceorientation", orienta);
+      cap.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "user", width: { ideal: 1080 }, height: { ideal: 1920 } } });
+      const v = d.querySelector(".mc-video"); v.srcObject = cap.stream; await v.play();
+      missatge("Cargando el analizador…");
+      const m = await motor();
+      if (!cap) return;
+      cap.m = m; missatge(POSES[pose].diu);
+      bucle();
+    } catch (e) {
+      console.warn("mirall:", e);
+      missatge(e && e.name === "NotAllowedError" ? "Sin permiso para la cámara. Dáselo en los ajustes del navegador." : "No se ha podido abrir la cámara.");
+    }
+  }
+  function orienta(ev) { if (cap && ev.beta != null) cap.inclinat = Math.abs(ev.beta - 90) > 12 || Math.abs(ev.gamma || 0) > 8; }
+  function missatge(t) { if (cap) { const m = cap.d.querySelector(".mc-msg"); if (m && m.textContent !== t) m.textContent = t; } }
+  function tanca() {
+    if (!cap) return;
+    cancelAnimationFrame(cap.raf); clearInterval(cap.compte);
+    if (cap.stream) cap.stream.getTracks().forEach(t => t.stop());
+    removeEventListener("deviceorientation", orienta);
+    cap.d.remove(); cap = null;
+  }
+  function bucle() {
+    if (!cap) return;
+    let ultim = 0;
+    const pas = ara => {
+      if (!cap) return;
+      cap.raf = requestAnimationFrame(pas);
+      if (ara - ultim < 180 || cap.fent) return;           // cinc cops per segon n'hi ha prou per guiar
+      ultim = ara;
+      const v = cap.d.querySelector(".mc-video"); if (!v.videoWidth) return;
+      let r;
+      try { r = cap.m.viu.detectForVideo(v, ara); } catch (e) { return; }
+      const lm = r.landmarks && r.landmarks[0];
+      const rv = lm ? Anatomia.revisa(lm, v.videoWidth, v.videoHeight, cap.pose) : { estat: "persona" };
+      const estat = cap.inclinat ? "mobil" : rv.estat;
+      cap.d.classList.toggle("encaixa", estat === "ok");
+      if (estat !== "ok") { cap.ok0 = 0; if (cap.compte) cancelaCompte(); missatge(MISSATGES[estat] || POSES[cap.pose].diu); return; }
+      missatge(MISSATGES.ok);
+      if (!cap.ok0) cap.ok0 = ara;
+      if (ara - cap.ok0 > 700 && !cap.compte) compte();
+    };
+    cap.raf = requestAnimationFrame(pas);
+  }
+  function cancelaCompte() { clearInterval(cap.compte); cap.compte = null; cap.d.querySelector(".mc-compte").textContent = ""; }
+  function compte() {
+    let n = 3; const el = cap.d.querySelector(".mc-compte");
+    const mostra = () => { el.textContent = n; el.classList.remove("pica"); void el.offsetWidth; el.classList.add("pica"); if (typeof Efectos === "object") { try { Efectos.suena("tic"); } catch (e) {} } };
+    mostra();
+    cap.compte = setInterval(() => {
+      if (!cap) return;
+      n--; if (n > 0) return mostra();
+      clearInterval(cap.compte); cap.compte = null; el.textContent = ""; rafega();
+    }, 800);
+  }
+  // la ràfega: tres fotos a 0,3 s (la diferència entre elles és el soroll d'avui)
+  async function rafega() {
+    cap.fent = true;
+    const v = cap.d.querySelector(".mc-video"), fotos = [];
+    for (let i = 0; i < 3; i++) {
+      const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext("2d").drawImage(v, 0, 0);
+      fotos.push(c);
+      const f = cap.d.querySelector(".mc-flash"); f.classList.remove("fa"); void f.offsetWidth; f.classList.add("fa");
+      if (typeof Efectos === "object") { try { Efectos.suena("tap"); Efectos.vibra("tria"); } catch (e) {} }
+      await new Promise(r => setTimeout(r, 300));
+    }
+    const pose = cap.pose, m = cap.m;
+    tanca();
+    processa(fotos, pose, m);
+  }
+
+  /* ---------- la càrrega: l'escàner que baixa, els punts, la graella, els números ---------- */
+  async function processa(fotos, pose, m) {
+    const d = document.createElement("div"); d.id = "mirall-proc"; d.className = "mc mproc";
+    const f0 = fotos[0], W = f0.width, H = f0.height;
+    d.innerHTML = `<div class="mp-escena" style="aspect-ratio:${W}/${H}"><img class="mp-foto" alt=""><canvas class="mp-capa" width="${W}" height="${H}"></canvas><i class="mp-escaner"></i></div>
+      <p class="mc-msg">Analizando tu cuerpo…</p><ol class="mp-passos"><li>Buscando tu esqueleto</li><li>Trazando la cuadrícula</li><li>Midiendo cada zona</li><li>Comparando con tus fotos</li></ol>`;
+    document.body.appendChild(d);
+    d.querySelector(".mp-foto").src = f0.toDataURL("image/jpeg", 0.9);
+    const t0 = performance.now(), passos = [...d.querySelectorAll(".mp-passos li")];
+    const marca = i => passos.forEach((p, k) => p.classList.toggle("fet", k < i) || p.classList.toggle("ara", k === i));
+    marca(0);
+    const res = [];
+    for (const c of fotos) {
+      await new Promise(r => setTimeout(r, 30));
+      const r = m.quiet.detect(c);
+      if (!r.landmarks || !r.landmarks.length) { res.push({ ok: false, motiu: "persona" }); continue; }
+      const mk = r.segmentationMasks[0], mw = mk.width, mh = mk.height, mask = mk.getAsFloat32Array();
+      const cf = document.createElement("canvas"); cf.width = mw; cf.height = mh; const xf = cf.getContext("2d", { willReadFrequently: true });
+      xf.drawImage(c, 0, 0, mw, mh);
+      const g = Anatomia.graella(mask, mw, mh, r.landmarks[0], pose, { data: xf.getImageData(0, 0, mw, mh).data, W: mw, H: mh });
+      g.escala = W / mw; g.lm = r.landmarks[0].map(p => [p.x, p.y]);
+      mk.close(); res.push(g);
+    }
+    const bons = res.filter(r => r.ok);
+    await animaEscaner(d, bons[0], W, H, t0, marca);
+    if (!bons.length) { d.querySelector(".mc-msg").textContent = "No te he encontrado entero en la foto. Prueba otra vez, con todo el cuerpo dentro."; afegeixTanca(d); return; }
+    // la mitjana de la ràfega i el seu soroll (la desviació relativa de cada mida entre les fotos)
+    const claus = [...new Set(bons.flatMap(b => Object.keys(b.mides)))];
+    const mides = {}, sigma = {};
+    for (const k of claus) {
+      const v = bons.map(b => b.mides[k]).filter(x => x != null);
+      if (!v.length) continue;
+      const mu = v.reduce((a, b) => a + b, 0) / v.length; mides[k] = mu;
+      if (v.length > 1 && mu) sigma[k] = Math.sqrt(v.reduce((a, b) => a + (b - mu) ** 2, 0) / (v.length - 1)) / Math.abs(mu);
+    }
+    const millor = bons.reduce((a, b) => (b.qualitat.visibilitat > a.qualitat.visibilitat ? b : a));
+    const i = res.indexOf(millor);
+    const foto = await new Promise(r => fotos[i].toBlob(r, "image/jpeg", 0.88));
+    const reg = { id: "m" + Date.now().toString(36), quan: Date.now(), pose, foto, mides, sigma, n: bons.length, eix: millor.eix, escala: millor.escala, mida: [W, H], avisos: millor.qualitat.avisos };
+    try { await desa(reg); } catch (e) {}
+    marca(4);
+    await new Promise(r => setTimeout(r, 350));
+    d.remove();
+    resultat(reg.id);
+  }
+  function afegeixTanca(d) { const b = document.createElement("button"); b.className = "mp-boto"; b.textContent = "Cerrar"; b.dataset.mirall = "tanca-proc"; d.appendChild(b); }
+  // l'escàner: com a mínim 2,4 s, perquè es vegi que mesura (els punts, les llesques de la graella i els números)
+  function animaEscaner(d, g, W, H, t0, marca) {
+    return new Promise(ok => {
+      const cv = d.querySelector(".mp-capa"), cx = cv.getContext("2d");
+      const quiet = matchMedia("(prefers-reduced-motion: reduce)").matches, DUR = quiet ? 400 : 2400;
+      const fes = ara => {
+        const t = Math.min(1, (ara - t0) / DUR);
+        cx.clearRect(0, 0, W, H);
+        if (g) {
+          const k = g.escala, lw = Math.max(2, W / 360);
+          // els punts del cos, apareixent
+          if (t > 0.1) { marca(t < 0.35 ? 1 : t < 0.7 ? 2 : 3); g.lm.forEach(([x, y], i) => { if (i > 10 && (i - 10) / 23 < (t - 0.1) / 0.25) { cx.fillStyle = "rgba(255,170,70,.95)"; cx.beginPath(); cx.arc(x * W, y * H, lw * 2.2, 0, 7); cx.fill(); } }); }
+          // les llesques, de dalt a baix
+          if (t > 0.3) {
+            const { S, T, u, n } = g.eix, fins = (t - 0.3) / 0.6;
+            cx.lineWidth = lw * 0.8;
+            g.perfil.forEach(([tt, w], i) => {
+              if (w == null || i % 2 || (i / g.perfil.length) > fins) return;
+              const c = [S[0] + u[0] * tt * T, S[1] + u[1] * tt * T];
+              cx.strokeStyle = "rgba(90,210,255,.7)"; cx.beginPath();
+              cx.moveTo((c[0] - n[0] * w * T / 2) * k, (c[1] - n[1] * w * T / 2) * k); cx.lineTo((c[0] + n[0] * w * T / 2) * k, (c[1] + n[1] * w * T / 2) * k); cx.stroke();
+            });
+          }
+        }
+        if (t < 1) requestAnimationFrame(fes); else ok();
+      };
+      requestAnimationFrame(fes);
+    });
+  }
+
+  /* ---------- el resultat: contra la primera foto, contra fa 4 setmanes, i l'abans i el després alineat ---------- */
+  // el canvi d'una mida i si es nota: MDC95 = 1,96 · σ · √(1/n₀ + 1/n₁), amb la σ de les ràfegues. La σ té un TERRA: la
+  // que va mesurar la skill amb la càmera moguda (prova.py, 28-09), perquè tres fotos quasi idèntiques d'un segon no
+  // diuen el soroll de posar-se un altre dia davant la càmera (i amb σ = 0, qualsevol canvi «es notaria»).
+  const TERRA = { dorsal: 0.019, cintura: 0.008, maluc: 0.006, v: 0.012, braç: 0.012, avantbraç: 0.015, cuixa: 0.012, bessó: 0.013 };
+  function canvi(k, ara, abans) {
+    const a = mida(ara.mides, k), b = mida(abans.mides, k);
+    if (a == null || b == null) return null;
+    const t = TERRA[k] || 0.015;
+    const s = (Math.max(sig(ara, k) || 0, t) + Math.max(sig(abans, k) || 0, t)) / 2;
+    const rel = a / b - 1, mdc = 1.96 * s * Math.sqrt(1 / (ara.n || 1) + 1 / (abans.n || 1));
+    return { rel, mdc, nota: Math.abs(rel) > mdc };
+  }
+  // braç, avantbraç, cuixa i bessó: la mitjana de l'esquerre i el dret
+  const mida = (m, k) => (m[k] != null ? m[k] : m[k + "_e"] != null && m[k + "_d"] != null ? (m[k + "_e"] + m[k + "_d"]) / 2 : m[k + "_e"] ?? m[k + "_d"] ?? null);
+  const sig = (r, k) => (r.sigma || {})[k] ?? (r.sigma ? ((r.sigma[k + "_e"] || 0) + (r.sigma[k + "_d"] || 0)) / ((r.sigma[k + "_e"] != null) + (r.sigma[k + "_d"] != null) || 1) || null : null);
+  const pct = x => `${x >= 0 ? "+" : "−"}${Math.abs(100 * x).toFixed(1).replace(".", ",")} %`;
+  async function resultat(id) {
+    const llista = await totes(), reg = llista.find(r => r.id === id); if (!reg) return;
+    const mateixa = llista.filter(r => r.pose === reg.pose && r.quan <= reg.quan);
+    const primera = mateixa[0], fa4 = [...mateixa].reverse().find(r => r.quan <= reg.quan - 28 * DIA) || (mateixa.length > 2 ? mateixa[mateixa.length - 2] : null);
+    const files = ORDRE.map(k => {
+      if (mida(reg.mides, k) == null) return "";
+      const c1 = primera !== reg ? canvi(k, reg, primera) : null, c4 = fa4 && fa4 !== primera ? canvi(k, reg, fa4) : null;
+      if (!c1) return "";
+      const cl = !c1.nota ? "mr-igual" : MILLOR[k] * c1.rel > 0 ? "mr-millor" : "mr-canvi";
+      return `<li class="${cl}"><span>${NOMS[k]}</span><b>${pct(c1.rel)}</b><small>${c1.nota ? "Se nota" : "Igual (dentro del margen)"} · ±${(100 * c1.mdc).toFixed(1).replace(".", ",")} %${c4 ? ` · ${pct(c4.rel)} en 4 semanas` : ""}</small></li>`;
+    }).join("");
+    const dies = primera ? Math.round((reg.quan - primera.quan) / DIA) : 0;
+    const html = `<div class="mr">${primera !== reg ? `<div class="mr-cortina" id="mr-cortina"><canvas class="mr-abans"></canvas><canvas class="mr-ara"></canvas><i class="mr-tall"><b>‹ ›</b></i></div>
+      <p class="mr-cap">Contra tu primera foto, ${dies === 0 ? "de hoy" : dies === 1 ? "de ayer" : `de hace ${dies} días`}</p><ul class="mr-llista">${files}</ul>`
+      : `<div class="mr-sola"><canvas class="mr-ara"></canvas></div><p class="mr-cap">Tu punto de partida. En la próxima foto verás qué ha cambiado.</p>`}
+      <p class="mp-priv">Se compara la silueta con la misma pose, no el músculo por dentro: la luz, el pump y la postura también cuentan, y por eso cada cambio lleva su margen.</p></div>`;
+    if (typeof obreFull === "function") obreFull(html, POSES[reg.pose].nom);
+    pintaCortina(reg, primera !== reg ? primera : null);
+    pintaMirall();
+  }
+  async function bitmap(reg) { return createImageBitmap(reg.foto); }
+  // l'abans, girat, escalat i mogut perquè les espatlles i els malucs caiguin on són avui
+  async function pintaCortina(ara, abans) {
+    const c1 = document.querySelector(".mr-ara"), c0 = document.querySelector(".mr-abans"); if (!c1) return;
+    const [W, H] = ara.mida; c1.width = W; c1.height = H;
+    c1.getContext("2d").drawImage(await bitmap(ara), 0, 0);
+    if (!abans || !c0) return;
+    c0.width = W; c0.height = H;
+    const x = c0.getContext("2d"), a = ara.eix, b = abans.eix, ka = ara.escala || 1, kb = abans.escala || 1;
+    const s = (a.T * ka) / (b.T * kb), r = Math.atan2(a.u[0], a.u[1]) - Math.atan2(b.u[0], b.u[1]);
+    x.translate(a.S[0] * ka, a.S[1] * ka); x.rotate(-r); x.scale(s, s); x.translate(-b.S[0] * kb, -b.S[1] * kb);
+    x.drawImage(await bitmap(abans), 0, 0);
+    const cort = document.getElementById("mr-cortina"), tall = cort.querySelector(".mr-tall");
+    const posa = f => { cort.style.setProperty("--f", (Math.max(0.03, Math.min(0.97, f)) * 100).toFixed(1) + "%"); };
+    posa(0.5);
+    let dit = null;
+    cort.addEventListener("pointerdown", ev => { dit = ev.pointerId; cort.setPointerCapture(dit); const r0 = cort.getBoundingClientRect(); posa((ev.clientX - r0.left) / r0.width); });
+    cort.addEventListener("pointermove", ev => { if (dit !== ev.pointerId) return; const r0 = cort.getBoundingClientRect(); posa((ev.clientX - r0.left) / r0.width); });
+    cort.addEventListener("pointerup", () => { dit = null; });
+    tall.setAttribute("aria-hidden", "true");
+  }
+
+  /* ---------- els gestos ---------- */
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-mirall]"); if (!b) return;
+    ev.preventDefault();
+    const que = b.dataset.mirall;
+    if (que === "prova") { try { localStorage.setItem(PROVA, "1"); } catch (e) {} const el = document.getElementById("mp-mirall"); if (el) el.innerHTML = `<p class="mp-carrega">Abriendo tu espejo…</p>`; pintaMirall(); }
+    else if (que === "nova") obre(b.dataset.pose || "A");
+    else if (que === "tanca") tanca();
+    else if (que === "tanca-proc") { const d = document.getElementById("mirall-proc"); if (d) d.remove(); }
+    else if (que === "veure") resultat(b.dataset.id);
+  });
+
+  const CSS = `
+.mp{display:flex;flex-direction:column;gap:14px;margin:0 -12px;padding:10px 16px 20px;color:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
+.mp-cap h1{margin:4px 0 0;font-size:26px;font-weight:900;font-family:inherit;color:var(--fb-tinta)}
+.mp-elo{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:22px;border:0;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-tinta);text-align:left;font:inherit}
+.mp-elo-n{font-size:40px;font-weight:900;line-height:1;color:var(--c,var(--fb-tinta));font-variant-numeric:tabular-nums}
+.mp-elo b{display:block;font-size:17px;font-weight:900}.mp-elo small{display:block;color:var(--fb-suau);font-weight:700;font-size:13px}
+.mp-mirall{border-radius:24px;background:var(--fb-sup);box-shadow:var(--fb-o2);overflow:hidden}
+.mp-drap{display:grid;justify-items:center;gap:8px;padding:22px 20px 18px;text-align:center;background:var(--fb-maestro);color:var(--fb-maestro-tinta)}
+.mp-drap b{font-size:20px;font-weight:900}.mp-drap p{margin:0;font-size:14px;line-height:1.4;opacity:.8;max-width:30ch}
+.mp-segell{width:62px;height:62px}
+.mp-boto{height:48px;padding:0 20px;border-radius:999px;border:0;background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);font:800 16px 'Nunito',system-ui,sans-serif;box-shadow:var(--fb-o-accio)}
+.mp-boto:disabled{opacity:.45;box-shadow:none}
+.mp-link{border:0;background:none;color:inherit;font:800 14px 'Nunito',system-ui,sans-serif;text-decoration:underline;opacity:.85;padding:6px}
+.mp-carrega{padding:22px;margin:0;color:var(--fb-suau);font-weight:700}
+.mp-obert{display:grid;gap:12px;padding:16px}
+.mp-obert-cap b{display:block;font-size:20px;font-weight:900}.mp-obert-cap small{color:var(--fb-suau);font-weight:700}
+.mp-polzes{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.mp-polze{flex:none;width:64px;height:96px;border-radius:14px;border:0;padding:0;overflow:hidden;background:var(--fb-enfonsat)}
+.mp-polze img{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.mp-primera{margin:0;color:var(--fb-suau);font-weight:700;font-size:14px}
+.mp-poses{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mp-priv{margin:0;font-size:12.5px;color:var(--fb-suau);line-height:1.4}
+.mp-stats{display:flex;justify-content:space-between;align-items:center;padding:16px;border-radius:18px;border:0;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-tinta);font:800 16px 'Nunito',system-ui,sans-serif}
+/* el fotomatón i la càrrega, a pantalla completa i foscos (la càmera mana) */
+.mc{position:fixed;inset:0;z-index:70;background:#05080b;color:#fff;font-family:'Nunito',system-ui,sans-serif;overflow:hidden}
+.mc-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.mc-sil{position:absolute;left:50%;top:52%;height:70%;aspect-ratio:656/1000;transform:translate(-50%,-50%);background:#fff;opacity:.9;
+  -webkit-mask:var(--sil) center/contain no-repeat;mask:var(--sil) center/contain no-repeat;transition:background .25s}
+.mc.encaixa .mc-sil{background:#4ade80}
+.mc-dalt{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(#000a,#0000)}
+.mc-dalt b{font-size:17px;font-weight:900}
+.mc-tanca{width:40px;height:40px;border-radius:50%;border:0;background:#fff2;color:#fff;font-size:18px}
+.mc-msg{position:absolute;left:16px;right:16px;bottom:calc(28px + env(safe-area-inset-bottom));margin:0;padding:12px 16px;border-radius:16px;background:#000b;text-align:center;font-weight:800;font-size:17px}
+.mc-compte{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:120px;font-weight:900;text-shadow:0 6px 30px #000a}
+.mc-compte.pica{animation:mc-pica .8s cubic-bezier(.2,.9,.3,1)}
+@keyframes mc-pica{0%{transform:translate(-50%,-50%) scale(1.5);opacity:0}25%{opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:.85}}
+.mc-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.mc-flash.fa{animation:mc-flash .28s ease-out}
+@keyframes mc-flash{0%{opacity:.85}100%{opacity:0}}
+.mproc{display:flex;flex-direction:column;align-items:center;gap:14px;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom))}
+.mp-escena{position:relative;height:62vh;max-width:100%;border-radius:22px;overflow:hidden}
+.mp-foto,.mp-capa{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.mp-foto{filter:saturate(.6) brightness(.8)}
+.mp-escaner{position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,transparent,#5ad2ff,transparent);box-shadow:0 0 18px 4px rgb(90 210 255 / .6);animation:mp-escaneja 1.2s ease-in-out infinite alternate}
+@keyframes mp-escaneja{from{top:0}to{top:calc(100% - 3px)}}
+.mproc .mc-msg{position:static;background:none;padding:0}
+.mp-passos{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-weight:800;color:#fff8}
+.mp-passos li::before{content:"";display:inline-block;width:10px;height:10px;margin-right:10px;border-radius:50%;border:2px solid currentColor;vertical-align:-1px}
+.mp-passos li.ara{color:#fff}.mp-passos li.fet{color:#4ade80}.mp-passos li.fet::before{background:currentColor}
+/* el resultat */
+.mr{display:grid;gap:12px}
+.mr-cortina,.mr-sola{position:relative;--f:50%;width:min(100%,calc(58vh * 9 / 16));aspect-ratio:9/16;justify-self:center;border-radius:18px;overflow:hidden;touch-action:none;background:#000}
+.mr-cortina canvas,.mr-sola canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.mr-ara{clip-path:inset(0 0 0 var(--f))}
+.mr-sola .mr-ara{clip-path:none}
+.mr-tall{position:absolute;top:0;bottom:0;left:var(--f);width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 10px #0008}
+.mr-tall b{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#fff;color:#111;font-size:14px;font-weight:900}
+.mr-cap{margin:0;font-weight:800}
+.mr-llista{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.mr-llista li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 14px;border-radius:16px;background:var(--fb-enfonsat,#222)}
+.mr-llista li span{font-weight:900}.mr-llista li b{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+.mr-llista li small{grid-column:1 / -1;color:var(--fb-suau,#aaa);font-weight:700}
+.mr-llista li.mr-millor b{color:#2f9e5b}.mr-llista li.mr-canvi b{color:var(--fb-tinta,#fff)}.mr-llista li.mr-igual b{color:var(--fb-suau,#aaa)}
+@media (prefers-reduced-motion:reduce){.mp-escaner{animation:none;top:50%}.mc-compte.pica,.mc-flash.fa{animation:none}}`;
+  function estil() { if (document.getElementById("estil-mirall")) return; const s = document.createElement("style"); s.id = "estil-mirall"; s.textContent = CSS; document.head.appendChild(s); }
+  estil();
+  return { vista, pintaMirall, motor, totes, canvi, mida, MAX_SETMANA };
 })();
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
