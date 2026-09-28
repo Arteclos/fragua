@@ -2282,6 +2282,8 @@ const Efectos = (() => {
 
   // Una espurna: posició, velocitat, vida, mida i color (del groc de la flama al vermell de la brasa).
   function lanza(x, y, n, fuerza = 1, hacia = -1) {
+    // les versions netes de la Beta (neta i marró) no porten les espurnes de foc de l'estil de sempre (src/versions.js)
+    if (document.body.classList.contains("sense-espurnes")) return;
     prepara();
     n = poco ? Math.ceil(n / 4) : n;
     for (let i = 0; i < n; i++) {
@@ -6936,6 +6938,11 @@ body.te-barra.descansant #barra-nova{display:none}
   background:radial-gradient(ellipse,var(--fb-brasa-glow),transparent 70%)}
 body.v-neta{--fb-ped-1:#ffffff;--fb-ped-2:#e8f0f6;--fb-ped-3:#cfdde8;--fb-ped-vora:#ffffff;--fb-ped-ombra:0 6px 8px rgb(38 84 122 / .28)}
 body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-vora:#d29a5e;--fb-ped-ombra:0 6px 10px rgb(0 0 0 / .6)}
+.bv-enclusa{position:absolute;left:4px;bottom:39px;width:96px;height:96px;pointer-events:none}
+.bo-enclusa{position:absolute;left:50%;bottom:48px;width:76px;height:76px;margin-left:-38px;pointer-events:none;filter:drop-shadow(0 4px 6px rgb(0 0 0 / .55));transform-origin:50% 100%}
+.bo-enclusa.pica{animation:bo-pica .5s cubic-bezier(.2,.9,.3,1)}
+@keyframes bo-pica{0%{transform:scale(1)}18%{transform:scale(1.08,.86)}45%{transform:scale(.96,1.06)}70%{transform:scale(1.02,.98)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bo-enclusa.pica{animation:none}}
 .vers-opc{display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;padding:14px;border-radius:14px;border:1.5px solid rgb(255 255 255 / .12);background:rgb(255 255 255 / .04);color:inherit;text-align:left;font:inherit;cursor:pointer}
 .vers-opc[aria-checked="true"]{border-color:#ffb55e;background:rgb(255 181 94 / .12)}
 .vers-opc b{display:block;font-size:16px}.vers-opc small{display:block;opacity:.75;margin-top:2px}`;
@@ -6959,14 +6966,60 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     // a la Beta, Progreso és l'espai nou (src/mirall.js: l'ELO i el mirall); les estadístiques de sempre hi són a dins
     const tab = ([lloc, v, nom]) => `<button class="bv-tab" data-lloc="${lloc}" data-accion="vista" data-v="${lloc === "progreso" ? "progreso" : v}" aria-label="${nom}"><span class="bv-ic">${IC[lloc]}</span><span class="bv-nom">${nom}</span></button>`;
     return `<div class="bv-barra">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
-      + `<button class="bv-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bv-brasa"></span><span class="bv-plint">${PEDESTAL}</span></button>`;
+      + `<button class="bv-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bv-brasa"></span><span class="bv-plint">${PEDESTAL}</span><canvas class="bv-enclusa" aria-hidden="true"></canvas></button>`;
   }
   function muntaOriginal() {
     const tab = ([lloc, v, nom, ic]) => `<button class="bo-tab" data-lloc="${lloc}" data-accion="vista" data-v="${v}" aria-label="${nom}"><img src="${A()}icones/${ic}.webp" alt="">${nom}</button>`;
     return `<div class="bo-barra marc">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
-      + `<button class="bo-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bo-brasa"></span><span class="bo-plint"></span></button>`;
+      + `<button class="bo-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bo-brasa"></span><span class="bo-plint"></span>${enclusaPintada()}</button>`;
   }
   const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector };
+  // L'ENCLUSA de l'estil original: la pintada de la teva divisió (la mateixa de sempre), sobre el pedestal de bronze
+  function enclusaPintada() {
+    let y = { id: "madera" };
+    try { if (typeof yunqueDe === "function" && typeof soc === "function") y = yunqueDe((soc().yo || {}).poder); } catch (e) {}
+    return `<img class="bo-enclusa" src="${A()}yunques/${y.id}.webp" alt="" draggable="false">`;
+  }
+  /* L'ENCLUSA DE RIVE (neta i marró), a BETA-1.0/actius/enclusa: la màquina d'estats «enclusa» amb «calenta» (bool) i
+     «cop» (trigger). El motor de Rive (canvas-lite, MIT) es baixa després del primer pintat. Calenta si has entrenat les
+     últimes 48 hores o tens un entreno en marxa: «la calor de l'enclusa diu com està la setmana» (ARQUITECTURA §11). */
+  let riveP = null, enclusa = null;
+  function motorRive() {
+    if (riveP) return riveP;
+    riveP = new Promise((ok, ko) => {
+      if (window.rive) return ok(window.rive);
+      const sc = document.createElement("script"); sc.src = A() + "lib/rive/rive.js";
+      sc.onload = () => { try { window.rive.RuntimeLoader.setWasmUrl(new URL(A() + "lib/rive/rive.wasm", location.href).href); } catch (e) {} ok(window.rive); };
+      sc.onerror = ko; document.head.appendChild(sc);
+    });
+    riveP.catch(() => { riveP = null; });
+    return riveP;
+  }
+  const calenta = () => {
+    try { return !!(typeof activa === "function" && activa()) || S.ses.some(x => x.fin && x.fin > Date.now() - 2 * 864e5); } catch (e) { return false; }
+  };
+  async function posaEnclusa() {
+    const cv = document.querySelector("#barra-nova .bv-enclusa");
+    if (!cv || cv.dataset.fet) return;
+    cv.dataset.fet = "1";
+    try {
+      const R = await motorRive();
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr);
+      const quiet = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const r = new R.Rive({ src: A() + `beta/enclusa-${actual}.riv`, canvas: cv, stateMachines: "enclusa", autoplay: !quiet,
+        onLoad: () => {
+          try { r.resizeDrawingSurfaceToCanvas(); } catch (e) {}
+          const ins = r.stateMachineInputs("enclusa") || [];
+          enclusa = { r, calenta: ins.find(i => i.name === "calenta"), cop: ins.find(i => i.name === "cop") };
+          if (enclusa.calenta) enclusa.calenta.value = calenta();
+          if (quiet) { try { r.drawFrame && r.drawFrame(); } catch (e) {} }
+        } });
+    } catch (e) { cv.remove(); }
+  }
+  // el cop del martell: l'enclusa s'aixafa, fa el flaix i les espurnes (el so el posa qui el crida)
+  function cop() { if (enclusa && enclusa.cop) { try { enclusa.cop.fire(); } catch (e) {} } }
+  function actualitzaCalor() { if (enclusa && enclusa.calenta) enclusa.calenta.value = calenta(); }
   function aplica() {
     estil();
     document.querySelectorAll("#barra-nova").forEach(n => n.remove());
@@ -6976,6 +7029,7 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     LLISTA.forEach(v => document.body.classList.remove("v-" + v.id));
     document.body.classList.add("v-" + actual);
     document.body.classList.toggle("te-barra", teBarra());
+    document.body.classList.toggle("sense-espurnes", AMB_FORJA.includes(actual));
     if (!teBarra() || !BARRES[actual]) return;
     const nav = document.createElement("nav"); nav.id = "barra-nova"; nav.setAttribute("aria-label", "Principal");
     nav.innerHTML = BARRES[actual]();
@@ -6990,6 +7044,7 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     document.body.classList.toggle("bt-actiu", forja || prog);
     document.body.classList.toggle("sense-ambient", forja || prog);
     if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
+    if (BARRES[actual] === muntaVector) { setTimeout(posaEnclusa, 60); actualitzaCalor(); }
     if (prog && typeof Mirall === "object") Mirall.pintaMirall();
     if (!forja && !prog && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
@@ -7015,7 +7070,16 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     }
     // tocar la pestanya on ja ets: tornar a dalt, sense tornar a pintar (l'Adrià: pujar amb el dit «és un pal»)
     const actiu = ev.target.closest("#barra-nova .on");
-    if (actiu) { ev.preventDefault(); ev.stopPropagation(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (actiu) {
+      ev.preventDefault(); ev.stopPropagation(); window.scrollTo({ top: 0, behavior: "smooth" });
+      if (actiu.dataset.lloc === "forja") {
+        cop();
+        try { const so = new Audio(A() + "sons/klonk.mp3"); so.volume = 0.9; so.play().catch(() => {}); } catch (e) {}
+        try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
+        const pe = document.querySelector("#barra-nova .bo-enclusa"); if (pe) { pe.classList.remove("pica"); void pe.offsetWidth; pe.classList.add("pica"); }
+      }
+      return;
+    }
     // tres tocs ràpids al logo obren el selector
     if (ev.target.closest('img[src$="logo.webp"], .fb-logo')) {
       const t = Date.now(); tocs = tocs.filter(x => t - x < 1000); tocs.push(t);
@@ -7030,7 +7094,7 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     if (v === "progreso" && typeof Mirall === "object") return () => Mirall.vista();
     return null;
   }
-  return { despresRender, vista, actual: () => actual };
+  return { despresRender, vista, actual: () => actual, cop };
 })();
 
 /* LA FORJA DE LA BETA 1.0 (28-09-2026): la pantalla principal de les versions d'estil (src/versions.js).
@@ -7341,6 +7405,7 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
     ev.stopPropagation(); ev.preventDefault(); b.dataset.picat = "1";
     try { const s = new Audio(A() + "sons/klonk.mp3"); s.volume = .9; s.play().catch(() => {}); } catch (e) {}
     try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
+    try { if (typeof Versions === "object" && Versions.cop) Versions.cop(); } catch (e) {}
     const c = b.closest(".fb-carta"); if (c) c.classList.add("colp");
     setTimeout(() => b.click(), 380);
   }, true);

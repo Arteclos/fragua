@@ -1,0 +1,2 @@
+@rive-app/canvas-lite 2.43.1 (rive.js, rive.wasm): MIT License, Rive Inc.
+https://github.com/rive-app/rive-wasm
