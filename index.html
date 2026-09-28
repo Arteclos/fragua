@@ -482,7 +482,8 @@ button.fd-r{cursor:pointer}
 .mapa-caixa{--x:8px;padding:3px}
 #mapa{position:relative;z-index:1;height:min(58vh,440px);border-radius:6px;background:#1b1918}
 .leaflet-bar a{background:#1b1918!important;color:#ffd27a!important;border-color:#5b4a3e!important}
-.mapa-fosc{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) sepia(.25) saturate(.9)}
+/* el mapa de la forja: fosc i càlid, però no trist (l'Albert, 28-09: «es veu trist o fosc») */
+.mapa-fosc{filter:invert(1) hue-rotate(180deg) brightness(1.08) contrast(.92) sepia(.32) saturate(1.15)}
 .gim-pin img{width:34px;height:34px;border-radius:50%;background:#1b1918;border:2px solid #e0892c;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.6)}
 .leaflet-container{font-family:var(--text)}
 .leaflet-control-attribution{background:rgba(20,17,15,.85)!important;color:var(--fum)!important;font-size:10px}
@@ -6872,6 +6873,8 @@ const Versions = (() => {
   ];
   // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
   const AMB_FORJA = ["neta", "marro"];
+  // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
+  const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda"];
   const CLAU = "klonk-versio";
   let actual = "actual";
   try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
@@ -6943,6 +6946,12 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
 .bo-enclusa.pica{animation:bo-pica .5s cubic-bezier(.2,.9,.3,1)}
 @keyframes bo-pica{0%{transform:scale(1)}18%{transform:scale(1.08,.86)}45%{transform:scale(.96,1.06)}70%{transform:scale(1.02,.98)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.bo-enclusa.pica{animation:none}}
+/* EL MAPA DELS GIMNASOS a cada versió (l'Albert, 28-09: «es veu trist o fosc»): la neta, el mapa clar de sempre amb el
+   color una mica suau; la marró, fosc i càlid però lluminós. Els pins, amb la pell de la versió. */
+body.v-neta .mapa-fosc{filter:saturate(.8) brightness(1.03) contrast(.97)}
+body.v-marro .mapa-fosc{filter:invert(1) hue-rotate(180deg) brightness(1.12) contrast(.9) sepia(.45) saturate(1.2)}
+body.v-neta .gim-pin img,body.v-neta .gim-pin-rang img{background:#fff;border-color:var(--fb-accio);box-shadow:0 4px 10px -3px rgb(38 84 122 / .5)}
+body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;border-color:var(--fb-accio);box-shadow:0 4px 12px -3px rgb(0 0 0 / .7)}
 .vers-opc{display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;padding:14px;border-radius:14px;border:1.5px solid rgb(255 255 255 / .12);background:rgb(255 255 255 / .04);color:inherit;text-align:left;font:inherit;cursor:pointer}
 .vers-opc[aria-checked="true"]{border-color:#ffb55e;background:rgb(255 181 94 / .12)}
 .vers-opc b{display:block;font-size:16px}.vers-opc small{display:block;opacity:.75;margin-top:2px}`;
@@ -7028,7 +7037,7 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     estil();
     document.querySelectorAll("#barra-nova").forEach(n => n.remove());
     // el que la versió d'abans hagués deixat posat (si no, en tornar a «la de sempre» quedaria el fons de la Forja)
-    document.body.classList.remove("fb-actiu", "bt-actiu", "sense-ambient", "bb-entrada");
+    document.body.classList.remove("fb-actiu", "bt-actiu", "bt-entreno", "bt-pell", "sense-ambient", "bb-entrada");
     if (typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     LLISTA.forEach(v => document.body.classList.remove("v-" + v.id));
     document.body.classList.add("v-" + actual);
@@ -7044,13 +7053,18 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
     if (!teBarra()) return;
     document.body.classList.toggle("bb-entrada", ["compte", "eleccion", "datos"].includes(vista));
     const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && vista === "progreso";
+    const entr = AMB_FORJA.includes(actual) && vista === "entreno";
+    // LA PELL DE LA BETA a les pantalles de sempre, NOMÉS a les que ja s'han revisat una per una (l'Albert: «pam a pam»)
+    const pell = AMB_FORJA.includes(actual) && PELL.includes(vista);
+    document.body.classList.toggle("bt-pell", pell);
     document.body.classList.toggle("fb-actiu", forja);
-    document.body.classList.toggle("bt-actiu", forja || prog);
-    document.body.classList.toggle("sense-ambient", forja || prog);
+    document.body.classList.toggle("bt-entreno", entr);
+    document.body.classList.toggle("bt-actiu", forja || prog || pell);
+    document.body.classList.toggle("sense-ambient", forja || prog || pell);
     if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
     if (BARRES[actual] === muntaVector) { setTimeout(posaEnclusa, 60); actualitzaCalor(); }
     if (prog && typeof Mirall === "object") Mirall.pintaMirall();
-    if (!forja && !prog && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
+    if (!forja && !prog && !pell && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
     document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
@@ -7291,14 +7305,65 @@ body.bt-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta
 @keyframes fb-respira{0%,100%{opacity:.6}50%{opacity:1}}
 @keyframes fb-colp{0%{scale:1}30%{scale:1.04 .95;filter:brightness(1.3)}100%{scale:1}}
 @media (prefers-reduced-motion:reduce){.fb-carta,.fb-carta .fb-boto{transition:none}.fb-carta.davant::before,.fb-carta.colp{animation:none}}
+/* LA PELL DE LA BETA PER A LES PANTALLES DE SEMPRE (body.bt-pell; src/versions.js l'encén pantalla a pantalla, un cop
+   revisada amb captures: «pam a pam») i L'ENTRENO DE LA BETA (28-09): la mateixa pantalla i la mateixa lògica (app.js, vistaEntreno), amb la pell de la versió.
+   Les variables de l'app (--crema, --fum, --panell, --bronze, les lletres) es tornen les de la Beta, i els marcs de bronze
+   amb el xamfrà es tornen targetes arrodonides. A la neta, sense el personatge («neta, sense personatges»). */
+body.bt-pell{--crema:var(--fb-tinta);--fum:var(--fb-suau);--fum-2:var(--fb-suau);--bronze-fil:var(--fb-linia);--flama:var(--fb-accio);
+  --display:'Nunito',system-ui,sans-serif;--text:'Nunito',system-ui,sans-serif;color:var(--fb-tinta)}
+body.bt-pell #vista .panel,body.bt-pell #vista .marc,body.bt-pell .descans .caixa{clip-path:none;background:var(--fb-sup);border-radius:22px;box-shadow:var(--fb-o1)}
+body.bt-pell #vista .panel::before,body.bt-pell #vista .marc::before,body.bt-pell .descans .caixa::before{display:none}
+body.bt-entreno #vista .exercici{padding:14px}
+body.bt-pell .or{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--fb-accio-text);filter:none}
+body.bt-pell .titol-pag{color:var(--fb-tinta);text-align:left;font-size:26px;margin:4px 0 14px}
+body.bt-pell .chip,body.bt-pell .chip-r span{border:1px solid var(--fb-linia);background:var(--fb-sup);color:var(--fb-tinta);box-shadow:var(--fb-o1)}
+body.bt-pell .chip[aria-pressed="true"],body.bt-pell .chip-r input:checked+span{border-color:transparent;background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta)}
+body.bt-pell .apat-cap[aria-expanded="true"]{background:var(--fb-enfonsat)}
+body.bt-pell .apat-cap svg{color:var(--fb-accio-text)}
+body.bt-pell #vista .btn.clar,body.bt-pell #vista .btn.clar.marc{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);box-shadow:var(--fb-o-accio)}
+/* els textos clars pensats per a fons fosc: a la pell de la Beta, amb el color de la versió */
+body.bt-pell .nv-req,body.bt-pell .toca{border-color:var(--fb-accio);color:var(--fb-accio-text);font-family:inherit}
+body.bt-pell .nv-req.falta-nv{border-color:var(--fb-linia);color:var(--fb-suau)}
+body.bt-pell .preu{color:var(--fb-accio-text);font-family:inherit}
+body.bt-pell .preu-c{background:var(--fb-sup);border-color:var(--fb-accio)}
+body.bt-pell svg text[fill="#f6e3b8"]{fill:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
+/* a la neta, sense personatges: el panell que el porta passa a una sola columna */
+body.v-neta.bt-pell .personatge{display:none}
+body.v-neta.bt-pell .panel.macros,body.v-neta.bt-pell .sessio-cap{grid-template-columns:1fr !important;display:block}
+body.v-neta.bt-entreno .sessio-cap .personatge{display:none}
+body.v-neta.bt-entreno .sessio-cap{grid-template-columns:1fr}
+body.bt-pell #vista *{text-shadow:none}
+body.bt-pell .prog{border:0;background:var(--fb-enfonsat);color:var(--fb-accio-text);box-shadow:none;font-family:inherit;font-weight:800}
+body.bt-pell .prog.baja{color:#3b7fb8}
+body.bt-entreno .sessio-cap .dia-n{font-size:24px;color:var(--fb-accio-text)}
+body.bt-pell .barra{height:10px;background:var(--fb-enfonsat);box-shadow:none}
+body.bt-pell .barra i{background:var(--fb-accio-grad,var(--fb-accio))}
+body.bt-entreno .objectiu{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta);font-weight:800}
+body.bt-entreno .ej-foto img{border-radius:14px}
+body.bt-entreno .serie .i{clip-path:none;width:30px;height:30px;border-radius:50%;background:var(--fb-enfonsat);color:var(--fb-accio-text);font-family:inherit;font-weight:900}
+body.bt-pell .camp input{border:0;border-radius:14px;background:var(--fb-enfonsat);color:var(--fb-tinta);font-family:inherit;font-weight:800}
+body.bt-entreno .serie.feta input{box-shadow:inset 0 0 0 2px var(--fb-accio)}
+body.bt-entreno .xec{border:0;border-radius:50%;background:var(--fb-enfonsat);color:var(--fb-suau);transition:transform .12s,background .2s}
+body.bt-entreno .xec:active{transform:scale(.9)}
+body.bt-entreno .xec[aria-pressed="true"]{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta);box-shadow:var(--fb-o-accio)}
+body.bt-pell #vista .btn,body.bt-pell #vista .btn.marc{clip-path:none;border-radius:999px;background:var(--fb-enfonsat);color:var(--fb-tinta);box-shadow:none;font-weight:800}
+body.bt-pell #vista .btn::before{display:none}
+body.bt-pell .chip,body.bt-pell .enllac{font-family:inherit}
+body.bt-entreno .descans .accions button{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta)}
+body.bt-entreno #descans .accions button.desc-fi{background:var(--fb-accio-grad,var(--fb-accio));color:var(--fb-accio-tinta)}
+body.bt-entreno .descans .temps{color:var(--fb-tinta)}
+body.bt-entreno .grup-cap{color:var(--fb-tinta)}
+/* el logo de dalt: el pla de la Beta en lloc del pintat (i els tres tocs hi continuen funcionant) */
+body.v-neta.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-fosc.webp);height:auto;max-height:24px;width:auto}
+body.v-marro.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-clar.webp);height:auto;max-height:24px;width:auto}
 /* ELS ESTILS: només colors, ombres i fons (calmats) */
 body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-1:#e5eff6;--fb-logo:fosc;--fb-tinta:#1f2f38;--fb-suau:#5d6f79;--fb-sup:#ffffff;--fb-enfonsat:#e3ecf3;
   --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
-  --fb-accio:#e8672a;--fb-accio-grad:linear-gradient(180deg,#f47d3a,#d9531c);--fb-accio-tinta:#fff;--fb-accio-text:#c9521c;--fb-o-accio:0 8px 16px -8px rgb(217 83 28 / .7);
+  --fb-linia:rgb(38 84 122 / .16);--fb-accio:#e8672a;--fb-accio-grad:linear-gradient(180deg,#f47d3a,#d9531c);--fb-accio-tinta:#fff;--fb-accio-text:#c9521c;--fb-o-accio:0 8px 16px -8px rgb(217 83 28 / .7);
   --fb-or:#f3b53c;--fb-or-tinta:#3a2604;--fb-brasa-1:#ffb15a;--fb-brasa-2:#ef6b24;--fb-brasa-glow:rgb(239 107 36 / .45);--fb-maestro:linear-gradient(160deg,#2f3a44,#1c242b);--fb-maestro-tinta:#f3ede4}
 body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons-1:#16110d;--fb-logo:clar;--fb-tinta:#f4ece3;--fb-suau:#bdaea0;--fb-sup:#262019;--fb-enfonsat:#0f0c0a;
   --fb-o1:0 4px 12px -5px rgb(0 0 0 / .6),inset 0 1px 0 rgb(255 214 170 / .08);--fb-o2:0 16px 32px -14px rgb(0 0 0 / .75),inset 0 1px 0 rgb(255 214 170 / .1);
-  --fb-accio:#d29a5e;--fb-accio-grad:linear-gradient(180deg,#e0ae74,#c18a50);--fb-accio-tinta:#2a1a0c;--fb-accio-text:#f0bd80;--fb-o-accio:0 10px 18px -10px rgb(58 32 10 / .9);
+  --fb-linia:rgb(255 214 170 / .14);--fb-accio:#d29a5e;--fb-accio-grad:linear-gradient(180deg,#e0ae74,#c18a50);--fb-accio-tinta:#2a1a0c;--fb-accio-text:#f0bd80;--fb-o-accio:0 10px 18px -10px rgb(58 32 10 / .9);
   --fb-or:#f0bd80;--fb-or-tinta:#2a1a0c;--fb-brasa-1:#ffb15a;--fb-brasa-2:#d86a24;--fb-brasa-glow:rgb(230 120 40 / .4);--fb-maestro:linear-gradient(160deg,#3a2c20,#1c1510);--fb-maestro-tinta:#f4ece3;
   --fb-il-filtre:saturate(.8)}`;
   // la lletra de les versions Beta: Nunito (SIL Open Font License), el tall llatí i prou, servida des de l'app
