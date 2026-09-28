@@ -8268,9 +8268,8 @@ const Nit = (() => {
     const pc = Math.min(1, xp.enNivel / Math.max(1, xp.paraSubir)), kg = v => (typeof fmt === "function" ? fmt(v) : String(v));
     return `<section class="nt-tu">
       <div class="nt-tu-dalt">
-        <div class="nt-tu-pj" data-in="tu"><i class="nt-tu-raigs"></i><i class="nt-tu-llum"></i><i class="nt-tu-anella"></i><img src="${R()}urba.webp" alt="Tu personaje" draggable="false"></div>
         <div class="nt-tu-dreta">
-          <div class="nt-tu-fitxa" data-in="tu"><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
+          <div class="nt-tu-fitxa" data-in="tu"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
             <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
           <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(e.divisio.nom) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
@@ -8814,7 +8813,8 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-rt-op span small{display:block;font-size:12px;font-weight:700;color:#8b98a4;line-height:1.25}
 /* TÚ (referencies/nx-tu) */
 .nt-tu{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
-.nt-tu-dalt{display:grid;grid-template-columns:44% 1fr;gap:10px;align-items:stretch}
+/* sense el personatge gran (l'Albert, 28-09: «el personatge no s'ha de veure, m'agrada molt més així»): la cara petita al costat del nom */
+.nt-tu-dalt{display:grid;gap:10px}
 .nt-tu-pj{position:relative;min-height:340px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 60% at 50% 40%,#2a2350 0%,#171a33 55%,#10131f 100%);box-shadow:var(--fb-o2),0 0 0 1px rgb(168 155 224 / .25)}
 .nt-tu-raigs{position:absolute;inset:0;background:conic-gradient(from 200deg at 50% 45%,transparent 0 8%,rgb(168 155 224 / .12) 10%,transparent 14% 30%,rgb(168 155 224 / .1) 33%,transparent 37% 60%,rgb(134 217 198 / .08) 63%,transparent 67%);animation:nt-tu-gira 28s linear infinite}
 @keyframes nt-tu-gira{to{transform:rotate(360deg)}}
@@ -8823,9 +8823,10 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 @keyframes nt-tu-anella{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
 .nt-tu-pj img{position:absolute;left:50%;bottom:6%;height:90%;width:auto;transform:translateX(-50%);filter:drop-shadow(0 12px 16px rgb(0 0 0 / .6))}
 .nt-tu-dreta{display:grid;gap:10px;align-content:start;min-width:0}
-.nt-tu-fitxa{display:grid;grid-template-columns:1fr auto;gap:6px 8px;align-items:center;padding:12px;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-fitxa{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;padding:14px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-av{grid-row:span 2;width:62px;height:62px;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:0 0 0 2px rgb(168 155 224 / .6),0 0 0 5px rgb(168 155 224 / .1)}
 .nt-tu-nom-l{display:grid;min-width:0}
-.nt-tu-nom{font-size:20px;font-weight:900;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:var(--nt-text-o)}
+.nt-tu-nom{font-size:23px;font-weight:900;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:var(--nt-text-o)}
 .nt-tu-nv{font-size:12.5px;font-weight:900;color:var(--nt-lila)}
 .nt-tu-anell{position:relative;display:grid;place-items:center;width:62px;height:62px;grid-row:span 2}
 .nt-tu-anell svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
@@ -8833,9 +8834,9 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-tu-a-p{fill:none;stroke:url(#nt-tu-g);stroke-width:6;stroke-linecap:round;stroke-dasharray:188.5;filter:drop-shadow(0 0 4px rgb(134 217 198 / .5))}
 .nt-tu-anell span{position:relative;display:grid;justify-items:center;line-height:1}
 .nt-tu-anell small{font-size:7.5px;font-weight:900;color:var(--nt-suau);letter-spacing:.06em}.nt-tu-anell b{font-size:19px;font-weight:900}
-.nt-tu-barra{grid-column:1;height:7px;border-radius:99px;background:#10171e;overflow:hidden}
+.nt-tu-barra{grid-column:2;height:7px;border-radius:99px;background:#10171e;overflow:hidden}
 .nt-tu-barra i{display:block;height:100%;width:var(--p);border-radius:99px;background:linear-gradient(90deg,var(--nt-lila),var(--nt-menta));box-shadow:0 0 10px -2px var(--nt-menta-glow)}
-.nt-tu-xp{grid-column:1 / -1;font-size:11px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-xp{grid-column:2 / -1;font-size:11px;font-weight:800;color:var(--nt-suau)}
 .nt-tu-rang{display:grid;gap:4px;width:100%;padding:10px 12px;border:0;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .12s}
 .nt-tu-rang:active{transform:scale(.97)}
 .nt-tu-rang > small{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
@@ -8878,7 +8879,7 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-editapj{display:grid;justify-items:center;gap:10px;text-align:center}
 .nt-editapj img{height:260px;width:auto;filter:drop-shadow(0 12px 16px rgb(0 0 0 / .6))}
 .nt-editapj p{margin:0;font-size:15px;font-weight:700;color:var(--nt-suau);line-height:1.4}
-@media (max-width:360px){.nt-tu-dalt{grid-template-columns:1fr}.nt-tu-pj{min-height:300px}}
+
 @media (prefers-reduced-motion:reduce){.nt-tu-raigs,.nt-tu-anella,.nt-sigma.gran{animation:none}}
 .nt-boto2{height:48px;border:0;border-radius:999px;font:900 16px/1 'Nunito',system-ui,sans-serif;color:var(--nt-tinta);cursor:pointer;
   background:linear-gradient(180deg,#232d38,#1a222b);box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(255 255 255 / .07),0 10px 20px -12px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o);transition:transform .1s}
