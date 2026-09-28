@@ -6868,11 +6868,12 @@ const Versions = (() => {
   const LLISTA = [
     { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
     { id: "original", nom: "KLONK con el menú nuevo", desc: "La de siempre con la barra de abajo nueva. En pruebas." },
-    { id: "neta", nom: "Beta · Neta", desc: "Clara y limpia, estilo Nintendo. La Forja y el menú; el resto aún es el de siempre." },
-    { id: "marro", nom: "Beta · Marrón", desc: "La forja limpia, en carbón y bronce. La Forja y el menú; el resto aún es el de siempre." },
+    { id: "neta", nom: "Beta · Neta", desc: "Clara y limpia, estilo Nintendo, sin personajes." },
+    { id: "marro", nom: "Beta · Marrón", desc: "La forja limpia, en carbón y bronce." },
+    { id: "rumble", nom: "Beta · Rumble", desc: "Pintada y con volumen, como un juego: la forja al estilo Warcraft Rumble." },
   ];
   // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
-  const AMB_FORJA = ["neta", "marro"];
+  const AMB_FORJA = ["neta", "marro", "rumble"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
   const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor"];
   const CLAU = "klonk-versio";
@@ -6952,6 +6953,23 @@ body.v-neta .mapa-fosc{filter:saturate(.8) brightness(1.03) contrast(.97)}
 body.v-marro .mapa-fosc{filter:invert(1) hue-rotate(180deg) brightness(1.12) contrast(.9) sepia(.45) saturate(1.2)}
 body.v-neta .gim-pin img,body.v-neta .gim-pin-rang img{background:#fff;border-color:var(--fb-accio);box-shadow:0 4px 10px -3px rgb(38 84 122 / .5)}
 body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;border-color:var(--fb-accio);box-shadow:0 4px 12px -3px rgb(0 0 0 / .7)}
+/* LA BARRA RUMBLE: el marc pintat (fusta i ferro), les icones pintades (la fosca en repòs, la daurada activa) i la placa amb el nom */
+.br-barra{position:relative;display:flex;align-items:flex-end;justify-content:space-between;height:calc(78px + env(safe-area-inset-bottom));
+  padding:0 12px calc(8px + env(safe-area-inset-bottom));background:url(${A()}beta/rumble/barra-marc.webp) center top/100% 78px no-repeat,linear-gradient(#2a2420,#1a1512) center 60px/100% 100% no-repeat;
+  filter:drop-shadow(0 -6px 14px rgb(0 0 0 / .5))}
+.br-tab{position:relative;flex:1;display:grid;justify-items:center;height:70px;padding:0;background:none;border:0}
+.br-ic{width:58px;height:58px;margin-top:4px;transition:transform .12s;grid-area:1/1}
+.br-ic.br-on{opacity:0}
+.br-tab.on .br-ic{opacity:0}.br-tab.on .br-ic.br-on{opacity:1;animation:bo-pop .42s cubic-bezier(.3,1.7,.5,1)}
+.br-tab:active .br-ic{transform:scale(.9) translateY(2px)}
+.br-nom{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);padding:1px 9px 2px;border-radius:9px;background:linear-gradient(#3a302a,#211a16);
+  border:1.5px solid #caa05a;color:#fff;font:400 13px/1.2 'Lilita One','Nunito',system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;opacity:0;transition:opacity .2s}
+.br-tab.on .br-nom{opacity:1}
+.br-buit{flex:0 0 28%}
+.br-forja{position:absolute;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));width:112px;height:120px;margin-left:-56px;padding:0;background:none;border:0}
+.br-ped{position:absolute;left:0;right:0;bottom:0;width:112px;height:auto;pointer-events:none}
+.br-enclusa{bottom:44px;width:80px;height:80px;margin-left:-40px}
+.br-forja.on .br-ped{filter:drop-shadow(0 0 10px rgb(255 170 60 / .55))}
 .vers-opc{display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;padding:14px;border-radius:14px;border:1.5px solid rgb(255 255 255 / .12);background:rgb(255 255 255 / .04);color:inherit;text-align:left;font:inherit;cursor:pointer}
 .vers-opc[aria-checked="true"]{border-color:#ffb55e;background:rgb(255 181 94 / .12)}
 .vers-opc b{display:block;font-size:16px}.vers-opc small{display:block;opacity:.75;margin-top:2px}`;
@@ -6982,11 +7000,22 @@ body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;bord
     return `<div class="bo-barra marc">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="bo-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
       + `<button class="bo-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><span class="bo-brasa"></span><span class="bo-plint"></span>${enclusaPintada()}</button>`;
   }
-  const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector };
+  function muntaRumble() {
+    const R = A() + "beta/rumble/";
+    const tab = ([lloc, v, nom]) => `<button class="br-tab" data-lloc="${lloc}" data-accion="vista" data-v="${lloc === "progreso" ? "progreso" : v}" aria-label="${nom}">`
+      + `<img class="br-ic" src="${R}ic-${lloc}.webp" alt="" draggable="false"><img class="br-ic br-on" src="${R}ic-${lloc}-on.webp" alt="" draggable="false"><span class="br-nom">${nom}</span></button>`;
+    return `<div class="br-barra">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="br-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
+      + `<button class="br-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><img class="br-ped" src="${R}pedestal.webp" alt="" draggable="false">${enclusaPintada().replace("bo-enclusa", "bo-enclusa br-enclusa")}</button>`;
+  }
+  const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector, rumble: muntaRumble };
   // L'ENCLUSA de l'estil original: la pintada de la teva divisió (la mateixa de sempre), sobre el pedestal de bronze
   function enclusaPintada() {
+    // a la Beta (rumble), el metall de la divisió d'ELO; a l'original, el yunque del Temple de sempre
     let y = { id: "madera" };
-    try { if (typeof yunqueDe === "function" && typeof soc === "function") y = yunqueDe((soc().yo || {}).poder); } catch (e) {}
+    try {
+      if (AMB_FORJA.includes(actual)) y = { id: metall() };
+      else if (typeof yunqueDe === "function" && typeof soc === "function") y = yunqueDe((soc().yo || {}).poder);
+    } catch (e) {}
     return `<img class="bo-enclusa" src="${A()}yunques/${y.id}.webp" alt="" draggable="false">`;
   }
   /* L'ENCLUSA DE RIVE (neta i marró), a BETA-1.0/actius/enclusa: la màquina d'estats «enclusa» amb «calenta» (bool) i
@@ -7177,7 +7206,7 @@ const ForjaBeta = (() => {
     const osques = Array.from({ length: dies }, (_, i) => `<i class="${fets.has(i + 1) ? "on" : ""}${i + 1 === d.getDate() ? " avui" : ""}"></i>`).join("");
     return `<section class="fb" data-estil="${e}">
       <header class="fb-cap">
-        <img class="fb-logo" src="${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp" alt="KLONK">
+        <img class="fb-logo${e === "rumble" ? " fb-logo-pintat" : ""}" src="${e === "rumble" ? A() + "logo.webp" : `${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp`}" alt="KLONK">
         <button class="fb-xip fb-elo" data-fb="elo" aria-label="${el.elo != null ? `Tu ELO: ${el.elo}, ${el.divisio.nom}` : "Tu ELO: sin clasificar"}"><span class="fb-elo-ic" style="color:${eloCol}">${I.enclusa}</span><small>ELO</small><b>${eloTxt}</b>${el.setmana > 0 ? `<i class="fb-puja">+${el.setmana}</i>` : ""}</button>
         <span class="fb-xip fb-or">${I.moneda}<b>${n0(oroTotal())}</b><button class="fb-botiga" data-accion="vista" data-v="tienda" aria-label="Tienda">${I.mes}</button></span>
       </header>
@@ -7405,18 +7434,40 @@ body.bt-resum .r-meta *{color:inherit}
 body.bt-resum .r-meta small,body.bt-resum .r-meta p{color:var(--fb-suau)}
 body.bt-pell .btn-forja span{font-family:'Nunito',system-ui,sans-serif;font-size:19px;color:var(--fb-accio-tinta);filter:none;letter-spacing:.01em}
 body.bt-pell .btn-forja small{color:var(--fb-accio-tinta);text-shadow:none;font-family:'Nunito',system-ui,sans-serif;opacity:.85}
+/* RUMBLE: el volum del joc (contorns gruixuts i foscos, una llum a dalt, el botó amb el gruix de sota) i els títols en
+   Lilita One. El fons, llis (la regla dels fons de l'Albert). */
+body.v-rumble .fb,body.v-rumble .mp,body.v-rumble.bt-pell #vista{font-family:'Nunito',system-ui,sans-serif}
+body.v-rumble .fb-carta,body.v-rumble .fb-mes,body.v-rumble .fb-xip,body.v-rumble .mp-elo,body.v-rumble .mp-mirall,body.v-rumble .mp-stats,
+body.v-rumble.bt-pell #vista .panel,body.v-rumble.bt-pell #vista .marc{border:3px solid #120f0d;box-shadow:inset 0 2px 0 rgb(255 225 170 / .16),inset 0 -3px 0 rgb(0 0 0 / .35),0 6px 0 #0c0a09,0 12px 22px -10px rgb(0 0 0 / .7)}
+body.v-rumble .fb-boto,body.v-rumble .mp-boto,body.v-rumble.bt-pell #vista .btn.clar,body.v-rumble.bt-pell .btn-forja{border:3px solid #3a1d02 !important;
+  box-shadow:inset 0 3px 0 rgb(255 255 255 / .45),inset 0 -5px 0 rgb(150 60 0 / .55),0 5px 0 #3a1d02 !important;text-shadow:0 2px 0 rgb(120 50 0 / .7)}
+body.v-rumble .fb-boto,body.v-rumble .mp-boto,body.v-rumble.bt-pell .btn-forja span{font-family:'Lilita One','Nunito',system-ui,sans-serif !important;font-weight:400 !important;letter-spacing:.03em}
+body.v-rumble .fb-boto:active,body.v-rumble .mp-boto:active{transform:translateY(4px);box-shadow:inset 0 3px 0 rgb(255 255 255 / .45),inset 0 -3px 0 rgb(150 60 0 / .55),0 1px 0 #3a1d02 !important}
+body.v-rumble .fb-tit,body.v-rumble .fb-mes-cap b,body.v-rumble .mp-cap h1,body.v-rumble.bt-pell .titol-pag,body.v-rumble .fe-num,body.v-rumble .fe-div,
+body.v-rumble .mp-elo-n,body.v-rumble.bt-resum .resum h1,body.v-rumble.bt-resum .resum h2,body.v-rumble.bt-resum .resum .gran,body.v-rumble.bt-resum .r-tile b{font-family:'Lilita One','Nunito',system-ui,sans-serif;font-weight:400;letter-spacing:.01em}
+body.v-rumble .fb-fin{border:3px solid #120f0d}
+body.v-rumble .fb-logo-pintat{height:34px}
+body.v-rumble.bt-actiu .toast{background:#1b1e28;color:#fdf3e1;border:2px solid #caa05a}
+body.v-rumble.bt-pell .chip[aria-pressed="true"],body.v-rumble.bt-pell .seg button[aria-pressed="true"],body.v-rumble .fb-hoy,body.v-rumble .fb-pro{text-shadow:0 1px 0 rgb(120 50 0 / .85)}
 /* ELS ESTILS: només colors, ombres i fons (calmats) */
 body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-1:#e5eff6;--fb-logo:fosc;--fb-tinta:#1f2f38;--fb-suau:#5d6f79;--fb-sup:#ffffff;--fb-enfonsat:#e3ecf3;
   --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
   --fb-linia:rgb(38 84 122 / .16);--fb-accio:#e8672a;--fb-accio-grad:linear-gradient(180deg,#f47d3a,#d9531c);--fb-accio-tinta:#fff;--fb-accio-text:#c9521c;--fb-o-accio:0 8px 16px -8px rgb(217 83 28 / .7);
   --fb-or:#f3b53c;--fb-or-tinta:#3a2604;--fb-brasa-1:#ffb15a;--fb-brasa-2:#ef6b24;--fb-brasa-glow:rgb(239 107 36 / .45);--fb-maestro:linear-gradient(160deg,#2f3a44,#1c242b);--fb-maestro-tinta:#f3ede4}
+body.v-rumble{--fb-fons:linear-gradient(180deg,#2c3140 0%,#1b1e28 100%);--fb-fons-1:#232733;--fb-logo:clar;--fb-tinta:#fdf3e1;--fb-suau:#c9bda9;
+  --fb-sup:linear-gradient(180deg,#4a3b2f 0%,#33281f 100%);--fb-enfonsat:#1f1813;--fb-linia:rgb(255 214 170 / .18);--fb-r:18px;
+  --fb-o1:0 4px 0 #0c0a09;--fb-o2:0 6px 0 #0c0a09,0 14px 26px -12px rgb(0 0 0 / .8);
+  --fb-accio:#ffb627;--fb-accio-grad:linear-gradient(180deg,#ffe066 0%,#ffb627 55%,#f08a0c 100%);--fb-accio-tinta:#fff;--fb-accio-text:#ffcf5c;--fb-o-accio:0 5px 0 #3a1d02;
+  --fb-or:#ffd24a;--fb-or-tinta:#3a2604;--fb-brasa-1:#ffc35a;--fb-brasa-2:#f0741c;--fb-brasa-glow:rgb(255 150 40 / .5);
+  --fb-maestro:linear-gradient(160deg,#5a2a8a,#2c1450);--fb-maestro-tinta:#fff4d6;--fb-ped-1:#8a8f99;--fb-ped-2:#5d626c;--fb-ped-3:#3d414a;--fb-ped-vora:#caa05a;--fb-ped-ombra:0 6px 10px rgb(0 0 0 / .6)}
 body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons-1:#16110d;--fb-logo:clar;--fb-tinta:#f4ece3;--fb-suau:#bdaea0;--fb-sup:#262019;--fb-enfonsat:#0f0c0a;
   --fb-o1:0 4px 12px -5px rgb(0 0 0 / .6),inset 0 1px 0 rgb(255 214 170 / .08);--fb-o2:0 16px 32px -14px rgb(0 0 0 / .75),inset 0 1px 0 rgb(255 214 170 / .1);
   --fb-linia:rgb(255 214 170 / .14);--fb-accio:#d29a5e;--fb-accio-grad:linear-gradient(180deg,#e0ae74,#c18a50);--fb-accio-tinta:#2a1a0c;--fb-accio-text:#f0bd80;--fb-o-accio:0 10px 18px -10px rgb(58 32 10 / .9);
   --fb-or:#f0bd80;--fb-or-tinta:#2a1a0c;--fb-brasa-1:#ffb15a;--fb-brasa-2:#d86a24;--fb-brasa-glow:rgb(230 120 40 / .4);--fb-maestro:linear-gradient(160deg,#3a2c20,#1c1510);--fb-maestro-tinta:#f4ece3;
   --fb-il-filtre:saturate(.8)}`;
   // la lletra de les versions Beta: Nunito (SIL Open Font License), el tall llatí i prou, servida des de l'app
-  const LLETRA = `@font-face{font-family:'Nunito';font-style:normal;font-weight:500 900;font-display:swap;src:url(${A()}fonts/Nunito-latin.woff2) format('woff2');
+  const LLETRA = `@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url(${A()}fonts/LilitaOne-latin.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:500 900;font-display:swap;src:url(${A()}fonts/Nunito-latin.woff2) format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}`;
   function estil() { if (document.getElementById("estil-forja")) return; const s = document.createElement("style"); s.id = "estil-forja"; s.textContent = LLETRA + CSS; document.head.appendChild(s); }
 
