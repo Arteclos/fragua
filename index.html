@@ -6998,16 +6998,20 @@ body.v-marro{--fb-ped-1:#4a3c30;--fb-ped-2:#30271f;--fb-ped-3:#1f1914;--fb-ped-v
   const calenta = () => {
     try { return !!(typeof activa === "function" && activa()) || S.ses.some(x => x.fin && x.fin > Date.now() - 2 * 864e5); } catch (e) { return false; }
   };
+  // el metall de la teva divisió d'ELO (src/elo.js); sense classificar, la de fusta
+  const metall = () => { try { const e = typeof Elo === "object" ? Elo.calcula() : null; return (e && e.elo != null && e.divisio.id) || "madera"; } catch (e) { return "madera"; } };
   async function posaEnclusa() {
     const cv = document.querySelector("#barra-nova .bv-enclusa");
-    if (!cv || cv.dataset.fet) return;
-    cv.dataset.fet = "1";
+    const m = metall();
+    if (!cv || cv.dataset.fet === m) return;
+    cv.dataset.fet = m;
+    if (enclusa && enclusa.r) { try { enclusa.r.cleanup(); } catch (e) {} enclusa = null; }
     try {
       const R = await motorRive();
       const dpr = Math.min(3, window.devicePixelRatio || 1);
       cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr);
       const quiet = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const r = new R.Rive({ src: A() + `beta/enclusa-${actual}.riv`, canvas: cv, stateMachines: "enclusa", autoplay: !quiet,
+      const r = new R.Rive({ src: A() + `beta/enclusa/${actual}-${m}.riv`, canvas: cv, stateMachines: "enclusa", autoplay: !quiet,
         onLoad: () => {
           try { r.resizeDrawingSurfaceToCanvas(); } catch (e) {}
           const ins = r.stateMachineInputs("enclusa") || [];
