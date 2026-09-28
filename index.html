@@ -7101,6 +7101,13 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
     if (BARRES[actual] === muntaVector) { setTimeout(posaEnclusa, 60); actualitzaCalor(); }
     if (prog && typeof Mirall === "object") Mirall.pintaMirall();
+    // la pestanya es diu Gimnasios (ARQUITECTURA §10: «Gimnasios dona nom a la pestanya»), i la pàgina també: un menú diu on ets
+    if (vista === "social") { const h = document.querySelector("#vista h1.titol-pag"); if (h && h.textContent.trim() === "Social") h.textContent = "Gimnasios"; }
+    // la barra de dalt de la Forja, també aquí (l'entrada no: encara no tens ELO ni or; l'entreno tampoc: és la batalla)
+    if ((pell || prog) && !["compte", "eleccion", "datos", "entreno"].includes(vista) && typeof ForjaBeta === "object" && ForjaBeta.cap) {
+      const v = document.getElementById("vista");
+      if (v && !v.querySelector(":scope > .bt-cap")) v.insertAdjacentHTML("afterbegin", ForjaBeta.cap(actual, "bt-cap"));
+    }
     if (!forja && !prog && !pell && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
     document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
@@ -7206,6 +7213,17 @@ const ForjaBeta = (() => {
       + `<span class="fb-sub">${c.ej.length} ejercicios · ~${min} min</span></div>`
       + boto + `</div>`;
   }
+  // LA BARRA DE DALT, la mateixa a tot arreu (ARQUITECTURA §11: «a dalt, a tot arreu»): el logo pla a l'esquerra, el xip
+  // de l'ELO amb el metall de la divisió, i l'or amb el cofre de la botiga a la dreta
+  function cap(e, cls = "") {
+    const el = elo(), eloTxt = el.elo != null ? n0(el.elo) : "?", eloCol = el.elo != null ? el.divisio.color : "var(--fb-suau)";
+    const clar = getComputedStyle(document.body).getPropertyValue("--fb-logo").trim() !== "fosc";
+    return `<header class="fb-cap${cls ? " " + cls : ""}">
+        <img class="fb-logo${e === "rumble" ? " fb-logo-pintat" : ""}" src="${e === "rumble" ? A() + "logo.webp" : `${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp`}" alt="KLONK">
+        <button class="fb-xip fb-elo" data-fb="elo" aria-label="${el.elo != null ? `Tu ELO: ${el.elo}, ${el.divisio.nom}` : "Tu ELO: sin clasificar"}"><span class="fb-elo-ic" style="color:${eloCol}">${I.enclusa}</span><small>ELO</small><b>${eloTxt}</b>${el.setmana > 0 ? `<i class="fb-puja">+${el.setmana}</i>` : ""}</button>
+        <span class="fb-xip fb-or">${I.moneda}<b>${n0(oroTotal())}</b><button class="fb-botiga" data-accion="vista" data-v="tienda" aria-label="Tienda">${I.mes}</button></span>
+      </header>`;
+  }
   function vista(e) {
     const d = ara(), dies = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), fets = diesEntrenats(), el = elo();
     const eloTxt = el.elo != null ? n0(el.elo) : "?", eloCol = el.elo != null ? el.divisio.color : "var(--fb-suau)";
@@ -7213,11 +7231,7 @@ const ForjaBeta = (() => {
     const clar = getComputedStyle(document.body).getPropertyValue("--fb-logo").trim() !== "fosc";
     const osques = Array.from({ length: dies }, (_, i) => `<i class="${fets.has(i + 1) ? "on" : ""}${i + 1 === d.getDate() ? " avui" : ""}"></i>`).join("");
     return `<section class="fb" data-estil="${e}">
-      <header class="fb-cap">
-        <img class="fb-logo${e === "rumble" ? " fb-logo-pintat" : ""}" src="${e === "rumble" ? A() + "logo.webp" : `${A()}beta/klonk-logo-${clar ? "clar" : "fosc"}.webp`}" alt="KLONK">
-        <button class="fb-xip fb-elo" data-fb="elo" aria-label="${el.elo != null ? `Tu ELO: ${el.elo}, ${el.divisio.nom}` : "Tu ELO: sin clasificar"}"><span class="fb-elo-ic" style="color:${eloCol}">${I.enclusa}</span><small>ELO</small><b>${eloTxt}</b>${el.setmana > 0 ? `<i class="fb-puja">+${el.setmana}</i>` : ""}</button>
-        <span class="fb-xip fb-or">${I.moneda}<b>${n0(oroTotal())}</b><button class="fb-botiga" data-accion="vista" data-v="tienda" aria-label="Tienda">${I.mes}</button></span>
-      </header>
+      ${cap(e)}
       <div class="fb-mes" aria-label="${MESOS[d.getMonth()]}: ${fets.size} días entrenados"><div class="fb-mes-cap"><b>${MESOS[d.getMonth()]}</b><span>${fets.size} ${fets.size === 1 ? "día" : "días"}</span></div><div class="fb-osques" style="--n:${dies}">${osques}</div></div>
       <div class="fb-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}<div class="fb-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "maestro" ? "pro" : ""}"></i>`).join("")}</div></div>
     </section>`;
@@ -7269,6 +7283,9 @@ body.bt-actiu .toast{background:var(--fb-tinta);color:var(--fb-sup);border:0;bor
 .fb-xip small{font-size:10.5px;font-weight:800;color:var(--fb-suau);letter-spacing:.04em}
 .fb-elo-ic{display:grid}
 .fb-puja{font-style:normal;font-size:11px;font-weight:800;color:#2f9e5b;margin-left:1px}
+/* la barra de dalt a les altres pantalles de la Beta (versions.js la posa al capdamunt de #vista); la de sempre s'amaga */
+#vista > .bt-cap{margin:0 0 6px;color:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
+body.bt-pell #vista > .cap,body.bt-actiu #vista .mp-cap-logo{display:none}
 /* la fitxa de l'ELO i qualsevol full que s'obri des de la Forja, amb la pell de la versió */
 body.bt-actiu .vel{background:rgb(10 20 28 / .38)}
 body.bt-actiu .full{background:var(--fb-sup);color:var(--fb-tinta);border-top:0;border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif;box-shadow:0 -12px 40px -16px rgb(0 0 0 / .5);animation:fb-full .38s cubic-bezier(.2,.9,.25,1)}
@@ -7632,7 +7649,7 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
     setTimeout(() => b.click(), 380);
   }, true);
   estil();
-  return { vista, despresPintar };
+  return { vista, despresPintar, cap };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -8113,7 +8130,7 @@ const Mirall = (() => {
     const html = `<div class="mr">${primera !== reg ? `<div class="mr-cortina" id="mr-cortina"><canvas class="mr-abans"></canvas><canvas class="mr-ara"></canvas><i class="mr-tall"><b>‹ ›</b></i></div>
       <p class="mr-cap">Contra tu primera foto, ${dies === 0 ? "de hoy" : dies === 1 ? "de ayer" : `de hace ${dies} días`}</p><ul class="mr-llista">${files}</ul>`
       : `<div class="mr-sola"><canvas class="mr-ara"></canvas></div><p class="mr-cap">Tu punto de partida. En la próxima foto verás qué ha cambiado.</p>`}
-      <p class="mp-priv">Se compara la silueta con la misma pose, no el músculo por dentro: la luz, el pump y la postura también cuentan, y por eso cada cambio lleva su margen.</p></div>`;
+      <p class="mp-priv">Se mide el ancho de tu silueta con la misma pose, no el contorno con cinta: el bíceps se nota más en la foto que en la cinta. La luz, el pump y la postura también cuentan, y por eso cada cambio lleva su margen.</p></div>`;
     if (typeof obreFull === "function") obreFull(html, POSES[reg.pose].nom);
     pintaCortina(reg, primera !== reg ? primera : null);
     pintaMirall();
