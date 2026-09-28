@@ -5430,7 +5430,7 @@ function sincronitza() {
   sincro = (async () => {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: sessio.nick || null, publico: so.visible === "publico", menor: sessio.franja !== "major", franja: sessio.franja || null, sexe: ambPes ? S.perfil.sexo || null : null,
-      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (S.personaje || {}).tipo || null, nivell: Stats.experienciaPj(S).nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
+      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (typeof Nit === "object" && Nit.activa() && Nit.avatarId ? Nit.avatarId() : (S.personaje || {}).tipo) || null, nivell: Stats.experienciaPj(S).nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       xp: xp.xp, gim_clan: so.gimClan !== false, ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
@@ -7844,7 +7844,7 @@ const Nit = (() => {
   const slug = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const fotoAnime = nom => EJ_ANIME.has(slug(nom)) ? `${R()}ej/${slug(nom)}.webp` : null;
   // ELS AVATARS (29-09): el roster, sense noms (són avatars: el nom és el nickname de cadascú). Cada un porta el seu tema.
-  const AVATARS = ["urba", "mascara", "fibrado", "chad", "berserker", "powerlifter", "acrobata", "lluitadora", "rebel", "reina"];
+  const AVATARS = ["urba", "mascara", "fibrado", "chad", "berserker", "powerlifter", "acrobata", "lluitadora", "rebel", "reina", "neteja"];
   const avatarId = () => { const a = S.personaje && S.personaje.avatar; return AVATARS.includes(a) ? a : "urba"; };
   const CARA = () => R() + "pj/cara-" + avatarId() + ".webp";
   // LA PORTADA DE CADA CARTA (29-09): els músculs que treballa (per defecte) o un dels seus exercicis dibuixat, triada a la
@@ -8211,6 +8211,8 @@ const Nit = (() => {
       if (r) miraCarta(nc, r, +nc.dataset.n);
       return;
     }
+    const sq = ev.target.closest('[data-accion^="nsq-"]');
+    if (sq && typeof api === "function") { ev.preventDefault(); ev.stopPropagation(); accioSquad(sq); return; }
     const sx = ev.target.closest('[data-accion="serie"]');
     if (sx && typeof activa === "function") { const s = activa(), e = s && s.ej[+sx.dataset.i], j = +sx.dataset.j; if (e && e.sets[j] && !e.sets[j].ok && e.sets.every((q, k) => q.ok || k === j)) obrintFet = +sx.dataset.i; }
     const tipus = ev.target.closest('[data-accion="serie-tipus"]');
@@ -8523,6 +8525,8 @@ const Nit = (() => {
     tancaTipus(true);
     const nav = document.getElementById("barra-nova");
     if (nav && !nav.querySelector(".nt-barra")) nav.innerHTML = `<div class="nt-barra nt-barra-g">${botonsBarra()}</div>`;
+    // la cara de la barra és la de l'avatar triat (la barra es pinta un cop: si canvies d'avatar, s'hi canvia la cara)
+    const av = nav && nav.querySelector(".nt-av"); if (av && av.getAttribute("src") !== CARA()) av.setAttribute("src", CARA());
     const lloc = LLOC[vista] || "";
     document.querySelectorAll(".nt-barra [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
@@ -8838,10 +8842,10 @@ const Nit = (() => {
     const so = soc(), yo = so.yo, gim = yo && yo.gimnas;
     if (S.demo || !yo || !gim || !so.participa) return window.vistaSocial ? window.vistaSocial() : "";
     const dins = S.ui.socDins;
-    if (dins === "clan" || dins === "rank" || dins === "gimnasios") {
-      S.ui.socTab = dins;
-      const nom = { clan: "Tu clan", rank: "Rankings", gimnasios: "Gimnasios" }[dins];
-      const cos = dins === "clan" ? vistaClan(so) : dins === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
+    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads") {
+      if (dins !== "squads") S.ui.socTab = dins;
+      const nom = { clan: "Tu clan", rank: "Rankings", gimnasios: "Gimnasios", squads: "Squads" }[dins];
+      const cos = dins === "squads" ? vistaSquads() : dins === "clan" ? vistaClan(so) : dins === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
       refrescaSocial(so, dins);
       return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag">${nom}</h1></div>${cos}`;
     }
@@ -8854,11 +8858,16 @@ const Nit = (() => {
     const rank = r && r.llista ? r.llista.slice(0, 5) : null;
     return `<h1 class="titol-pag">Social</h1>
       <section class="ns">
+        ${(() => { carregaSquads(); const q = S.ui.squads, inv = q ? q.invitacions.length : 0;
+          if (q && q.squads.length) return htmlSquad(q.squads[0], false) + (inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads" data-in="ns">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : "");
+          if (q) return `<button class="nsq-crea" data-accion="${inv ? "ns-dins" : "nsq-nova"}" data-t="squads" data-in="ns"><span class="nsq-crea-caras">${AVATARS.slice(1, 5).map(a => `<img src="${caraDe(a)}" alt="" draggable="false">`).join("")}</span><span><b>${inv ? (inv === 1 ? "Te han invitado a una squad" : `Tienes ${inv} invitaciones`) : "Crea tu squad"}</b><small>${inv ? "Mira quién te espera" : "Tu gente, un reto por semana y avisos de «voy al gym»"}</small></span>${I_TU.fle}</button>`;
+          return ""; })()}
         <div class="ns-guerra" data-in="ns">${guerraHero(meu, riv)}</div>
         <div class="ns-bloc" data-in="ns"><h2>Actividad del clan</h2>${clan.length ? clan.map(filaClan).join("") : `<p class="ns-buit">Cuando los de tu clan entrenen, saldrán aquí para que les hagas KLσNK!</p>`}</div>
         <div class="ns-bloc" data-in="ns"><h2>Ranking de amigos</h2>${rank ? (rank.length ? rank.map(f => filaRank(f, so2)).join("") + (r.yo && r.yo.pos > rank.length ? filaRank(r.yo, so2) : "") : `<p class="ns-buit">Aún no hay nadie de tu clan.</p>`) : `<p class="ns-buit">Cargando…</p>`}</div>
         <button class="nt-boto ns-invita" data-accion="ns-dins" data-t="clan" data-in="ns">${I_MENU.inv}Invitar amigos</button>
         <div class="ns-bot" data-in="ns">
+          <button data-accion="ns-dins" data-t="squads">${I_MENU.inv}<b>Squads</b>${S.ui.squads && S.ui.squads.invitacions.length ? `<i class="ns-xapa">${S.ui.squads.invitacions.length}</i>` : ""}</button>
           <button data-accion="ns-dins" data-t="clan">${I_TU.pj}<b>Mi clan</b>${n ? `<i class="ns-xapa">${n}</i>` : ""}</button>
           <button data-accion="ns-dins" data-t="rank">${I_TU.prog}<b>Rankings</b></button>
           <button data-accion="ns-dins" data-t="gimnasios">${I_MENU.gim}<b>Gimnasios</b></button>
@@ -9401,6 +9410,103 @@ const Nit = (() => {
         <div class="nc3-prog" data-in="nc3"><i style="width:${(got / Math.max(1, col.length) * 100).toFixed(1)}%"></i></div>
         <div class="nc3-grid">${col.filter(x => passa(x.d)).map(x => x.te ? cartaMini(x.r, x.n, k++) : `<button class="nc3-buit" data-accion="nc3-buit" data-in="nc3" style="--i:${k++}" aria-label="Carta ${x.num}, por conseguir"><b>${x.num}</b></button>`).join("")}</div>
       </section>`;
+  }
+
+  /* ======================= LES SQUADS (l'Albert, 29-09: «la part del social molt guai, amb crear una squad, assignar
+     líder i marcar reptes o diferents modalitats; que puguin fer crida d'aquí una hora vaig al gym i avisar la resta amb
+     notificació; que puguin enviar-los rutines») =======================
+     Servidor: squads.py (les regles de menors: sense text lliure, amics de tothom, l'invitat accepta). A dalt de Social, la
+     teva squad; a «Squads», totes, les invitacions i el que pot fer el líder. Les dades de la setmana: els dies, per a
+     tothom; les sèries, els quilos i els rècords, amb el PRO (el cadenat porta a la Tienda). */
+  const caraDe = p => R() + "pj/cara-" + (AVATARS.includes(p) ? p : "urba") + ".webp";
+  const NOM_REPTE = { dias: m => `${m} días de gym entre todos`, series: m => `${n0(m)} series entre todos`, kilos: m => `${n0(m)} kg entre todos`, todos: m => `Todos, ${m} días o más` };
+  const QUAN = [[0, "Ahora"], [30, "En 30 min"], [60, "En 1 h"], [120, "En 2 h"]];
+  function quanTxt(ts) {
+    const d = ts * 1000 - Date.now();
+    if (d <= 60000) return "ahora";
+    const h = new Date(ts * 1000); return `a las ${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")}`;
+  }
+  async function carregaSquads(forca) {
+    if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
+    const q = S.ui.squads;
+    if (!forca && q && Date.now() - q.at < 30000) return;
+    try { const r = await api("GET", "/squads"); S.ui.squads = { ...r, at: Date.now() }; } catch (e) { return; }
+    if (S.ui.vista === "social" && typeof render === "function") render();
+  }
+  function htmlSquad(q, tot) {
+    const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
+    return `<div class="nsq" data-in="ns">
+      <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esc(q.nom)}</b>${q.jo_lider ? `<i class="nsq-lider">Líder</i>` : ""}</div>
+      <div class="nsq-caras">${q.membres.map(m => `<span class="nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}"><img src="${caraDe(m.personatge)}" alt="" draggable="false"><small>${esc(m.yo ? "Tú" : m.nom)}</small></span>`).join("")}</div>
+      ${q.repte ? `<div class="nsq-repte${q.repte.fet ? " fet" : ""}"><div class="nsq-repte-t"><span>${NOM_REPTE[q.repte.tipus](q.repte.meta)}</span><b class="num">${n0(q.repte.progres)} / ${n0(q.repte.objectiu)}</b></div><div class="np3-barra"><i style="width:${pc.toFixed(1)}%"></i></div>${q.repte.fet ? `<small>¡Reto conseguido!</small>` : ""}</div>`
+        : q.jo_lider ? `<button class="nsq-b2" data-accion="nsq-repte" data-id="${q.id}">Poner el reto de la semana</button>` : `<p class="nsq-nota">Esta semana aún no hay reto.</p>`}
+      ${q.crides.map(c => `<div class="nsq-cr"><span><span class="nsq-cr-t"><b>${esc(c.yo ? "Tú" : c.de)}</b> ${c.yo ? "vas" : "va"} al gym ${quanTxt(c.quan)}</span><small>${c.apuntats} ${c.apuntats === 1 ? "va" : "van"}</small></span>${c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button data-accion="nsq-apunta" data-c="${c.id}">Me apunto</button>`}</div>`).join("")}
+      <div class="nsq-crida"><b>¿Vas al gym?</b><div class="nsq-quan">${QUAN.map(([m, t]) => `<button data-accion="nsq-crida" data-id="${q.id}" data-m="${m}">${t}</button>`).join("")}</div></div>
+      ${tot ? htmlDades(q) + `<div class="nsq-accions">${q.jo_lider ? `<button data-accion="nsq-invita" data-id="${q.id}">${I_MENU.inv}<span>Invitar</span></button><button data-accion="nsq-repte" data-id="${q.id}">${I_TU.est}<span>Reto</span></button>` : ""}<button data-accion="nsq-rutina" data-id="${q.id}">${I_MENU.rut}<span>Enviar mi rutina</span></button><button class="fora" data-accion="nsq-surt" data-id="${q.id}">${I_X}<span>Salir</span></button></div>` : ""}
+    </div>`;
+  }
+  // LES DADES DE LA SETMANA: els dies, per a tothom; la resta, amb el PRO (Albert: «ha de deixar pas al pla pro per mostrar
+  // totes les stats llamineres»). El PRO encara no es pot comprar: el cadenat porta a la Tienda.
+  function htmlDades(q) {
+    const pro = !!(S.pro && S.pro.actiu);
+    return `<div class="nsq-dades"><div class="nsq-dades-cap"><b>Esta semana</b>${pro ? "" : `<button class="nsq-pro" data-accion="nt-ves" data-v="tienda" data-t="oro">${ic("medalla")}<span>Más datos con PRO</span></button>`}</div>
+      <div class="nsq-taula${pro ? "" : " tancat"}"><div class="nsq-f cap"><span></span><span>Días</span><span>Series</span><span>Kg</span><span>Récords</span></div>
+      ${q.membres.map(m => `<div class="nsq-f"><span><img src="${caraDe(m.personatge)}" alt="" draggable="false">${esc(m.yo ? "Tú" : m.nom)}</span><b>${m.dies}</b><b class="p">${n0(m.series)}</b><b class="p">${n0(m.kilos)}</b><b class="p">${m.records}</b></div>`).join("")}</div></div>`;
+  }
+  function vistaSquads() {
+    const d = S.ui.squads;
+    carregaSquads();
+    if (!d) return `<p class="ns-buit">Cargando tus squads…</p>`;
+    return `<section class="nsq-pag">
+      ${d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}
+      ${d.squads.map(q => htmlSquad(q, true)).join("")}
+      ${d.squads.length < 3 ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
+    </section>`;
+  }
+  // un full de la Noche per triar (el nom, el repte, a qui convides)
+  function fullN(titol, cos) {
+    const el = document.createElement("div");
+    el.className = "nq nsq-full"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", titol);
+    el.innerHTML = `<div class="nq-vel" data-nq="no"></div><div class="nq-p"><b>${esc(titol)}</b>${cos}<button class="nq-si" data-nq="no">Cerrar</button></div>`;
+    document.body.appendChild(el);
+    if (!quiet()) el.querySelector(".nq-p").animate([{ opacity: 0, transform: "translateY(30px)" }, { opacity: 1, transform: "none" }], { duration: 360, easing: "cubic-bezier(.2,.9,.25,1.1)" });
+    el.addEventListener("click", ev => { const t = ev.target.closest("[data-nq]"); if (t) { ev.preventDefault(); ev.stopPropagation(); el.remove(); } });
+    fx(E => { E.suena("tap"); E.vibra("tria"); });
+    return el;
+  }
+  async function accioSquad(b) {
+    const a = b.dataset.accion, id = b.dataset.id, d = S.ui.squads;
+    const fes = async (met, ruta, cos, ok) => {
+      try { await api(met, ruta, cos); if (ok && typeof avis === "function") avis(ok); fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .3 }); E.vibra("fet"); }); await carregaSquads(true); return true; }
+      catch (e) { if (typeof avis === "function") avis(e.message, true); return false; }
+    };
+    if (a === "nsq-crida") { b.disabled = true; so(); await fes("POST", `/squads/${id}/crida`, { minuts: +b.dataset.m }, "Aviso enviado a tu squad."); b.disabled = false; return; }
+    if (a === "nsq-apunta") { await fes("POST", `/squads/crida/${b.dataset.c}/apunta`, null, "¡Te apuntas!"); return; }
+    if (a === "nsq-accepta") { await fes("POST", `/squads/${id}/accepta`, null, "Ya eres de la squad."); return; }
+    if (a === "nsq-rebutja") { await fes("POST", `/squads/${id}/rebutja`, null); return; }
+    if (a === "nsq-surt") { confirma({ titol: "¿Salir de la squad?", text: "Podrán volver a invitarte.", si: "Salir", no: "Quedarme", accio: "nsq-surt-si" }); S.ui.nsqSurt = id; return; }
+    if (a === "nsq-surt-si") { await fes("POST", `/squads/${S.ui.nsqSurt}/surt`, null, "Has salido de la squad."); return; }
+    if (a === "nsq-rutina") {
+      const r = rutinaActual();
+      const cos = typeof perCompartir === "function" ? perCompartir(r) : { nombre: r.nombre, dias: r.dias };
+      await fes("POST", `/squads/${id}/rutina`, { rutina: cos }, `«${r.nombre}» enviada a tu squad.`); return;
+    }
+    if (a === "nsq-nova") {
+      const noms = (d && d.noms) || [];
+      fullN("Elige el nombre", `<div class="nsq-noms">${noms.map(n => `<button data-accion="nsq-nom" data-nom="${esc(n)}">${esc(n)}</button>`).join("")}</div>`); return;
+    }
+    if (a === "nsq-nom") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", "/squads", { nom: b.dataset.nom }, `«${b.dataset.nom}» creada. Ahora invita a tu clan.`); return; }
+    if (a === "nsq-repte") {
+      const R2 = (d && d.reptes) || {};
+      fullN("El reto de la semana", Object.entries(R2).map(([t, metes]) => `<div class="nsq-rt"><small>${{ dias: "Días de gym entre todos", series: "Series entre todos", kilos: "Kilos entre todos", todos: "Que todos entrenen" }[t]}</small><div>${metes.map(m => `<button data-accion="nsq-repte-si" data-id="${id}" data-t="${t}" data-m="${m}">${t === "todos" ? m + " días" : n0(m)}</button>`).join("")}</div></div>`).join("")); return;
+    }
+    if (a === "nsq-repte-si") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", `/squads/${id}/repte`, { tipus: b.dataset.t, meta: +b.dataset.m }, "Reto puesto. ¡A por él!"); return; }
+    if (a === "nsq-invita") {
+      let c = []; try { c = (await api("GET", `/squads/${id}/candidats`)).candidats; } catch (e) { if (typeof avis === "function") avis(e.message, true); return; }
+      fullN("Invitar a tu squad", c.length ? `<div class="nsq-cands">${c.map(x => `<button data-accion="nsq-invita-si" data-id="${id}" data-p="${x.pid}"><img src="${caraDe(x.personatge)}" alt="" draggable="false"><span>${esc(x.nom)}</span></button>`).join("")}</div>`
+        : `<p>Solo puedes invitar a quien sea de tu clan y del de todos los de la squad.</p>`); return;
+    }
+    if (a === "nsq-invita-si") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", `/squads/${id}/invita`, { pid: b.dataset.p }, "Invitación enviada."); return; }
   }
 
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
@@ -9954,7 +10060,7 @@ button.ns-r{cursor:pointer}button.ns-r:active{background:rgb(255 255 255 / .04)}
 .ns-r-v small{font-size:11px;color:var(--nt-suau)}
 .ns-invita{display:flex;align-items:center;justify-content:center;gap:10px;height:52px}
 .ns-invita svg{width:24px;height:24px}
-.ns-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ns-bot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ns-bot button{position:relative;display:grid;justify-items:center;gap:6px;padding:14px 6px;border:0;border-radius:18px;color:var(--nt-tinta);font:inherit;cursor:pointer;
   background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(var(--l-rgb) / .25),0 10px 20px -14px rgb(0 0 0 / .9);transition:transform .12s}
 .ns-bot button:active{transform:scale(.96)}
@@ -10397,6 +10503,71 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nm-pb img{width:100%;height:100%;object-fit:cover}
 .nm-pb:first-child img{object-fit:contain;padding:6px}
 .nm-pb.on{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
+
+/* ======================= LES SQUADS ======================= */
+.nsq{position:relative;display:grid;gap:12px;padding:16px;border-radius:24px;overflow:hidden;
+  background:radial-gradient(90% 80% at 100% 0%,rgb(var(--l3-rgb) / .55),transparent 65%),linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--l-rgb) / .25)}
+.nsq-cap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nsq-nom{font:400 28px/1 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);text-shadow:3px 3px 0 rgb(var(--l3-rgb))}
+.nsq-lider{margin-left:auto;padding:4px 10px;border-radius:999px;font-style:normal;font-size:12px;font-weight:900;color:rgb(var(--mt-rgb));background:rgb(var(--m-rgb))}
+.nsq-caras{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px}
+.nsq-caras::-webkit-scrollbar{display:none}
+.nsq-cara{display:grid;justify-items:center;gap:4px;flex:none;width:58px}
+.nsq-cara img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08)}
+.nsq-cara.fet img{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
+.nsq-cara.lider img{outline:2px dashed rgb(var(--l-rgb) / .8);outline-offset:3px}
+.nsq-cara small{max-width:58px;font-size:11px;font-weight:900;color:var(--nt-suau);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nsq-repte{display:grid;gap:6px}
+.nsq-repte-t{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:900}
+.nsq-repte-t b{font:400 18px/1 'Anton','Nunito',sans-serif;font-style:italic}
+.nsq-repte.fet .nsq-repte-t b,.nsq-repte small{color:rgb(var(--m-rgb))}
+.nsq-repte small{font-weight:900;font-size:12.5px}
+.nsq-b2{height:42px;border:0;border-radius:999px;cursor:pointer;background:#10171e;color:rgb(var(--m-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
+.nsq-nota{margin:0;font-size:13px;font-weight:800;color:var(--nt-suau)}
+.nsq-cr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#10171e}
+.nsq-cr > span{flex:1;display:grid;font-size:14px;font-weight:800}.nsq-cr small{font-size:12px;color:var(--nt-suau)}
+.nsq-cr button{height:36px;padding:0 14px;border:0;border-radius:999px;cursor:pointer;color:rgb(var(--mt-rgb));background:linear-gradient(180deg,rgb(var(--m2-rgb)),rgb(var(--m-rgb)));font:900 13.5px/1 'Nunito',system-ui,sans-serif}
+.nsq-ok{display:flex;align-items:center;gap:4px;font-style:normal;font-weight:900;font-size:13px;color:rgb(var(--m-rgb))}.nsq-ok svg{width:16px;height:16px}
+.nsq-crida{display:grid;gap:8px}
+.nsq-crida > b{font:400 20px/1 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase}
+.nsq-quan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nsq-quan button{height:46px;border:0;cursor:pointer;background:rgb(var(--m-rgb));color:rgb(var(--mt-rgb));font:400 15px/1 'Anton','Nunito',sans-serif;letter-spacing:.03em;transform:skewX(-12deg);box-shadow:3px 3px 0 rgb(var(--l3-rgb));transition:transform .12s}
+.nsq-quan button:active{transform:skewX(-12deg) scale(.95)}
+.nsq-quan button:disabled{opacity:.5}
+.nsq-crea{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;padding:14px 16px 14px 12px;border:0;border-radius:24px;cursor:pointer;text-align:left;color:var(--nt-tinta);font:inherit;
+  background:radial-gradient(90% 90% at 0% 50%,rgb(var(--l3-rgb) / .6),transparent 70%),linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--l-rgb) / .3)}
+.nsq-crea-caras{display:flex}.nsq-crea-caras img{width:38px;height:38px;border-radius:50%;object-fit:cover;margin-left:-12px;box-shadow:0 0 0 2px #171e27}.nsq-crea-caras img:first-child{margin-left:0}
+.nsq-crea > span:nth-child(2){display:grid;gap:3px}.nsq-crea b{font-size:17px;font-weight:900}.nsq-crea small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.nsq-crea > svg{width:16px;height:16px;color:var(--nt-suau)}
+.nsq-avis{width:100%;height:44px;border:0;border-radius:999px;cursor:pointer;background:#10171e;color:rgb(var(--m-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
+.nsq-pag{display:grid;gap:14px}
+.nsq-inv{display:flex;align-items:center;gap:10px;padding:12px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);font-size:14px;font-weight:800}
+.nsq-inv > span:first-child{flex:1}.nsq-inv-b{display:flex;gap:6px}
+.nsq-nova{height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px}.nsq-nova svg{width:20px;height:20px}
+.nsq-dades{display:grid;gap:8px;padding:12px;border-radius:18px;background:#10171e}
+.nsq-dades-cap{display:flex;align-items:center;justify-content:space-between;gap:8px}.nsq-dades-cap b{font-size:15px;font-weight:900}
+.nsq-pro{display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;border-radius:999px;cursor:pointer;background:rgb(226 194 122 / .14);color:var(--nt-or);font:900 12.5px/1 'Nunito',system-ui,sans-serif}
+.nsq-pro .nt-ic{width:18px;height:18px}
+.nsq-taula{display:grid;gap:4px}
+.nsq-f{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(4,minmax(0,1fr));align-items:center;gap:6px;font-size:13px}
+.nsq-f.cap{font-size:11px;font-weight:900;color:var(--nt-suau)}.nsq-f.cap span:not(:first-child){text-align:center}
+.nsq-f > span:first-child{display:flex;align-items:center;gap:6px;min-width:0;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nsq-f img{width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none}
+.nsq-f b{text-align:center;font:400 16px/1 'Anton','Nunito',sans-serif}
+.nsq-taula.tancat .p{filter:blur(5px);opacity:.7;user-select:none}
+.nsq-accions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.nsq-accions button{display:grid;justify-items:center;gap:4px;padding:10px 4px 8px;border:0;border-radius:16px;cursor:pointer;background:#10171e;color:var(--nt-tinta);font:900 12px/1.15 'Nunito',system-ui,sans-serif}
+.nsq-accions button svg{width:22px;height:22px;color:rgb(var(--l-rgb))}
+.nsq-accions button.fora svg{color:#ec9a9a}
+.nsq-full .nq-p{gap:12px;max-height:80vh;overflow:auto}
+.nsq-noms{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.nsq-noms button,.nsq-rt button{min-height:44px;padding:6px 10px;border:0;border-radius:14px;cursor:pointer;background:#10171e;color:#e7edf2;font:900 13.5px/1.15 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
+.nsq-noms button:active,.nsq-rt button:active{transform:scale(.96)}
+.nsq-rt{display:grid;gap:6px;width:100%;text-align:left}.nsq-rt small{font-size:12.5px;font-weight:900;color:#8b98a4}
+.nsq-rt > div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.nsq-cands{display:grid;gap:8px;width:100%}
+.nsq-cands button{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border:0;border-radius:16px;cursor:pointer;background:#10171e;color:#e7edf2;font:900 14.5px/1 'Nunito',system-ui,sans-serif;text-align:left}
+.nsq-cands img{width:40px;height:40px;border-radius:50%;object-fit:cover}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
@@ -10496,7 +10667,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
