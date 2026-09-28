@@ -6933,7 +6933,8 @@ const Versions = (() => {
   // les versions que porten una pantalla principal nova (src/nit.js)
   const AMB_FORJA = ["nit"];
   // les pantalles que la Beta Noche no tapa: l'entrada (fer-te el compte, triar el personatge, les dades)
-  const ENTRADA_NIT = ["compte", "datos", "eleccion"];
+  // la portada del compte i «Elige tu personaje» ja tenen la seva a la Noche (29-09); les dades, encara la pell
+  const ENTRADA_NIT = ["datos"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
   const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor", "compte", "eleccion", "datos"];
   const CLAU = "klonk-versio";
@@ -7264,6 +7265,8 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       if (v === "rutinas") return () => Nit.vistaRutinas();
       if (v === "tienda") return () => Nit.vistaTienda();
       if (v === "cartas") return () => Nit.vistaCartas();
+      if (v === "compte") return () => Nit.vistaCompte();
+      if (v === "eleccion") return () => Nit.vistaEleccion();
       if (v === "gimnasios") { S.ui.vista = "social"; S.ui.socDins = "gimnasios"; S.ui.socTab = "gimnasios"; return () => Nit.vistaSocial(); }
       // l'entreno sense cap sessió en marxa és la portada (les cartes ja són els dies per començar)
       if (v === "entreno") { if (typeof activa === "function" && activa()) return () => Nit.vistaEntreno(); S.ui.vista = "inicio"; return () => Nit.vista(); }
@@ -7842,7 +7845,11 @@ const Nit = (() => {
   // (lot 39, talla_nit.py ej). Un exercici que encara no en té porta la manuella, no el nan.
   const EJ_ANIME = new Set(["elevaciones-laterales-en-polea", "press-inclinado-en-smith", "peck-deck", "extension-de-triceps-tras-nuca-en-polea", "extension-de-triceps", "crunch-en-polea-alta", "lat-pull-around-en-polea", "peso-muerto-rumano", "remo-isolateral-en-maquina-de-palanca", "jalon-con-brazos-rectos-en-polea", "curl-martillo-en-banco-scott", "face-pull", "curl-femoral-sentado", "aduccion-de-cadera-en-maquina", "hack-squat", "extension-de-cuadriceps", "press-de-gemelos-en-prensa", "press-militar-en-maquina", "curl-a-una-mano-de-pie-en-polea", "press-frances-con-mancuernas", "curl-en-banco-scott-con-barra", "patada-de-triceps-en-polea", "elevacion-de-piernas-en-paralelas", "elevacion-en-y-en-polea", "fondos", "aperturas-inclinadas-con-mancuernas", "extension-de-triceps-tipo-katana-en-polea", "rueda-abdominal", "remo-sentado-en-polea-baja", "extension-lumbar", "jalon-al-pecho", "curl-zottman", "pajaros-en-polea", "encogimientos-en-polea", "curl-femoral-tumbado", "prensa-de-piernas", "zancada-en-multipower", "elevacion-de-gemelos-en-multipower", "nordico-inverso", "press-de-hombros-en-multipower", "press-frances-en-polea", "curl-en-polea-por-encima-de-la-cabeza", "extension-de-triceps-en-polea-con-cuerda", "curl-inclinado-con-mancuernas"]);
   const slug = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const fotoAnime = nom => EJ_ANIME.has(slug(nom)) ? `${R()}ej/${slug(nom)}.webp` : null;
+  // EL PAQUET DE CADA AVATAR (29-09): els exercicis que ja té dibuixats (ej_avatar.py escriu aquesta llista); si l'avatar
+  // triat en té el dibuix, surt ell; si no, el de l'Urbà.
+  const EJ_AV = /*EJ_AV*/{"mascara":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-femoral-sentado","curl-martillo-en-banco-scott","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","face-pull","fondos","hack-squat","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","press-de-gemelos-en-prensa","press-frances-con-mancuernas","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca"]}/*/EJ_AV*/;
+  const teDibuix = sl => { const av = S.personaje && S.personaje.avatar; return av && EJ_AV[av] && EJ_AV[av].includes(sl) ? av : null; };
+  const fotoAnime = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej/${av}/${sl}.webp` : EJ_ANIME.has(sl) ? `${R()}ej/${sl}.webp` : null; };
   // ELS AVATARS (29-09): el roster, sense noms (són avatars: el nom és el nickname de cadascú). Cada un porta el seu tema.
   const AVATARS = ["urba", "mascara", "fibrado", "chad", "berserker", "powerlifter", "acrobata", "lluitadora", "rebel", "reina", "neteja"];
   const avatarId = () => { const a = S.personaje && S.personaje.avatar; return AVATARS.includes(a) ? a : "urba"; };
@@ -7852,7 +7859,7 @@ const Nit = (() => {
   const clauCarta = (r, n) => r.id + ":" + n;
   function ilCarta(r, n) {
     const d = r.dias[n - 1], tria = (S.cartesIl || {})[clauCarta(r, n)];
-    if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) return { src: `${R()}ej-gran/${tria}.webp`, ej: true, tria };
+    if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) { const av = teDibuix(tria); return { src: av ? `${R()}ej-gran/${av}/${tria}.webp` : `${R()}ej-gran/${tria}.webp`, ej: true, tria }; }
     return { src: `${R()}musculs-${tipusDia(d)}.webp`, ej: false, tria: "musculs" };
   }
   const aplicaTema = id => { const v = id || avatarId(); if (document.body.dataset.av !== v) document.body.dataset.av = v; };
@@ -8209,6 +8216,16 @@ const Nit = (() => {
       if (nc.dataset.accion === "nc3-buit") { fx(E => E.suena("tap")); if (typeof avis === "function") avis("Entrénala una vez y será tuya."); if (!quiet()) nc.animate([{ transform: "none" }, { transform: "translateX(-5px)" }, { transform: "translateX(5px)" }, { transform: "none" }], { duration: 260 }); return; }
       const r = (typeof totesRutinas === "function" ? totesRutinas() : []).find(x => x.id === nc.dataset.r);
       if (r) miraCarta(nc, r, +nc.dataset.n);
+      return;
+    }
+    const nwa = ev.target.closest('[data-accion="nw-av"]');
+    if (nwa) {
+      ev.preventDefault(); ev.stopPropagation();
+      S.ui.avTria = nwa.dataset.id; aplicaTema(nwa.dataset.id);
+      document.querySelectorAll('[data-accion="nw-av"]').forEach(b => { const on = b === nwa; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+      const img = document.querySelector(".nw-cos");
+      if (img) { img.src = `${R()}pj/${nwa.dataset.id}.webp`; if (!quiet()) img.animate([{ opacity: 0, transform: "translateY(16px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.1)" }); }
+      fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.05, volum: .3 }); E.vibra("gira"); });
       return;
     }
     const sq = ev.target.closest('[data-accion^="nsq-"]');
@@ -9160,7 +9177,7 @@ const Nit = (() => {
       <div class="nm-acc"><button class="nm-b nm-ic" data-nm="gira" aria-label="Girar">${I_GIRA}</button><button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button></div>
       <div class="nm-comp nm-portp" data-nm="noport" hidden><div class="nm-comp-p" data-nm="res" role="group" aria-label="Portada">
         <b class="nm-comp-t">Portada</b>
-        <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : `${R()}ej-gran/${p}.webp`}" alt="" draggable="false"></button>`).join("")}</div>
+        <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : (teDibuix(p) ? `${R()}ej-gran/${teDibuix(p)}/${p}.webp` : `${R()}ej-gran/${p}.webp`)}" alt="" draggable="false"></button>`).join("")}</div>
         <button class="nm-comp-no" data-nm="noport">Listo</button></div></div>
       ${panellComparteix(r, n, d)}`;
     document.body.appendChild(ov);
@@ -9507,6 +9524,62 @@ const Nit = (() => {
         : `<p>Solo puedes invitar a quien sea de tu clan y del de todos los de la squad.</p>`); return;
     }
     if (a === "nsq-invita-si") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", `/squads/${id}/invita`, { pid: b.dataset.p }, "Invitación enviada."); return; }
+  }
+
+  /* ======================= L'ENTRADA (l'Albert, 29-09: «el login encara s'ha de canviar») =======================
+     Fins avui era la farga: el nan en 3D, el logo de lava i el botó de lava. Ara: el logo fi (el de la càrrega), el roster
+     que es mou damunt la llesca en diagonal, «Crear cuenta», Google i «Ya tengo cuenta». Els formularis són els de
+     sempre, vestits de la Noche. «Elige tu personaje» és el roster amb el nickname a sota. */
+  const botoN = (attrs, txt, cls = "") => `<button class="nw-b ${cls}" ${attrs}><span>${txt}</span></button>`;
+  const LOGO_NW = () => `<img class="nw-logo" src="${A()}beta/klonk-logo-clar.webp" alt="KLONK" draggable="false">`;
+  const LEGAL_NW = `<p class="nw-legal"><a href="privacidad/" target="_blank" rel="noopener">Privacidad</a><a href="condiciones/" target="_blank" rel="noopener">Condiciones</a></p>`;
+  function vistaCompte() {
+    const c = typeof cmp === "function" ? cmp() : { mode: "inici" }, g = typeof botoGoogle === "function" ? botoGoogle() : "";
+    fontFirma();
+    const camps = (nou) => `<label class="nw-camp"><span>Correo electrónico</span><input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
+      <label class="nw-camp"><span>Contraseña</span><input id="c-pass" type="password" autocomplete="${nou ? "new-password" : "current-password"}" ${nou ? 'minlength="8" placeholder="8 caracteres o más"' : ""} required></label>`;
+    if (c.mode === "nou" || c.mode === "falta") {
+      const google = c.mode === "falta";
+      return `<section class="nw nw-form">${LOGO_NW()}<h1 class="nw-t">${google ? "Un paso más" : "Crear cuenta"}</h1>
+        ${!google && g ? `<div class="nw-google">${g}<p class="nw-o"><span>o con tu correo</span></p></div>` : ""}
+        <form class="nw-f" data-form="${google ? "compte-falta" : "compte-nou"}">
+          ${google ? `<p class="nw-nota">Entras con Google como ${esc(c.googleEmail || "")}. Solo nos falta esto:</p>` : camps(true)}
+          <div class="nw-camp"><span>¿Cuántos años tienes?</span><div class="nw-edat">${[["nen", "Menos de 14"], ["menor", "De 14 a 17"], ["major", "18 o más"]].map(([k, t]) => `<button type="button" class="chip" data-accion="compte-edat" data-v="${k}" aria-pressed="${c.edat === k}">${t}</button>`).join("")}</div></div>
+          <label class="nw-casella"><input type="checkbox" id="c-termes"><span>He leído y acepto las <a href="condiciones/" target="_blank" rel="noopener">condiciones de uso</a> y la <a href="privacidad/" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
+          ${botoN('type="submit"', google ? "Entrar" : "Crear cuenta", "nw-si")}
+        </form>
+        <button class="nw-b2" data-accion="compte-mode" data-m="${google ? "inici" : "entra"}">${google ? "Volver" : "Ya tengo cuenta"}</button>${LEGAL_NW}</section>`;
+    }
+    if (c.mode === "entra") return `<section class="nw nw-form">${LOGO_NW()}<h1 class="nw-t">Entrar</h1>
+        ${g ? `<div class="nw-google">${g}<p class="nw-o"><span>o con tu correo</span></p></div>` : ""}
+        <form class="nw-f" data-form="compte-entra">${camps(false)}${botoN('type="submit"', "Entrar", "nw-si")}</form>
+        <div class="nw-enllacos"><button class="nw-b2" data-accion="compte-mode" data-m="oblit">He olvidado la contraseña</button><button class="nw-b2" data-accion="compte-mode" data-m="nou">Crear una cuenta</button></div>${LEGAL_NW}</section>`;
+    if (c.mode === "oblit") return `<section class="nw nw-form">${LOGO_NW()}<h1 class="nw-t">Nueva contraseña</h1>
+        <form class="nw-f" data-form="compte-oblit"><p class="nw-nota">Te enviamos un enlace para poner una contraseña nueva. Caduca en una hora.</p>
+          <label class="nw-camp"><span>Correo electrónico</span><input id="c-mail" type="email" autocomplete="email" inputmode="email" required value="${esc(c.mail || "")}"></label>
+          ${botoN('type="submit"', "Enviar enlace", "nw-si")}</form>
+        <button class="nw-b2" data-accion="compte-mode" data-m="entra">Volver</button>${LEGAL_NW}</section>`;
+    if (c.mode === "restableix") return `<section class="nw nw-form">${LOGO_NW()}<h1 class="nw-t">Nueva contraseña</h1>
+        <form class="nw-f" data-form="compte-restableix"><label class="nw-camp"><span>Contraseña nueva</span><input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>
+          ${botoN('type="submit"', "Guardar y entrar", "nw-si")}</form>${LEGAL_NW}</section>`;
+    const colla = ["fibrado", "reina", "mascara", "powerlifter", "berserker"];
+    return `<section class="nw nw-inici"><i class="nw-llesca" aria-hidden="true"></i>${LOGO_NW()}
+      <div class="nw-colla" aria-hidden="true">${colla.map((a, k) => `<img class="nw-pj" style="--k:${k}" src="${R()}pj/${a}.webp" alt="" draggable="false">`).join("")}</div>
+      <div class="nw-botons">${botoN('type="button" data-accion="compte-mode" data-m="nou"', "Crear cuenta", "nw-si")}${g}
+        <button class="nw-b2" data-accion="compte-mode" data-m="entra">Ya tengo cuenta</button></div>
+      <p class="nw-edat-t">KLONK es a partir de 14 años.</p>${LEGAL_NW}</section>`;
+  }
+  function vistaEleccion() {
+    const nou = !S.personaje, tria = S.ui.avTria || avatarId();
+    const nom = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "";
+    return `<section class="nw nw-tria">${nou ? LOGO_NW() : ""}<h1 class="nw-t">Elige tu personaje</h1>
+      <div class="nw-esc"><img class="nw-cos" src="${R()}pj/${tria}.webp" alt="" draggable="false"></div>
+      <div class="nb3-graella nw-graella">${AVATARS.map((a, k) => `<button type="button" class="nb3-av${a === tria ? " on" : ""}" data-accion="nw-av" data-id="${a}" aria-label="Personaje ${k + 1}" aria-pressed="${a === tria}"><img src="${R()}pj/cara-${a}.webp" alt="" draggable="false"></button>`).join("")}</div>
+      <form class="nw-f" data-form="personaje">
+        <label class="nw-camp"><span>Tu nickname</span><input id="f-nom" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(nom)}" placeholder="Así te verán en KLONK"></label>
+        <p class="nw-nota">Único: nadie más puede tenerlo. De 3 a 20 letras o números, sin espacios.</p>
+        ${botoN('type="submit"', nou ? "Empezar" : "Elegir este", "nw-si")}
+      </form></section>`;
   }
 
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
@@ -10454,7 +10527,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nb3-t{font:400 44px/.95 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);transform-origin:left;text-shadow:4px 4px 0 rgb(var(--l3-rgb))}
 .nb3-escena{position:relative;z-index:1;min-height:0}
 .nb3-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain;filter:drop-shadow(0 24px 30px rgb(0 0 0 / .6))}
-.nb3-graella{position:relative;z-index:2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.nb3-graella{position:relative;z-index:2;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .nb3-av{aspect-ratio:1;border:0;padding:0;border-radius:50%;overflow:hidden;background:#111923;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08);cursor:pointer;transition:transform .15s,box-shadow .2s}
 .nb3-av img{width:100%;height:100%;object-fit:cover;display:block}
 .nb3-av.on{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 20px -2px rgb(var(--m-rgb) / .8)}
@@ -10568,6 +10641,56 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nsq-cands{display:grid;gap:8px;width:100%}
 .nsq-cands button{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border:0;border-radius:16px;cursor:pointer;background:#10171e;color:#e7edf2;font:900 14.5px/1 'Nunito',system-ui,sans-serif;text-align:left}
 .nsq-cands img{width:40px;height:40px;border-radius:50%;object-fit:cover}
+
+/* ======================= L'ENTRADA ======================= */
+.nw{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;min-height:calc(100dvh - 60px);padding:calc(18px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  font-family:'Nunito',system-ui,sans-serif;color:#e7edf2;overflow:hidden}
+.nw-llesca{position:absolute;left:-40%;width:180%;top:30%;height:26%;transform:rotate(-14deg);pointer-events:none;
+  background:linear-gradient(90deg,rgb(var(--l3-rgb,59 47 134)),rgb(var(--l2-rgb,111 99 201)) 50%,rgb(var(--m-rgb,134 217 198) / .8));opacity:.75;animation:np3-llesca .8s cubic-bezier(.2,.9,.25,1) both}
+.nw-logo{position:relative;z-index:2;width:min(62%,260px);height:auto;margin-top:8px;filter:drop-shadow(0 10px 24px rgb(0 0 0 / .6));animation:nw-logo .9s .1s cubic-bezier(.2,.9,.25,1) both}
+@keyframes nw-logo{from{opacity:0;transform:translateY(-10px) scale(.96);filter:blur(6px)}}
+.nw-colla{position:relative;z-index:1;width:100%;max-width:420px;height:min(46vh,420px);margin-top:4px}
+.nw-pj{position:absolute;bottom:0;height:78%;left:50%;width:auto;max-width:none;filter:drop-shadow(0 18px 24px rgb(0 0 0 / .6));animation:nw-pj .9s calc(var(--k) * 90ms + .2s) cubic-bezier(.2,.9,.25,1.1) both,nw-sura 4.2s calc(var(--k) * .6s + 1.2s) ease-in-out infinite}
+.nw-pj:nth-child(1){transform:translateX(-128%);height:70%;z-index:1;opacity:.92}
+.nw-pj:nth-child(2){transform:translateX(-86%);height:78%;z-index:2}
+.nw-pj:nth-child(3){transform:translateX(-50%);height:96%;z-index:4}
+.nw-pj:nth-child(4){transform:translateX(-12%);height:80%;z-index:3}
+.nw-pj:nth-child(5){transform:translateX(26%);height:72%;z-index:1;opacity:.92}
+@keyframes nw-pj{from{opacity:0;translate:0 30px}}
+@keyframes nw-sura{0%,100%{translate:0 0}50%{translate:0 -6px}}
+.nw-botons{position:relative;z-index:2;display:grid;gap:12px;width:min(100%,380px);margin-top:auto}
+.nw-b{height:58px;border:0;cursor:pointer;font:400 20px/1 'Anton','Nunito',sans-serif;letter-spacing:.08em;text-transform:uppercase;transform:skewX(-12deg);transition:transform .12s;
+  background:linear-gradient(90deg,rgb(var(--m2-rgb,166 236 219)),rgb(var(--m-rgb,134 217 198)));color:rgb(var(--mt-rgb,13 42 36));box-shadow:5px 5px 0 rgb(var(--l3-rgb,59 47 134))}
+.nw-b span{display:inline-block;transform:skewX(12deg)}
+.nw-b:active{transform:skewX(-12deg) scale(.97)}
+.nw-b2{height:46px;border:0;border-radius:999px;cursor:pointer;background:rgb(255 255 255 / .06);color:#e7edf2;font:900 15px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
+.nw-edat-t{position:relative;z-index:2;margin:0;font-size:13px;font-weight:800;color:#8b98a4}
+.nw-legal{position:relative;z-index:2;display:flex;gap:18px;justify-content:center;margin:0}
+.nw-legal a{color:#8b98a4;font-size:13px;font-weight:800}
+.nw-t{position:relative;z-index:2;margin:6px 0 0;font:400 40px/.95 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);text-shadow:4px 4px 0 rgb(var(--l3-rgb,59 47 134));text-align:center}
+.nw-form .nw-logo{width:min(40%,170px)}
+.nw-f{position:relative;z-index:2;display:grid;gap:14px;width:min(100%,400px);padding:18px 16px;border-radius:24px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:0 22px 40px -22px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .06)}
+.nw-camp{display:grid;gap:6px}.nw-camp > span{font-size:13.5px;font-weight:900;color:#c9d2da}
+.nw-camp input{height:50px;padding:0 16px;border:0;border-radius:14px;background:#10171e;color:#e7edf2;font:800 16px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .08)}
+.nw-camp input:focus{outline:none;box-shadow:inset 0 0 0 2px rgb(var(--m-rgb,134 217 198))}
+.nw-edat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.nw-edat .chip{min-height:42px}
+.nw-casella{display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:#aab4be;line-height:1.4}
+.nw-casella input{width:20px;height:20px;flex:none;accent-color:rgb(var(--m-rgb,134 217 198))}
+.nw-casella a,.nw-nota a{color:rgb(var(--m-rgb,134 217 198))}
+.nw-nota{margin:0;font-size:12.5px;font-weight:700;color:#8b98a4;line-height:1.4}
+.nw-google{position:relative;z-index:2;display:grid;gap:10px;justify-items:center;width:min(100%,400px)}
+.nw-o{display:flex;align-items:center;gap:10px;width:100%;margin:0;color:#8b98a4;font-size:12.5px;font-weight:800}
+.nw-o::before,.nw-o::after{content:"";flex:1;height:1px;background:rgb(255 255 255 / .1)}
+.nw-enllacos{display:grid;gap:8px;width:min(100%,400px)}
+.nw-tria .nw-esc{position:relative;z-index:1;width:100%;height:min(40vh,380px)}
+.nw-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain;filter:drop-shadow(0 24px 30px rgb(0 0 0 / .6))}
+.nw-graella{width:min(100%,420px)}
+@media (prefers-reduced-motion:reduce){.nw-pj,.nw-logo,.nw-llesca{animation:none}}
+/* la farga no surt enlloc de la Noche: ni el fons del calabós ni l'escena ambient, tampoc a l'entrada */
+body.v-nit .fons{background:#0b1016}
+body.v-nit .fons::after,body.v-nit .ambient{display:none}
+.nw .chip{border:0;background:#10171e;color:#e7edf2;font-weight:900;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .1)}
+.nw .chip[aria-pressed="true"]{color:rgb(var(--mt-rgb,13 42 36));background:rgb(var(--m-rgb,134 217 198));box-shadow:none}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
@@ -10667,7 +10790,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -12674,7 +12797,8 @@ async function forjaPersonatge() {
     try { const r = await apiCompte("POST", "/nick", { nick: nom }); desaSessio({ ...sessio, nick: r.nick }); }
     catch (e) { avis(e.status === 0 ? "Sin conexión: para elegir tu nickname hace falta red." : e.message, true); $("#f-nom").focus(); return; }
   }
-  S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom };
+  S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom, ...(S.ui.avTria ? { avatar: S.ui.avTria } : {}) };      // l'avatar triat a la Noche
+  S.ui.avTria = null;
   const tornar = S.ui.nickPendent; S.ui.nickPendent = false;
   S.ui.vista = !S.perfil.peso ? "datos" : tornar ? (S.ui.vistaAbansNick || "inicio") : "inicio"; S.ui.triaIniciada = false; guardar();
   Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra("forja"); render(); window.scrollTo({ top: 0 });
