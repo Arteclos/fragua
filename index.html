@@ -7088,7 +7088,10 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   // després de cada render(): la pestanya del lloc on ets
   function despresRender(vista) {
     if (!teBarra()) return;
-    document.body.classList.toggle("bb-entrada", ["compte", "eleccion", "datos"].includes(vista));
+    // l'entrada (sense la barra de baix) és NOMÉS mentre et fas el compte: triar el personatge des de Personaje no ho és, i
+    // sense la barra no hi havia manera de tornar enrere
+    const entrada = vista === "compte" || vista === "datos" || (vista === "eleccion" && (typeof S !== "object" || !S.personaje || S.ui.nickPendent));
+    document.body.classList.toggle("bb-entrada", entrada);
     const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && vista === "progreso";
     const entr = AMB_FORJA.includes(actual) && vista === "entreno";
     // LA PELL DE LA BETA a les pantalles de sempre, NOMÉS a les que ja s'han revisat una per una (l'Albert: «pam a pam»)
@@ -7104,7 +7107,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     // la pestanya es diu Gimnasios (ARQUITECTURA §10: «Gimnasios dona nom a la pestanya»), i la pàgina també: un menú diu on ets
     if (vista === "social") { const h = document.querySelector("#vista h1.titol-pag"); if (h && h.textContent.trim() === "Social") h.textContent = "Gimnasios"; }
     // la barra de dalt de la Forja, també aquí (l'entrada no: encara no tens ELO ni or; l'entreno tampoc: és la batalla)
-    if ((pell || prog) && !["compte", "eleccion", "datos", "entreno"].includes(vista) && typeof ForjaBeta === "object" && ForjaBeta.cap) {
+    if ((pell || prog) && !entrada && vista !== "entreno" && typeof ForjaBeta === "object" && ForjaBeta.cap) {
       const v = document.getElementById("vista");
       if (v && !v.querySelector(":scope > .bt-cap")) v.insertAdjacentHTML("afterbegin", ForjaBeta.cap(actual, "bt-cap"));
     }
@@ -7422,6 +7425,9 @@ body.bt-pell #vista *{text-shadow:none}
 body.bt-pell .prog{border:0;background:var(--fb-enfonsat);color:var(--fb-accio-text);box-shadow:none;font-family:inherit;font-weight:800}
 body.bt-pell .prog.baja{color:#3b7fb8}
 body.bt-entreno .sessio-cap .dia-n{font-size:24px;color:var(--fb-accio-text)}
+/* el personatge de la capçalera és un canvas 3D que surt 20 px per cada costat de la seva columna de 104 px, i el braç amb
+   el martell tapava la primera lletra del títol: el text comença passat el canvas */
+body.bt-entreno:not(.v-neta) .sessio-cap{column-gap:30px}
 body.bt-pell .barra{height:10px;background:var(--fb-enfonsat);box-shadow:none}
 body.bt-pell .barra i{background:var(--fb-accio-grad,var(--fb-accio))}
 body.bt-entreno .objectiu{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta);font-weight:800}
