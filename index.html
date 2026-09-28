@@ -7878,7 +7878,7 @@ const Nit = (() => {
   function cap() {
     const e = eloDe(), foc = fetAvui();
     return `<header class="nt-cap">
-      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${e.divisio.nom}` : "Tu ELO: sin clasificar"}">${ic("medalla", "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
+      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${e.divisio.nom}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
       <span class="nt-xip nt-ratxa${foc ? " on" : ""}" data-in="cap" role="button" data-accion="nt-ves" data-v="estadisticas" data-tab="racha" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
       <span class="nt-buit"></span>
       <span class="nt-xip nt-or" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro" aria-label="Tu oro: ${n0(oroTotal())}. Tienda">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
@@ -8191,6 +8191,8 @@ const Nit = (() => {
       if (c) { ev.preventDefault(); ev.stopPropagation(); klonk(c); return; }
       if (a) { ev.preventDefault(); ev.stopPropagation(); klonkAmic(a); return; }
     }
+    const ra = ev.target.closest('[data-accion="nt-rangs"], [data-accion="nt-editapj"]');
+    if (ra) { ev.preventDefault(); ev.stopPropagation(); if (ra.dataset.accion === "nt-rangs") obreRangs(); else obreEditaPj(); return; }
     const fo = ev.target.closest('[data-accion="nt-focus"]');
     if (fo) { ev.preventDefault(); ev.stopPropagation(); posaFocus(+fo.dataset.i, true); return; }
     const b = ev.target.closest('[data-accion="nt-ves"], [data-accion="nt-menu"]');
@@ -8243,24 +8245,65 @@ const Nit = (() => {
     }));
     return Object.values(m).sort((a, b) => b.v - a.v);
   }
+  // LA SIGMA DE L'ELO (l'Albert, 28-09: «en comptes d'enclusos per a l'ELO, una sigma 3D amb els mateixos materials»):
+  // la σ de KLσNK en el material de la teva divisió (src/elo.js: fusta, pedra, coure, bronze, ferro, acer, or, obsidiana,
+  // criselefantí i estel·lar). Sense classificar, la de fusta, apagada.
+  const sigma = (e, cls = "") => `<img class="nt-sigma ${cls}${e && e.elo != null ? "" : " apagada"}" src="${R()}sigma-${(e && e.elo != null && e.divisio && e.divisio.id) || "madera"}.webp" alt="" draggable="false">`;
+  const I_TU = {
+    cal: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><g fill="currentColor"><rect x="7" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="14.4" y="12.5" width="2.6" height="2.4" rx=".6"/><rect x="7" y="16" width="2.6" height="2.4" rx=".6"/><rect x="10.7" y="16" width="2.6" height="2.4" rx=".6"/></g></svg>',
+    man: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="2" y="9" width="2.6" height="6" rx="1"/><rect x="5" y="7" width="3" height="10" rx="1.2"/><rect x="16" y="7" width="3" height="10" rx="1.2"/><rect x="19.4" y="9" width="2.6" height="6" rx="1"/><rect x="8" y="10.8" width="8" height="2.4" rx="1.2"/></g></svg>',
+    est: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z" fill="currentColor"/></svg>',
+    pj: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.5" r="4" fill="currentColor"/><path d="M4 20.5c.6-4.2 3.8-6.8 8-6.8s7.4 2.6 8 6.8" fill="currentColor"/></svg>',
+    rut: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><rect x="8.5" y="2.5" width="7" height="4" rx="1.5" fill="currentColor"/><path d="M8.5 11h7M8.5 15h5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
+    prog: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="4" y="12" width="4" height="8" rx="1.3"/><rect x="10" y="7.5" width="4" height="12.5" rx="1.3"/><rect x="16" y="3.5" width="4" height="16.5" rx="1.3"/></g></svg>',
+    bot: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>',
+    fle: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  };
+  const ANELL_TU = 2 * Math.PI * 30;
   function vistaTu() {
     let xp = { nivel: 1, enNivel: 0, paraSubir: 1 };
     try { xp = Stats.experienciaPj(S); } catch (e) {}
     const e = eloDe(), nom = (S.personaje && S.personaje.nombre) || "Tú", fets = S.ses.filter(s => s.fin).length, m = marques().slice(0, 3);
-    const kg = v => (typeof fmt === "function" ? fmt(v) : String(v));
+    let rec = 0; try { rec = Stats.records(S); } catch (er) {}
+    const pc = Math.min(1, xp.enNivel / Math.max(1, xp.paraSubir)), kg = v => (typeof fmt === "function" ? fmt(v) : String(v));
     return `<section class="nt-tu">
-      <div class="nt-tu-pj" data-in="tu"><i class="nt-tu-llum"></i><img src="${R()}urba.webp" alt="Tu personaje" draggable="false"></div>
-      <div class="nt-tu-fitxa" data-in="tu"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span>
-        <div class="nt-tu-barra"><i style="--p:${Math.min(100, xp.enNivel / Math.max(1, xp.paraSubir) * 100).toFixed(1)}%"></i></div><small>${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
-      <div class="nt-tu-xifres" data-in="tu">
-        <div><b>${e.elo != null ? n0(e.elo) : "?"}</b><small>${e.elo != null ? `ELO, ${esc(e.divisio.nom)}` : "ELO, sin clasificar"}</small></div>
-        <div><b>${ratxa()}</b><small>días de gym este año</small></div>
-        <div><b>${fets}</b><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
+      <div class="nt-tu-dalt">
+        <div class="nt-tu-pj" data-in="tu"><i class="nt-tu-raigs"></i><i class="nt-tu-llum"></i><i class="nt-tu-anella"></i><img src="${R()}urba.webp" alt="Tu personaje" draggable="false"></div>
+        <div class="nt-tu-dreta">
+          <div class="nt-tu-fitxa" data-in="tu"><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
+            <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
+            <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
+          <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(e.divisio.nom) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
+          <div class="nt-tu-xifres" data-in="tu">
+            <div><b>${ratxa()}</b><i>${I_TU.cal}</i><small>días de gym este año</small></div>
+            <div><b>${fets}</b><i>${I_TU.man}</i><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
+            <div><b>${rec}</b><i>${I_TU.est}</i><small>récords este mes</small></div>
+          </div>
+        </div>
       </div>
-      ${m.length ? `<h2 class="nt-tu-t" data-in="tu">Tus mejores marcas</h2><div class="nt-tu-marques">${m.map(x => { const f = fotoAnime(x.n);
-        return `<div class="nt-tu-m" data-in="tu">${f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`}<span><b>${esc(x.n)}</b><small>${kg(x.kg)} kg × ${x.reps}</small></span><em>${n0(x.v)} kg<small>1RM</small></em></div>`; }).join("")}</div>` : ""}
-      <div class="nt-tu-acc" data-in="tu"><button class="nt-boto2" data-accion="nt-ves" data-v="estadisticas">Progreso</button><button class="nt-boto2" data-accion="nt-ves" data-v="rutinas">Mis rutinas</button></div>
+      ${m.length ? `<div class="nt-tu-marques-c" data-in="tu"><h2 class="nt-tu-t">Tus mejores marcas</h2><div class="nt-tu-marques">${m.map(x => { const f = fotoAnime(x.n);
+        return `<button class="nt-tu-m" data-accion="nt-ves" data-v="estadisticas" data-tab="ejercicios">${f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`}<span><b>${esc(x.n)}</b><small>${kg(x.kg)} kg × ${x.reps}</small></span><em>${n0(x.v)} kg<small>1RM</small></em><i class="nt-tu-fle">${I_TU.fle}</i></button>`; }).join("")}</div></div>` : ""}
+      <div class="nt-tu-bot" data-in="tu">
+        <button data-accion="nt-editapj">${I_TU.pj}<b>Editar personaje</b>${I_TU.fle}</button>
+        <button data-accion="nt-ves" data-v="rutinas">${I_TU.rut}<b>Mis rutinas</b>${I_TU.fle}</button>
+        <button data-accion="nt-ves" data-v="estadisticas">${I_TU.prog}<b>Progreso</b>${I_TU.fle}</button>
+        <button data-accion="nt-ves" data-v="tienda" data-t="oro">${I_TU.bot}<b>Tienda</b>${I_TU.fle}</button>
+      </div>
     </section>`;
+  }
+  // ELS RANGS: la sigma de cada material, del més baix al més alt, amb el teu marcat
+  function obreRangs() {
+    if (typeof obreFull !== "function" || typeof Elo !== "object") return;
+    const e = eloDe(), ara = e.elo != null ? e.divisio.id : null;
+    obreFull(`<div class="nt-rangs">${Elo.DIVISIONS.map(([min, id, nom]) => `<div class="nt-rang${id === ara ? " es-meu" : ""}"><img src="${R()}sigma-${id}.webp" alt="" draggable="false"><span><b>${esc(nom)}</b><small>desde ${n0(min)} de ELO</small></span>${id === ara ? `<em>Tú</em>` : ""}</div>`).join("")}</div>`, "Rangos");
+    if (!quiet()) document.querySelectorAll(".nt-rang").forEach((r, i) => { try { r.animate([{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }], { duration: 320, delay: 40 + i * 35, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (er) {} });
+    fx(E => E.suena("tap"));
+  }
+  // EL PERSONATGE: l'editor (cabells, roba, colors, com el Duolingo) encara no hi és; de moment, l'Urbà i el que vindrà
+  function obreEditaPj() {
+    if (typeof obreFull !== "function") return;
+    obreFull(`<div class="nt-editapj"><img src="${R()}urba.webp" alt="" draggable="false"><p>El editor de tu personaje llega pronto: el pelo, la ropa y los colores, y los looks de la tienda.</p></div>`, "Tu personaje");
+    fx(E => E.suena("tap"));
   }
   // l'Urbà en lloc del personatge 3D d'abans (app.js, heroi): a la capçalera de l'entreno i de Nutrición no hi surt
   const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}urba.webp" alt="" draggable="false"></div>`;
@@ -8300,7 +8343,7 @@ const Nit = (() => {
     v.dataset.vista = vista;
     if (nova && !quiet()) {
       v.classList.add("nt-entra"); clearTimeout(v._ntEntra); v._ntEntra = setTimeout(() => v.classList.remove("nt-entra"), 1200);
-      if (vista === "personaje") v.querySelectorAll(".nt-tu-xifres b").forEach(compta);
+      if (vista === "personaje") { v.querySelectorAll(".nt-tu-xifres b").forEach(compta); const a = v.querySelector(".nt-tu-a-p"); if (a) a.animate([{ strokeDashoffset: ANELL_TU + "px" }, { strokeDashoffset: getComputedStyle(a).strokeDashoffset }], { duration: 1000, easing: "cubic-bezier(.2,.9,.25,1)" }); }
       if (vista === "entreno") { entra([...v.querySelectorAll('[data-in="ne"]')], 40); const a = v.querySelector(".ne-a-p"); if (a) a.animate([{ strokeDashoffset: ANELL + "px" }, { strokeDashoffset: getComputedStyle(a).strokeDashoffset }], { duration: 900, easing: "cubic-bezier(.2,.9,.25,1)" }); }
     }
     if (!quiet()) {
@@ -8584,6 +8627,7 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-espurna{position:absolute;width:13px;height:13px;background:url(${A()}beta/nit/ic-espurna.webp) center/contain no-repeat;pointer-events:none;filter:drop-shadow(0 0 6px rgb(226 194 122 / .8))}
 .nt-espurna.menta{background-image:url(${A()}beta/nit/ic-espurna-menta.webp);filter:drop-shadow(0 0 6px var(--nt-menta-glow))}
 .nt-ic{display:block;width:22px;height:22px;object-fit:contain}
+.nt-elo .nt-sigma{width:24px;height:24px}
 /* LA BARRA DE DALT: xips petits amb relleu; a l'ELO, una brillantor passa de tant en tant */
 .nt-cap{display:flex;align-items:center;gap:7px;height:40px;flex:none}
 .nt-buit{flex:1}
@@ -8768,31 +8812,74 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-rt-l{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;font-weight:900;font-size:15px}
 .nt-rt-op span b{display:block;font-size:15px;font-weight:900;line-height:1.15}
 .nt-rt-op span small{display:block;font-size:12px;font-weight:700;color:#8b98a4;line-height:1.25}
-/* TÚ */
+/* TÚ (referencies/nx-tu) */
 .nt-tu{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
-.nt-tu-pj{position:relative;display:grid;place-items:end center;height:min(46vh,400px);border-radius:26px;overflow:hidden;
-  background:radial-gradient(70% 55% at 50% 45%,#233142 0%,#19222d 72%);box-shadow:var(--fb-o2)}
-.nt-tu-pj img{position:absolute;left:50%;bottom:0;height:95%;width:auto;transform:translateX(-50%)}
-.nt-tu-llum{position:absolute;left:20%;right:20%;bottom:3%;height:12%;border-radius:50%;background:radial-gradient(closest-side,rgb(168 155 224 / .35),transparent);pointer-events:none}
-.nt-tu-fitxa{display:grid;gap:6px;padding:14px 16px;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
-.nt-tu-nom{font-size:24px;font-weight:900;line-height:1.1;text-shadow:var(--nt-text-o)}
-.nt-tu-nv{font-size:13px;font-weight:900;color:var(--nt-lila)}
-.nt-tu-barra{height:8px;border-radius:99px;background:#10171e;overflow:hidden}
+.nt-tu-dalt{display:grid;grid-template-columns:44% 1fr;gap:10px;align-items:stretch}
+.nt-tu-pj{position:relative;min-height:340px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 60% at 50% 40%,#2a2350 0%,#171a33 55%,#10131f 100%);box-shadow:var(--fb-o2),0 0 0 1px rgb(168 155 224 / .25)}
+.nt-tu-raigs{position:absolute;inset:0;background:conic-gradient(from 200deg at 50% 45%,transparent 0 8%,rgb(168 155 224 / .12) 10%,transparent 14% 30%,rgb(168 155 224 / .1) 33%,transparent 37% 60%,rgb(134 217 198 / .08) 63%,transparent 67%);animation:nt-tu-gira 28s linear infinite}
+@keyframes nt-tu-gira{to{transform:rotate(360deg)}}
+.nt-tu-llum{position:absolute;left:10%;right:10%;bottom:2%;height:22%;border-radius:50%;background:radial-gradient(closest-side,rgb(168 155 224 / .55),rgb(168 155 224 / .12) 60%,transparent)}
+.nt-tu-anella{position:absolute;left:12%;right:12%;bottom:5%;height:9%;border-radius:50%;border:2px solid rgb(200 190 255 / .8);box-shadow:0 0 16px rgb(168 155 224 / .9),inset 0 0 12px rgb(168 155 224 / .6);animation:nt-tu-anella 3s ease-in-out infinite}
+@keyframes nt-tu-anella{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+.nt-tu-pj img{position:absolute;left:50%;bottom:6%;height:90%;width:auto;transform:translateX(-50%);filter:drop-shadow(0 12px 16px rgb(0 0 0 / .6))}
+.nt-tu-dreta{display:grid;gap:10px;align-content:start;min-width:0}
+.nt-tu-fitxa{display:grid;grid-template-columns:1fr auto;gap:6px 8px;align-items:center;padding:12px;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-nom-l{display:grid;min-width:0}
+.nt-tu-nom{font-size:20px;font-weight:900;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:var(--nt-text-o)}
+.nt-tu-nv{font-size:12.5px;font-weight:900;color:var(--nt-lila)}
+.nt-tu-anell{position:relative;display:grid;place-items:center;width:62px;height:62px;grid-row:span 2}
+.nt-tu-anell svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.nt-tu-a-f{fill:none;stroke:#10171e;stroke-width:6}
+.nt-tu-a-p{fill:none;stroke:url(#nt-tu-g);stroke-width:6;stroke-linecap:round;stroke-dasharray:188.5;filter:drop-shadow(0 0 4px rgb(134 217 198 / .5))}
+.nt-tu-anell span{position:relative;display:grid;justify-items:center;line-height:1}
+.nt-tu-anell small{font-size:7.5px;font-weight:900;color:var(--nt-suau);letter-spacing:.06em}.nt-tu-anell b{font-size:19px;font-weight:900}
+.nt-tu-barra{grid-column:1;height:7px;border-radius:99px;background:#10171e;overflow:hidden}
 .nt-tu-barra i{display:block;height:100%;width:var(--p);border-radius:99px;background:linear-gradient(90deg,var(--nt-lila),var(--nt-menta));box-shadow:0 0 10px -2px var(--nt-menta-glow)}
-.nt-tu-fitxa small{font-size:12px;font-weight:800;color:var(--nt-suau)}
-.nt-tu-xifres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.nt-tu-xifres div{display:grid;align-content:start;gap:3px;padding:12px 8px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
-.nt-tu-xifres b{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:var(--nt-text-o)}
-.nt-tu-xifres small{font-size:11.5px;font-weight:800;color:var(--nt-suau);line-height:1.2}
-.nt-tu-t{margin:6px 2px 0;font-size:17px;font-weight:900}
+.nt-tu-xp{grid-column:1 / -1;font-size:11px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-rang{display:grid;gap:4px;width:100%;padding:10px 12px;border:0;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .12s}
+.nt-tu-rang:active{transform:scale(.97)}
+.nt-tu-rang > small{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-rang-c{display:flex;align-items:center;gap:10px}
+.nt-tu-rang-c > span{flex:1;display:grid}.nt-tu-rang-c b{font-size:19px;font-weight:900;color:var(--nt-or)}.nt-tu-rang-c small{font-size:11px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-rang-c i{display:grid;width:18px;height:18px;color:var(--nt-suau)}.nt-tu-rang-c i svg{width:18px;height:18px}
+.nt-sigma{display:block;width:22px;height:22px;object-fit:contain}
+.nt-sigma.gran{width:58px;height:58px;filter:drop-shadow(0 6px 10px rgb(0 0 0 / .5));animation:nt-sigma 4s ease-in-out infinite}
+@keyframes nt-sigma{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-3px) rotate(3deg)}}
+.nt-sigma.apagada{filter:grayscale(.8) brightness(.7)}
+.nt-tu-xifres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.nt-tu-xifres div{display:grid;justify-items:center;align-content:start;gap:3px;padding:10px 4px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
+.nt-tu-xifres b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:var(--nt-text-o)}
+.nt-tu-xifres i{display:grid;width:20px;height:20px;color:var(--nt-lila)}.nt-tu-xifres i svg{width:20px;height:20px}
+.nt-tu-xifres small{font-size:10.5px;font-weight:800;color:var(--nt-suau);line-height:1.15}
+.nt-tu-marques-c{padding:12px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-t{margin:0 2px 10px;font-size:17px;font-weight:900}
 .nt-tu-marques{display:grid;gap:8px}
-.nt-tu-m{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
-.nt-tu-m img,.nt-tu-m .nt-ej-buit{width:42px;height:42px;border-radius:50%;flex:none;box-shadow:0 0 0 1.5px rgb(168 155 224 / .45)}
+.nt-tu-m{display:flex;align-items:center;gap:12px;width:100%;padding:8px 10px;border:0;border-radius:16px;background:#141b23;color:inherit;font:inherit;text-align:left;cursor:pointer;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .05);transition:transform .12s}
+.nt-tu-m:active{transform:scale(.98)}
+.nt-tu-m img,.nt-tu-m .nt-ej-buit{width:50px;height:50px;border-radius:14px;flex:none;object-fit:cover;box-shadow:0 0 0 1.5px rgb(168 155 224 / .45)}
 .nt-tu-m span{flex:1;display:grid;min-width:0}.nt-tu-m span b{font-size:14.5px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nt-tu-m span small{font-size:12px;font-weight:800;color:var(--nt-suau)}
 .nt-tu-m em{font-style:normal;font-weight:900;color:var(--nt-menta);font-size:15px;text-align:right;line-height:1.1}
 .nt-tu-m em small{display:block;font-size:10.5px;color:var(--nt-suau);font-weight:800}
-.nt-tu-acc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.nt-tu-fle{display:grid;width:16px;height:16px;color:var(--nt-suau)}.nt-tu-fle svg{width:16px;height:16px}
+.nt-tu-bot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nt-tu-bot button{display:flex;align-items:center;gap:10px;min-height:56px;padding:0 12px;border:0;border-radius:18px;color:var(--nt-tinta);font:inherit;cursor:pointer;
+  background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(168 155 224 / .28),0 10px 20px -14px rgb(0 0 0 / .9);transition:transform .12s}
+.nt-tu-bot button:active{transform:scale(.97)}
+.nt-tu-bot button > svg:first-child{width:24px;height:24px;flex:none;color:var(--nt-lila)}
+.nt-tu-bot button > svg:last-child{width:14px;height:14px;flex:none;color:var(--nt-suau);margin-left:auto}
+.nt-tu-bot b{font-size:14px;font-weight:900;text-align:left;line-height:1.15}
+.nt-rangs{display:grid;gap:8px}
+.nt-rang{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:16px;background:#1b242e;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .06)}
+.nt-rang img{width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 4px 6px rgb(0 0 0 / .5))}
+.nt-rang span{flex:1;display:grid}.nt-rang b{font-size:15.5px;font-weight:900}.nt-rang small{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nt-rang.es-meu{background:rgb(134 217 198 / .1);box-shadow:inset 0 0 0 1.5px rgb(134 217 198 / .45)}
+.nt-rang em{font-style:normal;font-size:12px;font-weight:900;color:#0d2a24;background:var(--nt-menta);padding:3px 10px;border-radius:99px}
+.nt-editapj{display:grid;justify-items:center;gap:10px;text-align:center}
+.nt-editapj img{height:260px;width:auto;filter:drop-shadow(0 12px 16px rgb(0 0 0 / .6))}
+.nt-editapj p{margin:0;font-size:15px;font-weight:700;color:var(--nt-suau);line-height:1.4}
+@media (max-width:360px){.nt-tu-dalt{grid-template-columns:1fr}.nt-tu-pj{min-height:300px}}
+@media (prefers-reduced-motion:reduce){.nt-tu-raigs,.nt-tu-anella,.nt-sigma.gran{animation:none}}
 .nt-boto2{height:48px;border:0;border-radius:999px;font:900 16px/1 'Nunito',system-ui,sans-serif;color:var(--nt-tinta);cursor:pointer;
   background:linear-gradient(180deg,#232d38,#1a222b);box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(255 255 255 / .07),0 10px 20px -12px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o);transition:transform .1s}
 .nt-boto2:active{transform:scale(.97)}
