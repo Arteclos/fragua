@@ -4114,7 +4114,7 @@ function aplicaEspecials(sets, cfg, c) {
 // El número de la sèrie, o la lletra del seu tipus, que es toca per canviar-lo
 function botoTipus(z, i, j, n) {
   const t = z.tipo || "", nom = (TIPUS_SERIE.find(x => x[0] === t) || TIPUS_SERIE[0])[1];
-  if (!t && !metodesOn()) return `<span class="i tipus-n" aria-label="Serie ${n}">${n}</span>`;
+  if (!t && !metodesOn() && !(typeof Nit === "object" && Nit.activa())) return `<span class="i tipus-n" aria-label="Serie ${n}">${n}</span>`;
   return `<button class="i tipus-${t || "n"}" data-accion="serie-tipus" data-i="${i}" data-j="${j}" aria-label="Serie ${n}: ${nom.toLowerCase()}. Cambiar el tipo">${t ? t.toUpperCase() : n}</button>`;
 }
 function fullTipusSerie(i, j) {
@@ -6893,7 +6893,7 @@ const Versions = (() => {
      anime i l'original amb el menú nou) ja no surten al selector; el seu codi es queda aquí per si se'n vol reprendre res. */
   const LLISTA = [
     { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
-    { id: "nit", nom: "Beta · Noche", desc: "Oscura y limpia. De momento, solo la pantalla de entrenar." },
+    { id: "nit", nom: "Beta · Noche", desc: "Oscura y limpia, en todas las pantallas." },
   ];
   // les versions que porten una pantalla principal nova (src/nit.js)
   const AMB_FORJA = ["nit"];
@@ -7104,9 +7104,10 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     document.body.classList.add("v-" + actual);
     document.body.classList.toggle("te-barra", teBarra());
     document.body.classList.toggle("sense-espurnes", AMB_FORJA.includes(actual));
-    if (!teBarra() || !BARRES[actual]) return;
+    if (!teBarra() || (!BARRES[actual] && actual !== "nit")) return;
     const nav = document.createElement("nav"); nav.id = "barra-nova"; nav.setAttribute("aria-label", "Principal");
-    nav.innerHTML = BARRES[actual]();
+    // la de la Noche la posa src/nit.js després del primer pintat (aquí encara no hi és)
+    nav.innerHTML = BARRES[actual] ? BARRES[actual]() : "";
     document.body.appendChild(nav);
   }
   // després de cada render(): la pestanya del lloc on ets
@@ -7116,13 +7117,18 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     // sense la barra no hi havia manera de tornar enrere
     const entrada = vista === "compte" || vista === "datos" || (vista === "eleccion" && (typeof S !== "object" || !S.personaje || S.ui.nickPendent));
     document.body.classList.toggle("bb-entrada", entrada);
-    // la Beta Noche és una sola pantalla: la d'entrenar, sigui quina sigui la vista (menys l'entrada)
+    // LA BETA NOCHE: la portada és seva (src/nit.js) i fixa; les altres pàgines són les de sempre amb la pell de la Beta i
+    // els colors de la Noche (28-09 nit, l'Albert: «aquest estil és el que ha de seguir en totes les pàgines»)
     if (actual === "nit") {
-      const nit = !ENTRADA_NIT.includes(vista) && typeof Nit === "object";
-      document.body.classList.toggle("fb-actiu", nit);
-      document.body.classList.toggle("sense-ambient", nit);
-      document.body.classList.remove("bt-pell", "bt-actiu", "bt-entreno");
-      if (nit) Nit.despresPintar();
+      if (typeof Nit !== "object") return;
+      const casa = vista === "inicio", pag = !entrada && !casa;
+      document.body.classList.toggle("fb-actiu", casa);
+      document.body.classList.toggle("sense-ambient", casa || pag);
+      document.body.classList.toggle("bt-pell", pag);
+      document.body.classList.toggle("bt-actiu", pag);
+      document.body.classList.toggle("bt-entreno", pag && vista === "entreno");
+      if (casa) Nit.despresPintar();
+      Nit.despresPagina(vista, entrada);
       return;
     }
     const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && (vista === "progreso" || vista === "espejo");
@@ -7213,7 +7219,12 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   // la pantalla que aquesta versió pinta al lloc de la de sempre (de moment, només l'inici: la Forja)
   function vista(v) {
     if (!AMB_FORJA.includes(actual)) return null;
-    if (actual === "nit") return !ENTRADA_NIT.includes(v) && typeof Nit === "object" ? () => Nit.vista() : null;
+    if (actual === "nit") {
+      if (typeof Nit !== "object" || ENTRADA_NIT.includes(v)) return null;
+      if (v === "inicio") return () => Nit.vista();
+      if (v === "personaje") return () => Nit.vistaTu();
+      return null;
+    }
     if (v === "inicio" && typeof ForjaBeta === "object") return () => ForjaBeta.vista(actual);
     // PROGRESO és un lloc (el cos forjat, src/progreso.js); el mirall hi és un objecte, i té la seva pròpia vista
     if (v === "progreso" && typeof Progreso === "object") return () => Progreso.vista();
@@ -7817,11 +7828,11 @@ const Nit = (() => {
 
   // LES PECES
   function carta(c, act) {
-    if (c.tipus === "pro") return `<div class="nt-carta nt-pro" data-in="carta"><span class="nt-pro-ic">${ic("medalla")}</span><b>Plan personalizado</b><span class="nt-sub">Tu rutina, hecha para ti</span><span class="nt-xip-pro">PRO</span></div>`;
-    if (c.tipus === "nova") return `<div class="nt-carta nt-nova" data-in="carta"><span class="nt-mes">${ic("mes")}</span><b>Nueva rutina</b></div>`;
+    if (c.tipus === "pro") return `<div class="nt-carta nt-pro" data-in="carta" data-accion="nt-ves" data-v="tienda" data-t="oro"><span class="nt-pro-ic">${ic("medalla")}</span><b>Plan personalizado</b><span class="nt-sub">Tu rutina, hecha para ti</span><span class="nt-xip-pro">PRO</span></div>`;
+    if (c.tipus === "nova") return `<div class="nt-carta nt-nova" data-in="carta" data-accion="nt-ves" data-v="rutinas"><span class="nt-mes">${ic("mes")}</span><b>Nueva rutina</b></div>`;
     const min = Math.round(c.ej.length * 6.5 / 5) * 5;
     const fotos = c.ej.slice(0, 5).map(x => { const f = fotoAnime(x[0]); return f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`; }).join("");
-    const boto = act && act.dia === c.n ? "Seguir" : "Empezar";
+    const segueix = act && act.dia === c.n;
     return `<div class="nt-carta${c.feta ? " nt-feta" : ""}${c.avui ? " nt-avui" : ""}" data-n="${c.n}" data-in="carta">
       <div class="nt-carta-cap">${c.avui && !act ? `<span class="nt-hoy">Hoy</span>` : ""}<span class="nt-dia">Día ${c.n}</span><b class="nt-tit">${esc(c.t)}</b></div>
       <div class="nt-il"><img src="${R()}musculs-${c.mm}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nt-brill"></i><i class="nt-llum"></i></div>
@@ -7829,18 +7840,26 @@ const Nit = (() => {
       ${c.feta ? `<span class="nt-ok" aria-label="Hecho">${ic("check")}</span>` : ""}
       <div class="nt-ejs">${fotos}${c.ej.length > 5 ? `<i class="nt-mas">+${c.ej.length - 5}</i>` : ""}</div>
       <p class="nt-meta">${c.ej.length} ejercicios · ${min} min</p>
-      <span class="nt-boto nt-press" role="button" aria-disabled="true">${boto}</span>
+      ${segueix ? `<button class="nt-boto" data-accion="nt-ves" data-v="entreno">Seguir</button>` : `<button class="nt-boto" data-accion="empezar" data-dia="${c.n}">Empezar</button>`}
     </div>`;
   }
   function cap() {
     const e = eloDe(), foc = fetAvui();
     return `<header class="nt-cap">
       <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${e.divisio.nom}` : "Tu ELO: sin clasificar"}">${ic("medalla", "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
-      <span class="nt-xip nt-ratxa nt-press${foc ? " on" : ""}" data-in="cap" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
+      <span class="nt-xip nt-ratxa${foc ? " on" : ""}" data-in="cap" role="button" data-accion="nt-ves" data-v="estadisticas" data-tab="racha" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
       <span class="nt-buit"></span>
-      <span class="nt-xip nt-or nt-press" data-in="cap">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
-      <span class="nt-xip nt-pro-x nt-press" data-in="cap">PRO</span>
+      <span class="nt-xip nt-or" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro" aria-label="Tu oro: ${n0(oroTotal())}. Tienda">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
+      <span class="nt-xip nt-pro-x" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro">PRO</span>
     </header>`;
+  }
+  // LA BARRA DE BAIX, la mateixa a la portada i a totes les pàgines: Tú, Social, el KLONK (la portada), Nutrición i el menú
+  function botonsBarra() {
+    return `<button class="nt-tab" data-in="barra" data-lloc="tu" data-accion="nt-ves" data-v="personaje" aria-label="Tú"><img class="nt-av" src="${CARA()}" alt="" draggable="false"></button>
+        <button class="nt-tab" data-in="barra" data-lloc="social" data-accion="nt-ves" data-v="social" aria-label="Social">${ic("escut")}</button>
+        <button class="nt-centre" data-in="barra" data-lloc="centre" data-accion="nt-ves" data-v="inicio" aria-label="Entrenar">${ic("manuella", "nt-manuella")}<i class="nt-anell"></i></button>
+        <button class="nt-tab" data-in="barra" data-lloc="nutri" data-accion="nt-ves" data-v="comer" aria-label="Nutrición">${ic("shaker")}</button>
+        <button class="nt-tab" data-in="barra" data-lloc="menu" data-accion="nt-menu" aria-label="Menú">${ic("menu")}</button>`;
   }
   function vista() {
     const { llista, idx, act } = cartes();
@@ -7853,13 +7872,7 @@ const Nit = (() => {
       <div class="nt-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}
         <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
       <div class="nt-amic" hidden></div>
-      <nav class="nt-barra" aria-label="Principal">
-        <span class="nt-tab nt-press" data-in="barra" aria-label="Tú" aria-disabled="true"><img class="nt-av" src="${CARA()}" alt="" draggable="false"></span>
-        <span class="nt-tab nt-press" data-in="barra" aria-label="Social" aria-disabled="true">${ic("escut")}</span>
-        <button class="nt-centre" data-in="barra" aria-label="KLONK">${ic("manuella", "nt-manuella")}<i class="nt-anell"></i></button>
-        <span class="nt-tab nt-press" data-in="barra" aria-label="Nutrición" aria-disabled="true">${ic("shaker")}</span>
-        <span class="nt-tab nt-press" data-in="barra" aria-label="Menú" aria-disabled="true">${ic("menu")}</span>
-      </nav>
+      <nav class="nt-barra" aria-label="Principal">${botonsBarra()}</nav>
       <div class="nt-fx" aria-hidden="true"></div>
     </section>`;
   }
@@ -8010,12 +8023,12 @@ const Nit = (() => {
     colloca(roda, pos);
     roda.addEventListener("pointerdown", ev => {
       if (dit !== null) return;
-      atura(); dit = ev.pointerId; x0 = ev.clientX; p0 = pos; mogut = false; mostres = [[performance.now(), pos]];
+      atura(); dit = ev.pointerId; x0 = ev.clientX; p0 = pos; mogut = false; roda._arrossegat = false; mostres = [[performance.now(), pos]];
     });
     roda.addEventListener("pointermove", ev => {
       if (dit !== ev.pointerId) return;
       const dx = ev.clientX - x0;
-      if (!mogut) { if (Math.abs(dx) < 5) return; mogut = true; try { roda.setPointerCapture(ev.pointerId); } catch (e) {} }
+      if (!mogut) { if (Math.abs(dx) < 5) return; mogut = true; roda._arrossegat = true; try { roda.setPointerCapture(ev.pointerId); } catch (e) {} }
       let cru = p0 - dx / pas();
       if (cru < 0) cru = -(1 - 1 / (1 - cru * 1.6)) / 1.6 * .5;
       else if (cru > n - 1) { const o = cru - (n - 1); cru = n - 1 + (1 - 1 / (1 + o * 1.6)) / 1.6 * .5; }
@@ -8131,12 +8144,258 @@ const Nit = (() => {
     try { if (typeof Efectos === "object") Efectos.suena("tap"); } catch (e) {}
   }
   document.addEventListener("click", ev => {
-    const sec = ev.target.closest(".nt"); if (!sec) return;
-    const c = ev.target.closest(".nt-centre"), a = ev.target.closest(".nt-klonk-amic"), p = ev.target.closest(".nt-press");
-    if (!c && !a && !p) return;
-    ev.preventDefault(); ev.stopPropagation();
-    if (c) klonk(c); else if (a) klonkAmic(a); else premsa(p);
+    if (!esNit()) return;
+    const tipus = ev.target.closest('[data-accion="serie-tipus"]');
+    if (tipus) { ev.preventDefault(); ev.stopPropagation(); obreTipus(tipus); return; }
+    const op = ev.target.closest(".nt-rt-op");
+    if (op) { ev.preventDefault(); ev.stopPropagation(); triaTipus(op); return; }
+    const sec = ev.target.closest(".nt");
+    if (sec) {
+      const roda = sec.querySelector(".nt-roda"), carta = ev.target.closest(".nt-carta");
+      if (carta && (roda && roda._arrossegat || !carta.classList.contains("davant"))) { ev.preventDefault(); ev.stopPropagation(); return; }
+      const em = ev.target.closest('.nt-boto[data-accion="empezar"]');
+      if (em && !em.dataset.nitFet) { ev.preventDefault(); ev.stopPropagation(); llanca(em); return; }
+      const c = ev.target.closest(".nt-centre"), a = ev.target.closest(".nt-klonk-amic");
+      if (c) { ev.preventDefault(); ev.stopPropagation(); klonk(c); return; }
+      if (a) { ev.preventDefault(); ev.stopPropagation(); klonkAmic(a); return; }
+    }
+    const b = ev.target.closest('[data-accion="nt-ves"], [data-accion="nt-menu"]');
+    if (b) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (b.classList.contains("on") && b.dataset.accion === "nt-ves") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+      if (b.dataset.accion === "nt-menu") obreMenu(); else ves(b.dataset.v, b);
+      return;
+    }
+    const p = ev.target.closest(".nt-press");
+    if (p && sec) { ev.preventDefault(); ev.stopPropagation(); premsa(p); }
   }, true);
+
+
+  /* ======================= LA RESTA DE PÀGINES (28-09 nit) =======================
+     L'Albert: «ens agrada ja com està l'app; aquest estil és el que ha de seguir en totes les pàgines… programa-la mentre
+     estic aquí». Les pantalles de sempre, amb tota la seva lògica, porten la pell de la Beta (forja-beta.js, body.bt-pell)
+     amb els colors de la Noche; a dalt, els mateixos xips que a la portada, i a baix, la mateixa barra a totes les pàgines.
+     Tú és nova (el perfil amb l'Urbà), i l'entreno és el de sempre amb la rodeta del tipus de sèrie. */
+  const esNit = () => typeof Versions === "object" && Versions.actual() === "nit";
+  const I_AJUST = '<svg viewBox="0 0 24 24" class="nt-ic" aria-hidden="true"><g fill="none" stroke="#b9c4ce" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></g></svg>';
+  function ves(v, b) {
+    if (typeof tancaFull === "function") { try { tancaFull(); } catch (e) {} }
+    if (b && b.dataset.t && v === "tienda") S.ui.tiendaTab = b.dataset.t;
+    if (b && b.dataset.tab && v === "estadisticas") S.ui.statsTab = b.dataset.tab;
+    // a la botiga de la Noche no hi ha els personatges d'abans (els nans): s'hi entra per l'or
+    if (v === "tienda" && (!S.ui.tiendaTab || S.ui.tiendaTab === "personajes")) S.ui.tiendaTab = "oro";
+    if (typeof veure === "function") veure(v);
+  }
+  // EL MENÚ (≡): el que no és a la barra, un toc més avall
+  function obreMenu() {
+    if (typeof obreFull !== "function") return;
+    const F = [["rutinas", "Mis rutinas", ic("manuella")], ["estadisticas", "Progreso", ic("flama-on")], ["gimnasios", "Gimnasios", ic("cresta")],
+      ["tienda", "Tienda", ic("moneda")], ["ajustes", "Ajustes", I_AJUST]];
+    obreFull(`<nav class="nt-menu" aria-label="Menú">${F.map(([v, n, i]) => `<button class="nt-menu-f" data-accion="nt-ves" data-v="${v}"><span class="nt-menu-ic">${i}</span><b>${n}</b><i aria-hidden="true">›</i></button>`).join("")}</nav>`, "Menú");
+    if (!quiet()) document.querySelectorAll(".nt-menu-f").forEach((f, i) => { try { f.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 360, delay: 60 + i * 45, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (e) {} });
+    fx(E => E.suena("tap"));
+  }
+
+  // TÚ: el perfil, amb l'Urbà (el builder del personatge vindrà aquí dins, com el Duolingo)
+  function marques() {
+    const m = {};
+    S.ses.filter(s => s.fin).forEach(s => (s.ej || []).forEach(e => {
+      if (e.x === "lastre") return;
+      (e.sets || []).forEach(z => {
+        if (!z.ok || !(z.kg > 0) || !(z.reps > 0) || z.tipo === "c" || z.tipo === "d") return;
+        const v = typeof Stats === "object" && Stats.e1rm ? Stats.e1rm(z.kg, z.reps) : z.kg * (1 + z.reps / 30);
+        if (!m[e.n] || v > m[e.n].v) m[e.n] = { n: e.n, kg: z.kg, reps: z.reps, v };
+      });
+    }));
+    return Object.values(m).sort((a, b) => b.v - a.v);
+  }
+  function vistaTu() {
+    let xp = { nivel: 1, enNivel: 0, paraSubir: 1 };
+    try { xp = Stats.experienciaPj(S); } catch (e) {}
+    const e = eloDe(), nom = (S.personaje && S.personaje.nombre) || "Tú", fets = S.ses.filter(s => s.fin).length, m = marques().slice(0, 3);
+    const kg = v => (typeof fmt === "function" ? fmt(v) : String(v));
+    return `<section class="nt-tu">
+      <div class="nt-tu-pj" data-in="tu"><i class="nt-tu-llum"></i><img src="${R()}urba.webp" alt="Tu personaje" draggable="false"></div>
+      <div class="nt-tu-fitxa" data-in="tu"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span>
+        <div class="nt-tu-barra"><i style="--p:${Math.min(100, xp.enNivel / Math.max(1, xp.paraSubir) * 100).toFixed(1)}%"></i></div><small>${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
+      <div class="nt-tu-xifres" data-in="tu">
+        <div><b>${e.elo != null ? n0(e.elo) : "?"}</b><small>${e.elo != null ? `ELO, ${esc(e.divisio.nom)}` : "ELO, sin clasificar"}</small></div>
+        <div><b>${ratxa()}</b><small>días de gym este año</small></div>
+        <div><b>${fets}</b><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
+      </div>
+      ${m.length ? `<h2 class="nt-tu-t" data-in="tu">Tus mejores marcas</h2><div class="nt-tu-marques">${m.map(x => { const f = fotoAnime(x.n);
+        return `<div class="nt-tu-m" data-in="tu">${f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`}<span><b>${esc(x.n)}</b><small>${kg(x.kg)} kg × ${x.reps}</small></span><em>${n0(x.v)} kg<small>1RM</small></em></div>`; }).join("")}</div>` : ""}
+      <div class="nt-tu-acc" data-in="tu"><button class="nt-boto2" data-accion="nt-ves" data-v="estadisticas">Progreso</button><button class="nt-boto2" data-accion="nt-ves" data-v="rutinas">Mis rutinas</button></div>
+    </section>`;
+  }
+  // l'Urbà en lloc del personatge 3D d'abans (app.js, heroi): a la capçalera de l'entreno i de Nutrición no hi surt
+  const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}urba.webp" alt="" draggable="false"></div>`;
+
+  // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
+  const LLOC = { inicio: "centre", personaje: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
+    ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu" };
+  const ORDRE = ["tu", "social", "centre", "nutri", "menu"];
+  let llocAbans = "";
+  function despresPagina(vista, entrada) {
+    estil();
+    tancaTipus(true);
+    const nav = document.getElementById("barra-nova");
+    if (nav && !nav.querySelector(".nt-barra")) nav.innerHTML = `<div class="nt-barra nt-barra-g">${botonsBarra()}</div>`;
+    const lloc = LLOC[vista] || "";
+    document.querySelectorAll(".nt-barra [data-lloc]").forEach(b => {
+      const on = b.dataset.lloc === lloc;
+      if (on !== b.classList.contains("on")) b.classList.toggle("on", on);
+      if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    const v = document.getElementById("vista");
+    if (!v || entrada || vista === "inicio") { if (lloc) llocAbans = lloc; return; }
+    if (vista !== "entreno" && !v.querySelector(":scope > .nt-cap-pag")) v.insertAdjacentHTML("afterbegin", cap().replace('<header class="nt-cap">', '<header class="nt-cap nt-cap-pag">'));
+    const nova = v.dataset.vista !== vista;
+    v.dataset.vista = vista;
+    if (nova && !quiet()) {
+      v.classList.add("nt-entra"); clearTimeout(v._ntEntra); v._ntEntra = setTimeout(() => v.classList.remove("nt-entra"), 1200);
+      if (vista === "personaje") v.querySelectorAll(".nt-tu-xifres b").forEach(compta);
+    }
+    if (!quiet()) {
+      if (lloc && llocAbans && lloc !== llocAbans) {
+        const dir = ORDRE.indexOf(lloc) > ORDRE.indexOf(llocAbans) ? 1 : -1;
+        [...v.children].filter(x => !x.classList.contains("nt-cap-pag")).forEach(x => { try { x.animate([{ opacity: 0, transform: `translateX(${18 * dir}px)` }, { opacity: 1, transform: "none" }], { duration: 300, easing: "cubic-bezier(.2,.9,.25,1)" }); } catch (e) {} });
+      }
+      if (vista === "personaje") entra([...v.querySelectorAll('[data-in="tu"]')], 40);
+    }
+    if (lloc) llocAbans = lloc;
+  }
+
+
+  /* EMPEZAR SONA KLONK (l'Albert, 28-09: «que al empezar soni klonk»): el cop, la carta que s'encén (la il·lustració fa un
+     bot, el fil de menta i la llum de darrere) i, un moment després, l'entreno. El que el comença és el de sempre (app.js). */
+  function llanca(b) {
+    so();
+    const carta = b.closest(".nt-carta"), sec = b.closest(".nt");
+    if (!quiet() && carta) {
+      const il = carta.querySelector(".nt-il"), aura = carta.querySelector(".nt-aura"), br = carta.querySelector(".nt-brill");
+      try {
+        b.animate([{ transform: "scale(1)" }, { transform: "scale(.94)", offset: .25 }, { transform: "scale(1.03)", offset: .6 }, { transform: "scale(1)" }], { duration: 320, easing: "cubic-bezier(.2,.9,.3,1)" });
+        if (il) il.animate([{ transform: "scale(1)" }, { transform: "scale(1.07)", offset: .4 }, { transform: "scale(1.02)" }], { duration: 340, easing: "cubic-bezier(.2,.9,.3,1)", fill: "forwards" });
+        if (aura) aura.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, fill: "forwards" });
+        if (br) br.animate([{ opacity: .55 }, { opacity: 1.2 }], { duration: 200, fill: "forwards" });
+        const fxc = sec && sec.querySelector(".nt-fx"), r0 = sec.getBoundingClientRect(), rb = b.getBoundingClientRect();
+        if (fxc) {
+          const o = document.createElement("i"); o.className = "nt-ona";
+          Object.assign(o.style, { left: rb.left + rb.width / 2 - r0.left + "px", top: rb.top + rb.height / 2 - r0.top + "px", borderColor: "var(--nt-menta)" });
+          fxc.appendChild(o);
+          o.animate([{ transform: "translate(-50%,-50%) scale(.6)", opacity: .8 }, { transform: "translate(-50%,-50%) scale(4.2)", opacity: 0 }], { duration: 620, easing: "cubic-bezier(.15,.8,.3,1)" }).onfinish = () => o.remove();
+        }
+      } catch (e) {}
+    }
+    setTimeout(() => { b.dataset.nitFet = "1"; b.click(); }, quiet() ? 0 : 300);
+  }
+  /* UNA SÈRIE FETA (app.js la crida en lloc de les espurnes i l'enclusa): el so «Positive Pick» que l'Albert va triar, un
+     esclat petit de menta on era el xec, i a la fila nova el xec fa un bot i hi passa una llum. L'hàptic, els +XP i l'or que
+     suren i els rècords són els de sempre. */
+  const SO_SERIE = () => R() + "so-serie.mp3";
+  let capa = null;
+  function capaFx() {
+    if (capa && capa.isConnected) return capa;
+    capa = document.createElement("div"); capa.className = "nt-fx-g"; capa.setAttribute("aria-hidden", "true"); document.body.appendChild(capa);
+    return capa;
+  }
+  function esclat(x, y, n = 10, dist = 34) {
+    if (quiet()) return;
+    const c = capaFx();
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + (k % 2 ? .2 : -.15), d = dist + (k % 3) * 8;
+      const e = document.createElement("i"); e.className = "nt-guspira" + (k % 3 === 0 ? " lila" : "");
+      e.style.left = x + "px"; e.style.top = y + "px"; c.appendChild(e);
+      e.animate([{ transform: "translate(-50%,-50%) scale(.4)", opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px),calc(-50% + ${Math.sin(a) * d}px)) scale(1)`, opacity: .9, offset: .6 },
+        { transform: `translate(calc(-50% + ${Math.cos(a) * d * 1.3}px),calc(-50% + ${Math.sin(a) * d * 1.3}px)) scale(.2)`, opacity: 0 }], { duration: 560, delay: k * 6, easing: "cubic-bezier(.15,.85,.3,1)" }).onfinish = () => e.remove();
+    }
+  }
+  function serieFeta(r, i, j) {
+    fx(E => { if (!E.mostra || !E.mostra(SO_SERIE(), { volum: .5 })) E.suena("tap"); });
+    if (r) esclat(r.left + r.width / 2, r.top + r.height / 2);
+    if (quiet()) return true;
+    const x = document.querySelector(`[data-accion="serie"][data-i="${i}"][data-j="${j}"]`), fila = x && x.closest(".serie");
+    try {
+      if (x) x.animate([{ transform: "scale(.55)" }, { transform: "scale(1.16)", offset: .55 }, { transform: "scale(1)" }], { duration: 440, easing: "cubic-bezier(.2,.9,.3,1)" });
+      if (fila) {
+        const f = document.createElement("i"); f.className = "nt-feta-fx"; fila.appendChild(f);
+        f.animate([{ opacity: 0, transform: "translateX(-40%)" }, { opacity: 1, offset: .3 }, { opacity: 0, transform: "translateX(40%)" }], { duration: 720, easing: "cubic-bezier(.3,.6,.3,1)" }).onfinish = () => f.remove();
+      }
+      // l'exercici sencer fet: la targeta s'encén
+      const sec = x && x.closest(".exercici");
+      if (sec && [...sec.querySelectorAll('[data-accion="serie"]')].every(b => b.getAttribute("aria-pressed") === "true"))
+        sec.animate([{ boxShadow: "var(--fb-o1)" }, { boxShadow: "0 0 0 2px var(--nt-menta),0 0 34px -6px var(--nt-menta-glow)", offset: .3 }, { boxShadow: "var(--fb-o1)" }], { duration: 1100, easing: "ease-out" });
+    } catch (e) {}
+    return true;
+  }
+  // els números de Tú compten des de zero en entrar
+  function compta(el) {
+    const fi = +String(el.textContent).replace(/\D/g, ""); if (!fi || quiet()) return;
+    const t0 = performance.now(), d = 700;
+    const pas = t => { const k = Math.min(1, (t - t0) / d), v = Math.round(fi * (1 - Math.pow(1 - k, 3))); el.textContent = n0(v); if (k < 1) requestAnimationFrame(pas); };
+    requestAnimationFrame(pas);
+  }
+
+  /* LA RODETA DEL TIPUS DE SÈRIE (l'Albert, 28-09: «a l'esquerra tenies el número de la sèrie i, fent clic, la podies
+     canviar a drop set o els diferents tipus; fes com una rodeta que baixi, en el mateix estil»). Els quatre tipus són els
+     de sempre (series.js), que són els mateixos que porten Hevy i Strong: normal, escalfament, drop set i al fallo. Es
+     desplega sota el número com un tambor que es desenrotlla (cada opció gira des de dalt), i en triar-ne una es torna
+     a enrotllar. El que canvia és el de sempre: l'escalfament i el drop set no compten per als rècords ni per pujar pes. */
+  const TIPUS = [["", "Normal", "La de siempre."], ["c", "Calentamiento", "Con poco peso, antes de las de verdad."],
+    ["d", "Drop set", "Bajas el peso y sigues, sin descanso."], ["f", "Al fallo", "Hasta que no puedes ni una más."]];
+  let rt = null;
+  function tancaTipus(ja) {
+    if (!rt) return;
+    const el = rt.el; rt = null;
+    if (ja || quiet() || !el.animate) { el.remove(); return; }
+    const ops = [...el.querySelectorAll(".nt-rt-op")];
+    ops.reverse().forEach((o, i) => { try { o.animate([{ transform: "none", opacity: 1 }, { transform: "rotateX(-80deg)", opacity: 0 }], { duration: 150, delay: i * 25, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }); } catch (e) {} });
+    try { el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, delay: 90, fill: "forwards" }).onfinish = () => el.remove(); } catch (e) { el.remove(); }
+  }
+  function obreTipus(b) {
+    const i = +b.dataset.i, j = +b.dataset.j;
+    tancaTipus(true);
+    const ses = typeof activa === "function" ? activa() : null;
+    const z = ses && ses.ej[i] && ses.ej[i].sets[j]; if (!z) return;
+    const ara = z.tipo || "";
+    const el = document.createElement("div");
+    el.className = "nt-rt"; el.setAttribute("role", "listbox"); el.setAttribute("aria-label", `Tipo de la serie ${j + 1}`);
+    el.innerHTML = TIPUS.map(([k, nom, des]) => `<button class="nt-rt-op${k === ara ? " on" : ""}" role="option" aria-selected="${k === ara}" data-i="${i}" data-j="${j}" data-t="${k}"><b class="nt-rt-l ${k || "n"}">${k ? k.toUpperCase() : j + 1}</b><span><b>${nom}</b><small>${des}</small></span></button>`).join("");
+    document.body.appendChild(el);
+    const r = b.getBoundingClientRect(), h = el.offsetHeight, w = el.offsetWidth;
+    const avall = r.bottom + 8 + h < innerHeight - 90;
+    el.style.left = Math.max(10, Math.min(innerWidth - w - 10, r.left - 6)) + "px";
+    el.style.top = (avall ? r.bottom + 8 : Math.max(10, r.top - 8 - h)) + "px";
+    el.style.transformOrigin = avall ? "20px 0" : "20px 100%";
+    rt = { el, b };
+    fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.18, volum: .24 }); E.vibra("tria"); });
+    if (quiet() || !el.animate) return;
+    el.animate([{ opacity: 0, transform: "scaleY(.55)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.9,.25,1)" });
+    const ops = [...el.querySelectorAll(".nt-rt-op")];
+    (avall ? ops : ops.slice().reverse()).forEach((o, n) => { try { o.animate([{ transform: `rotateX(${avall ? -90 : 90}deg)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 340, delay: 40 + n * 45, easing: "cubic-bezier(.2,.9,.3,1.15)", fill: "backwards" }); } catch (e) {} });
+  }
+  function triaTipus(op) {
+    const ses = typeof activa === "function" ? activa() : null;
+    const z = ses && ses.ej[+op.dataset.i] && ses.ej[+op.dataset.i].sets[+op.dataset.j];
+    if (!z) { tancaTipus(); return; }
+    const t = op.dataset.t, canvia = (z.tipo || "") !== t;
+    if (t) z.tipo = t; else delete z.tipo;
+    fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .26 }); E.vibra("posa"); });
+    if (!quiet() && op.animate) { try { op.animate([{ transform: "scale(1)" }, { transform: "scale(1.04)", offset: .4 }, { transform: "scale(1)" }], { duration: 220 }); } catch (e) {} }
+    setTimeout(() => {
+      tancaTipus();
+      if (!canvia) return;
+      if (typeof guardar === "function") guardar();
+      if (typeof render === "function") render();
+      // el número nou fa un bot al seu lloc
+      const nou = document.querySelector(`[data-accion="serie-tipus"][data-i="${op.dataset.i}"][data-j="${op.dataset.j}"]`);
+      if (nou && nou.animate && !quiet()) nou.animate([{ transform: "scale(.6)" }, { transform: "scale(1.12)", offset: .6 }, { transform: "scale(1)" }], { duration: 380, easing: "cubic-bezier(.2,.9,.3,1)" });
+    }, 170);
+  }
+  document.addEventListener("pointerdown", ev => { if (rt && !ev.target.closest(".nt-rt") && !ev.target.closest('[data-accion="serie-tipus"]')) tancaTipus(); }, true);
+  document.addEventListener("keydown", ev => { if (rt && ev.key === "Escape") tancaTipus(); });
+  addEventListener("scroll", () => { if (rt) tancaTipus(); }, { passive: true });
 
   // LA PANTALLA NO ES MOU: ni scroll, ni rebot, ni estirar per recarregar, mentre la Beta Noche és a la vista
   document.addEventListener("touchmove", ev => { if (ev.target.closest && ev.target.closest(".nt")) ev.preventDefault(); }, { passive: false });
@@ -8274,6 +8533,137 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-anell{position:absolute;inset:-5px;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgb(134 217 198 / .25),0 0 22px -4px var(--nt-menta-glow);animation:nt-respira-c 3.2s ease-in-out infinite}
 @keyframes nt-respira-c{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
 @media (prefers-reduced-motion:reduce){.nt-sheen,.nt-ratxa.on .nt-flama,.nt-dia-s.avui i::after,.nt-carta.davant .nt-brill,.nt-anell{animation:none}}
+/* ======================= LA NOCHE A TOTES LES PÀGINES ======================= */
+body.v-nit{--nt-fons:#0d1217;--nt-sup:#19212a;--nt-sup-2:#212b35;--nt-vora:rgb(255 255 255 / .07);--nt-tinta:#e7edf2;--nt-suau:#8b98a4;--nt-apagat:#2b3540;
+  --nt-menta:#86d9c6;--nt-menta-glow:rgb(134 217 198 / .45);--nt-lila:#a89be0;--nt-or:#e2c27a;--nt-text-o:0 1px 2px rgb(0 0 0 / .55);
+  --nt-o1:0 8px 20px -14px rgb(0 0 0 / .9),inset 0 1px 0 rgb(255 255 255 / .05);--nt-o2:0 22px 40px -22px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .06);
+  --fb-fons:linear-gradient(180deg,#131b22 0%,#0d1217 100%);--fb-fons-1:#0d1217;--fb-logo:clar;--fb-tinta:#e7edf2;--fb-suau:#8b98a4;--fb-sup:#19212a;--fb-enfonsat:#10171e;
+  --fb-linia:rgb(255 255 255 / .08);--fb-r:22px;
+  --fb-o1:0 10px 24px -16px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .05),0 0 0 1px rgb(255 255 255 / .06);
+  --fb-o2:0 22px 40px -22px rgb(0 0 0 / .95),inset 0 1px 0 rgb(255 255 255 / .06),0 0 0 1px rgb(255 255 255 / .07);
+  --fb-accio:#86d9c6;--fb-accio-grad:linear-gradient(180deg,#a6ecdb 0%,#86d9c6 55%,#6cc4b1 100%);--fb-accio-tinta:#0d2a24;--fb-accio-text:#86d9c6;
+  --fb-o-accio:inset 0 1px 0 rgb(255 255 255 / .6),inset 0 -2px 0 rgb(0 0 0 / .12),0 10px 22px -10px rgb(134 217 198 / .45);
+  --fb-or:#e2c27a;--fb-or-tinta:#2a200a;--fb-brasa-1:#a6ecdb;--fb-brasa-2:#86d9c6;--fb-brasa-glow:rgb(134 217 198 / .35);
+  --fb-maestro:linear-gradient(160deg,#2a2440,#171a2a);--fb-maestro-tinta:#e7edf2}
+html:has(body.v-nit){color-scheme:dark}
+body.v-nit.bt-actiu{background:#0d1217}
+body.v-nit.bt-pell #vista{font-family:'Nunito',system-ui,sans-serif}
+body.v-nit.bt-pell .titol-pag{font-size:24px;font-weight:900;margin:8px 2px 14px;letter-spacing:-.01em}
+body.v-nit.bt-pell #vista h2{font-family:'Nunito',system-ui,sans-serif}
+body.v-nit .btn-forja small{display:none}
+body.v-nit .nt-heroi{display:none}
+body.v-nit [data-accion="tienda-tab"][data-t="personajes"]{display:none}
+body.v-nit.bt-pell #vista .btn.clar,body.v-nit.bt-pell .btn-forja,body.v-nit.bt-pell .btn-forja span{text-shadow:0 1px 0 rgb(255 255 255 / .35)}
+body.v-nit.bt-pell .chip[aria-pressed="true"]{text-shadow:0 1px 0 rgb(255 255 255 / .35)}
+#vista > .nt-cap-pag{margin:2px 0 6px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nt-xip[role="button"]{cursor:pointer}
+/* la barra de baix, la mateixa a tot arreu */
+body.v-nit #barra-nova .nt-barra{position:relative;display:flex;align-items:center;justify-content:space-around;margin:0;pointer-events:auto;height:60px;
+  padding:0 8px max(6px,calc(env(safe-area-inset-bottom) - 16px));box-sizing:content-box;background:linear-gradient(180deg,#171f28,#10171d);
+  box-shadow:0 -1px 0 var(--nt-vora),0 -18px 30px -24px rgb(0 0 0 / .9);border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif}
+body.v-nit.fb-actiu #barra-nova{display:none}
+body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+.nt-barra button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nt-barra .nt-centre{background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%)}
+.nt-tab{position:relative;transition:opacity .2s}
+.nt-tab.on{opacity:1}
+.nt-tab.on::after{content:"";position:absolute;left:50%;bottom:1px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--nt-menta);box-shadow:0 0 8px var(--nt-menta-glow)}
+.nt-tab:active{transform:scale(.9)}
+/* els fulls de sota (el menú i els de l'app), foscos */
+body.v-nit .vel{background:rgb(5 8 12 / .55)}
+body.v-nit .full{background:#151c24;color:var(--nt-tinta);border-top:0;border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif;box-shadow:0 -12px 40px -16px rgb(0 0 0 / .7),0 0 0 1px rgb(255 255 255 / .06)}
+body.v-nit .full .ansa{background:#2b3540}
+body.v-nit .full-cap h2{font-family:inherit;font-weight:900;font-size:20px;color:var(--nt-tinta)}
+body.v-nit .tanca{border:0;background:#212b35;color:var(--nt-tinta)}
+.nt-menu{display:grid;gap:8px;margin-top:4px}
+.nt-menu-f{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border:0;border-radius:16px;background:#1b242e;color:var(--nt-tinta);font:inherit;text-align:left;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .05),0 0 0 1px rgb(255 255 255 / .06);transition:transform .12s}
+.nt-menu-f b{flex:1;font-size:16.5px;font-weight:900}
+.nt-menu-f i{font-style:normal;font-size:24px;line-height:1;color:var(--nt-suau)}
+.nt-menu-ic{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#10171e}
+.nt-menu-ic .nt-ic{width:24px;height:24px}
+.nt-menu-f:active{transform:scale(.98)}
+/* les cartes de la portada: el botó és de debò */
+.nt-boto{width:100%;border:0;font-family:inherit;cursor:pointer;transition:transform .1s}
+.nt-boto:active{transform:scale(.97) translateY(1px)}
+.nt-pro,.nt-nova{cursor:pointer}
+/* L'ENTRENO, com el de sempre: sense personatge a la capçalera, i el número de la sèrie és la rodeta */
+body.v-nit.bt-entreno .sessio-cap{display:block}
+body.v-nit.bt-entreno .sessio-cap .dia-n{font-size:15px;font-weight:900;color:var(--nt-menta)}
+body.v-nit.bt-entreno .sessio-cap .dia-t{font-size:23px;font-weight:900;color:var(--nt-tinta)}
+body.v-nit .serie .i{filter:none !important;clip-path:none;display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:12px;background:#10171e;color:var(--nt-tinta);
+  font:900 15px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .09)}
+body.v-nit .serie button.i{position:relative;cursor:pointer}
+body.v-nit .serie button.i::after{content:"";position:absolute;left:50%;bottom:3px;margin-left:-3px;border:3px solid transparent;border-top-color:currentColor;opacity:.5}
+body.v-nit .serie .i.tipus-c,.nt-rt-l.c{background:rgb(226 194 122 / .14);color:#e8cd8e;box-shadow:inset 0 0 0 1.5px rgb(226 194 122 / .45)}
+body.v-nit .serie .i.tipus-d,.nt-rt-l.d{background:rgb(168 155 224 / .16);color:#c8befa;box-shadow:inset 0 0 0 1.5px rgb(168 155 224 / .5)}
+body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:#f5ac9d;box-shadow:inset 0 0 0 1.5px rgb(240 144 126 / .5)}
+.nt-rt-l.n{background:#10171e;color:#e7edf2;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .12)}
+.nt-rt{position:fixed;z-index:70;width:248px;padding:6px;border-radius:18px;background:#1b242e;color:#e7edf2;font-family:'Nunito',system-ui,sans-serif;perspective:520px;
+  box-shadow:0 22px 44px -14px rgb(0 0 0 / .95),0 0 0 1px rgb(255 255 255 / .09),inset 0 1px 0 rgb(255 255 255 / .06)}
+.nt-rt-op{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:0;border-radius:13px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;
+  transform-origin:50% 0;backface-visibility:hidden;-webkit-tap-highlight-color:transparent}
+.nt-rt-op.on{background:rgb(134 217 198 / .1);box-shadow:inset 0 0 0 1.5px rgb(134 217 198 / .35)}
+.nt-rt-op:active{background:rgb(255 255 255 / .06)}
+.nt-rt-l{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;font-weight:900;font-size:15px}
+.nt-rt-op span b{display:block;font-size:15px;font-weight:900;line-height:1.15}
+.nt-rt-op span small{display:block;font-size:12px;font-weight:700;color:#8b98a4;line-height:1.25}
+/* TÚ */
+.nt-tu{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nt-tu-pj{position:relative;display:grid;place-items:end center;height:min(46vh,400px);border-radius:26px;overflow:hidden;
+  background:radial-gradient(70% 55% at 50% 45%,#233142 0%,#19222d 72%);box-shadow:var(--fb-o2)}
+.nt-tu-pj img{position:absolute;left:50%;bottom:0;height:95%;width:auto;transform:translateX(-50%)}
+.nt-tu-llum{position:absolute;left:20%;right:20%;bottom:3%;height:12%;border-radius:50%;background:radial-gradient(closest-side,rgb(168 155 224 / .35),transparent);pointer-events:none}
+.nt-tu-fitxa{display:grid;gap:6px;padding:14px 16px;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-nom{font-size:24px;font-weight:900;line-height:1.1;text-shadow:var(--nt-text-o)}
+.nt-tu-nv{font-size:13px;font-weight:900;color:var(--nt-lila)}
+.nt-tu-barra{height:8px;border-radius:99px;background:#10171e;overflow:hidden}
+.nt-tu-barra i{display:block;height:100%;width:var(--p);border-radius:99px;background:linear-gradient(90deg,var(--nt-lila),var(--nt-menta));box-shadow:0 0 10px -2px var(--nt-menta-glow)}
+.nt-tu-fitxa small{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-xifres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nt-tu-xifres div{display:grid;align-content:start;gap:3px;padding:12px 8px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
+.nt-tu-xifres b{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:var(--nt-text-o)}
+.nt-tu-xifres small{font-size:11.5px;font-weight:800;color:var(--nt-suau);line-height:1.2}
+.nt-tu-t{margin:6px 2px 0;font-size:17px;font-weight:900}
+.nt-tu-marques{display:grid;gap:8px}
+.nt-tu-m{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nt-tu-m img,.nt-tu-m .nt-ej-buit{width:42px;height:42px;border-radius:50%;flex:none;box-shadow:0 0 0 1.5px rgb(168 155 224 / .45)}
+.nt-tu-m span{flex:1;display:grid;min-width:0}.nt-tu-m span b{font-size:14.5px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-tu-m span small{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-m em{font-style:normal;font-weight:900;color:var(--nt-menta);font-size:15px;text-align:right;line-height:1.1}
+.nt-tu-m em small{display:block;font-size:10.5px;color:var(--nt-suau);font-weight:800}
+.nt-tu-acc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+.nt-boto2{height:48px;border:0;border-radius:999px;font:900 16px/1 'Nunito',system-ui,sans-serif;color:var(--nt-tinta);cursor:pointer;
+  background:linear-gradient(180deg,#232d38,#1a222b);box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(255 255 255 / .07),0 10px 20px -12px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o);transition:transform .1s}
+.nt-boto2:active{transform:scale(.97)}
+@media (prefers-reduced-motion:reduce){.nt-tab,.nt-boto,.nt-boto2,.nt-menu-f{transition:none}}
+/* Nutrición: sense el personatge, el panell de la proteïna torna a una columna; l'aigua, en lila */
+body.v-nit.bt-pell .panel.macros{display:block}
+body.v-nit.bt-pell .panel.macros .macro{margin-bottom:10px}
+body.v-nit .got{stroke:#3a4652}
+body.v-nit .got.ple{stroke:var(--nt-lila)}
+body.v-nit .got .aig{fill:var(--nt-lila);opacity:.78}
+body.v-nit .aig-b{border:0;background:#10171e;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .08)}
+body.v-nit .apat-cap svg{color:var(--nt-menta)}
+body.v-nit .ej-nom .grup > span:first-child{color:var(--nt-lila)}
+body.v-nit .carga-peu > :first-child{color:var(--nt-menta)}
+/* Progreso: els gràfics de foc, en menta (el taronja gira a menta; el blanc i el gris no es mouen) */
+body.v-nit #vista[data-vista="estadisticas"] .panel svg{filter:hue-rotate(140deg) saturate(.8)}
+/* L'ANIMACIÓ FINA: el que s'obre entra, el que es prem respon, i les barres s'omplen en arribar a la pàgina */
+@keyframes nt-obre{from{opacity:0;transform:translateY(-6px)}}
+body.v-nit #vista .apat-cos,body.v-nit #vista .dia-prev,body.v-nit #vista details[open] > :not(summary){animation:nt-obre .32s cubic-bezier(.2,.9,.25,1)}
+body.v-nit #vista :is(.btn,.chip,.xec,.objectiu,.dia-play,.dia-edita,.aig-b,.apat-cap){transition:transform .12s cubic-bezier(.2,.9,.3,1)}
+body.v-nit #vista :is(.btn,.chip,.xec,.objectiu,.dia-play,.dia-edita,.aig-b):active{transform:scale(.94)}
+#vista.nt-entra .barra i,#vista.nt-entra .nt-tu-barra i,#vista.nt-entra .nt-g-barra i{animation:nt-omple .9s cubic-bezier(.2,.9,.25,1) .12s both;transform-origin:left}
+@keyframes nt-omple{from{transform:scaleX(0)}}
+/* la sèrie feta: la llum que passa per la fila i l'esclat de menta */
+body.v-nit .serie{position:relative}
+.nt-feta-fx{position:absolute;inset:-4px -6px;border-radius:16px;pointer-events:none;background:linear-gradient(100deg,transparent 20%,rgb(134 217 198 / .24) 50%,transparent 80%);opacity:0}
+.nt-fx-g{position:fixed;inset:0;pointer-events:none;z-index:80}
+.nt-guspira{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--nt-menta);box-shadow:0 0 8px var(--nt-menta-glow)}
+.nt-guspira.lila{background:var(--nt-lila);box-shadow:0 0 8px rgb(168 155 224 / .6)}
+@media (prefers-reduced-motion:reduce){#vista.nt-entra .barra i,#vista.nt-entra .nt-tu-barra i{animation:none}body.v-nit #vista .apat-cos,body.v-nit #vista .dia-prev{animation:none}}
+
 `;
   function estil() { if (document.getElementById("estil-nit")) return; const s = document.createElement("style"); s.id = "estil-nit"; s.textContent = CSS; document.head.appendChild(s); }
   function despresPintar() {
@@ -8284,7 +8674,7 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, despresPintar, tipusDia };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -9561,6 +9951,8 @@ const EJERCICIOS = {
 // La il·lustració pròpia si en té; si no, la icona del seu grup muscular (fins que la dibuixem).
 const SLUG_GRUP = { Pecho: "pecho", Espalda: "espalda", Pierna: "pierna", Hombro: "hombro", Brazo: "brazo", Core: "core" };
 const fotoEj = n => {
+  // la Beta Noche: la miniatura d'anime de l'exercici, o res (mai el nan)
+  if (typeof Nit === "object" && Nit.activa()) return Nit.fotoAnime(n);
   if (EJERCICIOS[n]) return `${ACTIUS}ejercicios/${EJERCICIOS[n][0]}.webp`;
   const b = typeof bibDe === "function" ? bibDe(n) : null;
   if (b && typeof IL_BIB !== "undefined" && IL_BIB.has(b[0])) return `${ACTIUS}ejercicios/b-${b[0]}.webp`;
@@ -9573,7 +9965,8 @@ async function pasosDe(n) {
   if (!PASOS) { try { PASOS = await (await fetch(ACTIUS + "ejercicios/pasos.json")).json(); } catch (e) { return null; } }
   return PASOS[b[0]] || null;
 }
-const imgPersonaje = t => `${ACTIUS}personatges/${t}.webp`;
+// a la Beta Noche, el personatge de tothom és l'anime (l'Albert: «adapta tot el que surt com a herrero a anime»)
+const imgPersonaje = t => (typeof Nit === "object" && Nit.activa()) ? Nit.cara() : `${ACTIUS}personatges/${t}.webp`;
 const esTeu = t => (S.desbloq || []).includes(t) || !PERSONAJES[t].precio;
 const nivelOk = t => Stats.nivellMaxPj(S) >= (PERSONAJES[t].nivel || 1);
 
@@ -9711,7 +10104,7 @@ const bloc = (titol, html, cls = "") => `<section class="bloc ${cls}"><h2 class=
 // ensenya del cap als genolls, com la A, i les botes queden darrere del «Cómo vas». Mentre el model
 // arriba, s'hi veu una foto del mateix 3D amb el mateix enquadrament (FOTO3D), perquè no salti.
 const FOTO3D = { herrero: "personatges/herrero-3d.webp" };
-const heroi = (tipo, estil = "", vista = "") => `<div class="personatge" id="personatge" data-tipo="${tipo}" data-accion="heroi"${vista ? ` data-vista="${vista}"` : ""}${estil ? ` style="${estil}"` : ""}><div class="brillo"></div>${vista && FOTO3D[tipo]
+const heroi = (tipo, estil = "", vista = "") => (typeof Nit === "object" && Nit.activa()) ? Nit.heroi(estil) : `<div class="personatge" id="personatge" data-tipo="${tipo}" data-accion="heroi"${vista ? ` data-vista="${vista}"` : ""}${estil ? ` style="${estil}"` : ""}><div class="brillo"></div>${vista && FOTO3D[tipo]
   ? `<img class="foto3d" src="${ACTIUS}${FOTO3D[tipo]}" alt="${esc(PERSONAJES[tipo].nombre)}">` : `<img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}">`}</div>`;
 const hexagon = n => `<div class="hexagon${n > 9 ? " dos-xifres" : ""}" role="img" aria-label="Nivel ${n}"><span class="or"><small>NV</small><b>${n}</b></span></div>`;
 const botoForja = (attrs, titol, sub, cls = "") => `<div class="forja ${cls}"><button class="btn-forja" ${attrs}><span class="or">${titol}</span>${sub ? `<small>${esc(sub)}</small>` : ""}</button></div>`;
@@ -10370,7 +10763,8 @@ document.addEventListener("click", ev => {
     case "tria": triaIdx = (triaIdx + Number(b.dataset.d) + TIPOS.length) % TIPOS.length; render(); break;
     case "empezar": {
       if (activa()) { veure("entreno"); avis("Ya tienes un entreno en marcha."); break; }
-      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); marcaEntrenat(); Efectos.suena("fuego"); Efectos.vibra("encen"); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
+      // a la Beta Noche el so d'entrar és el KLONK, que ja ha sonat (src/nit.js)
+      S.ui.vista = "entreno"; empezar(Number(b.dataset.dia)); marcaEntrenat(); if (!(typeof Nit === "object" && Nit.activa())) Efectos.suena("fuego"); Efectos.vibra("encen"); musica(); Efectos.lanza(innerWidth / 2, innerHeight * 0.3, 40, 1.4);
       setTimeout(() => reacciona("tria"), 80);
       break;
     }
@@ -10403,7 +10797,8 @@ document.addEventListener("click", ev => {
       }
       guardar(); render();
       if (z.ok) {
-        Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); Efectos.vibra("serie");
+        if (!(typeof Nit === "object" && Nit.activa() && Nit.serieFeta(r, b.dataset.i, b.dataset.j))) { Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); }
+        Efectos.vibra("serie");
         Efectos.flota("+10 XP", r.left + r.width / 2, r.top - 6);
         setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
         if (record) setTimeout(() => { popRecord(e.n, prAbans, Stats.e1rm(z.kg || 0, z.reps)); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra("record"); Efectos.lluvia(0.8); }, 350);
