@@ -6874,7 +6874,7 @@ const Versions = (() => {
   // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
   const AMB_FORJA = ["neta", "marro"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
-  const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic"];
+  const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor"];
   const CLAU = "klonk-versio";
   let actual = "actual";
   try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
@@ -7351,7 +7351,8 @@ body.bt-pell .rk-fila:nth-child(1) .rk-pos{color:#d19a1c}
 body.bt-pell .form input,body.bt-pell .form select,body.bt-pell .form textarea,body.bt-pell .gim-cerca input{border:0;border-radius:14px;background:var(--fb-enfonsat);color:var(--fb-tinta)}
 body.bt-pell .xapa{background:var(--fb-accio);color:var(--fb-accio-tinta)}
 /* a la neta, sense personatges: el panell que el porta passa a una sola columna */
-body.v-neta.bt-pell .personatge{display:none}
+body.v-neta.bt-pell .panel.macros .personatge,body.v-neta.bt-pell .sessio-cap .personatge{display:none}
+body.bt-pell .reg div[style*="#ffd08a"]{color:var(--fb-accio-text) !important}
 body.v-neta.bt-pell .panel.macros,body.v-neta.bt-pell .sessio-cap{grid-template-columns:1fr !important;display:block}
 body.v-neta.bt-entreno .sessio-cap .personatge{display:none}
 body.v-neta.bt-entreno .sessio-cap{grid-template-columns:1fr}
