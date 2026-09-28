@@ -6884,7 +6884,7 @@ const Versions = (() => {
 
   // cada pantalla de l'app, a quin lloc de la barra pertany
   const LLOC = { comer: "comer", registro: "comer", estadisticas: "progreso", inicio: "forja", entreno: "forja", rutinas: "forja",
-    rutina: "forja", editor: "forja", personaje: "forja", progreso: "progreso", social: "gimnasios", gimnasios: "gimnasios", amic: "gimnasios", ajustes: "ajustes", tienda: "" };
+    rutina: "forja", editor: "forja", personaje: "forja", progreso: "progreso", espejo: "progreso", social: "gimnasios", gimnasios: "gimnasios", amic: "gimnasios", ajustes: "ajustes", tienda: "" };
   // [lloc, pantalla, nom, icona de l'app de sempre]
   const PESTANYES = [["comer", "comer", "Comer", "comer"], ["progreso", "estadisticas", "Progreso", "estadisticas"],
     ["gimnasios", "social", "Gimnasios", "social"], ["ajustes", "ajustes", "Ajustes", "ajustes"]];
@@ -7092,7 +7092,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     // sense la barra no hi havia manera de tornar enrere
     const entrada = vista === "compte" || vista === "datos" || (vista === "eleccion" && (typeof S !== "object" || !S.personaje || S.ui.nickPendent));
     document.body.classList.toggle("bb-entrada", entrada);
-    const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && vista === "progreso";
+    const forja = AMB_FORJA.includes(actual) && vista === "inicio", prog = AMB_FORJA.includes(actual) && (vista === "progreso" || vista === "espejo");
     const entr = AMB_FORJA.includes(actual) && vista === "entreno";
     // LA PELL DE LA BETA a les pantalles de sempre, NOMÉS a les que ja s'han revisat una per una (l'Albert: «pam a pam»)
     const pell = AMB_FORJA.includes(actual) && PELL.includes(vista);
@@ -7103,7 +7103,8 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     document.body.classList.toggle("sense-ambient", forja || prog || pell);
     if (forja && typeof ForjaBeta === "object") ForjaBeta.despresPintar();
     if (BARRES[actual] === muntaVector) { setTimeout(posaEnclusa, 60); actualitzaCalor(); }
-    if (prog && typeof Mirall === "object") Mirall.pintaMirall();
+    if (prog && vista === "espejo" && typeof Mirall === "object") Mirall.pintaMirall();
+    if (prog && vista === "progreso" && typeof Progreso === "object") Progreso.despresPintar();
     // la pestanya es diu Gimnasios (ARQUITECTURA §10: «Gimnasios dona nom a la pestanya»), i la pàgina també: un menú diu on ets
     if (vista === "social") { const h = document.querySelector("#vista h1.titol-pag"); if (h && h.textContent.trim() === "Social") h.textContent = "Gimnasios"; }
     // la barra de dalt de la Forja, també aquí (l'entrada no: encara no tens ELO ni or; l'entreno tampoc: és la batalla)
@@ -7180,7 +7181,9 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   function vista(v) {
     if (!AMB_FORJA.includes(actual)) return null;
     if (v === "inicio" && typeof ForjaBeta === "object") return () => ForjaBeta.vista(actual);
-    if (v === "progreso" && typeof Mirall === "object") return () => Mirall.vista();
+    // PROGRESO és un lloc (el cos forjat, src/progreso.js); el mirall hi és un objecte, i té la seva pròpia vista
+    if (v === "progreso" && typeof Progreso === "object") return () => Progreso.vista();
+    if (v === "espejo" && typeof Mirall === "object") return () => Mirall.vista({ espejo: true });
     return null;
   }
   return { despresRender, vista, actual: () => actual, cop };
@@ -7955,7 +7958,9 @@ const Mirall = (() => {
   }
 
   /* ---------- l'espai de Progreso de la Beta: l'ELO i el mirall ---------- */
-  function vista() {
+  function vista(o = {}) {
+    if (o.espejo) return `<section class="mp"><header class="mp-cap"><h1>Tu espejo</h1></header>
+      <div class="mp-mirall" id="mp-mirall">${pot() ? `<p class="mp-carrega">Abriendo tu espejo…</p>` : segellat()}</div></section>`;
     const e = typeof Elo === "object" ? Elo.calcula() : { elo: null };
     const elo = e.elo != null
       ? `<button class="mp-elo" data-fb="elo"><span class="mp-elo-n" style="--c:${e.divisio.color}">${n0(e.elo)}</span><span><b>${e.divisio.nom}</b><small>${e.seguent ? `Te faltan ${e.seguent.falta} para ${e.seguent.nom}` : "La división más alta"}</small></span></button>`
@@ -8288,6 +8293,223 @@ const Mirall = (() => {
   function estil() { if (document.getElementById("estil-mirall")) return; const s = document.createElement("style"); s.id = "estil-mirall"; s.textContent = CSS; document.head.appendChild(s); }
   estil();
   return { vista, pintaMirall, motor, totes, canvi, mida, MAX_SETMANA };
+})();
+
+/* PROGRESO · EL COS FORJAT (Beta 1.0, 28-09-2026). L'espai de Progreso com a LLOC i no com a llista: l'Albert, 28-09 07:50,
+   «és una merda el que has fet... no pots crear coses que no siguin quadrats una sobre l'altra i previsibles»; ARQUITECTURA
+   §11. Al mig, el cos forjat sobre el pedestal de la teva divisió; al voltant, els objectes que obren cada espai (la manuella,
+   la cinta, el trofeu, el pergamí, el mirall i l'àlbum). Les peces surten de la referència que va veure l'Albert
+   (referencies/es-progreso-lloc) i de la seva fulla d'actius (act-progreso), retallades amb talla_fulla.py.
+   EL METALL DE CADA PART DEL COS és de debò: la divisió d'ELO del seu aixecament (el pit i els braços, la banca; l'abdomen, el
+   peso muerto; les cames, la sentadilla). El que encara no has fet queda SENSE FORJAR, i ho diu: no s'inventa cap metall. */
+"use strict";
+
+const Progreso = (() => {
+  const A = () => (typeof ACTIUS === "string" ? ACTIUS : "assets/") + "beta/progreso/";
+  const quiet = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const potMirall = () => { try { return localStorage.getItem("klonk-mirall-beta") === "1"; } catch (e) { return false; } };
+  // els metalls com a mapes de degradat: de l'ombra a la llum (com es repinten les armadures als jocs)
+  const METALL = {
+    madera: ["#2a170a", "#6b4323", "#a8743f", "#e2b47a"], piedra: ["#26272a", "#5d6064", "#9a9ea3", "#d9dcdf"],
+    cobre: ["#3a1307", "#8e3f1f", "#d07a45", "#ffd2a6"], bronce: ["#331f0a", "#80521f", "#c58d45", "#f5d690"],
+    hierro: ["#171a1e", "#434a51", "#7a838b", "#c2c9cf"], acero: ["#1f262d", "#5d6c79", "#a6b6c4", "#f1f6fa"],
+    oro: ["#4b2f04", "#a9760f", "#e8b93c", "#fff3b8"], obsidiana: ["#07040d", "#241c38", "#57497c", "#bdb0ff"],
+    criselefantino: ["#5e4d2f", "#bca67c", "#eadcbd", "#fffaf0"], estelar: ["#081533", "#2a57a6", "#79b4ff", "#ffffff"],
+    cru: ["#1b1c1e", "#3a3c3f", "#5e6164", "#8a8d90"],
+  };
+  const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const RAMPA = {};
+  Object.entries(METALL).forEach(([k, st]) => {
+    const c = st.map(hex), r = new Uint8ClampedArray(256 * 3);
+    for (let i = 0; i < 256; i++) {
+      const t = i / 255 * 3, j = Math.min(2, Math.floor(t)), f = t - j;
+      for (let k2 = 0; k2 < 3; k2++) r[i * 3 + k2] = c[j][k2] + (c[j + 1][k2] - c[j][k2]) * f;
+    }
+    RAMPA[k] = r;
+  });
+  function elo() { try { return typeof Elo === "object" ? Elo.calcula() : { elo: null }; } catch (e) { return { elo: null }; } }
+  // el metall de cada part: la divisió de l'ELO del seu aixecament, o «cru» si encara no l'has fet
+  function metalls(e) {
+    const de = k => (e && e.per && e.per[k] && typeof Elo === "object") ? Elo.divisioDe(e.per[k].elo)[1] : "cru";
+    return { pit: de("banca"), braços: de("banca"), abdomen: de("peso_muerto"), cames: de("sentadilla") };
+  }
+
+  /* ---------- EL COS: la imatge pintada, repintada zona a zona amb el metall de debò ---------- */
+  // les zones són una màscara feta a mà sobre la mateixa pintura (cos-zones.png: 1 el pit, 2 els braços, 3 l'abdomen, 4 les
+  // cames, 5 el cap, el coll i els punys, que són ferro), i cada zona es repinta amb un mapa de degradat del seu metall, amb
+  // el contrast estirat zona a zona perquè un pit de ferro repintat d'or no quedi apagat
+  const ZONA = [null, "pit", "braços", "abdomen", "cames", null];
+  function forja(img, mascara, m) {
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const cx = cv.getContext("2d", { willReadFrequently: true }); cx.drawImage(img, 0, 0);
+    const mc = document.createElement("canvas"); mc.width = W; mc.height = H;
+    const mcx = mc.getContext("2d", { willReadFrequently: true }); mcx.imageSmoothingEnabled = false; mcx.drawImage(mascara, 0, 0, W, H);
+    let dades, zm;
+    try { dades = cx.getImageData(0, 0, W, H); zm = mcx.getImageData(0, 0, W, H).data; } catch (e) { return cv; }
+    const d = dades.data, lum = i => 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2];
+    const hist = ZONA.map(() => new Uint32Array(256));
+    for (let i = 0; i < d.length; i += 4) { const z = zm[i]; if (d[i + 3] >= 8 && z >= 1 && z <= 5) hist[z][Math.round(lum(i))]++; }
+    const rang = hist.map(h => {
+      let tot = 0; for (const x of h) tot += x;
+      if (!tot) return [0, 255];
+      let a = 0, lo = 0, hi = 255;
+      for (let k = 0; k < 256; k++) { a += h[k]; if (a >= tot * 0.03) { lo = k; break; } }
+      a = 0; for (let k = 255; k >= 0; k--) { a += h[k]; if (a >= tot * 0.03) { hi = k; break; } }
+      return [lo, Math.max(lo + 1, hi)];
+    });
+    for (let i = 0; i < d.length; i += 4) {
+      const z = zm[i]; if (d[i + 3] < 8 || z < 1 || z > 5) continue;
+      const rp = RAMPA[ZONA[z] ? m[ZONA[z]] : "hierro"] || RAMPA.hierro, [lo, hi] = rang[z];
+      const t = Math.max(0, Math.min(1, (lum(i) - lo) / (hi - lo))), k = Math.round((0.05 + t * 0.92) * 255) * 3;
+      d[i] = rp[k]; d[i + 1] = rp[k + 1]; d[i + 2] = rp[k + 2];
+    }
+    cx.putImageData(dades, 0, 0);
+    return cv;
+  }
+
+  /* ---------- L'ESPAI ---------- */
+  const obj = (cls, pg, img, etiqueta, extra = "") => `<button class="pg-obj ${cls}" data-pg="${pg}" aria-label="${etiqueta}">`
+    + `<img class="pg-img" src="${A()}${img}.webp" alt="" draggable="false">${extra}<span class="pg-placa"><img src="${A()}placa.webp" alt="" draggable="false"><b>${etiqueta}</b></span></button>`;
+  function forjats() {
+    // l'àlbum: els exercicis que has FORJAT, els que has fet en tres entrenos o més (sense cap total: l'app no té una llista
+    // tancada d'exercicis amb carta, i un denominador inventat no diu res)
+    const n = {}; (S.ses || []).filter(s => s.fin).forEach(s => new Set(s.ej.filter(e => e.sets.some(z => z.ok)).map(e => e.n)).forEach(k => { n[k] = (n[k] || 0) + 1; }));
+    return { fets: Object.values(n).filter(x => x >= 3).length };
+  }
+  function vista() {
+    const e = elo(), d = e.elo != null ? e.divisio : null, sg = e.seguent;
+    const pct = d && sg ? Math.max(4, Math.min(100, Math.round(100 * (e.elo - d.des) / (sg.des - d.des)))) : d ? 100 : 0;
+    const placa = d ? `<b>${d.nom}</b><small>${sg ? `Te faltan ${sg.falta} para ${sg.nom}` : "La división más alta"}</small><i class="pg-barra"><i style="width:${pct}%"></i></i>`
+      : `<b>Sin forjar</b><small>Haz sentadilla, banca o peso muerto con barra</small>`;
+    const al = forjats(), mir = potMirall();
+    return `<section class="pg" aria-label="Progreso"><h1 class="lector">Progreso</h1>
+      <div class="pg-escena">
+        ${obj("pg-manuella", "fuerza", "manuella", "Fuerza")}
+        ${obj("pg-cinta", "cuerpo", "cinta", "Cuerpo")}
+        ${obj("pg-mirall", "espejo", mir ? "mirall" : "mirall-tapat", "Tu espejo", mir ? "" : `<img class="pg-segell" src="${A()}segell.webp" alt="" draggable="false"><span class="fb-pro pg-pro">PRO</span>`)}
+        ${obj("pg-trofeu", "records", "trofeu", "Récords")}
+        ${obj("pg-pergami", "historial", "pergami", "Historial")}
+        <div class="pg-estatua">
+          <button class="pg-cos" data-fb="elo" style="--pg-mask:url(${A()}cos.webp)" aria-label="Tu cuerpo forjado: ${d ? d.nom : "sin forjar"}"><img class="pg-cos-img" src="${A()}cos.webp" alt="" draggable="false"></button>
+          <button class="pg-pedestal" data-fb="elo" aria-label="${d ? `${d.nom}${sg ? `, te faltan ${sg.falta} para ${sg.nom}` : ""}` : "Sin forjar"}"><img src="${A()}pedestal.webp" alt="" draggable="false"><span class="pg-div">${placa}</span></button>
+        </div>
+        <button class="pg-obj pg-album" data-pg="album" aria-label="Tu colección: ${al.fets} ejercicios forjados"><img class="pg-img" src="${A()}album.webp" alt="" draggable="false">
+          <span class="pg-album-t"><small>Ejercicios forjados</small><b>${al.fets}</b></span></button>
+      </div></section>`;
+  }
+  // després de pintar: el cos amb el seu metall (quan la imatge és a punt) i l'entrada
+  let ultimMetall = "";
+  function despresPintar() {
+    estil();
+    const img = document.querySelector(".pg-cos-img"); if (!img) return;
+    const m = metalls(elo()), clau = JSON.stringify(m);
+    const mascara = new Image(); mascara.src = A() + "cos-zones.png";
+    const llesta = el => el.complete && el.naturalWidth ? Promise.resolve() : new Promise(ok => { el.addEventListener("load", ok, { once: true }); el.addEventListener("error", ok, { once: true }); });
+    Promise.all([llesta(img), llesta(mascara)]).then(() => {
+      if (!img.isConnected || !img.naturalWidth || !mascara.naturalWidth) return;
+      try {
+        const cv = forja(img, mascara, m); cv.className = "pg-cos-img"; cv.setAttribute("aria-hidden", "true");
+        img.replaceWith(cv); ultimMetall = clau;
+      } catch (e) {}
+    });
+    const escena = document.querySelector(".pg-escena");
+    if (escena && !quiet()) { escena.classList.remove("pg-arriba"); void escena.offsetWidth; escena.classList.add("pg-arriba"); }
+  }
+  /* ---------- l'historial: tots els entrenos, del més nou al més vell ---------- */
+  function fullHistorial() {
+    const fetes = (S.ses || []).filter(s => s.fin).slice().reverse();
+    if (!fetes.length) return `<p class="suau">Aquí quedará cada entreno que termines.</p>`;
+    return `<div class="pg-hist">${fetes.map(x => {
+      const n = x.ej.filter(e => e.sets.some(z => z.ok)).length, min = x.inicio ? Math.round((x.fin - x.inicio) / 6e4) : null;
+      return `<button class="reg reg-ses" data-accion="ses-obre" data-id="${x.id}"><div><div>Día ${x.dia}${x.dt ? ` · ${esc(x.dt)}` : ""}</div><small class="suau">${new Date(x.fin).toLocaleDateString("es-ES", { day: "numeric", month: "long" })} · ${n} ${n === 1 ? "ejercicio" : "ejercicios"}${min ? ` · ${min} min` : ""}</small></div><span aria-hidden="true">›</span></button>`;
+    }).join("")}</div>`;
+  }
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest(".pg [data-pg]"); if (!b) return;
+    ev.preventDefault();
+    b.classList.remove("toc"); void b.offsetWidth; b.classList.add("toc");
+    try { if (typeof Efectos === "object") { Efectos.suena("tap"); Efectos.vibra("toc"); } } catch (e) {}
+    const pg = b.dataset.pg;
+    const stats = t => { S.ui.statsTab = t; veure("estadisticas"); };
+    setTimeout(() => {
+      if (pg === "fuerza") stats("fuerza");
+      else if (pg === "cuerpo") stats("cuerpo");
+      else if (pg === "records" || pg === "album") stats("ejercicios");
+      else if (pg === "espejo") veure("espejo");
+      else if (pg === "historial" && typeof obreFull === "function") obreFull(fullHistorial(), "Historial");
+    }, 140);
+  });
+
+  /* ---------- LA PELL ---------- */
+  let fet = false;
+  function estil() {
+    if (fet) return; fet = true;
+    const st = document.createElement("style"); st.id = "progreso-estil";
+    st.textContent = `
+.pg{margin:0 -12px;color:var(--fb-tinta);font-family:'Nunito',system-ui,sans-serif}
+/* L'ESCENA: un lloc, no una llista. Ocupa l'espai entre la barra de dalt i la de baix, i tot s'hi col·loca en proporció a
+   ella (unitats de contenidor), perquè en un mòbil baix no es trepitgi res */
+.pg-escena{position:relative;width:100%;aspect-ratio:390/600;max-height:calc(100svh - 198px - env(safe-area-inset-bottom,0px));min-height:430px;margin:0 auto;container-type:size;overflow:visible}
+.pg-obj,.pg-cos,.pg-pedestal{position:absolute;border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;font:inherit;color:inherit}
+.pg-img,.pg-obj>img,.pg-cos-img,.pg-pedestal>img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.pg-img{filter:drop-shadow(0 6px 8px rgb(20 30 40 / .18))}
+.pg-placa{position:relative;display:grid;place-items:center;width:112%;margin:-2px 0 0 -6%}
+.pg-placa img{width:100%;height:auto;display:block}
+.pg-placa b{position:absolute;inset:0;display:grid;place-items:center;font:900 min(3.9cqw,2.5cqh)/1 'Nunito',system-ui,sans-serif;color:#2c231a;letter-spacing:.01em;padding-bottom:1%}
+/* el lloc de cada objecte (la referència de l'Albert: la manuella i la cinta penjades a dalt, el mirall i el trofeu al mig,
+   el pergamí a baix a la dreta, l'àlbum als peus) */
+.pg-manuella{left:3cqw;top:0;width:min(23cqw,16cqh)}
+.pg-cinta{right:4cqw;top:1cqh;width:min(21cqw,15cqh)}
+.pg-mirall{left:1cqw;top:29cqh;width:min(24cqw,17cqh)}
+.pg-trofeu{right:4cqw;top:31cqh;width:min(19cqw,13cqh)}
+.pg-trofeu .pg-placa{margin-top:-24%;width:92%;margin-left:4%}
+.pg-trofeu .pg-placa img{opacity:0}
+.pg-pergami{right:3cqw;top:56cqh;width:min(24cqw,16cqh)}
+.pg-obj>.pg-segell{position:absolute;width:26%;right:2%;top:2%;filter:drop-shadow(0 3px 4px rgb(0 0 0 / .3))}
+.pg-pro{position:absolute;right:0;top:25%;font-size:9px}
+.pg-estatua{position:absolute;left:0;right:0;margin:0 auto;top:1cqh;width:min(54cqw,38cqh);pointer-events:none}
+.pg-cos{position:relative;display:block;width:78%;margin:0 auto;pointer-events:auto}
+.pg-cos-img{filter:drop-shadow(0 10px 14px rgb(20 30 40 / .25))}
+.pg-cos::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgb(255 255 255 / .55) 50%,transparent 60%) no-repeat;
+  background-size:250% 100%;background-position:120% 0;-webkit-mask:var(--pg-mask) center/100% 100% no-repeat;mask:var(--pg-mask) center/100% 100% no-repeat;
+  mix-blend-mode:soft-light;pointer-events:none}
+.pg-pedestal{position:relative;display:block;width:108%;margin:-9% 0 0 -4%;pointer-events:auto}
+.pg-div{position:absolute;left:24%;right:24%;top:38%;bottom:12%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;color:#2c231a}
+.pg-div b{font:900 min(4.4cqw,2.9cqh)/1 'Nunito',system-ui,sans-serif}
+.pg-div small{font:700 min(2.7cqw,1.8cqh)/1.15 'Nunito',system-ui,sans-serif;color:#51473c}
+.pg-barra{display:block;width:88%;height:min(1.6cqw,1.1cqh);min-height:5px;border-radius:99px;background:rgb(40 32 24 / .22);overflow:hidden;margin-top:3px}
+.pg-barra i{display:block;height:100%;border-radius:99px;background:var(--fb-accio-grad,var(--fb-accio))}
+.pg-album{left:0;right:0;margin:0 auto;top:74cqh;width:min(90cqw,60cqh)}
+.pg-album-t{position:absolute;left:72%;right:2%;top:14%;bottom:18%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2c231a;text-align:center}
+.pg-album-t small{font:800 min(2.4cqw,1.6cqh)/1.1 'Nunito',system-ui,sans-serif}
+.pg-album-t b{font:900 min(5.4cqw,3.6cqh)/1 'Nunito',system-ui,sans-serif}
+.pg-album-t i{font-style:normal;font-size:.62em;color:#6b5f52}
+/* EL MOVIMENT (skill moviment): l'entrada, un sol cop per visita; la manuella i la cinta es gronxen als ganxos; una
+   resplendor passa pel metall del cos. En tocar, l'objecte s'aixafa i torna. Amb el moviment reduït, quiet. */
+@media (prefers-reduced-motion:no-preference){
+  .pg-manuella>.pg-img,.pg-cinta>.pg-img{transform-origin:50% 4%;animation:pg-gronxa 3.4s ease-in-out infinite alternate}
+  .pg-cinta>.pg-img{animation-duration:3.9s;animation-delay:-1.3s}
+  .pg-cos::after{animation:pg-llum 7s cubic-bezier(.4,0,.2,1) 1.2s infinite}
+  .pg-escena.pg-arriba .pg-obj,.pg-escena.pg-arriba .pg-estatua{animation:pg-entra .62s cubic-bezier(.2,.9,.25,1) backwards}
+  .pg-escena.pg-arriba .pg-estatua{animation-name:pg-puja;animation-duration:.75s}
+  .pg-escena.pg-arriba .pg-manuella{animation-delay:.08s}.pg-escena.pg-arriba .pg-cinta{animation-delay:.12s}
+  .pg-escena.pg-arriba .pg-mirall{animation-delay:.18s}.pg-escena.pg-arriba .pg-trofeu{animation-delay:.22s}
+  .pg-escena.pg-arriba .pg-pergami{animation-delay:.28s}.pg-escena.pg-arriba .pg-album{animation-delay:.34s}
+  .pg-obj.toc>.pg-img{animation:pg-toc .28s cubic-bezier(.3,1.6,.5,1)}
+}
+@keyframes pg-gronxa{from{transform:rotate(-2.4deg)}to{transform:rotate(2.4deg)}}
+@keyframes pg-llum{0%,62%{background-position:120% 0}100%{background-position:-120% 0}}
+@keyframes pg-entra{from{opacity:0;transform:translateY(14px) scale(.94)}}
+@keyframes pg-puja{from{opacity:0;transform:translateY(22px)}}
+@keyframes pg-toc{40%{transform:scale(.93)}}
+.pg-album.toc>.pg-img{animation:none}
+.pg-hist{display:grid;gap:6px}
+.pg-hist .reg{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:0;border-radius:14px;background:var(--fb-enfonsat);color:var(--fb-tinta);padding:12px 14px;font:700 15px/1.3 'Nunito',system-ui,sans-serif}
+`;
+    document.head.appendChild(st);
+  }
+  return { vista, despresPintar, metalls, forja };
 })();
 
 /* FRAGUA · el menú de la setmana (26/09/2026).
