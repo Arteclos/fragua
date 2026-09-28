@@ -7105,6 +7105,14 @@ body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;bord
     }
   }, true);
   aplica();
+  // EL RESUM DE L'ENTRENO (i qualsevol capa de #celebra) porta la pell de la versió mentre és obert, sense tocar resum.js
+  const celebra = document.getElementById("celebra");
+  if (celebra && typeof MutationObserver === "function") new MutationObserver(() => {
+    const obert = AMB_FORJA.includes(actual) && !!celebra.querySelector(".resum");
+    document.body.classList.toggle("bt-resum", obert);
+    if (obert) document.body.classList.add("bt-pell");
+    else if (!PELL.includes((typeof S === "object" && S.ui && S.ui.vista) || "")) document.body.classList.remove("bt-pell");
+  }).observe(celebra, { childList: true });
   // la pantalla que aquesta versió pinta al lloc de la de sempre (de moment, només l'inici: la Forja)
   function vista(v) {
     if (!AMB_FORJA.includes(actual)) return null;
@@ -7356,6 +7364,31 @@ body.bt-entreno .grup-cap{color:var(--fb-tinta)}
 /* el logo de dalt: el pla de la Beta en lloc del pintat (i els tres tocs hi continuen funcionant) */
 body.v-neta.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-fosc.webp);height:auto;max-height:24px;width:auto}
 body.v-marro.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-clar.webp);height:auto;max-height:24px;width:auto}
+/* EL RESUM DE L'ENTRENO (src/resum.js, una capa a sobre de tot): mentre és obert a la neta o la marró, porta la pell
+   (versions.js hi encén bt-pell i bt-resum sense tocar resum.js) i aquestes regles seves. El botó de lava «SIGUIENTE»
+   passa a ser el botó d'acció de la versió; els números i els títols, en Nunito i en el color de la versió. */
+body.bt-resum .resum{background:var(--fb-fons)}
+body.bt-resum .resum .or,body.bt-resum .resum h1,body.bt-resum .resum h2{color:var(--fb-tinta)}
+body.bt-resum .resum .xp-guanyat{color:var(--fb-accio-text);text-shadow:none}
+body.bt-resum .resum-punts i{background:var(--fb-enfonsat)}
+body.bt-resum .resum-punts i.on{background:var(--fb-accio-grad,var(--fb-accio))}
+body.bt-resum .resum .marc,body.bt-resum .resum .panel,body.bt-resum .resum .r-tile{clip-path:none;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+body.bt-resum .resum .marc::before,body.bt-resum .resum .panel::before{display:none}
+body.bt-resum .r-tile b{color:var(--fb-tinta)}
+body.bt-resum .r-perfecta{background:var(--fb-sup);border:2px solid var(--fb-accio);box-shadow:var(--fb-o1)}
+body.bt-resum .r-perfecta b{color:var(--fb-accio-text);text-shadow:none}
+body.bt-resum .r-perfecta small{color:var(--fb-suau)}
+body.bt-pell .btn-forja{aspect-ratio:auto;min-height:56px;padding:0 20px;border-radius:999px;background:var(--fb-accio-grad,var(--fb-accio)) !important;box-shadow:var(--fb-o-accio)}
+body.bt-pell .btn-forja::before,body.bt-pell .btn-forja::after{display:none}
+body.bt-pell .btn-forja span,body.bt-pell .btn-forja span.or{color:var(--fb-accio-tinta) !important;background:none;-webkit-background-clip:border-box;background-clip:border-box}
+body.bt-resum .r-setmana span{background:var(--fb-sup);border:0;box-shadow:var(--fb-o1)}
+body.bt-resum .r-setmana span.desc{background:var(--fb-enfonsat)}
+body.bt-resum .r-setmana span.avui{box-shadow:0 0 0 2px var(--fb-accio),var(--fb-o1)}
+body.bt-resum .r-meta{background:var(--fb-sup) !important;border:0 !important;border-radius:20px;box-shadow:var(--fb-o1);color:var(--fb-tinta)}
+body.bt-resum .r-meta *{color:inherit}
+body.bt-resum .r-meta small,body.bt-resum .r-meta p{color:var(--fb-suau)}
+body.bt-pell .btn-forja span{font-family:'Nunito',system-ui,sans-serif;font-size:19px;color:var(--fb-accio-tinta);filter:none;letter-spacing:.01em}
+body.bt-pell .btn-forja small{color:var(--fb-accio-tinta);text-shadow:none;font-family:'Nunito',system-ui,sans-serif;opacity:.85}
 /* ELS ESTILS: només colors, ombres i fons (calmats) */
 body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-1:#e5eff6;--fb-logo:fosc;--fb-tinta:#1f2f38;--fb-suau:#5d6f79;--fb-sup:#ffffff;--fb-enfonsat:#e3ecf3;
   --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
