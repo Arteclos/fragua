@@ -6871,9 +6871,10 @@ const Versions = (() => {
     { id: "neta", nom: "Beta · Neta", desc: "Clara y limpia, estilo Nintendo, sin personajes." },
     { id: "marro", nom: "Beta · Marrón", desc: "La forja limpia, en carbón y bronce." },
     { id: "rumble", nom: "Beta · Rumble", desc: "Pintada y con volumen, como un juego: la forja al estilo Warcraft Rumble." },
+    { id: "anime", nom: "Beta · Anime", desc: "Tinta, diagonales y cel-shading: la forja en manga." },
   ];
   // les versions que porten la Forja nova com a pantalla principal (src/forja-beta.js)
-  const AMB_FORJA = ["neta", "marro", "rumble"];
+  const AMB_FORJA = ["neta", "marro", "rumble", "anime"];
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
   const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor"];
   const CLAU = "klonk-versio";
@@ -6953,6 +6954,13 @@ body.v-neta .mapa-fosc{filter:saturate(.8) brightness(1.03) contrast(.97)}
 body.v-marro .mapa-fosc{filter:invert(1) hue-rotate(180deg) brightness(1.12) contrast(.9) sepia(.45) saturate(1.2)}
 body.v-neta .gim-pin img,body.v-neta .gim-pin-rang img{background:#fff;border-color:var(--fb-accio);box-shadow:0 4px 10px -3px rgb(38 84 122 / .5)}
 body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;border-color:var(--fb-accio);box-shadow:0 4px 12px -3px rgb(0 0 0 / .7)}
+/* LA BARRA ANIME: tinta negra, la vora de dalt gruixuda, l'activa amb un paral·lelogram vermell i el pedestal en diagonal */
+body.v-anime .bv-barra{border-radius:0;border-top:3px solid #0a0a0a;box-shadow:none;background:#fff}
+body.v-anime .bv-tab{color:#0a0a0a}
+body.v-anime .bv-tab.on .bv-ic{background:#ff2d2d;color:#fff;border-radius:0;clip-path:polygon(14% 0,100% 0,86% 100%,0 100%)}
+body.v-anime .bv-tab.on{color:#0a0a0a}
+body.v-anime .bv-nom{font-family:'Anton','Nunito',sans-serif;font-weight:400;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-vora:#ffffff;--fb-ped-ombra:4px 4px 0 rgb(0 0 0 / .25)}
 /* LA BARRA RUMBLE: el marc pintat (fusta i ferro), les icones pintades (la fosca en repòs, la daurada activa) i la placa amb el nom */
 .br-barra{position:relative;display:flex;align-items:flex-end;justify-content:space-between;height:calc(78px + env(safe-area-inset-bottom));
   padding:0 12px calc(8px + env(safe-area-inset-bottom));background:url(${A()}beta/rumble/barra-marc.webp) center top/100% 78px no-repeat,linear-gradient(#2a2420,#1a1512) center 60px/100% 100% no-repeat;
@@ -7007,7 +7015,7 @@ body.v-marro .gim-pin img,body.v-marro .gim-pin-rang img{background:#262019;bord
     return `<div class="br-barra">${tab(PESTANYES[0])}${tab(PESTANYES[1])}<span class="br-buit"></span>${tab(PESTANYES[2])}${tab(PESTANYES[3])}</div>`
       + `<button class="br-forja" data-lloc="forja" data-accion="vista" data-v="inicio" aria-label="Forja"><img class="br-ped" src="${R}pedestal.webp" alt="" draggable="false">${enclusaPintada().replace("bo-enclusa", "bo-enclusa br-enclusa")}</button>`;
   }
-  const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector, rumble: muntaRumble };
+  const BARRES = { original: muntaOriginal, neta: muntaVector, marro: muntaVector, rumble: muntaRumble, anime: muntaVector };
   // L'ENCLUSA de l'estil original: la pintada de la teva divisió (la mateixa de sempre), sobre el pedestal de bronze
   function enclusaPintada() {
     // a la Beta (rumble), el metall de la divisió d'ELO; a l'original, el yunque del Temple de sempre
@@ -7407,7 +7415,7 @@ body.bt-entreno #descans .accions button.desc-fi{background:var(--fb-accio-grad,
 body.bt-entreno .descans .temps{color:var(--fb-tinta)}
 body.bt-entreno .grup-cap{color:var(--fb-tinta)}
 /* el logo de dalt: el pla de la Beta en lloc del pintat (i els tres tocs hi continuen funcionant) */
-body.v-neta.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-fosc.webp);height:auto;max-height:24px;width:auto}
+body.v-anime.bt-pell img[src$="logo.webp"],body.v-neta.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-fosc.webp);height:auto;max-height:24px;width:auto}
 body.v-marro.bt-pell img[src$="logo.webp"]{content:url(${A()}beta/klonk-logo-clar.webp);height:auto;max-height:24px;width:auto}
 /* EL RESUM DE L'ENTRENO (src/resum.js, una capa a sobre de tot): mentre és obert a la neta o la marró, porta la pell
    (versions.js hi encén bt-pell i bt-resum sense tocar resum.js) i aquestes regles seves. El botó de lava «SIGUIENTE»
@@ -7434,6 +7442,23 @@ body.bt-resum .r-meta *{color:inherit}
 body.bt-resum .r-meta small,body.bt-resum .r-meta p{color:var(--fb-suau)}
 body.bt-pell .btn-forja span{font-family:'Nunito',system-ui,sans-serif;font-size:19px;color:var(--fb-accio-tinta);filter:none;letter-spacing:.01em}
 body.bt-pell .btn-forja small{color:var(--fb-accio-tinta);text-shadow:none;font-family:'Nunito',system-ui,sans-serif;opacity:.85}
+/* ANIME: la forja en manga. Paper, tinta negra de 3 px, l'ombra dura desplaçada del còmic (sense difuminar), el vermell
+   de la forja als botons tallats en diagonal, i els títols en Anton inclinats amb el cop de vermell al darrere. */
+body.v-anime .fb-carta,body.v-anime .fb-mes,body.v-anime .fb-xip,body.v-anime .mp-elo,body.v-anime .mp-mirall,body.v-anime .mp-stats,body.v-anime .fb-fin,
+body.v-anime.bt-pell #vista .panel,body.v-anime.bt-pell #vista .marc,body.v-anime.bt-resum .resum .r-tile,body.v-anime.bt-pell .chip,body.v-anime.bt-pell .seg{border:3px solid #0a0a0a;border-radius:6px}
+body.v-anime .fb-fin{border-radius:3px}
+body.v-anime .fb-boto,body.v-anime .mp-boto,body.v-anime.bt-pell #vista .btn.clar,body.v-anime.bt-pell .btn-forja{border:3px solid #0a0a0a !important;border-radius:0 !important;
+  clip-path:polygon(4% 0,100% 0,96% 100%,0 100%);box-shadow:none !important;background:#ff2d2d !important}
+body.v-anime .fb-boto,body.v-anime .mp-boto,body.v-anime.bt-pell .btn-forja span{font-family:'Anton','Nunito',sans-serif !important;font-weight:400 !important;letter-spacing:.06em;text-transform:uppercase}
+body.v-anime .fb-tit,body.v-anime .mp-cap h1,body.v-anime.bt-pell .titol-pag,body.v-anime .fe-num,body.v-anime .mp-elo-n,body.v-anime.bt-resum .resum h1,body.v-anime.bt-resum .resum h2{
+  font-family:'Anton','Nunito',sans-serif;font-weight:400;letter-spacing:.02em;text-transform:uppercase;transform:skewX(-7deg);transform-origin:left;text-shadow:3px 3px 0 #ff2d2d}
+body.v-anime .fb-tit{text-shadow:2px 2px 0 #ff2d2d}
+body.v-anime .fb-carta.davant::before{box-shadow:0 0 0 3px #ff2d2d;animation:none;opacity:1}
+body.v-anime .fb-hoy,body.v-anime .fb-pro{border-radius:0;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);background:#0a0a0a;color:#fff}
+body.v-anime .fb-osques i{border-radius:0;transform:skewX(-14deg)}
+body.v-anime.bt-pell .chip[aria-pressed="true"],body.v-anime.bt-pell .seg button[aria-pressed="true"]{background:#0a0a0a;color:#fff}
+body.v-anime.bt-actiu .toast{background:#0a0a0a;color:#fff;border:3px solid #ff2d2d;border-radius:0}
+body.v-anime .fb-logo{height:22px}
 /* RUMBLE: el volum del joc (contorns gruixuts i foscos, una llum a dalt, el botó amb el gruix de sota) i els títols en
    Lilita One. El fons, llis (la regla dels fons de l'Albert). */
 body.v-rumble .fb,body.v-rumble .mp,body.v-rumble.bt-pell #vista{font-family:'Nunito',system-ui,sans-serif}
@@ -7454,6 +7479,9 @@ body.v-neta{--fb-fons:linear-gradient(180deg,#eef6fa 0%,#dae7f1 100%);--fb-fons-
   --fb-o1:0 3px 10px -4px rgb(38 84 122 / .35);--fb-o2:0 14px 30px -14px rgb(38 84 122 / .45),0 2px 6px -2px rgb(38 84 122 / .2);
   --fb-linia:rgb(38 84 122 / .16);--fb-accio:#e8672a;--fb-accio-grad:linear-gradient(180deg,#f47d3a,#d9531c);--fb-accio-tinta:#fff;--fb-accio-text:#c9521c;--fb-o-accio:0 8px 16px -8px rgb(217 83 28 / .7);
   --fb-or:#f3b53c;--fb-or-tinta:#3a2604;--fb-brasa-1:#ffb15a;--fb-brasa-2:#ef6b24;--fb-brasa-glow:rgb(239 107 36 / .45);--fb-maestro:linear-gradient(160deg,#2f3a44,#1c242b);--fb-maestro-tinta:#f3ede4}
+body.v-anime{--fb-fons:#f4f1ea;--fb-fons-1:#f4f1ea;--fb-logo:fosc;--fb-tinta:#0a0a0a;--fb-suau:#4a4744;--fb-sup:#ffffff;--fb-enfonsat:#ebe6da;--fb-linia:#0a0a0a;--fb-r:6px;
+  --fb-o1:4px 4px 0 #0a0a0a;--fb-o2:6px 6px 0 #0a0a0a;--fb-accio:#ff2d2d;--fb-accio-grad:#ff2d2d;--fb-accio-tinta:#ffffff;--fb-accio-text:#d91c14;--fb-o-accio:4px 4px 0 #0a0a0a;
+  --fb-or:#ffd23f;--fb-or-tinta:#0a0a0a;--fb-brasa-1:#ff5a3c;--fb-brasa-2:#d91c14;--fb-brasa-glow:rgb(255 45 45 / .3);--fb-maestro:#0a0a0a;--fb-maestro-tinta:#ffffff}
 body.v-rumble{--fb-fons:linear-gradient(180deg,#2c3140 0%,#1b1e28 100%);--fb-fons-1:#232733;--fb-logo:clar;--fb-tinta:#fdf3e1;--fb-suau:#c9bda9;
   --fb-sup:linear-gradient(180deg,#4a3b2f 0%,#33281f 100%);--fb-enfonsat:#1f1813;--fb-linia:rgb(255 214 170 / .18);--fb-r:18px;
   --fb-o1:0 4px 0 #0c0a09;--fb-o2:0 6px 0 #0c0a09,0 14px 26px -12px rgb(0 0 0 / .8);
@@ -7466,7 +7494,8 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
   --fb-or:#f0bd80;--fb-or-tinta:#2a1a0c;--fb-brasa-1:#ffb15a;--fb-brasa-2:#d86a24;--fb-brasa-glow:rgb(230 120 40 / .4);--fb-maestro:linear-gradient(160deg,#3a2c20,#1c1510);--fb-maestro-tinta:#f4ece3;
   --fb-il-filtre:saturate(.8)}`;
   // la lletra de les versions Beta: Nunito (SIL Open Font License), el tall llatí i prou, servida des de l'app
-  const LLETRA = `@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url(${A()}fonts/LilitaOne-latin.woff2) format('woff2')}
+  const LLETRA = `@font-face{font-family:'Anton';font-style:normal;font-weight:400;font-display:swap;src:url(${A()}fonts/Anton-latin.woff2) format('woff2')}
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url(${A()}fonts/LilitaOne-latin.woff2) format('woff2')}
 @font-face{font-family:'Nunito';font-style:normal;font-weight:500 900;font-display:swap;src:url(${A()}fonts/Nunito-latin.woff2) format('woff2');
   unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}`;
   function estil() { if (document.getElementById("estil-forja")) return; const s = document.createElement("style"); s.id = "estil-forja"; s.textContent = LLETRA + CSS; document.head.appendChild(s); }
