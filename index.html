@@ -7113,6 +7113,9 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     }
     if (!forja && !prog && !pell && typeof Ambient === "object" && Ambient.desperta) Ambient.desperta();
     const lloc = LLOC[vista] != null ? LLOC[vista] : "";
+    // canviar de lloc de la barra: el contingut nou entra des del costat de la pestanya (l'Albert: «les animacions són clau»)
+    if (AMB_FORJA.includes(actual) && llocAbans && lloc && lloc !== llocAbans) entra(lloc, llocAbans);
+    if (lloc) llocAbans = lloc;
     document.querySelectorAll("#barra-nova [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
       if (on !== b.classList.contains("on")) b.classList.toggle("on", on);
@@ -7123,6 +7126,19 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     if (typeof obreFull !== "function") return;
     obreFull(`<p class="suau petit">Solo en este móvil. No cambia nada de tu cuenta.</p>`
       + LLISTA.map(v => `<button class="vers-opc" role="radio" aria-checked="${v.id === actual}" data-versio="${v.id}"><span><b>${v.nom}</b><small>${v.desc}</small></span></button>`).join(""), "Versión");
+  }
+  // LA TRANSICIÓ ENTRE LLOCS (skill moviment §4: una resposta a un gest, 300 ms, arrencada ràpida i arribada suau, 18 px).
+  // Només entra el nou: cada pantalla torna a dalt en pintar-se (veure fa scrollTo), i una instantània de la vella saltaria.
+  // La barra de dalt i la de baix no es mouen; amb el moviment reduït, res.
+  const ORDRE = ["comer", "progreso", "forja", "gimnasios", "ajustes"];
+  let llocAbans = "";
+  function entra(a, de) {
+    const v = document.getElementById("vista");
+    if (!v || !v.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const dir = ORDRE.indexOf(a) > ORDRE.indexOf(de) ? 1 : -1, fb = v.querySelector(":scope > .fb");
+    const peces = fb ? [...fb.children].filter(x => !x.classList.contains("fb-cap")) : [...v.children].filter(x => !x.classList.contains("bt-cap"));
+    peces.forEach(x => { try { x.animate([{ opacity: 0, transform: `translateX(${18 * dir}px)` }, { opacity: 1, transform: "none" }],
+      { duration: 300, easing: "cubic-bezier(.2,.9,.25,1)" }); } catch (e) {} });
   }
   let tocs = [];
   document.addEventListener("click", ev => {
