@@ -7263,6 +7263,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       if (v === "ajustes") return () => Nit.vistaAjustes();
       if (v === "rutinas") return () => Nit.vistaRutinas();
       if (v === "tienda") return () => Nit.vistaTienda();
+      if (v === "cartas") return () => Nit.vistaCartas();
       if (v === "gimnasios") { S.ui.vista = "social"; S.ui.socDins = "gimnasios"; S.ui.socTab = "gimnasios"; return () => Nit.vistaSocial(); }
       // l'entreno sense cap sessió en marxa és la portada (les cartes ja són els dies per començar)
       if (v === "entreno") { if (typeof activa === "function" && activa()) return () => Nit.vistaEntreno(); S.ui.vista = "inicio"; return () => Nit.vista(); }
@@ -7846,6 +7847,14 @@ const Nit = (() => {
   const AVATARS = ["urba", "mascara", "fibrado", "chad", "berserker", "powerlifter", "acrobata", "lluitadora", "rebel", "reina"];
   const avatarId = () => { const a = S.personaje && S.personaje.avatar; return AVATARS.includes(a) ? a : "urba"; };
   const CARA = () => R() + "pj/cara-" + avatarId() + ".webp";
+  // LA PORTADA DE CADA CARTA (29-09): els músculs que treballa (per defecte) o un dels seus exercicis dibuixat, triada a la
+  // carta a la mà. Es guarda per carta (rutina:dia) a S.cartesIl.
+  const clauCarta = (r, n) => r.id + ":" + n;
+  function ilCarta(r, n) {
+    const d = r.dias[n - 1], tria = (S.cartesIl || {})[clauCarta(r, n)];
+    if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) return { src: `${R()}ej-gran/${tria}.webp`, ej: true, tria };
+    return { src: `${R()}musculs-${tipusDia(d)}.webp`, ej: false, tria: "musculs" };
+  }
   const aplicaTema = id => { const v = id || avatarId(); if (document.body.dataset.av !== v) document.body.dataset.av = v; };
 
   // LES DADES DE DEBÒ
@@ -7882,7 +7891,7 @@ const Nit = (() => {
     const segueix = act && act.dia === c.n;
     return `<div class="nt-carta${c.feta ? " nt-feta" : ""}${c.avui ? " nt-avui" : ""}" data-n="${c.n}" data-in="carta">
       <div class="nt-carta-cap">${c.avui && !act ? `<span class="nt-hoy">Hoy</span>` : ""}<span class="nt-dia">Día ${c.n}</span><b class="nt-tit">${esc(c.t)}</b></div>
-      <div class="nt-il"><img src="${R()}musculs-${c.mm}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nt-brill"></i><i class="nt-llum"></i></div>
+      ${(() => { const il = ilCarta(rutinaActual(), c.n); return `<div class="nt-il${il.ej ? " nt-il-ej" : ""}"><img src="${il.src}" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nt-brill"></i><i class="nt-llum"></i></div>`; })()}
       <i class="nt-aura"></i>
       ${c.feta ? `<span class="nt-ok" aria-label="Hecho">${ic("check")}</span>` : ""}
       <div class="nt-ejs">${fotos}${c.ej.length > 5 ? `<i class="nt-mas">+${c.ej.length - 5}</i>` : ""}</div>
@@ -8193,6 +8202,15 @@ const Nit = (() => {
   }
   document.addEventListener("click", ev => {
     if (!esNit()) return;
+    const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-buit"], [data-accion="nc3-filtre"]');
+    if (nc) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (nc.dataset.accion === "nc3-filtre") { S.ui.nc3Filtre = nc.dataset.f; fx(E => { E.suena("tap"); E.vibra("tria"); }); if (typeof render === "function") render(); return; }
+      if (nc.dataset.accion === "nc3-buit") { fx(E => E.suena("tap")); if (typeof avis === "function") avis("Entrénala una vez y será tuya."); if (!quiet()) nc.animate([{ transform: "none" }, { transform: "translateX(-5px)" }, { transform: "translateX(5px)" }, { transform: "none" }], { duration: 260 }); return; }
+      const r = (typeof totesRutinas === "function" ? totesRutinas() : []).find(x => x.id === nc.dataset.r);
+      if (r) miraCarta(nc, r, +nc.dataset.n);
+      return;
+    }
     const sx = ev.target.closest('[data-accion="serie"]');
     if (sx && typeof activa === "function") { const s = activa(), e = s && s.ej[+sx.dataset.i], j = +sx.dataset.j; if (e && e.sets[j] && !e.sets[j].ok && e.sets.every((q, k) => q.ok || k === j)) obrintFet = +sx.dataset.i; }
     const tipus = ev.target.closest('[data-accion="serie-tipus"]');
@@ -8307,7 +8325,7 @@ const Nit = (() => {
         <button class="nt-cal-perfil" data-accion="nt-ves" data-v="personaje" data-cal-in><img src="${CARA()}" alt="" draggable="false"><b>${esc(nom)}</b>${I_MENU.fle}</button>
         <button class="nt-cal-pro" data-accion="nt-ves" data-v="tienda" data-t="oro" data-cal-in>${ic("medalla")}<span>KLONK PRO</span></button>
         <i class="nt-cal-sep" data-cal-in></i>
-        <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
+        <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("cartas", "Mis cartas", I_MENU.rut, " data-cal-in")}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
         <i class="nt-cal-sep" data-cal-in></i>
         <div class="nt-cal-grup">${fila("estadisticas", "Progreso", I_MENU.prog, " data-cal-in")}${fila("gimnasios", "Gimnasios", I_MENU.gim, " data-cal-in")}${fila("social", "Invitar amigos", I_MENU.inv, ' data-soc="clan" data-cal-in')}${fila("ajustes", "Ajustes", I_MENU.ajust, " data-cal-in")}</div>
       </nav>`;
@@ -8406,7 +8424,7 @@ const Nit = (() => {
         </div>
       </div>
       <div class="nt-tu-mazo" data-in="tu">
-        <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="rutinas">Mis rutinas</button></div>
+        <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="cartas">Mis cartas</button></div>
         <button class="nt-tu-mazo-b" data-accion="nt-ves" data-v="rutinas"><span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span><span><b>${esc(r.nombre)}</b><small>${r.dias.length} ${r.dias.length === 1 ? "carta" : "cartas"}, en uso</small></span>${I_TU.fle}</button>
       </div>
       <div class="nt-tu-venta" data-in="tu">
@@ -8483,7 +8501,7 @@ const Nit = (() => {
   const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}pj/${avatarId()}.webp" alt="" draggable="false"></div>`;
 
   // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
-  const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", espejo: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
+  const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", espejo: "tu", cartas: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
     ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu" };
   const ORDRE = ["tu", "social", "centre", "nutri", "menu"];
   let llocAbans = "";
@@ -8522,6 +8540,7 @@ const Nit = (() => {
       if (vista === "social") entra([...v.querySelectorAll('[data-in="ns"]')], 40);
       if (vista === "ajustes") entra([...v.querySelectorAll('[data-in="na"]')], 30);
       if (vista === "rutinas") entra([...v.querySelectorAll('[data-in="nr"]')], 35);
+      if (vista === "cartas") entra([...v.querySelectorAll('[data-in="nc3"]')].slice(0, 16), 30);
       if (vista === "tienda") { entra([...v.querySelectorAll('[data-in="nb"]')], 35); const n = v.querySelector(".nb2-n"); if (n) compta(n); }
       if (vista === "comer" || vista === "registro") {
         entra([...v.querySelectorAll('[data-in="nc"]')], 40);
@@ -9054,6 +9073,7 @@ const Nit = (() => {
   };
   const I_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
   const I_GIRA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 0 1 12.8-5.3L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-12.8 5.3L4.5 15M4.5 19.5V15H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const I_PORT = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="2" fill="currentColor"/><path d="M5 18l5-5 3.5 3.5L16 14l3.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
   const I_COMP = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5" fill="currentColor"/><circle cx="6" cy="12" r="2.5" fill="currentColor"/><circle cx="18" cy="18.5" r="2.5" fill="currentColor"/><path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4" stroke="currentColor" stroke-width="2"/></svg>';
   const talla3 = (v, a, b) => Math.max(a, Math.min(b, v));
   // la lletra de la firma (Mr Dafoe, OFL, servida des de casa com les altres): es declara un cop, i es baixa abans que calgui
@@ -9075,7 +9095,7 @@ const Nit = (() => {
     const e = eloDe(), nick = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "";
     const firma = r.autor || (propia ? nick : "KLONK");
     const mat = r.autor ? "cap" : !propia ? "klonk" : (e.elo != null && e.divisio && MAT[e.divisio.id] ? e.divisio.id : "cap");
-    return { d, fetes, tier: tier[1], seg, firma, mat, e: propia && !r.autor ? e : null };
+    return { r, d, fetes, tier: tier[1], seg, firma, mat, e: propia && !r.autor ? e : null };
   }
   const ESPURNES = `<i class="nm-esp" aria-hidden="true">${"<i></i>".repeat(7)}</i>`;
   function caraCarta(n, I, darrere) {
@@ -9086,7 +9106,7 @@ const Nit = (() => {
       const fotos = d.ej.slice(0, 5).map(x => { const f = fotoAnime(x[0]); return f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`; }).join("");
       return `<div class="nm-cara nm-davant"><i class="nm-sheen"></i><div class="nm-dins">
         <div class="nm-cap"><span class="nm-dia">Día ${n}</span><b class="nm-tit">${esc(d.t)}</b>${I.e ? sigma(I.e, "nm-sig") : ""}</div>
-        <div class="nm-il"><img src="${R()}musculs-${tipusDia(d)}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nm-holo"></i><i class="nm-purp"></i><i class="nm-llum"></i></div>
+        ${(() => { const il = ilCarta(I.r, n); return `<div class="nm-il${il.ej ? " nm-il-ej" : ""}"><img src="${il.src}" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nm-holo"></i><i class="nm-purp"></i><i class="nm-llum"></i></div>`; })()}
         <div class="nt-ejs">${fotos}${d.ej.length > 5 ? `<i class="nt-mas">+${d.ej.length - 5}</i>` : ""}</div>
         <p class="nm-meta">${d.ej.length} ejercicios · ${min} min</p>${peu}</div><i class="nm-glare"><i></i></i>${ESPURNES}</div>`;
     }
@@ -9113,13 +9133,14 @@ const Nit = (() => {
   }
   function dispara(ds) { const b = document.createElement("button"); b.hidden = true; Object.assign(b.dataset, ds); document.body.appendChild(b); b.click(); b.remove(); }
   let MI = null, permGiro = "";
-  function miraCarta(el) {
+  function miraCarta(el, rr, nn) {
     if (MI) return;
-    const r = rutinaActual(), n = +el.dataset.n, d = r && r.dias[n - 1];
+    const r = rr || rutinaActual(), n = nn || +el.dataset.n, d = r && r.dias[n - 1];
     if (!d) return;
     const I = infoCarta(r, n), m = MAT[I.mat], rc = el.getBoundingClientRect(), q = quiet();
     fontFirma();
-    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar";
+    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar", enUs = r.id === rutinaActual().id;
+    const portades = ["musculs", ...[...new Set(d.ej.map(e => slug(e[0])))].filter(x => EJ_ANIME.has(x)).slice(0, 8)];
     const ov = document.createElement("div");
     ov.className = "nm"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Carta: " + d.t);
     ov.style.cssText = `--m1:${m[0]};--m2:${m[1]};--m3:${m[2]}`;
@@ -9127,7 +9148,11 @@ const Nit = (() => {
       <button class="nm-x" data-nm="tanca" aria-label="Cerrar">${I_X}</button>
       <div class="nm-escena"><div class="nm-carta nm-t${I.tier}"><div class="nm-gir">${caraCarta(n, I)}${caraCarta(n, I, true)}</div></div></div>
       <p class="nm-prova" aria-live="polite"></p>
-      <div class="nm-acc"><button class="nm-b" data-nm="gira">${I_GIRA}<span>Girar</span></button><button class="nm-b" data-nm="comparteix">${I_COMP}<span>Compartir</span></button><button class="nm-b nm-emp" data-nm="empieza">${segueix ? "Seguir" : "Empezar"}</button></div>
+      <div class="nm-acc"><button class="nm-b nm-ic" data-nm="gira" aria-label="Girar">${I_GIRA}</button><button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button></div>
+      <div class="nm-comp nm-portp" data-nm="noport" hidden><div class="nm-comp-p" data-nm="res" role="group" aria-label="Portada">
+        <b class="nm-comp-t">Portada</b>
+        <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : `${R()}ej-gran/${p}.webp`}" alt="" draggable="false"></button>`).join("")}</div>
+        <button class="nm-comp-no" data-nm="noport">Listo</button></div></div>
       ${panellComparteix(r, n, d)}`;
     document.body.appendChild(ov);
     const escena = ov.querySelector(".nm-escena");
@@ -9182,14 +9207,31 @@ const Nit = (() => {
       if (k === "tanca") { tancaMira(); return; }
       if (k === "gira") { gira(1); return; }
       if (k === "comparteix") {
-        const p = ov.querySelector(".nm-comp"); p.hidden = false;
+        const p = ov.querySelector(".nm-comp:not(.nm-portp)"); p.hidden = false;
         if (!q) { p.querySelector(".nm-comp-p").animate([{ transform: "translateY(105%)" }, { transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.05)" }); p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
         fx(E => { E.suena("tap"); E.vibra("tria"); });
         return;
       }
-      if (k === "nocomp") { ov.querySelector(".nm-comp").hidden = true; fx(E => E.suena("tap")); return; }
+      if (k === "nocomp") { ov.querySelector(".nm-comp:not(.nm-portp)").hidden = true; fx(E => E.suena("tap")); return; }
       if (k === "una" || k === "totes") { tancaMira(true); dispara(k === "una" ? { accion: "rut-compartir-dia", id: r.id, dia: String(n) } : { accion: "rut-compartir", id: r.id }); return; }
-      if (k === "empieza") { const b = el.querySelector(".nt-boto"); tancaMira(true); if (b) b.click(); return; }
+      if (k === "empieza") { const b = el.querySelector(".nt-boto"); tancaMira(true); if (b) b.click(); else { so(); dispara({ accion: "empezar", dia: String(n) }); } return; }
+      if (k === "usa") { tancaMira(true); dispara({ accion: "rut-usar", id: r.id }); return; }
+      if (k === "port") {
+        const p = ov.querySelector(".nm-portp"); p.hidden = false;
+        if (Math.round(M.objA / 180) % 2 !== 0) gira(1);
+        if (!q) p.querySelector(".nm-comp-p").animate([{ transform: "translateY(105%)" }, { transform: "none" }], { duration: 360, easing: "cubic-bezier(.2,.9,.25,1.05)" });
+        fx(E => { E.suena("tap"); E.vibra("tria"); });
+        return;
+      }
+      if (k === "noport") { ov.querySelector(".nm-portp").hidden = true; fx(E => E.suena("tap")); return; }
+      if (k === "il") {
+        S.cartesIl = { ...(S.cartesIl || {}), [clauCarta(r, n)]: t.dataset.il }; if (typeof guardar === "function") guardar();
+        const il = ilCarta(r, n), caixa = ov.querySelector(".nm-davant .nm-il"), img = caixa && caixa.querySelector("img");
+        if (img) { img.src = il.src; caixa.classList.toggle("nm-il-ej", il.ej); if (!q) img.animate([{ opacity: 0, transform: "scale(1.06)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1)" }); }
+        ov.querySelectorAll(".nm-pb").forEach(b => b.classList.toggle("on", b.dataset.il === t.dataset.il));
+        fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .3 }); E.vibra("posa"); });
+        return;
+      }
       if (k === "prova") {
         const tt = +t.dataset.t, B = BRILL[tt];
         M.carta.className = `nm-carta nm-t${tt}`;
@@ -9328,6 +9370,37 @@ const Nit = (() => {
     if (quiet()) return;
     const w = document.createElement("i"); w.className = "np3-wipe"; w.setAttribute("aria-hidden", "true"); c.appendChild(w);
     w.animate([{ transform: "translateX(-80vw) skewX(-18deg)" }, { transform: "translateX(120vw) skewX(-18deg)" }], { duration: 560, easing: "cubic-bezier(.6,.05,.3,1)" }).onfinish = () => w.remove();
+  }
+
+  /* ======================= MIS CARTAS (l'Albert, 29-09, amb les captures del «My Cards» i del «Genetic Apex» del Pokémon
+     TCG Pocket) =======================
+     A dalt, el recompte i les dues portes (Colección i Mazos). A sota, «Tus cartas» (els dies dels teus mazos, sempre
+     teves) i la «Colección KLONK»: tots els dies de les plantilles, numerats; una carta és teva quan l'has entrenada una
+     vegada, i mentrestant és un forat amb el seu número. Cada carta porta el marc del material del sigma de qui l'ha
+     feta, la portada que hi has triat i, a baix a l'esquerra, les vegades que l'has feta. Tocar-la l'aixeca. */
+  function cartaMini(r, n, k) {
+    const I = infoCarta(r, n), m = MAT[I.mat], il = ilCarta(r, n);
+    return `<button class="nc3-c t${I.tier}" data-accion="nc3-mira" data-r="${esc(r.id)}" data-n="${n}" data-in="nc3" style="--c1:${m[0]};--c2:${m[1]};--c3:${m[2]};--i:${k}" aria-label="${esc(I.d.t)}, hecha ${I.fetes} veces">
+      <span class="nc3-in"><span class="nc3-t">${esc(I.d.t)}</span><span class="nc3-il${il.ej ? " ej" : ""}"><img src="${il.src}" alt="" draggable="false" loading="lazy"></span></span><span class="nc3-n">${I.fetes}</span></button>`;
+  }
+  function vistaCartas() {
+    const filtre = S.ui.nc3Filtre || "tot", passa = d => filtre === "tot" || tipusDia(d) === filtre;
+    const teves = (S.rutinas || []).flatMap(r => r.dias.map((d, i) => ({ r, n: i + 1, d }))).filter(x => passa(x.d));
+    const klonk = [RUTINA_BASE, ...PLANTILLAS].flatMap(r => r.dias.map((d, i) => ({ r, n: i + 1, d })));
+    const fetes = new Set(S.ses.filter(s => s.fin).map(s => (s.rut || "") + ":" + s.dia));
+    const col = klonk.map((x, i) => ({ ...x, num: i + 1, te: fetes.has(x.r.id + ":" + x.n) })), got = col.filter(x => x.te).length;
+    const FILT = [["tot", "Todas"], ["empuje", "Empuje"], ["tiron", "Tirón"], ["pierna", "Pierna"], ["brazos", "Brazos"], ["cuerpo", "Cuerpo"]];
+    let k = 0;
+    return `<h1 class="titol-pag">Mis cartas</h1>
+      <section class="nc3">
+        <div class="nc3-portes" data-in="nc3"><button class="nc3-porta on" aria-current="page">${I_MENU.rut}<span>Colección</span></button><button class="nc3-porta" data-accion="nt-ves" data-v="rutinas">${I_PORT}<span>Mazos</span></button>
+          <span class="nc3-compte" aria-label="${teves.length + got} cartas">${teves.length + got}</span></div>
+        <div class="nc3-filtres" data-in="nc3">${FILT.map(([f, nom]) => `<button class="chip" data-accion="nc3-filtre" data-f="${f}" aria-pressed="${f === filtre}">${nom}</button>`).join("")}</div>
+        ${teves.length ? `<h2 class="nc3-h" data-in="nc3">Tus cartas<small>${teves.length}</small></h2><div class="nc3-grid">${teves.map(x => cartaMini(x.r, x.n, k++)).join("")}</div>` : ""}
+        <h2 class="nc3-h" data-in="nc3">Colección KLONK<small>${got} / ${col.length}</small></h2>
+        <div class="nc3-prog" data-in="nc3"><i style="width:${(got / Math.max(1, col.length) * 100).toFixed(1)}%"></i></div>
+        <div class="nc3-grid">${col.filter(x => passa(x.d)).map(x => x.te ? cartaMini(x.r, x.n, k++) : `<button class="nc3-buit" data-accion="nc3-buit" data-in="nc3" style="--i:${k++}" aria-label="Carta ${x.num}, por conseguir"><b>${x.num}</b></button>`).join("")}</div>
+      </section>`;
   }
 
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
@@ -10284,6 +10357,46 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nb3-ok{position:relative;z-index:2;height:56px;border:0;cursor:pointer;background:linear-gradient(90deg,rgb(var(--m2-rgb)),rgb(var(--m-rgb)));color:rgb(var(--mt-rgb));font:400 20px/1 'Anton','Nunito',sans-serif;letter-spacing:.08em;text-transform:uppercase;transform:skewX(-12deg);box-shadow:5px 5px 0 rgb(var(--l3-rgb));transition:transform .12s}
 .nb3-ok span{display:inline-block;transform:skewX(12deg)}
 .nb3-ok:active{transform:skewX(-12deg) scale(.97)}
+
+/* ======================= MIS CARTAS ======================= */
+.nc3{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nc3-portes{display:flex;align-items:center;gap:8px;padding:8px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nc3-porta{display:grid;justify-items:center;gap:4px;min-width:78px;padding:10px 8px 8px;border:0;border-radius:16px;background:#10171e;color:var(--nt-suau);font:900 12.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer}
+.nc3-porta svg{width:24px;height:24px}
+.nc3-porta.on{color:var(--nt-tinta);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .6)}
+.nc3-compte{margin-left:auto;padding:6px 14px;border-radius:999px;background:#10171e;font:400 18px/1 'Anton','Nunito',sans-serif;color:var(--nt-tinta)}
+.nc3-filtres{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.nc3-filtres::-webkit-scrollbar{display:none}
+.nc3-filtres .chip{flex:none}
+.nc3-h{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 0;font-size:18px;font-weight:900}
+.nc3-h small{font:400 16px/1 'Anton','Nunito',sans-serif;color:var(--nt-suau)}
+.nc3-prog{height:6px;border-radius:99px;background:#1c242e;overflow:hidden}
+.nc3-prog i{display:block;height:100%;background:linear-gradient(90deg,rgb(var(--l2-rgb)),rgb(var(--m-rgb)))}
+.nc3-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.nc3-c{position:relative;aspect-ratio:63/88;border:0;padding:4px;border-radius:12px;cursor:pointer;font:inherit;color:inherit;
+  background:linear-gradient(145deg,var(--c1),var(--c2) 42%,var(--c3) 64%,var(--c1));box-shadow:0 12px 20px -14px rgb(0 0 0 / .95);transition:transform .15s}
+.nc3-c:active{transform:scale(.96)}
+.nc3-in{display:flex;flex-direction:column;gap:4px;height:100%;border-radius:9px;padding:6px 5px 5px;overflow:hidden;background:linear-gradient(180deg,rgb(255 255 255 / .06),rgb(255 255 255 / .015) 40%),#19212a}
+.nc3-t{font-size:11px;font-weight:900;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc3-il{flex:1;min-height:0;display:grid;place-items:center;border-radius:7px;overflow:hidden}
+.nc3-il img{max-width:100%;max-height:100%;object-fit:contain}
+.nc3-il.ej img{width:100%;height:100%;object-fit:cover}
+.nc3-n{position:absolute;left:0;bottom:0;min-width:30px;height:22px;padding:0 10px 0 7px;display:grid;place-items:center;background:#0b1119;color:#e7edf2;font:400 13px/1 'Anton','Nunito',sans-serif;
+  clip-path:polygon(0 0,78% 0,100% 100%,0 100%);border-bottom-left-radius:12px}
+.nc3-c.t2::after,.nc3-c.t3::after{content:"";position:absolute;inset:4px;border-radius:9px;pointer-events:none;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 28%,rgb(255 255 255 / .16) 44%,rgb(177 140 255 / .14) 54%,transparent 70%)}
+.nc3-buit{aspect-ratio:63/88;border:0;border-radius:12px;cursor:pointer;display:grid;place-items:center;background:#111923;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .06)}
+.nc3-buit b{font:400 26px/1 'Anton','Nunito',sans-serif;color:#2f3a46}
+.nt-il-ej img{width:100%;height:100%;object-fit:cover;border-radius:18px}
+.nm-il-ej img{width:100%;height:100%;object-fit:cover}
+.nm-acc .nm-ic{flex:0 0 52px;padding:0}
+.nm-acc .nm-ic svg{width:21px;height:21px}
+.nm-ports{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:4px 2px 6px}
+.nm-ports::-webkit-scrollbar{display:none}
+.nm-pb{flex:none;width:86px;height:112px;border:0;padding:0;border-radius:12px;overflow:hidden;cursor:pointer;background:#10171e;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .08)}
+.nm-pb img{width:100%;height:100%;object-fit:cover}
+.nm-pb:first-child img{object-fit:contain;padding:6px}
+.nm-pb.on{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
@@ -10383,7 +10496,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
