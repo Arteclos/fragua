@@ -8453,6 +8453,13 @@ const Nit = (() => {
     if (lloc) llocAbans = lloc;
     if (vista === "social") despresSocial();
     if (vista === "rutinas") despresRutinas();
+    if (vista === "estadisticas") {
+      const h = v.querySelector("h1.titol-pag"); if (h && h.textContent.trim() === "Estadísticas") h.textContent = "Progreso";
+      if ((S.ui.statsTab || "fuerza") === "fuerza" && !v.querySelector(".np")) {
+        const tabs = [...v.querySelectorAll(".tabs-t")].pop();
+        if (tabs) { tabs.insertAdjacentHTML("afterend", heroiProgreso()); if (!quiet() && v.classList.contains("nt-entra")) entra([...v.querySelectorAll('[data-in="np"]')], 60); }
+      }
+    }
   }
 
 
@@ -8883,6 +8890,31 @@ const Nit = (() => {
         if (i !== ultim) { if (ultim >= 0) fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: i > ultim ? 1.1 : .9, costat: i > ultim ? .3 : -.3, volum: .3 }); E.vibra("gira", true); }); ultim = i; }
       }, 90);
     }, { passive: true });
+  }
+
+
+  /* ======================= PROGRESO (referencies/nx-estadisticas) =======================
+     A dalt de Fuerza, «Esta semana»: quatre figures (empenta, estirada, cama i braços) enceses segons les sèries que els has
+     fet des de dilluns, i tres xifres (dies entrenats, sèries i rècords del mes). El mapa múscul a múscul de la referència
+     espera les capes separades que l'Àlex ha de passar; fins llavors, una figura per grup, que és el que tenim de debò.
+     A sota, els gràfics de sempre (app.js, vistaEstadisticas), que a la Noche ja són en menta. */
+  const GRUP_TIPUS = { Pecho: "empuje", Hombro: "empuje", Espalda: "tiron", Pierna: "pierna", Brazo: "brazos" };
+  function setmanaMuscular() {
+    const avui = new Date(), dl = new Date(avui.getFullYear(), avui.getMonth(), avui.getDate() - (avui.getDay() + 6) % 7).getTime();
+    const c = { empuje: 0, tiron: 0, pierna: 0, brazos: 0 }, dies = new Set();
+    let series = 0;
+    S.ses.filter(s => s.fin && s.inicio >= dl).forEach(s => { dies.add(s.fecha); s.ej.forEach(e => { const t = GRUP_TIPUS[(Stats.GRUPO || {})[e.n]]; const n = e.sets.filter(z => z.ok).length; series += n; if (t) c[t] += n; }); });
+    return { c, dies: dies.size, series };
+  }
+  function heroiProgreso() {
+    const { c, dies, series } = setmanaMuscular(), max = Math.max(1, ...Object.values(c));
+    let rec = 0; try { rec = Stats.records(S); } catch (e) {}
+    const NOM = { empuje: "Empuje", tiron: "Tirón", pierna: "Pierna", brazos: "Brazos" };
+    return `<section class="np" data-in="np">
+      <h2 class="np-t">Esta semana</h2>
+      <div class="np-cos">${Object.entries(c).map(([t, n]) => `<div class="np-g${n ? "" : " buit"}" style="--f:${(n / max).toFixed(2)}"><img src="${R()}musculs-${t}.webp" alt="" draggable="false"><b>${n}</b><small>${NOM[t]}</small></div>`).join("")}</div>
+      <div class="np-xifres"><div><b>${dies}</b><small>de 7 días</small></div><div><b>${series}</b><small>series</small></div><div><b>${rec}</b><small>récords este mes</small></div></div>
+    </section>`;
   }
 
   /* LA RODETA DEL TIPUS DE SÈRIE (l'Albert, 28-09: «a l'esquerra tenies el número de la sèrie i, fent clic, la podies
@@ -9480,6 +9512,19 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 .nr-p > span{display:grid;gap:2px;min-width:0}.nr-p b{font-size:15px;font-weight:900}
 .nr-p-d{display:flex !important;flex-wrap:wrap;align-items:center;gap:6px}.nr-p-d small{font-size:12px;font-weight:800;color:var(--nt-suau)}
 .nr-p > svg{width:16px;height:16px;color:var(--nt-suau)}
+
+/* ======================= PROGRESO ======================= */
+.np{display:grid;gap:10px;margin:12px 0 4px;padding:14px;border-radius:24px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta);
+  background:radial-gradient(90% 70% at 50% 0%,rgb(168 155 224 / .12),transparent 70%),var(--fb-sup);box-shadow:var(--fb-o2),0 0 0 1px rgb(168 155 224 / .2)}
+.np-t{margin:0 2px;font-size:18px;font-weight:900}
+.np-cos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.np-g{display:grid;justify-items:center;gap:2px;padding:8px 2px;border-radius:16px;background:#10171e;box-shadow:inset 0 0 0 1px rgb(168 155 224 / calc(.1 + var(--f) * .5))}
+.np-g img{width:100%;height:84px;object-fit:contain;opacity:calc(.35 + var(--f) * .65);filter:drop-shadow(0 0 calc(var(--f) * 10px) rgb(168 155 224 / .6))}
+.np-g b{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}.np-g small{font-size:11px;font-weight:800;color:var(--nt-suau)}
+.np-g.buit b{color:var(--nt-suau)}
+.np-xifres{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.np-xifres div{display:grid;justify-items:center;padding:8px 4px;border-radius:14px;background:#10171e}
+.np-xifres b{font-size:20px;font-weight:900;color:var(--nt-menta);font-variant-numeric:tabular-nums}.np-xifres small{font-size:11px;font-weight:800;color:var(--nt-suau);text-align:center}
 /* EL MENÚ LATERAL */
 .nt-cal{position:fixed;inset:0;z-index:90;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nt-cal-vel{position:absolute;inset:0;background:rgb(6 9 14 / .5);-webkit-backdrop-filter:blur(10px) saturate(.8);backdrop-filter:blur(10px) saturate(.8)}
