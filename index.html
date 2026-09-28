@@ -7359,8 +7359,15 @@ body.bt-actiu .tanca{border:0;background:var(--fb-enfonsat);color:var(--fb-tinta
 .fb-nova{justify-content:center;align-items:center;gap:10px;background:transparent;box-shadow:none;outline:2.5px dashed var(--fb-suau);outline-offset:-4px;color:var(--fb-suau);cursor:pointer}
 .fb-mes-gros{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:var(--fb-sup);box-shadow:var(--fb-o1);color:var(--fb-accio-text)}
 .fb-mes-gros svg{width:28px;height:28px}
-@supports (height:1cqh){.fb-carta,.fb-punts{--w:72cqw;--ch:min(72cqw + 186px,100cqh - 44px)}}
+.fb-pista{--ch:min(444px,58vh);position:absolute;left:50%;top:calc(var(--ch) + 36px);transform:translate(-50%,8px);padding:8px 14px;
+  border-radius:999px;background:var(--fb-tinta);color:var(--fb-fons-1);font:800 13px/1 'Nunito',system-ui,sans-serif;white-space:nowrap;
+  opacity:0;pointer-events:none;z-index:5;transition:opacity .35s ease,transform .45s cubic-bezier(.2,.9,.25,1)}
+.fb-pista.on{opacity:.94;transform:translate(-50%,0)}
+.fb-pista.fora{opacity:0;transform:translate(-50%,-4px);transition-duration:.3s}
 .fb-punts{--ch:min(444px,58vh);position:absolute;left:0;right:0;top:calc(var(--ch) + 20px);display:flex;justify-content:center;gap:6px;pointer-events:none}
+/* la mida de la carta surt del contenidor on n'hi ha (cq): ha d'anar DESPRÉS de la de sobre, o els punts es queden amb
+   la de reserva i es desencaixen de la carta (51 px per sota en un 375x667; a dins de la carta en un 430x932) */
+@supports (height:1cqh){.fb-carta,.fb-punts,.fb-pista{--w:72cqw;--ch:min(72cqw + 186px,100cqh - 44px)}}
 .fb-punts i{width:7px;height:7px;border-radius:99px;background:var(--fb-enfonsat);box-shadow:inset 0 1px 2px rgb(0 0 0 / .2);transition:width .25s cubic-bezier(.2,.9,.3,1),background .25s}
 .fb-punts i.on{width:22px;background:var(--fb-accio)}
 .fb-punts i.pro{background:var(--fb-or);opacity:.55}.fb-punts i.pro.on{opacity:1}
@@ -7635,6 +7642,29 @@ body.v-marro{--fb-fons:linear-gradient(180deg,#1e1915 0%,#110e0b 100%);--fb-fons
       objectiu = Math.max(0, Math.min(n - 1, Math.round(objectiu) + (ev.key === "ArrowRight" ? 1 : -1)));
       vel = 0; molla();
     });
+    // LA PISTA, la primera vegada (l'Adrià: «tutorials, com menys millor»; ARQUITECTURA §9: una pista a cada lloc, la
+    // primera vegada). La roda fa un tast de la carta del costat i torna, amb la mateixa molla, i una píndola diu què s'hi
+    // fa. Un sol cop per mòbil; si toques la roda abans, ja no cal. Amb el moviment reduït, només la píndola.
+    let vist = true;
+    try { vist = !!localStorage.getItem("klonk-pista-roda"); } catch (e) {}
+    if (!vist && n > 1) {
+      const marca = () => { try { localStorage.setItem("klonk-pista-roda", "1"); } catch (e) {} };
+      const pi = document.createElement("span");
+      pi.className = "fb-pista"; pi.setAttribute("aria-hidden", "true"); pi.textContent = "Desliza para ver tus días";
+      roda.appendChild(pi);
+      const treu = () => { pi.classList.remove("on"); pi.classList.add("fora"); setTimeout(() => pi.remove(), 450); };
+      roda.addEventListener("pointerdown", () => { marca(); treu(); }, { once: true });
+      setTimeout(() => {
+        if (!roda.isConnected || dit !== null) return;
+        marca(); pi.classList.add("on");
+        if (!quiet()) {
+          const on = Math.round(pos), dir = on >= n - 1 ? -1 : 1;
+          objectiu = on + dir * .3; vel = 0; molla();
+          setTimeout(() => { if (dit === null && roda.isConnected && Math.abs(objectiu - on) < .5) { objectiu = on; molla(); } }, 560);
+        }
+        setTimeout(treu, 3800);
+      }, 1100);
+    }
   }
   function despresPintar() { estil(); const r = document.querySelector(".fb-roda"); if (r) activaRoda(r); }
   // «Empezar»: primer el KLONK i el cop de la carta, i després l'acció de sempre de l'app (la música, les espurnes, marcar el
