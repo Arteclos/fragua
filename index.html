@@ -3143,8 +3143,15 @@ function cfgDeRutina(r) {
   r.dias.forEach(d => d.ej.forEach(e => { const c = (S.cfg || {})[e[0]]; if (c && !cfg[e[0]]) { const x = {}; CLAUS_CFG.forEach(k => { if (c[k] != null && c[k] !== false) x[k] = c[k]; }); if (Object.keys(x).length) cfg[e[0]] = x; } }));
   return cfg;
 }
-const perCompartir = r => ({ nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })),
-  cfg: cfgDeRutina(r) });
+// EL MARC DE QUI LA VA CREAR (l'Albert, 28-09): la rutina viatja amb el sigma de qui la va fer. Si és teva, el teu d'ara;
+// si te la van passar o la vas comprar, el de qui la va crear (r.mat).
+const MATS_SIGMA = ["madera", "piedra", "cobre", "bronce", "hierro", "acero", "oro", "obsidiana", "criselefantino", "estelar"];
+function matDeRutina(r) {
+  if (r.autor) return MATS_SIGMA.includes(r.mat) ? r.mat : null;
+  try { const e = typeof Elo === "object" ? Elo.calcula() : null; return e && e.elo != null && e.divisio && MATS_SIGMA.includes(e.divisio.id) ? e.divisio.id : null; } catch (x) { return null; }
+}
+const perCompartir = r => { const mat = matDeRutina(r); return { nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })),
+  cfg: cfgDeRutina(r), ...(mat ? { mat } : {}) }; };
 // Una rutina que ve de fora (un enllaç o un amic) es mira abans de fer-la servir: noms curts, poques coses.
 function rutinaValida(x) {
   if (!x || typeof x.nombre !== "string" || !Array.isArray(x.dias) || !x.dias.length || x.dias.length > 14) return null;
@@ -3164,7 +3171,7 @@ function rutinaValida(x) {
     if (c.fallo === true) y.fallo = true;
     if (Object.keys(y).length) cfg[n] = y;
   });
-  return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias, ...(Object.keys(cfg).length ? { cfg } : {}) };
+  return { nombre: x.nombre.slice(0, 60), resumen: String(x.resumen || "").slice(0, 200), dias, ...(Object.keys(cfg).length ? { cfg } : {}), ...(MATS_SIGMA.includes(x.mat) ? { mat: x.mat } : {}) };
 }
 // En guardar una rutina que ve d'algú: les seves sèries i repeticions, per als exercicis que tu encara no tens configurats.
 function guardaRutinaDeFora(x) {
@@ -3272,7 +3279,8 @@ async function accioCompartir(acc, b) {
     case "rut-guarda-enllac": case "rut-guarda-rebuda": {
       const x = acc === "rut-guarda-enllac" ? S.ui.rutEnllac : ((S.recibidas || []).find(y => String(y.id) === b.dataset.id) || {}).rutina;
       if (!x) return true;
-      guardaRutinaDeFora(x);
+      const nova0 = guardaRutinaDeFora(x);
+      if (acc === "rut-guarda-rebuda") { const reb = (S.recibidas || []).find(y => String(y.id) === b.dataset.id); if (reb && reb.de) nova0.autor = String(reb.de).slice(0, 20); }
       if (acc === "rut-guarda-rebuda") { S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); }
       S.ui.rutEnllac = null; guardar(); tancaFull(); Efectos.suena("yunque"); avis("Guardada en tus rutinas."); veure("rutinas");
       return true;
@@ -3287,6 +3295,7 @@ async function accioCompartir(acc, b) {
     case "rebuda-entrena": {
       const x = (S.recibidas || []).find(y => String(y.id) === b.dataset.id); if (!x) return true;
       const nova = guardaRutinaDeFora(x.rutina);
+      if (x.de) nova.autor = String(x.de).slice(0, 20);
       S.rutinaActiva = nova.id;
       S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {});
       guardar(); tancaFull(); Efectos.suena("yunque"); Efectos.vibra("forja"); avis(`«${nova.nombre}» es tu rutina. A por el día 1.`); veure("entreno");
@@ -7851,7 +7860,7 @@ const Nit = (() => {
   const slug = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   // EL PAQUET DE CADA AVATAR (29-09): els exercicis que ja té dibuixats (ej_avatar.py escriu aquesta llista); si l'avatar
   // triat en té el dibuix, surt ell; si no, el de l'Urbà.
-  const EJ_AV = /*EJ_AV*/{"fibrado":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo-en-banco-scott","curl-zottman","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","rueda-abdominal","zancada-en-multipower"],"mascara":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-inclinado-con-mancuernas","curl-martillo-en-banco-scott","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","face-pull","fondos","hack-squat","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","zancada-en-multipower"]}/*/EJ_AV*/;
+  const EJ_AV = /*EJ_AV*/{"berserker":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-inclinado-con-mancuernas","curl-martillo-en-banco-scott","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","face-pull","fondos","hack-squat","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","zancada-en-multipower"],"chad":["aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-zottman","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","encogimientos-en-polea","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","fondos","jalon-al-pecho","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","rueda-abdominal","zancada-en-multipower"],"fibrado":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo-en-banco-scott","curl-zottman","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","rueda-abdominal","zancada-en-multipower"],"mascara":["aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-inclinado-con-mancuernas","curl-martillo-en-banco-scott","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","face-pull","fondos","hack-squat","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","zancada-en-multipower"],"neteja":["aduccion-de-cadera-en-maquina","crunch-en-polea-alta","curl-femoral-sentado","curl-martillo-en-banco-scott","elevaciones-laterales-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-tras-nuca-en-polea","face-pull","hack-squat","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","peck-deck","peso-muerto-rumano","press-de-gemelos-en-prensa","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca"]}/*/EJ_AV*/;
   const teDibuix = sl => { const av = S.personaje && S.personaje.avatar; return av && EJ_AV[av] && EJ_AV[av].includes(sl) ? av : null; };
   const fotoAnime = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej/${av}/${sl}.webp` : EJ_ANIME.has(sl) ? `${R()}ej/${sl}.webp` : null; };
   // ELS AVATARS (29-09): el roster, sense noms (són avatars: el nom és el nickname de cadascú). Cada un porta el seu tema.
@@ -9134,7 +9143,7 @@ const Nit = (() => {
     const propia = typeof rutinaPropia === "function" && !!rutinaPropia(r.id);
     const e = eloDe(), nick = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "";
     const firma = r.autor || (propia ? nick : "KLONK");
-    const mat = r.autor ? "cap" : !propia ? "klonk" : (e.elo != null && e.divisio && MAT[e.divisio.id] ? e.divisio.id : "cap");
+    const mat = r.autor ? (MAT[r.mat] ? r.mat : "cap") : !propia ? "klonk" : (e.elo != null && e.divisio && MAT[e.divisio.id] ? e.divisio.id : "cap");
     return { r, d, fetes, tier: tier[1], seg, firma, mat, e: propia && !r.autor ? e : null };
   }
   const ESPURNES = `<i class="nm-esp" aria-hidden="true">${"<i></i>".repeat(7)}</i>`;
@@ -9710,9 +9719,11 @@ const Nit = (() => {
     try { const r = await api("GET", "/mercat"); S.ui.mercat = { ...r, at: Date.now() }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
     if (S.ui.vista === "tienda" && S.ui.tiendaTab === "rutinas" && typeof render === "function") render();
   }
+  const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? "Sigma de " + d[2].toLowerCase() : ""; };
+  const marcM = m => (MAT[m] ? ` style="--mc:${MAT[m][1]}"` : "");
   const baralla = (o, extra = "") => `<button class="nm3-o${o.comprada ? " teva" : ""}" data-accion="nm3-obre" data-id="${o.id}" data-in="nb"${extra}>
-      <span class="nm3-pila"><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
-      <b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)} · ${o.exercicis} ejercicios</small>
+      <span class="nm3-pila"${marcM(o.mat)}><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
+      <b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small><small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
       <span class="nm3-peu">${o.comprada ? `<em class="nm3-tuya">Es tuya</em>` : `<em class="nm3-preu">${ic("moneda")}${n0(o.preu)}</em>`}<small>${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : o.nou ? "Nueva" : ""}</small></span></button>`;
   function vistaMercat() {
     if (esMenor()) return `<p class="nb2-av">El mercado de rutinas es para mayores de edad.</p>`;
@@ -9737,8 +9748,8 @@ const Nit = (() => {
       : o.comprada ? `<button class="nm3-b gran" data-accion="nm3-guarda" data-id="${o.id}">Guardar en mis rutinas</button>`
       : `<button class="nm3-b gran" data-accion="nm3-compra" data-id="${o.id}" data-preu="${o.preu}"${falta ? " disabled" : ""}>${ic("moneda")}Comprar por ${n0(o.preu)} de oro</button>
          ${falta ? `<p class="nm3-nota">Te faltan ${n0(falta)} de oro.</p>` : ""}`;
-    fullN(o.titol, `<div class="nm3-fitxa"><img class="nm3-gran" src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false">
-      <p class="nm3-meta">de ${esc(o.autor)} · ${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
+    fullN(o.titol, `<div class="nm3-fitxa"><img class="nm3-gran" src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"${marcM(o.mat)}>
+      <p class="nm3-meta">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""} · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK<br>${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
       ${accio}<div class="nm3-dies">${dies}</div>
       ${o.meva ? "" : `<button class="nm3-informa" data-accion="nm3-informa" data-id="${o.id}">Denunciar esta rutina</button>`}</div>`);
   }
@@ -9785,7 +9796,7 @@ const Nit = (() => {
       let r;
       try { r = await api("POST", `/mercat/${id}/compra`); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
       if (r.or && typeof aplicaOr === "function") aplicaOr(r.or);
-      if (!(S.rutinas || []).some(x => x.mercat === id)) { const nova = guardaRutinaDeFora(r.rutina); nova.mercat = id; }
+      if (!(S.rutinas || []).some(x => x.mercat === id)) { const nova = guardaRutinaDeFora(r.rutina); nova.mercat = id; nova.autor = String(r.autor || "Alguien").slice(0, 20); if (r.mat) nova.mat = r.mat; }
       if (typeof guardarYa === "function") guardarYa();
       document.querySelectorAll(".nsq-full").forEach(x => x.remove());
       fx(E => { if (!E.suena("cofre")) E.suena("or"); E.vibra("forja"); if (E.lluvia) E.lluvia(.8); });
@@ -10068,6 +10079,11 @@ body.v-nit.bt-pell #vista{font-family:'Nunito',system-ui,sans-serif}
 body.v-nit.bt-pell .titol-pag{font-size:24px;font-weight:900;margin:8px 2px 14px;letter-spacing:-.01em}
 body.v-nit.bt-pell #vista h2{font-family:'Nunito',system-ui,sans-serif}
 body.v-nit .btn-forja small{display:none}
+/* el cos a Progreso (cos.js): les xifres i les línies eren de la farga (or i taronja) */
+body.v-nit .mesura .m-val{color:var(--nt-tinta)}
+body.v-nit .spark polyline{stroke:rgb(var(--m-rgb))}
+body.v-nit .r-graf .punt{fill:rgb(var(--m-rgb))}
+body.v-nit .r-graf .tend{stroke:rgb(var(--l-rgb))}
 body.v-nit .nt-heroi{display:none}
 body.v-nit [data-accion="tienda-tab"][data-t="personajes"]{display:none}
 body.v-nit.bt-pell #vista .btn.clar,body.v-nit.bt-pell .btn-forja,body.v-nit.bt-pell .btn-forja span{text-shadow:0 1px 0 rgb(255 255 255 / .35)}
@@ -10912,7 +10928,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nm3-pila i{background:#2a3440;box-shadow:0 0 0 1px rgb(255 255 255 / .08)}
 .nm3-pila i:first-child{transform:rotate(-7deg) translate(-4px,2px);opacity:.55}
 .nm3-pila i:nth-child(2){transform:rotate(5deg) translate(4px,1px);opacity:.8}
-.nm3-pila img{width:100%;height:100%;object-fit:cover;background:#10171e;box-shadow:0 0 0 2px rgb(var(--l-rgb) / .55),0 10px 18px -10px rgb(0 0 0 / .9)}
+.nm3-pila img{width:100%;height:100%;object-fit:cover;background:#10171e;box-shadow:0 0 0 2px var(--mc,rgb(var(--l-rgb) / .55)),0 10px 18px -10px rgb(0 0 0 / .9)}
 .nm3-t{font-size:14.5px;font-weight:900;line-height:1.2}
 .nm3-de{font-size:12px;font-weight:700;color:#8b98a4;line-height:1.3}
 .nm3-peu{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px}.nm3-peu small{font-size:11.5px;font-weight:800;color:#8b98a4}
@@ -10933,7 +10949,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nm3-guanyat{margin:2px 2px 0;font-size:13.5px;font-weight:800;color:#e2c27a}
 .nm3-buit{display:grid;gap:8px;justify-items:start;padding:16px;border-radius:20px;background:#171e27}.nm3-buit b{font-size:17px;font-weight:900}.nm3-buit p{margin:0;font-size:14px;font-weight:700;color:#aab4be}
 .nm3-fitxa{display:grid;gap:12px;text-align:left}
-.nm3-gran{width:min(62%,220px);aspect-ratio:3/4;justify-self:center;object-fit:cover;border-radius:18px;box-shadow:0 0 0 2px rgb(var(--l-rgb) / .55),0 18px 30px -16px rgb(0 0 0 / .9)}
+.nm3-gran{width:min(62%,220px);aspect-ratio:3/4;justify-self:center;object-fit:cover;border-radius:18px;box-shadow:0 0 0 2px var(--mc,rgb(var(--l-rgb) / .55)),0 18px 30px -16px rgb(0 0 0 / .9)}
 .nm3-meta{margin:0;text-align:center;font-size:13.5px;font-weight:800;color:#8b98a4}
 .nm3-dies{display:grid;gap:10px;max-height:34vh;overflow:auto}
 .nm3-dia b{display:block;margin-bottom:6px;font-size:14px;font-weight:900}
