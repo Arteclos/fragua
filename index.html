@@ -11184,6 +11184,11 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
   background:linear-gradient(90deg,rgb(var(--m2-rgb,166 236 219)),rgb(var(--m-rgb,134 217 198)));color:rgb(var(--mt-rgb,13 42 36));box-shadow:5px 5px 0 rgb(var(--l3-rgb,59 47 134))}
 .nw-b span{display:inline-block;transform:skewX(12deg)}
 .nw-b:active{transform:skewX(-12deg) scale(.97)}
+/* «Continuar con Google» a la Noche (29-09): era el de la farga (el marc de cantons tallats, el coure i la lletra serif).
+   Ara, el tema fosc dels botons de Google (fons #131314, vora #8E918F, text #E3E3E3), en píndola i amb la lletra de l'app */
+body.v-nit .btn-google,body.v-nit .btn-google.marc{clip-path:none;border-radius:999px;min-height:52px;background:#131314;border:1px solid #8e918f;color:#e3e3e3;font:800 15.5px/1 'Nunito',system-ui,sans-serif;gap:10px}
+body.v-nit .btn-google.marc::before{content:none}
+body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .nw-b2{height:46px;border:0;border-radius:999px;cursor:pointer;background:rgb(255 255 255 / .06);color:#e7edf2;font:900 15px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
 .nw-edat-t{position:relative;z-index:2;margin:0;font-size:13px;font-weight:800;color:#8b98a4}
 .nw-legal{position:relative;z-index:2;display:flex;gap:18px;justify-content:center;margin:0}
