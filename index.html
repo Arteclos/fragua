@@ -8648,9 +8648,10 @@ const Nit = (() => {
     if (pv && typeof api === "function") { ev.preventDefault(); ev.stopPropagation(); avisaPro(pv); return; }
     const mk = ev.target.closest('[data-accion^="nm3-"]');
     if (mk && typeof api === "function") { ev.preventDefault(); ev.stopPropagation(); accioMercat(mk); return; }
-    const ec = ev.target.closest('[data-accion="esc-compra"], [data-accion="esc-compra-si"]');
+    const ec = ev.target.closest('[data-accion="esc-compra"], [data-accion="esc-compra-si"], [data-accion="esc-regal"]');
     if (ec) {
       ev.preventDefault(); ev.stopPropagation();
+      if (ec.dataset.accion === "esc-regal") { compraEscaner(true); return; }
       if (ec.dataset.accion === "esc-compra") confirma({ titol: `¿Gastar ${PREU_ESCANER} de oro?`, text: "Un escáner de cuerpo. Si la foto no sale bien, no se gasta.", si: "Escanear", no: "Ahora no", accio: "esc-compra-si", ic: ic("moneda") });
       else compraEscaner();
       return;
@@ -10828,10 +10829,14 @@ const Nit = (() => {
     ganxos();
     const cr = S.escaners || 0, oro = oroTotal(), menor = typeof esMenor === "function" && esMenor(), falta = Math.max(0, PREU_ESCANER - oro);
     const poses = typeof Mirall === "object" && Mirall.POSES ? Object.entries(Mirall.POSES) : [];
+    // EL PRIMER, REGALAT (29-09 vespre, LA LLISTA 5): qui no n'ha tingut mai cap. El servidor ho torna a mirar (sincro.py)
+    const regal = !menor && !S.escRegal && cr === 0;
     const accio = cr > 0
       ? `<div class="nx-tens"><b>${cr === 1 ? "Tienes un escáner" : `Tienes ${cr} escáneres`}</b><span>Elige la pose</span></div>
          <div class="nx-poses">${poses.map(([k, p]) => `<button class="nx-pose" data-mirall="nova" data-pose="${k}"><i class="nx-mini" style="--sil:url('${ACTIUS}beta/${p.sil}')"></i><b>${p.curt}</b></button>`).join("")}</div>`
       : menor ? `<p class="nx-nota">Las compras son para mayores de edad.</p>`
+      : regal ? `<button class="nx-compra" data-accion="esc-regal">${I_TU.scan}<b>Tu primer escáner, gratis</b></button>
+         <p class="nx-nota">Es tu «Día 1»: a partir de aquí verás lo que cambia.</p>`
       : `<button class="nx-compra" data-accion="esc-compra"${falta ? " disabled" : ""}>${ic("moneda")}<b>Escanear por ${PREU_ESCANER} de oro</b></button>
          ${falta ? `<p class="nx-falta">Te faltan ${n0(falta)} de oro. Entrenando, los tienes en una semana, o <button class="nx-euro" data-accion="compra-oro" data-p="bolsa">consíguelos por 0,99 €</button>.</p>`
            : `<p class="nx-nota">Un escáner, una vez. Si la foto no sale bien, no se gasta.</p>`}`;
@@ -10861,19 +10866,24 @@ const Nit = (() => {
       if (img && r.foto) { const u = URL.createObjectURL(r.foto); img.onload = () => URL.revokeObjectURL(u); img.src = u; }
     }
   }
-  async function compraEscaner() {
+  async function compraEscaner(regal) {
     if (S.demo) { if (typeof avis === "function") avis("En el modo demostración no se compra nada.", true); return; }
-    if (oroTotal() < PREU_ESCANER) return;
+    if (!regal && oroTotal() < PREU_ESCANER) return;
     const id = "e" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     if (typeof teCompte === "function" && teCompte()) {
-      try { const r = await apiCompte("POST", "/or/escaner", { id }); aplicaOr(r.or); }
-      catch (e) { if (typeof avis === "function") avis(e.status === 0 ? "Sin conexión: para comprar hace falta red." : e.message, true); return; }
-    } else S.oroGastado = (S.oroGastado || 0) + PREU_ESCANER;
+      try { const r = await apiCompte("POST", "/or/escaner", regal ? { id, regal: true } : { id }); aplicaOr(r.or); }
+      catch (e) {
+        // el regalat ja el vas tenir (en un altre mòbil, o abans que n'hi hagués): es passa a comprar-lo
+        if (regal && e.status === 409) { S.escRegal = true; if (typeof guardarYa === "function") guardarYa(); if (typeof render === "function") render(); }
+        if (typeof avis === "function") avis(e.status === 0 ? "Sin conexión: para comprar hace falta red." : e.message, true); return;
+      }
+    } else if (!regal) S.oroGastado = (S.oroGastado || 0) + PREU_ESCANER;
+    if (regal) S.escRegal = true;
     S.escaners = (S.escaners || 0) + 1;
     if (typeof guardarYa === "function") guardarYa();
     fx(E => { if (!E.suena("compra")) E.suena("or"); E.vibra("forja"); if (E.lluvia) E.lluvia(.8); });
     if (typeof render === "function") render();
-    if (typeof avis === "function") avis("Escáner listo. Elige la pose.");
+    if (typeof avis === "function") avis(regal ? "Tu primer escáner, gratis. Elige la pose." : "Escáner listo. Elige la pose.");
   }
 
   /* ======================= EL MERCADO DE RUTINAS (l'Albert, 29-09: «volem també posar-li de vendre rutines») =======
