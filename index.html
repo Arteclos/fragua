@@ -11728,8 +11728,10 @@ body.v-nit #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh + 2px)}
    l'hora i la bateria en baixar, i no es llegien. Una franja del color de la pàgina, fixa, que s'esvaeix cap avall; per
    sobre del contingut (la barra de Progreso és a 39) i per sota de tot el que s'obre al damunt (els efectes, 50; els fulls,
    80 i més). Al Safari no cal: la hi posa ell */
-@media (display-mode: standalone){body.v-nit::before{content:"";position:fixed;z-index:45;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 12px);
-  pointer-events:none;background:linear-gradient(to bottom,var(--nt-fons) calc(100% - 12px),rgb(13 18 23 / 0))}}
+@media (display-mode: standalone){body.v-nit::before{content:"";position:fixed;z-index:45;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) * 1.2);
+  pointer-events:none;background:linear-gradient(to bottom,var(--nt-fons) 83%,rgb(13 18 23 / 0))}}
+/* l'alçada, proporcional a la zona segura: a l'Android instal·lat no n'hi ha i la franja no hi ha de ser (amb 12 px fixos hi
+   quedava un fos damunt de la capçalera) */
 .nt-barra button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nt-barra .nt-centre{background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%)}
 .nt-tab{position:relative;transition:opacity .2s}
