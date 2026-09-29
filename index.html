@@ -5625,7 +5625,7 @@ const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span cl
 function filaRanking(f, so) {
   const v = f.valor;
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
-    <span class="rk-nom">${typeof Nit === "object" && Nit.activa() && Nit.tagSq ? Nit.tagSq(f.tag) : ""}${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -6340,6 +6340,8 @@ async function desaPrefsAvisos(canvi) {
 const AVISOS_MAX_NO = 3;
 let preguntatAra = false;
 function preguntaAvisos(forca) {
+  // a la Noche (l'app de tothom) ja no salta un full en entrar: és una targeta de la portada (nit.js, targetaAvisos; 29-09)
+  if (!forca && typeof Versions === "object" && Versions.actual() === "nit") return;
   if (!forca && (preguntatAra || navigator.webdriver || S.demo || !teCompte() || activa() || (S.ui.vista || "inicio") !== "inicio" || $("#capa").innerHTML || $("#celebra").innerHTML)) return;
   const e = estatAvisos(), dies = (Date.now() - (S.ui.avisosNo || 0)) / 864e5;
   if (!forca && (e === "actius" || e === "no" || e === "bloquejats" || S.ui.avisosMai || (S.ui.avisosNoN || 0) >= AVISOS_MAX_NO || dies < 3)) return;
@@ -8118,25 +8120,57 @@ const Nit = (() => {
     const i = el.querySelector(".nt-g-barra i");
     if (i && i.animate && !quiet()) i.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 900, easing: "cubic-bezier(.2,.9,.25,1)", delay: 120, fill: "backwards" });
   }
-  // UN AMIC DEL CLAN per fer-li KLσNK: l'últim entreno que no és teu
+  // LES TARGETES D'UN SOL COP (29-09, l'Albert: «una vegada donaves a enviar klonk, després ja no ha de sortir»; «ho faria
+  // aparèixer com a targeta una vegada, igual que lo d'activa notificacions»; «igual que les apps professionals, per no ratllar
+  // la penya amb coses que no vol»). A la portada, com a molt UNA, a baix: es fa i se'n va, o es tanca amb la creu i no torna.
+  // Primer, un amic que ha entrenat i encara no li has fet KLσNK!; si no n'hi ha, els avisos (que abans saltaven en un full).
+  const AMIC_VIST_MAX = 40;
+  const amicVist = id => (S.ui.amicVist || []).includes(id);
+  function marcaAmicVist(id) { if (!id) return; S.ui.amicVist = [...(S.ui.amicVist || []).filter(x => x !== id), id].slice(-AMIC_VIST_MAX); guardar(); }
   async function carregaAmic(sec) {
     const el = sec.querySelector(".nt-amic");
     if (!el || typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
     let f = S.ui.feed;
     if (!f || Date.now() - (f.at || 0) > 60000) {
-      try { const r = await api("GET", "/clan/feed"); f = S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; } catch (e) { return; }
+      try { const r = await api("GET", "/clan/feed"); f = S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; } catch (e) { f = null; }
     }
-    const it = (f.items || []).find(x => !x.yo);
-    if (!it) return;
+    if (!el.isConnected) return;
+    const it = f && (f.items || []).find(x => !x.yo && x.meva !== KLONK_REACCIO && !amicVist(x.id));
+    if (!it) { targetaAvisos(el); return; }
     const que = QUE[tipusDeNoms((it.exercicis || []).map(e => e.nom))];
     const quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
-    // la cara de l'amic (no la teva), quan ho ha fet (també «hoy»), i el KLσNK! de debò: s'envia, i queda enviat (29-09)
-    const fet = it.meva === KLONK_REACCIO;
+    // la cara de l'amic (no la teva), quan ho ha fet (també «hoy»), i el KLσNK! de debò: s'envia, i la targeta se'n va
+    el.dataset.mena = "amic";
     el.innerHTML = `<img class="nt-amic-av" src="${caraDe(it.personatge)}" alt="" draggable="false">
       <span class="nt-amic-t"><b>${esc(it.nom)}</b> ${que ? `ha entrenado ${que}` : "ha entrenado"}${quan ? ` <small>${quan}</small>` : ""}</span>
-      <button class="nt-klonk-amic${fet ? " fet" : ""}" data-id="${esc(it.id)}" aria-pressed="${fet}">${fet ? I_CHECK : ""}KLσNK!</button>`;
+      <button class="nt-klonk-amic" data-id="${esc(it.id)}" aria-pressed="false">KLσNK!</button>
+      <button class="nt-nudge-x" data-accion="nt-nudge-x" data-id="${esc(it.id)}" aria-label="Cerrar">${I_X}</button>`;
     el.hidden = false;
     entra([el], 0);
+  }
+  // els avisos, com una targeta i no com un full que salta en entrar: la mateixa regla que tenien (si dius «ahora no», torna
+  // al cap de tres dies i com a molt tres vegades; «Activar» demana el permís dins del toc, com vol l'iPhone)
+  function targetaAvisos(el) {
+    if (typeof estatAvisos !== "function") return;
+    const e = estatAvisos(), dies = (Date.now() - (S.ui.avisosNo || 0)) / 864e5;
+    if (!(e === "pregunta" || e === "instal") || S.ui.avisosMai || (S.ui.avisosNoN || 0) >= 3 || dies < 3) return;
+    el.dataset.mena = "avisos";
+    el.innerHTML = `<span class="nt-nudge-ic">${ic("flama-on", "nt-flama")}</span>
+      <span class="nt-amic-t"><b>Activa los avisos</b> <small>Te avisamos a tu hora si aún no has entrenado.</small></span>
+      <button class="nt-nudge-b" data-accion="avisos-activa">Activar</button>
+      <button class="nt-nudge-x" data-accion="nt-nudge-x" aria-label="Ahora no">${I_X}</button>`;
+    el.hidden = false;
+    entra([el], 0);
+  }
+  // se'n va: s'encongeix i desapareix (no es torna a pintar fins que hi hagi una altra cosa a dir)
+  function tancaNudge(el, des = 0) {
+    const fi = () => { el.hidden = true; el.innerHTML = ""; el.removeAttribute("style"); };
+    if (quiet() || !el.animate) return fi();
+    const h = el.offsetHeight;
+    el.style.overflow = "hidden";
+    el.animate([{ opacity: 1, transform: "none", height: h + "px", marginTop: "10px" },
+      { opacity: 0, transform: "scale(.97)", height: "0px", marginTop: "0px", paddingTop: "0px", paddingBottom: "0px" }],
+      { duration: 380, delay: des, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" }).onfinish = fi;
   }
 
   // L'ENTRADA: cada peça arriba al seu temps (skill moviment §4: 8-24 px, 40-80 ms entre germanes, tot per sota de 1,2 s)
@@ -8365,7 +8399,11 @@ const Nit = (() => {
     if (b.classList.contains("fet") || !b.dataset.id || typeof api !== "function") return;
     const f = S.ui.feed, it = f && (f.items || []).find(x => x.id === b.dataset.id); if (!it) return;
     b.classList.add("fet"); b.setAttribute("aria-pressed", "true"); b.innerHTML = I_CHECK + "KLσNK!";
-    try { const r = await api("POST", `/clan/feed/${encodeURIComponent(it.id)}/reaccio`, { tipus: KLONK_REACCIO }); it.meva = KLONK_REACCIO; if (r && r.reaccions) it.reaccions = r.reaccions; }
+    try {
+      const r = await api("POST", `/clan/feed/${encodeURIComponent(it.id)}/reaccio`, { tipus: KLONK_REACCIO }); it.meva = KLONK_REACCIO; if (r && r.reaccions) it.reaccions = r.reaccions;
+      marcaAmicVist(it.id);
+      const el = b.closest(".nt-amic"); if (el) tancaNudge(el, 900);
+    }
     catch (e) { b.classList.remove("fet"); b.setAttribute("aria-pressed", "false"); b.textContent = "KLσNK!"; if (typeof avis === "function") avis(e.message || "Sin conexión.", true); }
   }
   // cada peça respon al dit (sense fer res més: és una demostració)
@@ -8448,6 +8486,14 @@ const Nit = (() => {
       if (carta && carta.dataset.n && !ev.target.closest(".nt-boto")) { ev.preventDefault(); ev.stopPropagation(); miraCarta(carta); return; }
       const em = ev.target.closest('.nt-boto[data-accion="empezar"]');
       if (em && !em.dataset.nitFet) { ev.preventDefault(); ev.stopPropagation(); llanca(em); return; }
+      const nx = ev.target.closest('[data-accion="nt-nudge-x"]');
+      if (nx) {
+        ev.preventDefault(); ev.stopPropagation();
+        const el = nx.closest(".nt-amic"); if (!el) return;
+        if (el.dataset.mena === "amic") marcaAmicVist(nx.dataset.id);
+        else { S.ui.avisosNo = Date.now(); S.ui.avisosNoN = (S.ui.avisosNoN || 0) + 1; guardar(); }
+        fx(E => E.suena("tap")); tancaNudge(el); return;
+      }
       const c = ev.target.closest(".nt-centre"), a = ev.target.closest(".nt-klonk-amic");
       if (c) { ev.preventDefault(); ev.stopPropagation(); klonk(c); return; }
       if (a) { ev.preventDefault(); ev.stopPropagation(); klonkAmic(a); return; }
@@ -9080,7 +9126,7 @@ const Nit = (() => {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
     return `<div class="ns-f" data-in="ns"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">
-      <span class="ns-f-t"><b>${tagSq(it.tag)}${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>
+      <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
       ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
   }
@@ -9088,7 +9134,7 @@ const Nit = (() => {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
     return `<${f.pid ? `button class="ns-r" data-accion="social-perfil" data-p="${f.pid}"` : `div class="ns-r${f.yo ? " yo" : ""}"`} data-in="ns">
       <span class="ns-r-pos">${f.pos === 1 ? `<svg viewBox="0 0 24 24" aria-label="1"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 11H5z" fill="#e2c27a"/></svg>` : (f.pos ?? "–")}</span>
-      <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${tagSq(f.tag)}${esc(nom)}</span>
+      <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
       <span class="ns-r-v">${so.metrica === "rango" ? `${imgYunque(f.valor)}<b>${f.valor != null ? n0(f.valor) : "·"}</b>` : `<b>${n0(f.valor)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
   }
   // EL RÀNQUING DE LA SQUAD (29-09, l'Albert: «dins l'squad hauria d'activar la visibilitat del rànquing, si la gent ho
@@ -9111,7 +9157,7 @@ const Nit = (() => {
     const cap = t => `<div class="ns-bloc-cap"><h2>${t}</h2><button class="ns-mes" data-accion="ns-dins" data-t="rank">Rankings${I_TU.fle}</button></div>`;
     if (sq) return `<div class="ns-bloc" data-in="ns">${cap(`Ranking de ${esEtq(sq.nom) ? tagSq({ t: sq.nom, c: sq.color }) : esc(sq.nom)}`)}${sq.ranking.llista.length ? sq.ranking.llista.slice(0, 6).map(f => filaSqR(f, sq.ranking.mesura)).join("") : `<p class="ns-buit">Nadie de la squad sale todavía en el ranking.</p>`}</div>`;
     const gest = q && q.squads.find(x => x.jo_lider || x.jo_admin);
-    const txt = !q ? "Cargando…" : !q.squads.length ? "Haz una squad con tus amigos y encended el ranking para veros." : gest ? "El ranking de tu squad está apagado." : "El ranking de tu squad está apagado: lo enciende quien la lidera.";
+    const txt = !q ? (S.ui.sqErr ? "No se ha podido cargar." : "Cargando…") : !q.squads.length ? "Haz una squad con tus amigos y encended el ranking para veros." : gest ? "El ranking de tu squad está apagado." : "El ranking de tu squad está apagado: lo enciende quien la lidera.";
     const boto = q && !q.squads.length ? `<button class="nt-boto2 ns-rk-b" data-accion="nsq-nova">Crear una squad</button>` : gest ? `<button class="nt-boto2 ns-rk-b" data-accion="ns-dins" data-t="squads">Encenderlo</button>` : "";
     return `<div class="ns-bloc" data-in="ns">${cap("Ranking de tu squad")}<p class="ns-buit">${txt}</p>${boto}</div>`;
   }
@@ -9336,7 +9382,8 @@ const Nit = (() => {
     return `<h1 class="titol-pag">Tienda</h1>
       <section class="nb2">
         <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
-        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="${tab === "material"}">Material</button></div>
+        ${jove() ? "" : `<button class="nb2-pro" data-in="nb" data-accion="nt-ves" data-v="pro"><span class="nb2-pro-ic">${ic("medalla")}</span><span class="nb2-pro-t"><b>KLONK PRO</b><small>Tu plan hecho para ti, y más. Aún no está a la venta: te avisamos.</small></span><span class="nb2-pro-f">${I_TU.fle}</span></button>`}
+        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="${tab === "material"}">Ropa</button></div>
         ${tab === "rutinas" ? vistaMercat() : tab === "material" ? vistaMaterial() : esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
         <div class="nb2-paq">${PAQ.map(([k, n, q, e]) => `<article class="nb2-p" data-in="nb"><img src="${R()}or-${k}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${n0(q)}</b><small>de oro</small><span class="nb2-p-n">${n}</span><em>${e}</em><button class="nb2-compra" data-accion="compra-oro" data-p="${k}">Comprar</button></article>`).join("")}</div>
         <p class="nb2-av">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
@@ -9980,7 +10027,11 @@ const Nit = (() => {
     if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
     const q = S.ui.squads;
     if (!forca && q && Date.now() - q.at < 30000) return;
-    try { const r = await api("GET", "/squads"); S.ui.squads = { ...r, at: Date.now() }; } catch (e) { return; }
+    // si falla, es diu i es pot tornar a provar; i no es torna a demanar a cada render (29-09: un 500 del servidor la deixava
+    // a «Cargando tus squads…» per sempre, i l'app el demanava a cada segon)
+    if (!forca && S.ui.sqErr && Date.now() - S.ui.sqErr < 20000) return;
+    try { const r = await api("GET", "/squads"); S.ui.squads = { ...r, at: Date.now() }; S.ui.sqErr = 0; }
+    catch (e) { const nou = !S.ui.sqErr; S.ui.sqErr = Date.now(); if (!nou || S.ui.squads) return; }
     if (S.ui.vista === "social" && typeof render === "function") render();
   }
   // LA GESTIÓ (29-09, l'Albert: «has de poder fer admin a la gent; tenir disponible tota la gestió del teu squad»): el líder i
@@ -10030,7 +10081,8 @@ const Nit = (() => {
   function vistaSquads() {
     const d = S.ui.squads;
     carregaSquads();
-    if (!d) return `<p class="ns-buit">Cargando tus squads…</p>`;
+    if (!d) return S.ui.sqErr ? `<div class="nsq-err"><p class="ns-buit">No se han podido cargar tus squads.</p><button class="nt-boto2" data-accion="nsq-recarrega">Reintentar</button></div>`
+      : `<p class="ns-buit">Cargando tus squads…</p>`;
     return `<section class="nsq-pag">
       ${d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}
       ${d.squads.map(q => htmlSquad(q, true)).join("")}
@@ -10064,6 +10116,7 @@ const Nit = (() => {
     };
     if (a === "nsq-crida") { b.disabled = true; so(); await fes("POST", `/squads/${id}/crida`, { minuts: +b.dataset.m }, "Aviso enviado a tu squad."); b.disabled = false; return; }
     if (a === "nsq-apunta") { S.ui.crNou = +b.dataset.c; await fes("POST", `/squads/crida/${b.dataset.c}/apunta`, null, "¡Te apuntas! Allí os veis."); setTimeout(() => { S.ui.crNou = null; }, 1500); return; }
+    if (a === "nsq-recarrega") { b.disabled = true; so(); await carregaSquads(true); if (S.ui.sqErr && typeof avis === "function") avis("Sigue sin cargar. Prueba en un momento.", true); b.disabled = false; return; }
     if (a === "nsq-accepta") { await fes("POST", `/squads/${id}/accepta`, null, "Ya eres de la squad."); return; }
     if (a === "nsq-rebutja") { await fes("POST", `/squads/${id}/rebutja`, null); return; }
     if (a === "nsq-surt") { confirma({ titol: "¿Salir de la squad?", text: "Podrán volver a invitarte.", si: "Salir", no: "Quedarme", accio: "nsq-surt-si" }); S.ui.nsqSurt = id; return; }
@@ -10492,10 +10545,11 @@ const Nit = (() => {
         <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
     return `<section class="na">${tanca}
       <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b></span>
-        <h1 class="na-nom">${tagSq(p.tag)}${esc(nom)}</h1>
+        <h1 class="na-nom">${esc(nom)}</h1>
         <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
       <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
       ${ratxa}
+      ${(p.squads || []).length ? `<div class="na-sq"><small>${p.squads.length === 1 ? "En 1 squad" : `En ${p.squads.length} squads`}</small><span>${p.squads.map(q => `<span class="na-sq-c">${esEtq(q.t) ? tagSq({ t: q.t, c: q.c }) : `<b>${esc(q.t)}</b>`}<small>${q.n === 1 ? "1 persona" : `${n0(q.n)} personas`}</small></span>`).join("")}</span></div>` : ""}
       ${grups.length ? `<div class="na-grups">${grups.map(([g, v]) => { const yg = yunqueDe(v); return `<div><img src="${sigmaMat(yg.id)}" alt="" draggable="false"><small>${esc(g)}</small></div>`; }).join("")}</div>` : ""}
       ${gim || desde ? `<p class="na-peu">${gim ? `<span>${esc(gim)}</span>` : ""}${desde ? `<span>${esc(desde)}</span>` : ""}</p>` : ""}
     </section>`;
@@ -10823,7 +10877,12 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-amic-t{flex:1;font-size:13.5px;color:var(--nt-suau);font-weight:700;line-height:1.25}.nt-amic-t b{color:var(--nt-tinta)}
 .nt-amic-t small{font-size:11px;opacity:.8}
 .nt-klonk-amic.fet{background:rgb(var(--m-rgb) / .16)}.nt-klonk-amic svg{width:14px;height:14px;margin-right:5px;vertical-align:-2px}
-.nt-klonk-amic{height:34px;padding:0 14px;border-radius:999px;border:0;font:900 13.5px/1 inherit;font-family:inherit;color:var(--nt-menta);letter-spacing:.02em;
+.nt-nudge-x{flex:none;width:30px;height:30px;margin-left:-4px;border:0;border-radius:50%;background:none;color:var(--nt-suau);display:grid;place-items:center;padding:0}
+.nt-nudge-x svg{width:14px;height:14px}.nt-nudge-x:active{background:rgb(255 255 255 / .06)}
+.nt-nudge-ic{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(var(--m-rgb) / .35)}
+.nt-nudge-ic .nt-flama{width:22px;height:22px}
+.nt-amic-t small{display:block;margin-top:2px}
+.nt-klonk-amic,.nt-nudge-b{height:34px;padding:0 14px;border-radius:999px;border:0;font:900 13.5px/1 'Nunito',system-ui,sans-serif;color:var(--nt-menta);letter-spacing:.02em;
   background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(var(--m-rgb) / .3),0 6px 14px -8px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o)}
 /* LA BARRA DE BAIX: cinc llocs, el del mig és el botó del KLONK */
 /* més avall (l'Albert, 28-09, al mòbil: «el menú queda una mica per sobre d'on hauria d'estar»): les icones entren
@@ -11319,6 +11378,10 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 .nb2-or b{font-size:40px;font-weight:900;color:var(--nt-or);font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgb(226 194 122 / .35)}
 .nb2-or img{height:96px;width:auto;filter:drop-shadow(0 8px 12px rgb(0 0 0 / .5));animation:nb2-sura 4s ease-in-out infinite}
 @keyframes nb2-sura{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.nb2-pro{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:12px 14px;border:0;border-radius:20px;text-align:left;color:var(--nt-tinta);font-family:inherit;background:radial-gradient(80% 120% at 0% 0%,rgb(var(--l-rgb) / .28),transparent 60%),linear-gradient(180deg,#221f33,#18172a);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--l-rgb) / .45)}
+.nb2-pro-ic .nt-ic{width:44px;height:44px}.nb2-pro-t{flex:1;display:grid;gap:2px}
+.nb2-pro-t b{font-size:17px;font-weight:900;letter-spacing:.03em;color:var(--nt-lila)}.nb2-pro-t small{font-size:13px;font-weight:700;color:#c9c2e6;line-height:1.35}
+.nb2-pro-f svg{width:18px;height:18px;color:var(--nt-lila)}.nb2-pro:active{transform:scale(.98)}
 .nb2-paq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .nb2-p{display:grid;justify-items:center;gap:2px;padding:12px 8px 10px;border-radius:20px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1),0 0 0 1px rgb(226 194 122 / .18);text-align:center}
 .nb2-p img{width:74px;height:64px;object-fit:contain;filter:drop-shadow(0 6px 10px rgb(0 0 0 / .5))}
@@ -11767,6 +11830,7 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nsq-crea > svg{width:16px;height:16px;color:var(--nt-suau)}
 .nsq-avis{width:100%;height:44px;border:0;border-radius:999px;cursor:pointer;background:#10171e;color:rgb(var(--m-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
 .nsq-pag{display:grid;gap:14px}
+.nsq-err{display:grid;justify-items:center;gap:10px;padding:18px 0}
 .nsq-inv{display:flex;align-items:center;gap:10px;padding:12px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);font-size:14px;font-weight:800}
 .nsq-inv > span:first-child{flex:1}.nsq-inv-b{display:flex;gap:6px}
 .nsq-nova{height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px}.nsq-nova svg{width:20px;height:20px}
@@ -11941,6 +12005,10 @@ body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .na-rx.viva{background:rgb(var(--m-rgb) / .12);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35)}
 .na-rx b{font-size:16px;font-weight:900}.na-rx small{font-size:13px;font-weight:700;color:#c9d2da;line-height:1.4}
 .na-grups{display:flex;justify-content:center;gap:18px}
+.na-sq{display:grid;justify-items:center;gap:8px}.na-sq>small{font-size:12.5px;font-weight:800;color:#8b98a4}
+.na-sq>span{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.na-sq-c{display:inline-flex;align-items:baseline;gap:6px;padding:8px 14px;border-radius:999px;background:#171e27;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .07);font-size:15px}
+.na-sq-c .nsq-tag{margin:0}.na-sq-c b{font-weight:900}.na-sq-c small{font-size:12.5px;font-weight:800;color:#aab4be}
 .na-grups div{display:grid;justify-items:center;gap:4px}.na-grups img{width:52px;height:52px;object-fit:contain}.na-grups small{font-size:12.5px;font-weight:800;color:#aab4be}
 .na-peu{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:0;font-size:13px;font-weight:800;color:#8b98a4}
 .npro{display:grid;gap:16px;padding:6px 2px 20px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
