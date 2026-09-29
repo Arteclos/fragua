@@ -9722,14 +9722,14 @@ const Nit = (() => {
     if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo || esMenor()) return;
     const m = S.ui.mercat;
     if (!forca && m && Date.now() - m.at < 30000) return;
-    try { const r = await api("GET", "/mercat"); S.ui.mercat = { ...r, at: Date.now() }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
+    try { const r = await api("GET", "/mercat" + (S.ui.mercatGym ? "?gym=1" : "")); S.ui.mercat = { ...r, at: Date.now(), gym: !!S.ui.mercatGym }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
     if (S.ui.vista === "tienda" && S.ui.tiendaTab === "rutinas" && typeof render === "function") render();
   }
   const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? "Sigma de " + d[2].toLowerCase() : ""; };
   const marcM = m => (MAT[m] ? ` style="--mc:${MAT[m][1]}"` : "");
   const baralla = (o, extra = "") => `<button class="nm3-o${o.comprada ? " teva" : ""}" data-accion="nm3-obre" data-id="${o.id}" data-in="nb"${extra}>
       <span class="nm3-pila"${marcM(o.mat)}><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
-      <b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small><small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
+      ${o.mateix_gym ? `<em class="nm3-gym">De tu gym</em>` : ""}<b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small><small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
       <span class="nm3-peu">${o.comprada ? `<em class="nm3-tuya">Es tuya</em>` : `<em class="nm3-preu">${ic("moneda")}${n0(o.preu)}</em>`}<small>${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : o.nou ? "Nueva" : ""}</small></span></button>`;
   function vistaMercat() {
     if (esMenor()) return `<p class="nb2-av">El mercado de rutinas es para mayores de edad.</p>`;
@@ -9743,7 +9743,8 @@ const Nit = (() => {
       ${meves.length ? `<h2 class="nb2-t" data-in="nb">Tus ventas</h2><div class="nm3-meves">${meves.map(o => `<div class="nm3-meva" data-in="nb"><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"><span><b>${esc(o.titol)}</b><small>${n0(o.preu)} de oro · ${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : "sin ventas aún"}${o.estat === "amagat" ? " · oculta por denuncias" : ""}</small></span><button data-accion="nm3-retira" data-id="${o.id}">Retirar</button></div>`).join("")}</div>
         ${m.guanyat ? `<p class="nm3-guanyat" data-in="nb">Llevas ${n0(m.guanyat)} de oro ganado vendiendo.</p>` : ""}` : ""}
       <h2 class="nb2-t" data-in="nb">A la venta</h2>
-      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}`;
+      ${m.te_gym ? `<div class="nm3-xips nm3-filtre" data-in="nb"><button class="chip" data-accion="nm3-gym" data-g="0" aria-pressed="${!S.ui.mercatGym}">Todas</button><button class="chip" data-accion="nm3-gym" data-g="1" aria-pressed="${!!S.ui.mercatGym}">De tu gym</button></div>` : ""}
+      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : S.ui.mercatGym ? `<p class="nb2-av">Aún nadie de tu gym vende rutinas. Solo salen quienes son públicos en el ranking del gym.</p>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}`;
   }
   async function obreOferta(id) {
     let o;
@@ -9777,6 +9778,7 @@ const Nit = (() => {
     const a = b.dataset.accion;
     if (a === "nm3-obre") return obreOferta(b.dataset.id);
     if (a === "nm3-ven") return obreVenda();
+    if (a === "nm3-gym") { S.ui.mercatGym = b.dataset.g === "1"; fx(E => { E.suena("tap"); E.vibra("tria"); }); return carregaMercat(true); }
     if (a === "nm3-v") {
       S.ui.venda = { ...(S.ui.venda || {}), [b.dataset.k]: b.dataset.k === "p" ? +b.dataset.v : b.dataset.v };
       b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
@@ -10938,6 +10940,8 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nw-edat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.nw-edat .chip{min-height:42px}
 .nw-dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .nm3-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.nm3-filtre{margin:-4px 0 2px}
+.nm3-gym{justify-self:start;margin:-2px 0 2px;padding:3px 8px;border-radius:999px;background:rgb(var(--m-rgb) / .16);color:rgb(var(--m-rgb));font-style:normal;font-size:11.5px;font-weight:900}
 .nm3-o{display:grid;gap:3px;padding:10px 10px 12px;border:0;border-radius:20px;text-align:left;cursor:pointer;background:linear-gradient(180deg,#1f2733,#171e27);color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;box-shadow:var(--nt-o1)}
 .nm3-o.teva{box-shadow:0 0 0 1.5px rgb(var(--m-rgb) / .6),var(--nt-o1)}
 .nm3-pila{position:relative;display:block;aspect-ratio:3/4;margin:4px 6px 10px}
