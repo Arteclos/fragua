@@ -1822,13 +1822,16 @@ function empezar(dia) {
   // proposat a partir de la teva marca de les 8 setmanes (el 90, el 95 i el 100 %, arrodonits a 2,5 kg)
   const fams = d.pr && typeof Elo === "object" ? Elo.families(S.ses, Date.now(), S.cfg) : {};
   // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
-  s.ej = d.ej.map(([n, t, x, g]) => {
+  s.ej = d.ej.map(e => {
+    const [n, t, x, g] = e;
     const vr = d.pr && typeof Elo === "object" ? Elo.variant(n, (S.cfg[n] || {}).carga) : null;
     if (vr && !vr.est && vr.f === 1) {
       const m = fams[vr.k] && fams[vr.k].v;
       return { n, t, x, ...(g ? { g } : {}), sets: [0.9, 0.95, 1].map(p => ({ kg: m ? Math.round(m * p / 2.5) * 2.5 : null, reps: 1, ok: false })) };
     }
-    const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
+    const p = progresion(n, t, x, s.id), c = cfgEj(n, t), pl = plaDe(e);
+    // amb el pla de la carta (29-09 vespre, src/series.js), les sèries en surten; sense, com sempre
+    if (pl) return { n, t, x, ...(g ? { g } : {}), sets: setsDelPla(pl, p, x, n) };
     const sets = p.sets ? p.sets.map(z => ({ kg: z.kg, reps: z.reps, ok: false }))
       : Array.from({ length: c.series }, () => ({ kg: x === "lastre" ? 0 : null, reps: null, ok: false }));
     return { n, t, x, ...(g ? { g } : {}), sets: aplicaEspecials(sets, S.cfg[n], c) };      // g: la supersèrie o el circuit (src/grups.js); les especials, src/series.js
@@ -1928,7 +1931,7 @@ const pjDe = (S, s) => s.pj || S.pjOrigen || (S.personaje && S.personaje.tipo) |
 // +50 XP (aquí) i +5 d'or (ORO.completo, a app.js; eren 15 fins al 29-09). El servidor ho compta igual: servidor/sincro.py, completa().
 const COMPLET_MIN = 6;
 function completa(s) {
-  const feina = s.ej.flatMap(e => e.sets.filter(z => z.tipo !== "c" && z.tipo !== "d"));
+  const feina = s.ej.flatMap(e => e.sets.filter(z => z.tipo !== "c" && z.tipo !== "d" && z.tipo !== "m"));
   return feina.length >= COMPLET_MIN && feina.every(z => z.ok && z.reps > 0);
 }
 function experiencia(S) {
@@ -3031,7 +3034,7 @@ function refrescaTria() { const l = $("#tria-llista"); if (l) l.innerHTML = llis
 
 /* ---------------------------------------------------------------- els gestos */
 const nouId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-const copia = r => ({ id: nouId(), nombre: r.nombre, resumen: r.resumen || "", dias: r.dias.map(d => ({ t: d.t, ej: d.ej.map(e => [...e]) })) });
+const copia = r => ({ id: nouId(), nombre: r.nombre, resumen: r.resumen || "", dias: r.dias.map(d => ({ t: d.t, ej: d.ej.map(copiaEj) })) });
 // LES RUTINES TEVES: UNA DE FRANC, MÉS AMB EL PRO (29-09 vespre, LA LLISTA I; l'Albert: «diverses rutines, com a mazos, i
 // canviar entre elles; una de franc, més amb el Pro»). Compten les que fas tu (creades, copiades d'una plantilla,
 // importades o desades d'un enllaç). No compten les de KLONK (sempre de franc), les del mercat (ja s'han pagat) ni les que
@@ -3241,12 +3244,12 @@ function fullCompartir(r) {
   return `<p class="suau petit" style="margin:0">${esc(r.nombre)}: ${nDies(r.dias.length)}, ${seriesSemana(r)} series a la semana.</p>
     ${botoForja(`data-accion="rut-enllac" data-id="${r.id}"`, "POR WHATSAPP", "O donde quieras: un enlace que abre KLONK")}
     <h3 class="grup-tria">A un amigo de tu clan</h3>
-    <div id="amics-comparteix">${teCompte() && soc().participa ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
+    <div id="amics-comparteix">${teCompte() && soc().participa ? (amics.length ? amics.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${r.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell, "", caraNit(a.personatge))}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Cargando tu clan…</p>') : '<p class="suau petit">Para enviarla dentro de la app, entra en Social y añade a tus amigos.</p>'}</div>`;
 }
 async function carregaAmics() {
   try { S.ui.amicsLlista = await api("GET", "/amigos"); } catch (e) { S.ui.amicsLlista = []; }
   const el = $("#amics-comparteix"), id = (document.querySelector('[data-accion="rut-enllac"]') || {}).dataset;
-  if (el && id) el.innerHTML = S.ui.amicsLlista.length ? S.ui.amicsLlista.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${id.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell)}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Aún no tienes amigos en tu clan: pásales tu código desde Social.</p>';
+  if (el && id) el.innerHTML = S.ui.amicsLlista.length ? S.ui.amicsLlista.map(a => `<button class="ej-tria" data-accion="rut-a-amic" data-id="${id.id}" data-p="${a.pid}" data-nom="${esc(a.nom)}">${avatar(a.personatge, a.nivell, "", caraNit(a.personatge))}<span>${esc(a.nom)}</span></button>`).join("") : '<p class="suau petit">Aún no tienes amigos en tu clan: pásales tu código desde Social.</p>';
 }
 async function carregaRebudes() {
   try { S.recibidas = (await api("GET", "/rutinas/recibidas")).map(x => ({ ...x, rutina: rutinaValida(x.rutina) })).filter(x => x.rutina); guardar(); if (S.ui.vista === "rutinas") render(); mostraRebuda(); } catch (e) {}
@@ -4144,6 +4147,9 @@ const CONCEPTES = {
   circuito: ["Circuito", "Tres ejercicios o más seguidos, sin descanso entre ellos. Haces una vuelta entera y descansas al final; luego, la siguiente vuelta. Cansa más y se hace más rápido."],
   calentamiento: ["Serie de calentamiento", "Una serie con poco peso antes de las de verdad, para que el músculo y las articulaciones entren en calor. No cuenta para tus récords ni para subir el peso."],
   drop: ["Drop set", "Al terminar una serie, bajas el peso (más o menos un 20 o 30 %) y sigues sin descansar hasta que no puedas más. Sirve para cansar el músculo del todo; mejor al final y en ejercicios con máquina o mancuernas."],
+  myo: ["Myo-reps", "Después de una serie, descansas unos 15 segundos y haces unas pocas repeticiones más con el mismo peso; y otra vez. Da mucho trabajo en poco tiempo. Va mejor en ejercicios seguros, como máquinas o poleas."],
+  intento: ["Intento de PR", "Una serie corta, de 1 a 3 repeticiones, con el peso de tu marca o un poco más, para batirla. Calienta bien antes y hazlo con alguien que te ayude si el ejercicio lo pide."],
+  emblema: ["Emblema de la squad", "Es el escudo de vuestra squad. Sube de nivel con las semanas seguidas en que todos entrenáis 2 días o más: nivel 2 a las 2 semanas, 3 a las 4, 4 a las 8 y 5 a las 12. Nunca baja. Si quieres, lo llevas junto a tu cara en la actividad, tu perfil y los rankings; si estás en varias squads, eliges cuál."],
   fallo: ["Al fallo", "Hacer repeticiones hasta que no puedes hacer ni una más con buena técnica. Cansa mucho: úsalo en la última serie, no en todas, y con cuidado en los ejercicios pesados."],
 };
 const I_INFO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".6" fill="currentColor"/></svg>';
@@ -4178,10 +4184,12 @@ function accioGrups(acc, b) {
 "use strict";
 
 const TIPUS_SERIE = [["", "Normal", "La de siempre."], ["c", "Calentamiento", "Con poco peso, antes de las de verdad."],
-  ["d", "Drop set", "Bajas el peso y sigues, sin descanso."], ["f", "Al fallo", "Hasta que no puedes ni una más."]];
-const CONCEPTE_TIPUS = { c: "calentamiento", d: "drop", f: "fallo" };
+  ["d", "Drop set", "Bajas el peso y sigues, sin descanso."], ["f", "Al fallo", "Hasta que no puedes ni una más."],
+  ["m", "Myo-reps", "Tras 15 segundos, unas pocas más con el mismo peso."], ["p", "Intento de PR", "De 1 a 3 repeticiones para batir tu marca."]];
+const CONCEPTE_TIPUS = { c: "calentamiento", d: "drop", f: "fallo", m: "myo", p: "intento" };
 const redona = (kg, f) => kg == null ? null : Math.max(0, Math.round(kg * f / 2.5) * 2.5);
-const serieCompta = z => z.tipo !== "c" && z.tipo !== "d";           // compta per als rècords i per a com puja el pes
+// compta per als rècords i per a com puja el pes. El myo-reps (m, 29-09 vespre) és un tram de la sèrie d'abans, com el drop set
+const serieCompta = z => z.tipo !== "c" && z.tipo !== "d" && z.tipo !== "m";
 // LES SÈRIES ESPECIALS, ENCESES O APAGADES (Hub 773; l'Albert, 27-09 11:50: «potser s'ha de poder fer toggle de mètodes,
 // com el WUS... però tampoc que no molesti molt»). Apagades, un entreno nou no en porta cap i el número de la sèrie no obre
 // res; les que ja hi són es queden. Mentre no s'ha triat a Ajustes, enceses només per qui ja en té configurades.
@@ -4209,6 +4217,72 @@ function aplicaEspecials(sets, cfg, c) {
   if (!cfg.drop) s = s.filter(z => !(z.tipo === "d" && !z.ok));
   return s;
 }
+/* EL PLA DE LES SÈRIES D'UNA CARTA (29-09-2026 vespre; l'Albert: «el tipus de sèrie és una per una: hi ha gent que al principi
+   fa amb un percentatge del pes, després canvia a regular, després fa drop set, o fa un PR»; TIPUS-DE-SERIE.md §3). És el
+   cinquè element de cada exercici de la carta, {s: [{tipo, r: [mín, màx], pct}]}, i així cada carta té el seu (un press
+   fort el dilluns i lleuger el dijous) i es mou amb l'exercici. Sense, l'entreno surt com sempre de S.cfg. El pes de les de
+   treball el proposa la progressió (carga.js); el de les altres, un percentatge: C, de la primera de treball; D, de la d'abans;
+   P, de la teva marca de les 8 setmanes; M, el mateix de la d'abans. Encara no viatja quan es comparteix (perCompartir). */
+const PLA_MAX = 12;
+const PCT_PLA = { c: 50, d: 75, p: 100 };
+const plaDe = e => Array.isArray(e) && e[4] && Array.isArray(e[4].s) && e[4].s.length ? e[4].s : null;
+// una còpia de debò d'un exercici de carta: el pla no es pot compartir entre dues còpies
+const copiaEj = e => e.map(v => v && typeof v === "object" ? JSON.parse(JSON.stringify(v)) : v);
+// el pla que surt de la configuració d'avui de l'exercici (quan s'obre per primer cop a l'editor)
+function plaDeCfg(n, t) {
+  const c = cfgEj(n, t), cfg = (S.cfg || {})[n] || {}, pl = [], esc = Math.max(0, Math.min(3, cfg.esc || 0));
+  for (let k = 0; k < esc; k++) pl.push({ tipo: "c", r: [c.max, c.max], pct: [50, 70, 85][k] || 50 });
+  for (let k = 0; k < c.series; k++) pl.push({ tipo: "", r: [c.min, c.max] });
+  if (cfg.fallo && c.series) pl[pl.length - 1].tipo = "f";
+  if (cfg.drop) pl.push({ tipo: "d", r: [c.min, c.max], pct: 75 });
+  return pl;
+}
+// la teva marca d'un exercici: el millor e1RM de les 8 setmanes, amb sèries de treball d'1 a 10 repeticions
+function marcaEj(n) {
+  const des = Date.now() - 56 * 864e5; let m = 0;
+  S.ses.forEach(s => { if (!s.fin || (s.inicio || 0) < des) return; (s.ej || []).forEach(e => { if (e.n !== n) return;
+    (e.sets || []).forEach(z => { if (z.ok && z.kg > 0 && z.reps >= 1 && z.reps <= 10 && serieCompta(z)) m = Math.max(m, Stats.e1rm(z.kg, z.reps)); }); }); });
+  return m || null;
+}
+// les sèries d'un entreno que surten del pla: les de treball, amb el que proposa la progressió; les altres, pel seu percentatge
+function setsDelPla(pl, p, x, n) {
+  const treball = (p && p.sets) || [], obj = q => (q.r && (q.r[1] || q.r[0])) || null;
+  const out = pl.map(q => ({ kg: null, reps: obj(q), ok: false, ...(q.tipo ? { tipo: q.tipo } : {}), ...(Array.isArray(q.r) ? { obj: q.r } : {}) }));
+  let k = 0;
+  out.forEach((z, i) => {
+    const t = pl[i].tipo || ""; if (t !== "" && t !== "f") return;
+    const w = treball[k] || treball[treball.length - 1]; k++;
+    if (w) { z.kg = w.kg; if (w.reps) z.reps = w.reps; } else if (x === "lastre") z.kg = 0;
+  });
+  const primer = (out.find((z, i) => ["", "f"].includes(pl[i].tipo || "") && z.kg != null) || {}).kg;
+  const marca = pl.some(q => q.tipo === "p") ? marcaEj(n) : null;
+  out.forEach((z, i) => {
+    const q = pl[i], t = q.tipo || "", f = (q.pct || PCT_PLA[t] || 100) / 100, abans = i ? out[i - 1].kg : null;
+    if (t === "c") z.kg = x === "lastre" ? 0 : redona(primer, f);
+    else if (t === "d") z.kg = x === "lastre" ? 0 : redona(abans, f);
+    else if (t === "m") z.kg = abans;
+    else if (t === "p") { z.kg = marca && x !== "lastre" ? redona(marca, f) : null; z.reps = (q.r && q.r[0]) || 1; }
+  });
+  return out;
+}
+// el pla en dues línies, per a la fila de l'editor: «3×8-12» i «2 de calentamiento, drop set»
+function txtPla(pl) {
+  const tr = pl.filter(q => !q.tipo || q.tipo === "f"), r = (tr[0] || pl[0] || {}).r || [], rr = r[1] && r[1] !== r[0] ? `${r[0]}-${r[1]}` : `${r[0] || ""}`;
+  const n = t => pl.filter(q => q.tipo === t).length;
+  const extra = [n("c") ? `${n("c")} de calentamiento` : "", n("f") ? "al fallo" : "", n("p") ? (n("p") > 1 ? `${n("p")} intentos de PR` : "intento de PR") : "",
+    n("d") ? (n("d") > 1 ? `${n("d")} drop sets` : "drop set") : "", n("m") ? `${n("m")} myo-reps` : ""].filter(Boolean).join(", ");
+  return { cap: tr.length ? `${tr.length}×${rr}` : `${pl.length} series`, extra };
+}
+// LES PLANTILLES (TIPUS-DE-SERIE.md §3.4; les tres últimes surten del programa de l'Albert)
+const PLANTILLES_PLA = [
+  ["3 × 8-12", [{ tipo: "", r: [8, 12] }, { tipo: "", r: [8, 12] }, { tipo: "", r: [8, 12] }]],
+  ["Calentamiento + 3", [{ tipo: "c", r: [8, 8], pct: 50 }, { tipo: "c", r: [5, 5], pct: 70 }, { tipo: "", r: [6, 10] }, { tipo: "", r: [6, 10] }, { tipo: "", r: [6, 10] }]],
+  ["Una fuerte y dos más ligeras", [{ tipo: "c", r: [5, 5], pct: 50 }, { tipo: "c", r: [3, 3], pct: 70 }, { tipo: "", r: [4, 6] }, { tipo: "", r: [6, 8] }, { tipo: "", r: [8, 10] }]],
+  ["Myo-reps al final", [{ tipo: "c", r: [8, 8], pct: 50 }, { tipo: "", r: [10, 12] }, { tipo: "", r: [10, 12] }, { tipo: "", r: [10, 12] }, { tipo: "m", r: [3, 5] }, { tipo: "m", r: [3, 5] }]],
+];
+// el número d'una sèrie normal compta només les normals, com Hevy o Strong: amb un pla C · C · 1 · 2 · D, no «C C 3 4 D»
+// (29-09 vespre)
+const numSerie = (sets, j) => sets.slice(0, j + 1).filter(q => !q.tipo).length;
 // El número de la sèrie, o la lletra del seu tipus, que es toca per canviar-lo
 function botoTipus(z, i, j, n) {
   const t = z.tipo || "", nom = (TIPUS_SERIE.find(x => x[0] === t) || TIPUS_SERIE[0])[1];
@@ -4547,7 +4621,7 @@ function itemFeed(it) {
       : `<button class="fd-r${meva ? " meva" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${k}" aria-pressed="${meva}" aria-label="${nom}${n ? `, ${n}` : ""}"><span aria-hidden="true">${em}</span>${n ? `<b class="num">${n}</b>` : ""}</button>`;
   }).join("");
   return `<article class="fd-item panel pad">
-    <div class="fd-cap">${avatar(it.personatge, it.nivell)}<span><b>${it.yo ? "Tú" : esc(it.nom)}</b><small>${diaFeed(it.dia)}</small></span></div>
+    <div class="fd-cap">${avatar(it.personatge, it.nivell, "", it.yo ? caraMeva() : caraNit(it.personatge))}<span><b>${it.yo ? "Tú" : esc(it.nom)}</b><small>${diaFeed(it.dia)}</small></span></div>
     <p class="fd-xifres">${it.minuts != null ? `<b class="num">${it.minuts}</b> min, ` : ""}<b class="num">${it.series}</b> ${it.series === 1 ? "serie" : "series"}${it.volum ? `, <b class="num">${n0(it.volum)}</b> kg` : ""}</p>
     ${(it.records || []).length ? `<p class="fd-rec">${I_MEDALLA}<span>${it.records.length === 1 ? `Récord en ${esc(it.records[0])}` : `${it.records.length} récords: ${it.records.map(esc).join(", ")}`}</span></p>` : ""}
     ${ex ? `<ul class="fd-ex">${ex}${mes > 0 ? `<li class="suau">y ${mes} ${mes === 1 ? "ejercicio" : "ejercicios"} más</li>` : ""}</ul>` : ""}
@@ -5653,11 +5727,16 @@ async function carregaRanking() {
 // El personatge de cadascú, petit, amb el nivell: «la cara que surt és la del teu personatge amb el nivell que toqui».
 // Un personatge que ve del servidor: només si és un dels nostres («constructor» o «toString» són de tots els objectes de JS)
 const pjBo = t => Object.prototype.hasOwnProperty.call(PERSONAJES, t) ? t : "herrero";
-const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span class="av-img"><img src="${imgPersonaje(pjBo(tipo))}" alt="" loading="lazy"></span><b class="num">${nivell || 1}</b></span>`;
+const avatar = (tipo, nivell, cls = "", src = null) => `<span class="avatar ${cls}"><span class="av-img"><img src="${src || imgPersonaje(pjBo(tipo))}" alt="" loading="lazy"></span><b class="num">${nivell || 1}</b></span>`;
+// A la Noche el servidor porta l'id de l'AVATAR («chad», «urba»...), no un tipus de PERSONAJES: sense això, pjBo() ho
+// tornava tot «herrero» i tothom sortia amb la mateixa cara als rànquings (29-09 vespre, vist a l'iPhone simulat)
+const nitViva = () => typeof Nit === "object" && Nit.activa() && Nit.caraDe;
+const caraNit = t => nitViva() ? Nit.caraDe(t) : null;
+const caraMeva = () => nitViva() ? Nit.cara() : null;
 function filaRanking(f, so) {
   const v = f.valor;
-  const emb = f.emblema && typeof Nit === "object" && Nit.emb ? Nit.emb(f.emblema, "mini") : "";
-  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span><span class="ns-av-w">${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}${emb}</span>
+  const emb = f.emblema && typeof Nit === "object" && Nit.emb ? Nit.emb(f.emblema, "emb-mini") : "";
+  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span><span class="ns-av-w">${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "", caraMeva()) : avatar(f.personatge, f.nivell, "", caraNit(f.personatge))}${emb}</span>
     <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
@@ -5807,7 +5886,7 @@ function mostraPujada() {
 let tSug = null, qSug = "", sugDades = null;
 const avatarAmagat = () => `<span class="avatar"><span class="av-img"><img src="${ACTIUS}icones/social.webp" alt=""></span></span>`;
 function filaSug(p, nota) {
-  return `<div class="clan-fila sug">${p.public ? avatar(p.personatge, p.nivell) : avatarAmagat()}<span class="clan-nom">${esc(p.nom)}${nota ? `<small>${esc(nota)}</small>` : ""}</span><span class="clan-acc">${
+  return `<div class="clan-fila sug">${p.public ? avatar(p.personatge, p.nivell, "", caraNit(p.personatge)) : avatarAmagat()}<span class="clan-nom">${esc(p.nom)}${nota ? `<small>${esc(nota)}</small>` : ""}</span><span class="clan-acc">${
     p.estat === "tu" ? '<small class="suau">Eres tú</small>' : p.estat === "amic" ? '<small class="suau">En tu clan</small>' : p.estat === "enviada" ? '<small class="suau">Enviada</small>'
     : p.estat === "rebuda" ? '<small class="suau">Te la envió: acéptala arriba</small>'
     : `<button type="button" class="btn clar marc" data-accion="clan-confirma" data-n="${esc(p.nom)}">Añadir</button>`}</span></div>`;
@@ -5832,7 +5911,7 @@ function suggereix(q) {
 function confirmaSollicitud(nom) {
   const r = sugDades || {}, p = (r.exacte && r.exacte.nom === nom ? r.exacte : (r.suggeriments || []).find(x => x.nom === nom)) || { nom, public: false };
   S.ui.clanConf = nom;
-  obreFull(`<div class="conf-clan">${p.public ? avatar(p.personatge, p.nivell, "gran") : `<img class="conf-av" src="${ACTIUS}icones/social.webp" alt="">`}
+  obreFull(`<div class="conf-clan">${p.public ? avatar(p.personatge, p.nivell, "gran", caraNit(p.personatge)) : `<img class="conf-av" src="${ACTIUS}icones/social.webp" alt="">`}
     <b class="or conf-nom">${esc(p.nom)}</b>
     <p class="suau petit" style="margin:0">Le llegará tu solicitud y entrará en tu clan cuando la acepte.</p>
     <div style="width:100%">${botoForja('data-accion="clan-envia-conf"', "ENVIAR SOLICITUD", "")}</div>
@@ -7105,7 +7184,7 @@ const Elo = (() => {
         const vr = e && variant(e.n, estriDe(cfg, e.n)); if (!vr) return;
         let m = 0;
         (Array.isArray(e.sets) ? e.sets : []).forEach(z => {
-          if (!z || !z.ok || !(z.kg > 0) || !(z.reps >= 1 && z.reps <= 10) || z.tipo === "c" || z.tipo === "d") return;
+          if (!z || !z.ok || !(z.kg > 0) || !(z.reps >= 1 && z.reps <= 10) || z.tipo === "c" || z.tipo === "d" || z.tipo === "m") return;
           m = Math.max(m, epley(z.kg, z.reps));
         });
         if (!(m > 0)) return;
@@ -7210,7 +7289,7 @@ const Elo = (() => {
         (Array.isArray(e.sets) ? e.sets : []).forEach(z => {
           if (!z || !z.ok) return;
           const kg = Number.isFinite(+z.kg) ? +z.kg : 0, reps = +z.reps, total = pes + kg;
-          if (!(total > 0) || !(reps >= 1 && reps <= 10) || z.tipo === "c" || z.tipo === "d") return;
+          if (!(total > 0) || !(reps >= 1 && reps <= 10) || z.tipo === "c" || z.tipo === "d" || z.tipo === "m") return;
           m = Math.max(m, total * (1 + reps / 30));
         });
         if (m > 0 && (!millor[k] || m > millor[k].v)) millor[k] = { v: m, de: e.n };
@@ -8690,6 +8769,8 @@ const Nit = (() => {
       return;
     }
     // l'editor d'una carta i els espais de «Tus entrenos»
+    const npl = ev.target.closest('[data-accion^="npl-"]');
+    if (npl && plaObert) { ev.preventDefault(); ev.stopPropagation(); accioPla(npl); return; }
     const nce = ev.target.closest('[data-accion^="nce-"], [data-accion="nc3-nou"]');
     if (nce) {
       ev.preventDefault(); ev.stopPropagation();
@@ -8703,7 +8784,7 @@ const Nit = (() => {
       if (a === "nce-surt") { S.ui.edc = null; veure("cartas"); return; }
       if (!d) return;
       if (a === "nce-afegeix") { obreFull(fullTriaEj(-1), "Añadir ejercicio"); return; }
-      if (a === "nce-cfg" && d.ej[j]) { const [n, t, x] = d.ej[j]; obreFull(fullCfgEj(null, { n, t, x }), "Este ejercicio"); return; }
+      if (a === "nce-cfg" && d.ej[j]) { obrePla(j); return; }
       if (a === "nce-treu" && d.ej[j]) { d.ej.splice(j, 1); normalitzaGrups(d); guardar(); fx(E => E.suena("tap")); render(); return; }
       if (a === "nce-uneix" && d.ej[j + 1]) { uneixSeguent(d, j); guardar(); fx(E => { E.suena("tap"); E.vibra("tria"); }); render(); return; }
       return;
@@ -8868,7 +8949,7 @@ const Nit = (() => {
     S.ses.filter(s => s.fin).forEach(s => (s.ej || []).forEach(e => {
       if (e.x === "lastre") return;
       (e.sets || []).forEach(z => {
-        if (!z.ok || !(z.kg > 0) || !(z.reps > 0) || z.tipo === "c" || z.tipo === "d") return;
+        if (!z.ok || !(z.kg > 0) || !(z.reps > 0) || z.tipo === "c" || z.tipo === "d" || z.tipo === "m") return;
         const v = typeof Stats === "object" && Stats.e1rm ? Stats.e1rm(z.kg, z.reps) : z.kg * (1 + z.reps / 30);
         if (!m[e.n] || v > m[e.n].v) m[e.n] = { n: e.n, kg: z.kg, reps: z.reps, v };
       });
@@ -9180,7 +9261,8 @@ const Nit = (() => {
       <b class="ne-ipf-v">${val ? "Intento válido" : "Márcalos para que cuente"}</b></div>`;
   }
   function filaSerie(z, i, j, lastre, ambLastre, c) {
-    return `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, j + 1)}
+    const ac = typeof activa === "function" && activa(), ee = ac && ac.ej[i], num = ee && ee.sets[j] === z ? numSerie(ee.sets, j) : j + 1;
+    return `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, num)}
       ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
       <span class="x">×</span>
       <label class="camp"><span class="lector">Repeticiones de la serie ${j + 1}</span><input inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-camp="reps" data-i="${i}" data-j="${j}" value="${z.reps ?? ""}" placeholder="${c.min}-${c.max}"><span class="u">rep</span></label>
@@ -9401,7 +9483,7 @@ const Nit = (() => {
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
-    const qui = `<span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "mini")}</span>
+    const qui = `<span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "emb-mini")}</span>
       <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>`;
     // tocar-lo (la cara o el text) n'obre el perfil (29-09 vespre, l'Albert: «hauria de poder fer clic a cada amigo»)
     return `<div class="ns-f" data-in="ns">${!it.yo && it.pid ? `<button class="ns-f-qui" data-accion="social-perfil" data-p="${esc(it.pid)}" aria-label="Perfil de ${esc(it.nom)}">${qui}</button>` : qui}
@@ -9418,11 +9500,14 @@ const Nit = (() => {
   // EL RÀNQUING DE LA SQUAD (29-09, l'Albert: «dins l'squad hauria d'activar la visibilitat del rànquing, si la gent ho
   // vol; ho hauria de fer l'admin»): a Social, el de la primera squad que el té encès; si no n'hi ha cap, què cal fer
   const CORONA = '<svg viewBox="0 0 24 24" aria-label="1"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 11H5z" fill="#e2c27a"/></svg>';
+  // qui encara no té ELO (29-09 vespre): com s'aconsegueix, en una línia, sota el rànquing
+  const notaSenseElo = (ll, mesura) => mesura === "forca" && ll.some(f => f.valor == null)
+    ? `<p class="ns-nota">Sin ELO todavía: sale cuando apuntas dos de los tres grandes (sentadilla, press de banca y peso muerto) en semanas distintas.</p>` : "";
   function filaSqR(f, mesura) {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
-    const val = mesura === "forca" ? (f.valor != null ? `<img class="ns-r-sig" src="${sigmaMat(Elo.divisioDe(f.valor)[1])}" alt="" draggable="false"><b>${n0(f.valor)}</b>` : "<b>·</b>") : `<b>${n0(f.valor || 0)}</b><small>${f.valor === 1 ? "día" : "días"}</small>`;
+    const val = mesura === "forca" ? (f.valor != null ? `<img class="ns-r-sig" src="${sigmaMat(Elo.divisioDe(f.valor)[1])}" alt="" draggable="false"><b>${n0(f.valor)}</b>` : `<small class="ns-r-sense">Sin ELO todavía</small>`) : `<b>${n0(f.valor || 0)}</b><small>${f.valor === 1 ? "día" : "días"}</small>`;
     return `<${f.pid ? `button class="ns-r" data-accion="social-perfil" data-p="${esc(f.pid)}"` : `div class="ns-r${f.yo ? " yo" : ""}"`} data-in="ns">
-      <span class="ns-r-pos">${f.pos === 1 ? CORONA : (f.pos ?? "–")}</span>
+      <span class="ns-r-pos">${f.pos === 1 ? CORONA : (f.pos ?? "")}</span>
       <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
       <span class="ns-r-v">${val}</span></${f.pid ? "button" : "div"}>`;
   }
@@ -9450,7 +9535,7 @@ const Nit = (() => {
     const sel = q.squads.find(x => x.id === S.ui.sqSel) || q.squads[0], rk = sel.ranking && sel.ranking.on;
     const nom = `${q.squads.length > 1 ? "" : badgeEmb(sel.emblema)}${esEtq(sel.nom) ? tagSq({ t: sel.nom, c: sel.color }) : esc(sel.nom)}`;
     const tria = q.squads.length > 1 ? `<div class="nsq-tria" role="tablist" aria-label="Tus squads">${q.squads.map(x => `<button class="nsq-tria-b${x.id === sel.id ? " on" : ""}" data-accion="nsq-sel" data-id="${x.id}" role="tab" aria-selected="${x.id === sel.id}">${badgeEmb(x.emblema)}<small>${esc(x.nom)}</small></button>`).join("")}</div>` : "";
-    const cos = rk ? (sel.ranking.llista.length ? sel.ranking.llista.slice(0, 8).map(f => filaSqR(f, sel.ranking.mesura)).join("") : `<p class="ns-buit">Nadie de la squad sale todavía en el ranking.</p>`) : progresSquad(sel);
+    const cos = rk ? (sel.ranking.llista.length ? sel.ranking.llista.slice(0, 8).map(f => filaSqR(f, sel.ranking.mesura)).join("") + notaSenseElo(sel.ranking.llista, sel.ranking.mesura) : `<p class="ns-buit">Nadie de la squad sale todavía en el ranking.</p>`) : progresSquad(sel);
     return `<div class="ns-bloc nsq-bloc" data-in="ns">${cap(rk ? `Ranking de ${nom}` : nom)}${tria}${cos}
       ${inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : ""}</div>`;
   }
@@ -9470,7 +9555,7 @@ const Nit = (() => {
     return `<div class="nsq-rk">
       <div class="nsq-rk-cap"><b>Ranking de la squad</b>${gestor ? interruptor("nsq-rk-on", rk.on, "Ranking de la squad", ` data-id="${q.id}"`) : ""}</div>
       ${rk.on ? `${gestor ? `<div class="nsq-rk-m" role="group" aria-label="Qué cuenta">${[["forca", "Fuerza"], ["constancia", "Constancia"]].map(([m, t]) => `<button class="chip" data-accion="nsq-rk-m" data-id="${q.id}" data-m="${m}" aria-pressed="${rk.mesura === m}">${t}</button>`).join("")}</div>` : `<small class="nsq-rk-d">${rk.mesura === "forca" ? "Por fuerza: el ELO de cada uno" : "Por constancia: días de gym este mes"}</small>`}
-        ${rk.llista.length ? rk.llista.map(f => filaSqR(f, rk.mesura)).join("") : `<p class="ns-buit">Nadie sale todavía.</p>`}
+        ${rk.llista.length ? rk.llista.map(f => filaSqR(f, rk.mesura)).join("") + notaSenseElo(rk.llista, rk.mesura) : `<p class="ns-buit">Nadie sale todavía.</p>`}
         <button class="nsq-rk-jo" data-accion="nsq-rk-vis" data-id="${q.id}" data-v="${q.jo_visible ? 0 : 1}">${q.jo_visible ? "No salir en el ranking" : "Salir en el ranking"}</button>` : ""}
     </div>`;
   }
@@ -10081,7 +10166,7 @@ const Nit = (() => {
     if (typeof rutinaPropia === "function" && rutinaPropia(act.id)) { idsMazo(act); return act; }
     if (typeof potNovaRutina === "function" && !potNovaRutina()) { murRutina(); return null; }
     const nova = { id: typeof nouId === "function" ? nouId() : "r" + Date.now().toString(36), nombre: act.nombre + " (mía)", resumen: act.resumen || "",
-      dias: act.dias.map((d, i) => ({ id: nouIdCarta(), o: act.id + ":" + (i + 1), t: d.t, ej: d.ej.map(e => [...e]), klonk: true })) };
+      dias: act.dias.map((d, i) => ({ id: nouIdCarta(), o: act.id + ":" + (i + 1), t: d.t, ej: d.ej.map(copiaEj), klonk: true })) };
     nova.dias.forEach(d => { const il = (S.cartesIl || {})[d.o]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il }; });
     S.rutinas = [...(S.rutinas || []), nova]; S.rutinaActiva = nova.id;
     if (typeof avis === "function") avis(`Ahora es tuya: «${nova.nombre}».`);
@@ -10115,7 +10200,7 @@ const Nit = (() => {
     let d;
     if (x.font === "sol") { d = { ...x.d }; S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id); }
     else {
-      d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(e => [...e]), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}), ...(x.d.pr ? { pr: true } : {}) };
+      d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(copiaEj), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}), ...(x.d.pr ? { pr: true } : {}) };
       const il = (S.cartesIl || {})[clauCarta(x.r, x.n)]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il };
     }
     // qui la va crear viatja amb la carta; una de teva dins d'un mazo d'algú altre ho diu (autor buit)
@@ -10427,7 +10512,8 @@ const Nit = (() => {
   function filaEdEj(d, x, j) {
     const [n, t, , g] = x, c = cfgEj(n, t), pg = posGrup(d.ej, j, y => y[3]), junt = !!(g && d.ej[j + 1] && d.ej[j + 1][3] === g), esp = especialsTxt(S.cfg[n]);
     return `<div class="nce-f${pg ? " en-grup" : ""}" data-j="${j}">
-        <button class="nce-esq" data-accion="nce-cfg" data-j="${j}" aria-label="Series y tipo de serie de ${esc(n)}"><b>${c.series}×${c.min === c.max ? c.min : c.min + "-" + c.max}</b>${esp ? `<small>${esc(esp)}</small>` : ""}</button>
+        <button class="nce-esq" data-accion="nce-cfg" data-j="${j}" aria-label="Series y tipo de serie de ${esc(n)}">${(tp => tp ? `<b>${esc(tp.cap)}</b>${tp.extra ? `<small>${esc(tp.extra)}</small>` : ""}`
+          : `<b>${c.series}×${c.min === c.max ? c.min : c.min + "-" + c.max}</b>${esp ? `<small>${esc(esp)}</small>` : ""}`)(plaDe(x) ? txtPla(plaDe(x)) : null)}</button>
         ${fotoAnime(n) ? `<img src="${fotoAnime(n)}" alt="" draggable="false">` : `<span class="nce-sf">${ic("manuella")}</span>`}
         <span class="nce-n">${pg ? `<i class="grup-tag">${esc(g)}${pg.pos}</i>` : ""}<b>${esc(n)}</b><small>${esc(grupDe(n))}</small></span>
         <button class="nce-x" data-accion="nce-treu" data-j="${j}" aria-label="Quitar ${esc(n)}">${I_X}</button></div>`
@@ -10496,14 +10582,18 @@ const Nit = (() => {
   // l'emblema de la squad: el nivell (la millor ratxa, no baixa), la ratxa d'ara i el que falta per al següent; qui la
   // gestiona en canvia la forma; i cadascú tria si el porta a l'avatar (sense triar, el de la primera squad)
   function portaEmb(q) { const d = S.ui.squads || {}, j = d.jo_emblema; return j === q.id || (!j && d.squads && d.squads[0] && d.squads[0].id === q.id); }
+  // (29-09 vespre, l'Albert, a l'iPhone: «no s'entén el botó; no he entès què vol dir emblema; no s'ha explicat»): què és (la
+  // ⓘ), a quin nivell és i quant falta per al següent (una barra), i un interruptor que diu el que fa
   function htmlEmbSquad(q, gestor) {
-    const e = q.emblema, r = +e.ratxa || 0, porta = portaEmb(q);
-    return `<div class="nsq-emb">${badgeEmb(e, "xl")}
-      <span class="nsq-emb-t"><b>${esc(NOM_FORMA[e.f] || "Emblema")} · nivel ${e.n}</b>
-        <small>${r ? `${r} ${r === 1 ? "semana seguida" : "semanas seguidas"} entrenando todos, 2 días o más` : "Si todos entrenáis 2 días esta semana, empieza la racha"}</small>
-        <small>${e.seguent ? `Nivel ${+e.n + 1} a las ${e.seguent} semanas seguidas${e.millor ? ` (vuestra mejor racha: ${e.millor})` : ""}` : "Nivel máximo"}</small></span>
-      ${gestor ? `<button class="nsq-etq-ed" data-accion="nsq-emb" data-id="${q.id}" aria-label="Cambiar el emblema">${I_LLAPIS}</button>` : ""}</div>
-      <button class="nsq-b2 nsq-porta${porta ? " on" : ""}" data-accion="nsq-porta" data-id="${q.id}" aria-pressed="${porta}">${porta ? "Lo llevas en tu avatar" : "Llevarlo en tu avatar"}</button>`;
+    const e = q.emblema, r = +e.ratxa || 0, porta = portaEmb(q), seg = +e.seguent || 0;
+    return `<div class="nsq-emb">${badgeEmb(e, "emb-xl")}
+      <span class="nsq-emb-t"><span class="nsq-emb-cap"><small>Emblema de la squad</small>${typeof infoBoto === "function" ? infoBoto("emblema") : ""}</span>
+        <b>${esc(NOM_FORMA[e.f] || "Emblema")} · nivel ${e.n}</b>
+        ${seg ? `<span class="nsq-emb-barra" role="img" aria-label="${r} de ${seg} semanas para el nivel ${+e.n + 1}"><i style="--p:${Math.min(100, r / seg * 100)}%"></i></span>
+        <small>${r} de ${seg} ${seg === 1 ? "semana" : "semanas"} seguidas para el nivel ${+e.n + 1}</small>` : `<small>Nivel máximo${e.millor ? `: ${e.millor} semanas seguidas` : ""}</small>`}
+        <small>Cuenta una semana si todos entrenáis 2 días o más.</small></span>
+      ${gestor ? `<button class="nsq-etq-ed" data-accion="nsq-emb" data-id="${q.id}" aria-label="Cambiar la forma del emblema">${I_LLAPIS}</button>` : ""}</div>
+      <div class="nsq-porta-f"><span><b>Mostrar en mi avatar</b><small>Sale junto a tu cara en la actividad, tu perfil y los rankings.</small></span>${interruptor("nsq-porta", porta, "Mostrar el emblema en mi avatar", ` data-id="${q.id}"`)}</div>`;
   }
   function htmlSquad(q, tot) {
     const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0, gestor = q.jo_lider || q.jo_admin;
@@ -11110,7 +11200,7 @@ const Nit = (() => {
     const ratxa = r ? `<div class="na-rx${r.setmanes ? " viva" : ""}"><b>${r.setmanes ? `${r.setmanes} ${r.setmanes === 1 ? "semana seguida" : "semanas seguidas"} juntos` : "Empezad una racha"}</b>
         <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
     return `<section class="na">${tanca}
-      <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b>${badgeEmb(p.emblema, "gran")}</span>
+      <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b>${badgeEmb(p.emblema, "emb-gran")}</span>
         <h1 class="na-nom">${esc(nom)}</h1>
         <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
       <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
@@ -11266,8 +11356,7 @@ const Nit = (() => {
      de sempre (series.js), que són els mateixos que porten Hevy i Strong: normal, escalfament, drop set i al fallo. Es
      desplega sota el número com un tambor que es desenrotlla (cada opció gira des de dalt), i en triar-ne una es torna
      a enrotllar. El que canvia és el de sempre: l'escalfament i el drop set no compten per als rècords ni per pujar pes. */
-  const TIPUS = [["", "Normal", "La de siempre."], ["c", "Calentamiento", "Con poco peso, antes de las de verdad."],
-    ["d", "Drop set", "Bajas el peso y sigues, sin descanso."], ["f", "Al fallo", "Hasta que no puedes ni una más."]];
+  const TIPUS = TIPUS_SERIE;          // els de src/series.js: des del 29-09 vespre, també el myo-reps (M) i l'intent de PR (P)
   let rt = null;
   function tancaTipus(ja) {
     if (!rt) return;
@@ -11278,14 +11367,20 @@ const Nit = (() => {
     try { el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, delay: 90, fill: "forwards" }).onfinish = () => el.remove(); } catch (e) { el.remove(); }
   }
   function obreTipus(b) {
-    const i = +b.dataset.i, j = +b.dataset.j;
+    const pla = b.dataset.accion === "npl-tipus";
+    let i = +b.dataset.i, j = +b.dataset.j, ara, num;
     tancaTipus(true);
-    const ses = typeof activa === "function" ? activa() : null;
-    const z = ses && ses.ej[i] && ses.ej[i].sets[j]; if (!z) return;
-    const ara = z.tipo || "";
+    if (pla) {                                   // una fila del pla de la carta (l'editor)
+      const q = plaObert && plaObert.pl[+b.dataset.k]; if (!q) return;
+      ara = q.tipo || ""; j = +b.dataset.k; num = b.dataset.n || j + 1;
+    } else {
+      const ses = typeof activa === "function" ? activa() : null;
+      const z = ses && ses.ej[i] && ses.ej[i].sets[j]; if (!z) return;
+      ara = z.tipo || ""; num = j + 1;
+    }
     const el = document.createElement("div");
-    el.className = "nt-rt"; el.setAttribute("role", "listbox"); el.setAttribute("aria-label", `Tipo de la serie ${j + 1}`);
-    el.innerHTML = TIPUS.map(([k, nom, des]) => `<button class="nt-rt-op${k === ara ? " on" : ""}" role="option" aria-selected="${k === ara}" data-i="${i}" data-j="${j}" data-t="${k}"><b class="nt-rt-l ${k || "n"}">${k ? k.toUpperCase() : j + 1}</b><span><b>${nom}</b><small>${des}</small></span></button>`).join("");
+    el.className = "nt-rt" + (pla ? " sobre" : ""); el.setAttribute("role", "listbox"); el.setAttribute("aria-label", `Tipo de la serie ${j + 1}`);
+    el.innerHTML = TIPUS.map(([k, nom, des]) => `<button class="nt-rt-op${k === ara ? " on" : ""}" role="option" aria-selected="${k === ara}" ${pla ? `data-pla="1" data-k="${j}"` : `data-i="${i}" data-j="${j}"`} data-t="${k}"><b class="nt-rt-l ${k || "n"}">${k ? k.toUpperCase() : num}</b><span><b>${nom}</b><small>${des}</small></span></button>`).join("");
     document.body.appendChild(el);
     const r = b.getBoundingClientRect(), h = el.offsetHeight, w = el.offsetWidth;
     const avall = r.bottom + 8 + h < innerHeight - 90;
@@ -11301,6 +11396,20 @@ const Nit = (() => {
     (avall ? ops : ops.slice().reverse()).forEach((o, n) => { try { o.animate([{ transform: `rotateX(${avall ? -90 : 90}deg)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 340, delay: 40 + n * 45, easing: "cubic-bezier(.2,.9,.3,1.15)", fill: "backwards" }); } catch (e) {} });
   }
   function triaTipus(op) {
+    if (op.dataset.pla) {                        // el tipus d'una fila del pla
+      const q = plaObert && plaObert.pl[+op.dataset.k];
+      if (!q) { tancaTipus(); return; }
+      const t = op.dataset.t, canvia = (q.tipo || "") !== t;
+      q.tipo = t;
+      if (canvia) {
+        if (PCT_PLA[t]) q.pct = PCT_PLA[t]; else delete q.pct;
+        if (t === "p") q.r = [1, 3];
+        else if (t === "m") q.r = [3, 5];
+      }
+      fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .26 }); E.vibra("posa"); });
+      setTimeout(() => { tancaTipus(); if (canvia) { desaPla(); refaPla(); } }, 170);
+      return;
+    }
     const ses = typeof activa === "function" ? activa() : null;
     const z = ses && ses.ej[+op.dataset.i] && ses.ej[+op.dataset.i].sets[+op.dataset.j];
     if (!z) { tancaTipus(); return; }
@@ -11318,7 +11427,83 @@ const Nit = (() => {
       if (nou && nou.animate && !quiet()) nou.animate([{ transform: "scale(.6)" }, { transform: "scale(1.12)", offset: .6 }, { transform: "scale(1)" }], { duration: 380, easing: "cubic-bezier(.2,.9,.3,1)" });
     }, 170);
   }
-  document.addEventListener("pointerdown", ev => { if (rt && !ev.target.closest(".nt-rt") && !ev.target.closest('[data-accion="serie-tipus"]')) tancaTipus(); }, true);
+  document.addEventListener("pointerdown", ev => { if (rt && !ev.target.closest(".nt-rt") && !ev.target.closest('[data-accion="serie-tipus"], [data-accion="npl-tipus"]')) tancaTipus(); }, true);
+
+  /* EL FULL DEL PLA D'UN EXERCICI (29-09 vespre; l'Albert: «el tipus de sèrie és una per una»; TIPUS-DE-SERIE.md §3.4). Una
+     fila per sèrie: la lletra (o el número, si és normal), que obre la mateixa rodeta de l'entreno; les repeticions; el
+     percentatge (C, del pes de treball; D, de la d'abans; P, de la teva marca); i treure-la. A dalt, les plantilles; a baix,
+     afegir-ne una. Es desa sol a la carta (src/series.js, el cinquè element de l'exercici), sense tocar S.cfg. */
+  let plaObert = null;                           // {j, pl}: el pla que s'edita, una còpia
+  function desaPla() {
+    const d = cartaEd(), e = d && plaObert && d.ej[plaObert.j]; if (!e) return;
+    while (e.length < 4) e.push("");
+    e[4] = { s: plaObert.pl.map(q => ({ ...q, r: Array.isArray(q.r) ? [...q.r] : [8, 12] })) };
+    if (typeof guardar === "function") guardar();
+  }
+  function htmlPla() {
+    const { j, pl } = plaObert; let num = 0;
+    const PCT_TXT = { c: "% del peso", d: "% de la anterior", p: "% de tu marca" };
+    const files = pl.map((q, k) => {
+      const t = q.tipo || "", r = Array.isArray(q.r) ? q.r : [8, 12];
+      if (!t) num++;
+      const extra = PCT_PLA[t] ? `<span class="npl-p"><input class="npl-in" inputmode="numeric" data-pla="pct" data-k="${k}" value="${q.pct != null ? q.pct : PCT_PLA[t]}" aria-label="Porcentaje"><small>${PCT_TXT[t]}</small></span>`
+        : t === "m" ? `<small class="npl-nota">mismo peso, tras 15 s</small>` : t === "f" ? `<small class="npl-nota">hasta no poder más</small>` : "<span></span>";
+      return `<div class="npl-f"><button class="npl-t nt-rt-l ${t || "n"}" data-accion="npl-tipus" data-k="${k}" data-n="${num}" aria-label="Serie ${k + 1}: ${esc(((TIPUS.find(x => x[0] === t) || TIPUS[0])[1]).toLowerCase())}. Cambiar el tipo">${t ? t.toUpperCase() : num}</button>
+        <span class="npl-r"><input class="npl-in" inputmode="numeric" data-pla="min" data-k="${k}" value="${r[0] != null ? r[0] : ""}" aria-label="Repeticiones mínimas"><i>–</i><input class="npl-in" inputmode="numeric" data-pla="max" data-k="${k}" value="${r[1] != null ? r[1] : ""}" aria-label="Repeticiones máximas"><small>reps</small></span>
+        ${extra}<button class="npl-x" data-accion="npl-treu" data-k="${k}" aria-label="Quitar la serie"${pl.length <= 1 ? " disabled" : ""}>${I_X}</button></div>`;
+    }).join("");
+    return `<div class="npl" id="npl" data-j="${j}">
+        <div class="npl-plant">${PLANTILLES_PLA.map(([nom], p) => `<button class="chip" data-accion="npl-plant" data-p="${p}">${esc(nom)}</button>`).join("")}</div>
+        <div class="npl-files">${files}</div>
+        ${pl.length < PLA_MAX ? `<button class="npl-mes" data-accion="npl-mes">${I_NC.mes}<span>Añadir serie</span></button>` : ""}
+        <button class="npl-cfg" data-accion="npl-cfg">Carga y peso de este ejercicio</button>
+      </div>`;
+  }
+  function refaPla() { const el = document.getElementById("npl"); if (el && plaObert) el.outerHTML = htmlPla(); }
+  function obrePla(j) {
+    const d = cartaEd(), e = d && d.ej[j]; if (!e) return;
+    const pl = plaDe(e);
+    plaObert = { j, pl: pl ? pl.map(q => ({ ...q, r: Array.isArray(q.r) ? [...q.r] : [8, 12] })) : plaDeCfg(e[0], e[1]) };
+    fullN(e[0], htmlPla());
+    fx(E => { E.suena("tap"); E.vibra("tria"); });
+  }
+  function accioPla(b) {
+    const a = b.dataset.accion, k = +b.dataset.k, pl = plaObert.pl;
+    if (a === "npl-tipus") { obreTipus(b); return; }
+    if (a === "npl-plant") {
+      const p = PLANTILLES_PLA[+b.dataset.p]; if (!p) return;
+      plaObert.pl = p[1].map(q => ({ ...q, r: [...q.r] }));
+      desaPla(); refaPla(); fx(E => { E.suena("tap"); E.vibra("tria"); }); return;
+    }
+    if (a === "npl-mes") {
+      if (pl.length >= PLA_MAX) return;
+      const ult = pl.filter(q => !q.tipo || q.tipo === "f").pop();
+      pl.push({ tipo: "", r: ult && Array.isArray(ult.r) ? [...ult.r] : [8, 12] });
+      desaPla(); refaPla(); fx(E => E.suena("tap")); return;
+    }
+    if (a === "npl-treu") { if (pl.length <= 1 || !pl[k]) return; pl.splice(k, 1); desaPla(); refaPla(); fx(E => E.suena("tap")); return; }
+    if (a === "npl-cfg") {
+      const d = cartaEd(), e = d && d.ej[plaObert.j];
+      document.querySelectorAll(".nsq-full").forEach(x => x.remove()); plaObert = null;
+      if (e) { const [n, t, x] = e; obreFull(fullCfgEj(null, { n, t, x }), "Este ejercicio"); }
+    }
+  }
+  // les repeticions i el percentatge: es desen quan es deixa el camp
+  document.addEventListener("change", ev => {
+    const inp = ev.target.closest && ev.target.closest("#npl [data-pla]"); if (!inp || !plaObert) return;
+    const q = plaObert.pl[+inp.dataset.k]; if (!q) return;
+    const v = Math.round(+String(inp.value).replace(",", "."));
+    if (inp.dataset.pla === "pct") q.pct = Math.max(5, Math.min(150, v || PCT_PLA[q.tipo] || 100));
+    else {
+      const i = inp.dataset.pla === "min" ? 0 : 1;
+      if (!Array.isArray(q.r)) q.r = [8, 12];
+      q.r[i] = v > 0 ? Math.min(50, v) : (i ? null : 1);
+      if (q.r[1] != null && q.r[1] < q.r[0]) q.r[1] = q.r[0];
+    }
+    desaPla();
+    const net = inp.dataset.pla === "pct" ? q.pct : q.r[inp.dataset.pla === "min" ? 0 : 1];
+    if (String(net == null ? "" : net) !== String(inp.value)) refaPla();
+  });
   document.addEventListener("keydown", ev => { if (rt && ev.key === "Escape") tancaTipus(); });
   addEventListener("scroll", () => { if (rt) tancaTipus(); }, { passive: true });
 
@@ -11542,6 +11727,27 @@ body.v-nit .serie .i.tipus-c,.nt-rt-l.c{background:rgb(226 194 122 / .14);color:
 body.v-nit .serie .i.tipus-d,.nt-rt-l.d{background:rgb(var(--l-rgb) / .16);color:#c8befa;box-shadow:inset 0 0 0 1.5px rgb(var(--l-rgb) / .5)}
 body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:#f5ac9d;box-shadow:inset 0 0 0 1.5px rgb(240 144 126 / .5)}
 .nt-rt-l.n{background:#10171e;color:#e7edf2;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .12)}
+body.v-nit .serie .i.tipus-m,.nt-rt-l.m{background:rgb(var(--m-rgb) / .14);color:var(--nt-menta);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
+body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#ffd84a;box-shadow:inset 0 0 0 1.5px rgb(255 210 74 / .6)}
+.nt-rt.sobre{z-index:95}
+/* EL FULL DEL PLA (29-09 vespre) */
+.npl{display:grid;gap:10px;width:100%;text-align:left}
+.npl-plant{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.npl-plant::-webkit-scrollbar{display:none}
+.npl-plant .chip{flex:none}
+.npl-files{display:grid;gap:6px;max-height:min(52vh,420px);overflow-y:auto;overscroll-behavior:contain}
+.npl-f{display:grid;grid-template-columns:40px auto minmax(0,1fr) 32px;align-items:center;gap:8px;padding:6px 8px;border-radius:14px;background:var(--fb-sup)}
+.npl-t{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:11px;font:900 15px/1 'Nunito',system-ui,sans-serif;cursor:pointer}
+.npl-r,.npl-p{display:flex;align-items:center;gap:4px;min-width:0;font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.npl-r i{font-style:normal}
+.npl-in{width:38px;height:34px;padding:0;border:0;border-radius:9px;background:#0f151b;color:var(--nt-tinta);font:800 15px/1 'Nunito',system-ui,sans-serif;text-align:center}
+.npl-nota{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.npl-x{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:10px;background:none;color:var(--nt-suau);cursor:pointer}
+.npl-x:disabled{opacity:.3}.npl-x svg{width:16px;height:16px}
+.npl-mes{height:40px;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;cursor:pointer;
+  background:rgb(var(--m-rgb) / .1);color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif}
+.npl-mes svg{width:16px;height:16px}
+.npl-cfg{border:0;background:none;color:var(--nt-suau);font:800 12.5px/1.3 'Nunito',system-ui,sans-serif;text-decoration:underline;cursor:pointer}
 .nt-rt{position:fixed;z-index:70;width:248px;padding:6px;border-radius:18px;background:#1b242e;color:#e7edf2;font-family:'Nunito',system-ui,sans-serif;perspective:520px;
   box-shadow:0 22px 44px -14px rgb(0 0 0 / .95),0 0 0 1px rgb(255 255 255 / .09),inset 0 1px 0 rgb(255 255 255 / .06)}
 .nt-rt-op{display:flex;align-items:center;gap:11px;width:100%;padding:8px 10px;border:0;border-radius:13px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;
@@ -11626,7 +11832,13 @@ body.v-nit #vista[data-vista="estadisticas"] > .tabs-t{position:fixed;left:50%;t
 body.v-nit #vista[data-vista="estadisticas"] > .tabs-t .chip{justify-content:center;min-width:0;padding:0 6px}
 /* les files d'Ejercicios, tan amples com la pàgina (eren botons a la mida del text, cada una d'un ample) */
 body.v-nit .ej-fila{width:100%}
-body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
+body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]{padding-bottom:calc(200px + env(safe-area-inset-bottom))}
+/* (29-09 vespre, vist a l'iPhone simulat de l'iMac) el contingut passava per sota de la barra tallat en sec: les etiquetes de
+   les xifres i mig títol «Por grupo muscular». Un fos del color de la pàgina, de la barra cap avall: la pàgina s'esvaeix
+   abans d'arribar-hi i la barra i el menú de baix es llegeixen com una sola peça */
+body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]::after{content:"";position:fixed;left:0;right:0;bottom:0;z-index:38;
+  height:calc(188px + max(6px,calc(env(safe-area-inset-bottom) - 16px)));pointer-events:none;
+  background:linear-gradient(to bottom,rgb(13 18 23 / 0),var(--nt-fons) 40px)}
 /* TÚ, 29-09: el mazo amunt i, on hi havia «Tus mejores marcas», el PRO i l'escàner */
 .nt-tu-mazo{display:grid;gap:4px}
 .nt-tu-mazo-c{display:flex;align-items:center;justify-content:space-between}
@@ -12498,9 +12710,19 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .emb svg{width:62%;height:62%;fill:var(--ec,#86d9c6)}
 .emb.n1{--er:#9a6a3c}.emb.n2{--er:#c0c8d0}.emb.n3{--er:#f0b73a}
 .emb.n4{--er:#86d9c6;box-shadow:0 0 0 2px var(--er),0 0 10px -2px var(--er)}.emb.n5{--er:#b8a4ff;box-shadow:0 0 0 2px var(--er),0 0 14px -1px var(--er)}
-.emb.mini{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;box-shadow:0 0 0 1.5px var(--er),0 0 0 3px #0d1217}
-.emb.gran{position:absolute;left:-6px;bottom:0;width:40px;height:40px;box-shadow:0 0 0 2.5px var(--er),0 0 0 5px #0d1217}
-.emb.xl{width:64px;height:64px;box-shadow:0 0 0 3px var(--er),0 0 18px -4px var(--er)}
+/* les mides, amb nom propi: «mini» xocava amb una regla de la farga (.mini{min-height:130px}) i a l'iPhone l'emblema sortia
+   com un oval llarg al damunt de l'activitat (29-09 vespre) */
+.emb.emb-mini{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;min-height:0;box-shadow:0 0 0 1.5px var(--er),0 0 0 3px #0d1217}
+.emb.emb-gran{position:absolute;left:-6px;bottom:0;width:40px;height:40px;min-height:0;box-shadow:0 0 0 2.5px var(--er),0 0 0 5px #0d1217}
+.emb.emb-xl{width:64px;height:64px;min-height:0;box-shadow:0 0 0 3px var(--er),0 0 18px -4px var(--er)}
+.nsq-emb-cap{display:flex;align-items:center;gap:6px}.nsq-emb-cap small{font-size:12px;font-weight:900;color:var(--nt-suau)}
+.nsq-emb-barra{display:block;height:6px;margin:3px 0 1px;border-radius:99px;background:rgb(255 255 255 / .08);overflow:hidden}
+.nsq-emb-barra i{display:block;width:var(--p);height:100%;border-radius:inherit;background:var(--nt-menta)}
+.nsq-porta-f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:16px;background:#10171e}
+.nsq-porta-f > span{display:grid;gap:2px;text-align:left}.nsq-porta-f b{font-size:14px;font-weight:900}
+.nsq-porta-f small{font-size:12px;font-weight:700;line-height:1.35;color:var(--nt-suau)}
+.ns-r-sense{font-size:11.5px;font-weight:800;color:var(--nt-suau);white-space:nowrap}
+.ns-nota{margin:4px 4px 0;font-size:12px;font-weight:700;line-height:1.4;color:var(--nt-suau);text-align:left}
 .ns-av-w{position:relative;display:inline-grid;flex:none}
 .nsq-emb{display:flex;align-items:center;gap:14px;padding:10px 4px 4px}.nsq-emb-t{flex:1;display:grid;gap:2px}
 .nsq-emb-t b{font-size:15px;font-weight:900}.nsq-emb-t small{font-size:12.5px;font-weight:700;color:var(--nt-suau);line-height:1.35}
@@ -14598,7 +14820,7 @@ function vistaEntreno() {
     h += `<section class="panel exercici${pgr ? " en-grup" : ""}" id="ej-${i}"><div class="fila-cap">${foto ? `<button class="ej-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" loading="lazy" width="64" height="64"></button>` : ""}<div class="ej-nom"><div class="nom">${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</div><div class="grup"><span>${esc(Stats.GRUPO[e.n] || "")}</span>${chipProg(p, i)}</div>${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
       <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div><div class="series">
-      ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, j + 1)}
+      ${e.sets.map((z, j) => `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, numSerie(e.sets, j))}
         ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
         <span class="x">×</span>
         <label class="camp"><span class="lector">Repeticiones de la serie ${j + 1}</span><input inputmode="numeric" pattern="[0-9]*" autocomplete="off" data-camp="reps" data-i="${i}" data-j="${j}" value="${z.reps ?? ""}" placeholder="${c.min}-${c.max}"><span class="u">rep</span></label>
