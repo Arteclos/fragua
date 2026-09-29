@@ -12798,7 +12798,11 @@ button.ns-guerra:active{transform:scale(.985)}
 .nw-llesca{position:absolute;left:-40%;width:180%;top:30%;height:26%;transform:rotate(-14deg);pointer-events:none;
   background:linear-gradient(90deg,rgb(var(--l3-rgb,59 47 134)),rgb(var(--l2-rgb,111 99 201)) 50%,rgb(var(--m-rgb,134 217 198) / .8));opacity:.75;animation:np3-llesca .8s cubic-bezier(.2,.9,.25,1) both}
 .nw-logo{position:relative;z-index:2;width:min(62%,260px);height:auto;margin-top:8px;filter:drop-shadow(0 10px 24px rgb(0 0 0 / .6));animation:nw-logo .9s .1s cubic-bezier(.2,.9,.25,1) both}
-@keyframes nw-logo{from{opacity:0;transform:translateY(-10px) scale(.96);filter:blur(6px)}}
+/* (29-09 nit, vist a l'iPhone simulat) les dues puntes amb la MATEIXA llista de filtres: de blur(6px) a la drop-shadow de
+   l'element, l'iPhone (quan la imatge ja hi és, del service worker, i l'anima amb la GPU) acabava amb el logotip desenfocat
+   uns 24 px i s'hi quedava */
+@keyframes nw-logo{from{opacity:0;transform:translateY(-10px) scale(.96);filter:blur(6px) drop-shadow(0 10px 24px rgb(0 0 0 / 0))}
+  to{filter:blur(0) drop-shadow(0 10px 24px rgb(0 0 0 / .6))}}
 .nw-colla{position:relative;z-index:1;width:100%;max-width:420px;height:min(46vh,420px);margin-top:4px}
 .nw-pj{position:absolute;bottom:0;height:78%;left:50%;width:auto;max-width:none;filter:drop-shadow(0 18px 24px rgb(0 0 0 / .6));animation:nw-pj .9s calc(var(--k) * 90ms + .2s) cubic-bezier(.2,.9,.25,1.1) both,nw-sura 4.2s calc(var(--k) * .6s + 1.2s) ease-in-out infinite}
 .nw-pj:nth-child(1){transform:translateX(-128%);height:70%;z-index:1;opacity:.92}
