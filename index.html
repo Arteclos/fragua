@@ -6955,6 +6955,15 @@ const Versions = (() => {
   const CLAU = "klonk-versio";
   let actual = "actual";
   try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
+  // UN ENLLAÇ PER A LA BETA (29-09): klonk.fit/?v=nit deixa triada la Noche en aquell mòbil, sense els tres tocs; la de sempre
+  // no canvia per a ningú més. El paràmetre es treu de l'adreça perquè no es comparteixi sense voler.
+  try {
+    const q = new URLSearchParams(location.search), v = q.get("v");
+    if (v && LLISTA.some(x => x.id === v)) {
+      actual = v; localStorage.setItem(CLAU, v);
+      q.delete("v"); history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    }
+  } catch (e) {}
   const teBarra = () => actual !== "actual";
 
   // cada pantalla de l'app, a quin lloc de la barra pertany
