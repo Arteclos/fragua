@@ -1425,7 +1425,27 @@ function rutinaActual() {
   const totes = typeof totesRutinas === "function" ? totesRutinas() : [RUTINA_BASE];
   return totes.find(r => r.id === S.rutinaActiva) || RUTINA_BASE;
 }
-function diaRutina(n) { const r = rutinaActual(), d = r.dias[n - 1]; return d ? { n, t: d.t, ej: d.ej } : null; }
+function diaRutina(n) { const r = rutinaActual(), d = r.dias[n - 1]; return d ? { n, t: d.t, ej: d.ej, ...(d.id ? { id: d.id } : {}) } : null; }
+// LES CARTES AMB NOM PROPI (29-09-2026, l'Albert: «totes les cartes de la rutina en ordre, i les pots moure»). Des que el
+// mazo es pot reordenar, una carta ja no es pot reconèixer per la posició: cada dia d'una rutina teva porta un id (d.id),
+// la sessió el guarda (s.did), i d.o diu on era la carta abans de tenir-ne («rutina:dia»), perquè les sessions d'abans li
+// segueixin comptant; d.src, la carta d'on es va copiar. Una carta de KLONK (d'una plantilla, sense id), per la posició.
+const nouIdCarta = () => "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function idsMazo(r) {
+  if (!r || typeof rutinaPropia !== "function" || !rutinaPropia(r.id)) return false;
+  let canvi = false;
+  r.dias.forEach((d, i) => {
+    if (d.id) return;
+    d.id = nouIdCarta(); d.o = r.id + ":" + (i + 1); canvi = true;
+    const il = (S.cartesIl || {})[d.o]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il };
+  });
+  if (canvi) guardar();
+  return canvi;
+}
+function esDeCarta(s, r, n, d) {
+  if (d && d.id) return s.did ? s.did === d.id || (!!d.src && s.did === d.src) : !!d.o && (s.rut || "seis-dias") + ":" + s.dia === d.o;
+  return !s.did && (s.rut || "seis-dias") === r.id && +s.dia === n;
+}
 const RANGO = { c: [6, 10], a: [10, 15] };
 const DESCANSO = { c: 120, a: 75 };
 
@@ -1795,8 +1815,9 @@ function resumenSets(sets, lastre) {
   return sets.map(s => pesoTxt(s.kg ?? 0) + " × " + s.reps).join(", ");
 }
 function empezar(dia) {
+  idsMazo(rutinaActual());                                  // la carta d'avui es recordarà pel seu id
   const d = diaRutina(dia) || diaRutina(1);
-  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
+  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, ...(d.id ? { did: d.id } : {}), dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
   // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
   s.ej = d.ej.map(([n, t, x, g]) => {
     const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
@@ -1809,11 +1830,15 @@ function empezar(dia) {
   window.scrollTo({ top: 0 });
 }
 const activa = () => S.ses.find(s => s.id === S.activa) || null;
+// Toca la carta que va després de l'última que has fet d'aquest mazo, on sigui ara (el mazo es reordena).
 function siguienteDia() {
   const r = rutinaActual();
-  const hechas = S.ses.filter(s => s.fin && (s.rut || "seis-dias") === r.id);
-  if (!hechas.length) return 1;
-  return (hechas[hechas.length - 1].dia % r.dias.length) + 1;
+  for (let i = S.ses.length - 1; i >= 0; i--) {
+    const s = S.ses[i]; if (!s.fin) continue;
+    const k = r.dias.findIndex((d, j) => esDeCarta(s, r, j + 1, d));
+    if (k >= 0) return ((k + 1) % r.dias.length) + 1;
+  }
+  return 1;
 }
 function e1rm(kg, reps) { return reps > 0 ? kg * (1 + reps / 30) : 0; }
 function terminar() {
@@ -7964,7 +7989,7 @@ const Nit = (() => {
   const CARA = () => R() + "pj/cara-" + avatarId() + ".webp";
   // LA PORTADA DE CADA CARTA (29-09): els músculs que treballa (per defecte) o un dels seus exercicis dibuixat, triada a la
   // carta a la mà. Es guarda per carta (rutina:dia) a S.cartesIl.
-  const clauCarta = (r, n) => r.id + ":" + n;
+  const clauCarta = (r, n) => { const d = r.dias[n - 1]; return d && d.id ? d.id : r.id + ":" + n; };
   function ilCarta(r, n) {
     const d = r.dias[n - 1], tria = (S.cartesIl || {})[clauCarta(r, n)];
     if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) { const av = teDibuix(tria); return { src: av ? `${R()}ej-gran/${av}/${tria}.webp` : `${R()}ej-gran/${tria}.webp`, ej: true, tria }; }
@@ -7990,7 +8015,8 @@ const Nit = (() => {
   }
   function cartes() {
     const r = rutinaActual(), act = activa(), lim = Date.now() - 7 * 864e5;
-    const fets = new Set(S.ses.filter(s => s.fin && s.fin >= lim).map(s => s.dia));
+    const fets = new Set();
+    S.ses.forEach(s => { if (!s.fin || s.fin < lim) return; const k = r.dias.findIndex((d, j) => esDeCarta(s, r, j + 1, d)); if (k >= 0) fets.add(k + 1); });
     const avui = act ? act.dia : siguienteDia();
     const llista = r.dias.map((d, i) => ({ tipus: "dia", n: i + 1, t: d.t, ej: d.ej, feta: fets.has(i + 1) && i + 1 !== avui, avui: i + 1 === avui, mm: tipusDia(d) }));
     if (!jove()) llista.push({ tipus: "pro" });
@@ -8330,13 +8356,15 @@ const Nit = (() => {
   }
   document.addEventListener("click", ev => {
     if (!esNit()) return;
-    const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-buit"], [data-accion="nc3-filtre"]');
+    const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-arx"], [data-accion="nc3-recupera"], [data-accion="nc3-rebuda"]');
     if (nc) {
       ev.preventDefault(); ev.stopPropagation();
-      if (nc.dataset.accion === "nc3-filtre") { S.ui.nc3Filtre = nc.dataset.f; fx(E => { E.suena("tap"); E.vibra("tria"); }); if (typeof render === "function") render(); return; }
-      if (nc.dataset.accion === "nc3-buit") { fx(E => E.suena("tap")); if (typeof avis === "function") avis("Entrénala una vez y será tuya."); if (!quiet()) nc.animate([{ transform: "none" }, { transform: "translateX(-5px)" }, { transform: "translateX(5px)" }, { transform: "none" }], { duration: 260 }); return; }
-      const r = (typeof totesRutinas === "function" ? totesRutinas() : []).find(x => x.id === nc.dataset.r);
-      if (r) miraCarta(nc, r, +nc.dataset.n);
+      if (Date.now() - ultimArr < 450) return;                    // el clic que arriba en deixar anar una carta
+      const acc = nc.dataset.accion;
+      if (acc === "nc3-arx") { S.ui.nc3Arx = !S.ui.nc3Arx; fx(E => E.suena("tap")); if (typeof render === "function") render(); return; }
+      if (acc === "nc3-recupera") { recupera(nc.dataset.k); return; }
+      if (acc === "nc3-rebuda") { dispara({ accion: "rebuda-veure", id: nc.dataset.id }); return; }
+      obreCartaRutina(nc);
       return;
     }
     const nwa = ev.target.closest('[data-accion="nw-av"]');
@@ -9243,6 +9271,10 @@ const Nit = (() => {
     estelar: ["#2c2160", "#bfeaff", "#a88cff"], klonk: ["#3a3470", "#a89be0", "#5fb8a4"], cap: ["#39414a", "#8b98a4", "#4f5963"],
   };
   const I_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  const I_TREU = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10M7.5 9L12 13.5 16.5 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14.5v4A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const I_ARX = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="4.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5.5 9v9A1.5 1.5 0 0 0 7 19.5h10a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  // la brillantor, sota la carta (el revers, amb les lletres del revés, ja no hi és: l'Albert, 29-09, «no mola poder-la girar»)
+  const textBrill = I => I.seg ? (I.fetes ? `Hecha ${I.fetes} ${I.fetes === 1 ? "vez" : "veces"}. ${I.seg[0] - I.fetes} más y será ${I.seg[2]}.` : `Hazla ${I.seg[0]} veces y será ${I.seg[2]}.`) : `Hecha ${I.fetes} veces. Brillo máximo.`;
   const I_GIRA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 0 1 12.8-5.3L19.5 9M19.5 4.5V9H15M19.5 12a7.5 7.5 0 0 1-12.8 5.3L4.5 15M4.5 19.5V15H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const I_PORT = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="2" fill="currentColor"/><path d="M5 18l5-5 3.5 3.5L16 14l3.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
   const I_COMP = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5.5" r="2.5" fill="currentColor"/><circle cx="6" cy="12" r="2.5" fill="currentColor"/><circle cx="18" cy="18.5" r="2.5" fill="currentColor"/><path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4" stroke="currentColor" stroke-width="2"/></svg>';
@@ -9260,13 +9292,17 @@ const Nit = (() => {
   }
   function infoCarta(r, n) {
     const d = r.dias[n - 1];
-    const fetes = S.ses.filter(s => s.fin && (s.rut ? s.rut === r.id && +s.dia === n : s.dt === d.t)).length;
+    const fetes = S.ses.filter(s => s.fin && esDeCarta(s, r, n, d)).length;
     const tier = [...BRILL].reverse().find(b => fetes >= b[0]), seg = BRILL.find(b => b[0] > fetes) || null;
-    const propia = typeof rutinaPropia === "function" && !!rutinaPropia(r.id);
+    const propia = !!r.propia || (typeof rutinaPropia === "function" && !!rutinaPropia(r.id));
+    // qui la va crear: la carta que ha passat d'un mazo a un altre porta el seu; si no, el del mazo
+    const autor = d && "autor" in d ? d.autor : r.autor, matA = d && "autor" in d ? d.mat : r.mat;
+    // i una carta de KLONK és de KLONK encara que sigui al teu mazo (d.klonk: moure-la no te la fa teva)
+    const deKlonk = !!(d && d.klonk) || !propia;
     const e = eloDe(), nick = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "";
-    const firma = r.autor || (propia ? nick : "KLONK");
-    const mat = r.autor ? (MAT[r.mat] ? r.mat : "cap") : !propia ? "klonk" : (e.elo != null && e.divisio && MAT[e.divisio.id] ? e.divisio.id : "cap");
-    return { r, d, fetes, tier: tier[1], seg, firma, mat, e: propia && !r.autor ? e : null };
+    const firma = autor || (deKlonk ? "KLONK" : nick);
+    const mat = autor ? (MAT[matA] ? matA : "cap") : deKlonk ? "klonk" : (e.elo != null && e.divisio && MAT[e.divisio.id] ? e.divisio.id : "cap");
+    return { r, d, fetes, tier: tier[1], seg, firma, mat, autor, e: !deKlonk && !autor ? e : null };
   }
   const ESPURNES = `<i class="nm-esp" aria-hidden="true">${"<i></i>".repeat(7)}</i>`;
   function caraCarta(n, I, darrere) {
@@ -9276,7 +9312,7 @@ const Nit = (() => {
       const min = Math.round(d.ej.length * 6.5 / 5) * 5;
       const fotos = d.ej.slice(0, 5).map(x => { const f = fotoAnime(x[0]); return f ? `<img src="${f}" alt="" draggable="false">` : `<i class="nt-ej-buit">${ic("manuella")}</i>`; }).join("");
       return `<div class="nm-cara nm-davant"><i class="nm-sheen"></i><div class="nm-dins">
-        <div class="nm-cap"><span class="nm-dia">Día ${n}</span><b class="nm-tit">${esc(d.t)}</b>${I.e ? sigma(I.e, "nm-sig") : ""}</div>
+        <div class="nm-cap">${I.sol ? "" : `<span class="nm-dia">Día ${n}</span>`}<b class="nm-tit">${esc(d.t)}</b>${I.e ? sigma(I.e, "nm-sig") : ""}</div>
         ${(() => { const il = ilCarta(I.r, n); return `<div class="nm-il${il.ej ? " nm-il-ej" : ""}"><img src="${il.src}" alt="" draggable="false" onerror="this.style.visibility='hidden'"><i class="nm-holo"></i><i class="nm-purp"></i><i class="nm-llum"></i></div>`; })()}
         <div class="nt-ejs">${fotos}${d.ej.length > 5 ? `<i class="nt-mas">+${d.ej.length - 5}</i>` : ""}</div>
         <p class="nm-meta">${d.ej.length} ejercicios · ${min} min</p>${peu}</div><i class="nm-glare"><i></i></i>${ESPURNES}</div>`;
@@ -9304,22 +9340,28 @@ const Nit = (() => {
   }
   function dispara(ds) { const b = document.createElement("button"); b.hidden = true; Object.assign(b.dataset, ds); document.body.appendChild(b); b.click(); b.remove(); }
   let MI = null, permGiro = "";
-  function miraCarta(el, rr, nn) {
+  function miraCarta(el, rr, nn, ctx) {
     if (MI) return;
     const r = rr || rutinaActual(), n = nn || +el.dataset.n, d = r && r.dias[n - 1];
     if (!d) return;
     const I = infoCarta(r, n), m = MAT[I.mat], rc = el.getBoundingClientRect(), q = quiet();
+    I.sol = !!ctx && ctx.lloc === "sol";
     fontFirma();
-    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar", enUs = r.id === rutinaActual().id, deEntrenos = el.classList.contains("nc3-c");
+    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar", enUs = r.id === rutinaActual().id, lloc = ctx && ctx.lloc;
+    const acc = lloc === "mazo"
+      ? `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-ic" data-nm="treu" aria-label="Sacar de tu rutina">${I_TREU}</button><button class="nm-b nm-emp" data-nm="edita">Editar</button>`
+      : lloc === "sol"
+      ? `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comp-sol" aria-label="Compartir">${I_COMP}</button>${I.autor ? "" : `<button class="nm-b nm-ic" data-nm="arxiva" aria-label="Archivar">${I_ARX}</button>`}<button class="nm-b nm-emp" data-nm="posa">Añadir a tu rutina</button>`
+      : `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button>`;
     const portades = ["musculs", ...[...new Set(d.ej.map(e => slug(e[0])))].filter(x => EJ_ANIME.has(x)).slice(0, 8)];
     const ov = document.createElement("div");
     ov.className = "nm"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Carta: " + d.t);
     ov.style.cssText = `--m1:${m[0]};--m2:${m[1]};--m3:${m[2]}`;
     ov.innerHTML = `<div class="nm-vel" data-nm="tanca"></div>
       <button class="nm-x" data-nm="tanca" aria-label="Cerrar">${I_X}</button>
-      <div class="nm-escena"><div class="nm-carta nm-t${I.tier}"><div class="nm-gir">${caraCarta(n, I)}${caraCarta(n, I, true)}</div></div></div>
-      <p class="nm-prova" aria-live="polite"></p>
-      <div class="nm-acc"><button class="nm-b nm-ic" data-nm="gira" aria-label="Girar">${I_GIRA}</button><button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? (deEntrenos ? "edita" : "empieza") : "usa"}">${enUs ? (deEntrenos ? "Editar" : segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button></div>
+      <div class="nm-escena"><div class="nm-carta nm-t${I.tier}"><div class="nm-gir">${caraCarta(n, I)}</div></div></div>
+      <p class="nm-prova" aria-live="polite">${textBrill(I)}</p>
+      <div class="nm-acc">${acc}</div>
       <div class="nm-comp nm-portp" data-nm="noport" hidden><div class="nm-comp-p" data-nm="res" role="group" aria-label="Portada">
         <b class="nm-comp-t">Portada</b>
         <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : (teDibuix(p) ? `${R()}ej-gran/${teDibuix(p)}/${p}.webp` : `${R()}ej-gran/${p}.webp`)}" alt="" draggable="false"></button>`).join("")}</div>
@@ -9366,8 +9408,7 @@ const Nit = (() => {
     escena.addEventListener("pointerup", ev => {
       if (M.dit !== ev.pointerId) return; M.dit = null;
       const dx = ev.clientX - M.x0, dy = ev.clientY - M.y0;
-      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.2) gira(dx > 0 ? 1 : -1);
-      else if (dy > 90 && dy > Math.abs(dx) * 1.3) tancaMira();
+      if (dy > 90 && dy > Math.abs(dx) * 1.3) tancaMira();
     });
     escena.addEventListener("pointercancel", ev => { if (M.dit === ev.pointerId) M.dit = null; });
     ov.addEventListener("click", ev => {
@@ -9376,7 +9417,6 @@ const Nit = (() => {
       const k = t.dataset.nm;
       if (k === "res") return;
       if (k === "tanca") { tancaMira(); return; }
-      if (k === "gira") { gira(1); return; }
       if (k === "comparteix") {
         const p = ov.querySelector(".nm-comp:not(.nm-portp)"); p.hidden = false;
         if (!q) { p.querySelector(".nm-comp-p").animate([{ transform: "translateY(105%)" }, { transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.05)" }); p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 }); }
@@ -9387,7 +9427,15 @@ const Nit = (() => {
       if (k === "una" || k === "totes") { tancaMira(true); dispara(k === "una" ? { accion: "rut-compartir-dia", id: r.id, dia: String(n) } : { accion: "rut-compartir", id: r.id }); return; }
       if (k === "empieza") { const b = el.querySelector(".nt-boto"); tancaMira(true); if (b) b.click(); else { so(); dispara({ accion: "empezar", dia: String(n) }); } return; }
       if (k === "usa") { tancaMira(true); dispara({ accion: "rut-usar", id: r.id }); return; }
-      if (k === "edita") { tancaMira(true); dispara({ accion: "rut-lapiz", dia: String(n) }); return; }
+      if (k === "edita") { tancaMira(true); if (!activa()) mazoPropi(); dispara({ accion: "rut-lapiz", dia: String(n) }); return; }
+      if (k === "treu") { tancaMira(true); if (treuDelMazo(ctx.i)) { fx(E => { E.suena("tap"); E.vibra("tria"); }); if (typeof render === "function") render(); if (typeof avis === "function") avis("La tienes abajo, en «Tus entrenos»."); } return; }
+      if (k === "posa") { tancaMira(true); if (posaAlMazo(ctx.x)) { fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .34 }); E.vibra("tria"); }); if (typeof render === "function") render(); if (typeof avis === "function") avis("Añadida al final de tu rutina."); } return; }
+      if (k === "arxiva") { tancaMira(true); if (arxiva(ctx.x)) { fx(E => E.suena("tap")); if (typeof render === "function") render(); if (typeof avis === "function") avis("Archivada: la recuperas abajo, en «Archivadas»."); } return; }
+      if (k === "comp-sol") {
+        tancaMira(true); S.ui.rutDia = { id: "sol-" + Date.now().toString(36), nombre: d.t, resumen: "", dias: [{ t: d.t, ej: d.ej }] };
+        if (typeof obreFull === "function" && typeof fullCompartir === "function") obreFull(fullCompartir(S.ui.rutDia), "Compartir este entreno");
+        return;
+      }
       if (k === "port") {
         const p = ov.querySelector(".nm-portp"); p.hidden = false;
         if (Math.round(M.objA / 180) % 2 !== 0) gira(1);
@@ -9544,40 +9592,242 @@ const Nit = (() => {
     w.animate([{ transform: "translateX(-80vw) skewX(-18deg)" }, { transform: "translateX(120vw) skewX(-18deg)" }], { duration: 560, easing: "cubic-bezier(.6,.05,.3,1)" }).onfinish = () => w.remove();
   }
 
-  /* ======================= MIS CARTAS (l'Albert, 29-09, amb les captures del «My Cards» i del «Genetic Apex» del Pokémon
-     TCG Pocket) =======================
-     A dalt, el recompte i les dues portes (Colección i Mazos). A sota, «Tus cartas» (els dies dels teus mazos, sempre
-     teves) i la «Colección KLONK»: tots els dies de les plantilles, numerats; una carta és teva quan l'has entrenada una
-     vegada, i mentrestant és un forat amb el seu número. Cada carta porta el marc del material del sigma de qui l'ha
-     feta, la portada que hi has triat i, a baix a l'esquerra, les vegades que l'has feta. Tocar-la l'aixeca. */
-  function cartaMini(r, n, k) {
+  /* ======================= TU RUTINA, EL MAZO QUE ES MUNTA (l'Albert, 29-09 matí, per veu: «quan entres a rutines has de
+     veure el mazo que tens actiu: totes les cartes de la rutina en ordre, i les pots moure»; «si la vull moure d'ordre és
+     mantenir polsat»; «si faig clic, editar o eliminar el dia»; «no mola poder-la girar»; «a baix, tus entrenos: els dies
+     solts, que pots agafar i enviar al mazo principal»; i abans, «les comprades o les que t'han passat sempre les tens; les
+     altres, que s'arxivin i sempre es puguin recuperar») =======================
+     A dalt, el mazo en ús, en ordre i numerat. A sota, «Tus entrenos»: les cartes que tens i no hi són (les que n'has tret,
+     els dies de les teves altres rutines i els de KLONK que ja has entrenat). Tocar-ne una l'aixeca amb les seves accions;
+     mantenir-la premuda l'encén i la mou: dins del mazo canvia l'ordre, a baix surt del mazo, i una de baix hi entra on la
+     deixes. Tocar el mazo el fa teu: si era una plantilla de KLONK, primer se'n fa una còpia (motor.js, idsMazo). */
+  const MAX_MAZO = 14;
+  function cartaMini(r, n, k, lloc, clau) {
     const I = infoCarta(r, n), m = MAT[I.mat], il = ilCarta(r, n);
-    return `<button class="nc3-c t${I.tier}" data-accion="nc3-mira" data-r="${esc(r.id)}" data-n="${n}" data-in="nc3" style="--c1:${m[0]};--c2:${m[1]};--c3:${m[2]};--i:${k}" aria-label="${esc(I.d.t)}, hecha ${I.fetes} veces">
-      <span class="nc3-in"><span class="nc3-t">${esc(I.d.t)}</span><span class="nc3-il${il.ej ? " ej" : ""}"><img src="${il.src}" alt="" draggable="false" loading="lazy"></span></span><span class="nc3-n">${I.fetes}</span></button>`;
+    return `<button class="nc3-c t${I.tier}" data-accion="nc3-mira" data-lloc="${lloc}" data-n="${n}"${clau ? ` data-k="${esc(clau)}"` : ""} data-in="nc3" style="--c1:${m[0]};--c2:${m[1]};--c3:${m[2]};--i:${k}" aria-label="${lloc === "mazo" ? `Día ${n}: ` : ""}${esc(I.d.t)}, hecha ${I.fetes} ${I.fetes === 1 ? "vez" : "veces"}">
+      ${lloc === "mazo" ? `<i class="nc3-pos" aria-hidden="true">${n}</i>` : ""}<span class="nc3-in"><span class="nc3-t">${esc(I.d.t)}</span><span class="nc3-il${il.ej ? " ej" : ""}"><img src="${il.src}" alt="" draggable="false" loading="lazy"></span></span><span class="nc3-n">${I.fetes}</span></button>`;
   }
-  /* TU RUTINA I ELS SEUS ENTRENOS (l'Albert, 29-09 08:40-08:50, des del mòbil: «l'accés a rutinas hauria de ser el clic
-     que ara diu Programa de Alex, i s'obre directament la pàgina de cartes»; «no són tus cartas, són tus entrenos»; «ha de
-     sortir primer tu rutina, i a baix tus entrenos»; i «en comptes d'empezar ha de posar editar: des d'allà no es comença a
-     entrenar»). A dalt, la rutina en ús; a sota, els seus dies; i la Colección KLONK. Les altres rutines, a «Cambiar». */
+  // una carta es reconeix pel que porta (el títol i els exercicis): de cada una, només una, i cap que ja sigui al mazo
+  const sigCarta = d => (d.t || "") + "|" + (d.ej || []).map(e => e[0]).join("+");
+  const solR = d => ({ id: "sol:" + d.id, nombre: d.t, dias: [d], propia: !d.autor && !d.klonk, ...(d.autor ? { autor: d.autor, mat: d.mat } : {}) });
+  function solts(r0) {
+    const r = r0 || rutinaActual(), fora = new Set([...r.dias.map(sigCarta), ...(S.arxiu || []).map(a => a.k)]), out = [];
+    const posa = x => { const k = sigCarta(x.d); if (fora.has(k)) return; fora.add(k); out.push({ ...x, k }); };
+    (S.entrenos || []).forEach(d => posa({ d, r: solR(d), n: 1, font: "sol" }));
+    (S.rutinas || []).forEach(x => { if (x.id !== r.id) x.dias.forEach((d, i) => posa({ d, r: x, n: i + 1, font: "rut" })); });
+    [RUTINA_BASE, ...PLANTILLAS].forEach(x => { if (x.id !== r.id) x.dias.forEach((d, i) => { if (S.ses.some(s => s.fin && esDeCarta(s, x, i + 1, d))) posa({ d, r: x, n: i + 1, font: "klonk" }); }); });
+    return out;
+  }
+  const enMarxa = () => { if (!activa()) return false; if (typeof avis === "function") avis("Termina o descarta el entreno en marcha antes de tocar tu rutina.", true); return true; };
+  // tocar el mazo el fa teu: d'una plantilla de KLONK se'n fa una còpia, amb el que hi has fet i les portades
+  function mazoPropi() {
+    const act = rutinaActual();
+    if (typeof rutinaPropia === "function" && rutinaPropia(act.id)) { idsMazo(act); return act; }
+    const nova = { id: typeof nouId === "function" ? nouId() : "r" + Date.now().toString(36), nombre: act.nombre + " (mía)", resumen: act.resumen || "",
+      dias: act.dias.map((d, i) => ({ id: nouIdCarta(), o: act.id + ":" + (i + 1), t: d.t, ej: d.ej.map(e => [...e]), klonk: true })) };
+    nova.dias.forEach(d => { const il = (S.cartesIl || {})[d.o]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il }; });
+    S.rutinas = [...(S.rutinas || []), nova]; S.rutinaActiva = nova.id;
+    if (typeof avis === "function") avis(`Ahora es tuya: «${nova.nombre}».`);
+    return nova;
+  }
+  function reordena(ordre) {
+    if (enMarxa()) return false;
+    const r = mazoPropi(), dies = ordre.map(i => r.dias[i]);
+    if (dies.length !== r.dias.length || dies.some(d => !d) || new Set(dies).size !== dies.length) return false;
+    r.dias = dies; guardar(); return true;
+  }
+  // treure-la del mazo no la perd: baixa a «Tus entrenos», amb el que hi has fet i qui la va crear
+  function treuDelMazo(i) {
+    if (enMarxa()) return false;
+    if (rutinaActual().dias.length <= 1) { if (typeof avis === "function") avis("Tu rutina necesita al menos un entreno.", true); return false; }
+    const r = mazoPropi(), [d] = r.dias.splice(i, 1);
+    if (!d) return false;
+    const autor = "autor" in d ? d.autor : r.autor, mat = "autor" in d ? d.mat : r.mat;
+    const sol = { id: d.id, ...(d.o ? { o: d.o } : {}), ...(d.src ? { src: d.src } : {}), t: d.t, ej: d.ej, ...(autor ? { autor, mat } : {}), ...(d.klonk ? { klonk: true } : {}) };
+    S.entrenos = [sol, ...(S.entrenos || []).filter(x => x.id !== sol.id)];
+    guardar(); return true;
+  }
+  // una de «Tus entrenos» entra al mazo on la deixes (o al final); si era d'una altra rutina, se'n fa una còpia
+  function posaAlMazo(x, j) {
+    if (enMarxa()) return false;
+    if (rutinaActual().dias.length >= MAX_MAZO) { if (typeof avis === "function") avis(`Tu rutina ya tiene ${MAX_MAZO} entrenos.`, true); return false; }
+    const autor = "autor" in x.d ? x.d.autor : x.r.autor, mat = "autor" in x.d ? x.d.mat : x.r.mat;
+    let d;
+    if (x.font === "sol") { d = { ...x.d }; S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id); }
+    else {
+      d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(e => [...e]), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}) };
+      const il = (S.cartesIl || {})[clauCarta(x.r, x.n)]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il };
+    }
+    const r = mazoPropi();
+    // qui la va crear viatja amb la carta; una de teva dins d'un mazo d'algú altre ho diu (autor buit)
+    if (autor) { d.autor = autor; d.mat = mat; } else if (r.autor) { d.autor = ""; delete d.mat; } else { delete d.autor; delete d.mat; }
+    r.dias.splice(j == null || j < 0 ? r.dias.length : Math.min(j, r.dias.length), 0, d);
+    guardar(); return true;
+  }
+  // arxivar: les comprades i les que t'han passat no (sempre les tens); les altres es guarden i es recuperen
+  function arxiva(x) {
+    if (!x || ("autor" in x.d ? x.d.autor : x.r.autor)) return false;
+    if (x.font === "sol") S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id);
+    const d = x.font === "sol" ? x.d : { o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej, ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}) };
+    S.arxiu = [{ k: x.k, d, quan: Date.now() }, ...(S.arxiu || []).filter(a => a.k !== x.k)];
+    guardar(); return true;
+  }
+  function recupera(k) {
+    const a = (S.arxiu || []).find(y => y.k === k); if (!a) return;
+    S.arxiu = S.arxiu.filter(y => y.k !== k);
+    const d = { ...a.d, id: a.d.id || nouIdCarta() };
+    S.entrenos = [d, ...(S.entrenos || []).filter(y => y.id !== d.id)];
+    guardar(); fx(E => { E.suena("tap"); E.vibra("tria"); });
+    if (typeof render === "function") render();
+    if (typeof avis === "function") avis("Ha vuelto a tus entrenos.");
+  }
+  function obreCartaRutina(nc) {
+    if (nc.dataset.lloc === "sol") { const x = solts().find(y => y.k === nc.dataset.k); if (x) miraCarta(nc, x.r, x.n, { lloc: "sol", x }); return; }
+    const r = rutinaActual(), n = +nc.dataset.n;
+    if (r.dias[n - 1]) miraCarta(nc, r, n, { lloc: "mazo", i: n - 1 });
+  }
   function vistaCartas() {
-    const filtre = S.ui.nc3Filtre || "tot", passa = d => filtre === "tot" || tipusDia(d) === filtre;
-    const ru = rutinaActual(), teves = ru.dias.map((d, i) => ({ r: ru, n: i + 1, d }));
-    const klonk = [RUTINA_BASE, ...PLANTILLAS].flatMap(r => r.dias.map((d, i) => ({ r, n: i + 1, d })));
-    const fetes = new Set(S.ses.filter(s => s.fin).map(s => (s.rut || "") + ":" + s.dia));
-    const col = klonk.map((x, i) => ({ ...x, num: i + 1, te: fetes.has(x.r.id + ":" + x.n) })), got = col.filter(x => x.te).length;
-    const FILT = [["tot", "Todas"], ["empuje", "Empuje"], ["tiron", "Tirón"], ["pierna", "Pierna"], ["brazos", "Brazos"], ["cuerpo", "Cuerpo"]];
+    const r = rutinaActual(); idsMazo(r);
+    const ss = solts(r), arx = S.arxiu || [], rebudes = S.recibidas || [];
     let k = 0;
     return `<h1 class="titol-pag">Tu rutina</h1>
       <section class="nc3">
-        <div class="nc3-rut" data-in="nc3"><span class="nt-tu-mini">${ru.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span>
-          <span class="nc3-rut-t"><b>${esc(ru.nombre)}</b><small>${nDies(ru.dias.length)}, en uso</small></span><button class="nc3-canvia" data-accion="nt-ves" data-v="rutinas">Cambiar</button></div>
-        <h2 class="nc3-h" data-in="nc3">Tus entrenos<small>${teves.length}</small></h2>
-        <div class="nc3-grid">${teves.map(x => cartaMini(x.r, x.n, k++)).join("")}</div>
-        <h2 class="nc3-h" data-in="nc3">Colección KLONK<small>${got} / ${col.length}</small></h2>
-        <div class="nc3-filtres" data-in="nc3">${FILT.map(([f, nom]) => `<button class="chip" data-accion="nc3-filtre" data-f="${f}" aria-pressed="${f === filtre}">${nom}</button>`).join("")}</div>
-        <div class="nc3-prog" data-in="nc3"><i style="width:${(got / Math.max(1, col.length) * 100).toFixed(1)}%"></i></div>
-        <div class="nc3-grid">${col.filter(x => passa(x.d)).map(x => x.te ? cartaMini(x.r, x.n, k++) : `<button class="nc3-buit" data-accion="nc3-buit" data-in="nc3" style="--i:${k++}" aria-label="Entreno ${x.num}, por conseguir"><b>${x.num}</b></button>`).join("")}</div>
+        <div class="nc3-mazo">
+          <h2 class="nc3-h" data-in="nc3">${esc(r.nombre)}<small>${r.dias.length}</small></h2>
+          <div class="nc3-grid">${r.dias.map((d, i) => cartaMini(r, i + 1, k++, "mazo")).join("")}</div>
+          ${S.nc3Mogut ? "" : `<p class="nc3-pista" data-in="nc3">Mantén pulsada una carta para moverla.</p>`}
+        </div>
+        <div class="nc3-solts">
+          <h2 class="nc3-h" data-in="nc3">Tus entrenos<small>${ss.length}</small></h2>
+          ${rebudes.map(x => `<button class="nc3-rebuda" data-accion="nc3-rebuda" data-id="${esc(String(x.id))}" data-in="nc3"><img src="${caraDe(x.personatge)}" alt="" draggable="false"><span><b>${esc(x.de || "Un amigo")} te ha enviado «${esc(x.rutina.nombre)}»</b><small>${nDies(x.rutina.dias.length)}: mírala y decide si la quieres</small></span><i>Ver</i></button>`).join("")}
+          ${ss.length ? `<div class="nc3-grid">${ss.map(x => cartaMini(x.r, x.n, k++, "sol", x.k)).join("")}</div>` : `<p class="nc3-buit-t" data-in="nc3">Arrastra aquí una carta de tu rutina para sacarla.</p>`}
+        </div>
+        ${arx.length ? `<button class="nc3-arx-b" data-accion="nc3-arx" aria-expanded="${!!S.ui.nc3Arx}" data-in="nc3">Archivadas<small>${arx.length}</small></button>
+        ${S.ui.nc3Arx ? `<div class="nc3-arx">${arx.map(a => `<div class="nc3-arx-f"><span><b>${esc(a.d.t)}</b><small>${a.d.ej.length} ${a.d.ej.length === 1 ? "ejercicio" : "ejercicios"}</small></span><button data-accion="nc3-recupera" data-k="${esc(a.k)}">Recuperar</button></div>`).join("")}</div>` : ""}` : ""}
       </section>`;
+  }
+
+  /* MANTENIR PREMUDA UNA CARTA: als 380 ms s'encén, s'aixeca i segueix el dit, i les del mazo s'aparten per fer-li lloc (i es
+     renumeren). Si el dit es mou abans, és la pàgina que corre, i no passa res; si s'aixeca i la deixes anar sense moure-la,
+     s'obre, com si l'haguessis tocat. Amb la carta aixecada la pàgina no corre, i prop de dalt o de baix corre sola. */
+  let PR = null, AR = null, ultimArr = 0;
+  document.addEventListener("pointerdown", ev => {
+    if (AR || PR || ev.button > 0 || !esNit()) return;
+    const c = ev.target.closest && ev.target.closest(".nc3-c[data-lloc]"); if (!c) return;
+    const p = PR = { c, x0: ev.clientX, y0: ev.clientY, id: ev.pointerId };
+    p.t = setTimeout(() => { if (PR !== p) return; PR = null; if (c.isConnected) aixeca(p); }, 380);
+  });
+  document.addEventListener("pointermove", ev => {
+    if (PR && ev.pointerId === PR.id && Math.hypot(ev.clientX - PR.x0, ev.clientY - PR.y0) > 10) { clearTimeout(PR.t); PR = null; }
+    if (!AR || ev.pointerId !== AR.id) return;
+    ev.preventDefault();
+    mouArr(ev.clientX, ev.clientY);
+  }, { passive: false });
+  const oblidaPR = ev => { if (PR && ev.pointerId === PR.id) { clearTimeout(PR.t); PR = null; } };
+  document.addEventListener("pointerup", ev => { oblidaPR(ev); if (AR && ev.pointerId === AR.id) deixa(true); });
+  document.addEventListener("pointercancel", ev => { oblidaPR(ev); if (AR && ev.pointerId === AR.id) deixa(false); });
+  document.addEventListener("touchmove", ev => { if (AR && ev.cancelable) ev.preventDefault(); }, { passive: false });
+  document.addEventListener("contextmenu", ev => { if (AR || (ev.target.closest && ev.target.closest(".nc3-c"))) ev.preventDefault(); });
+  function aixeca(p) {
+    const c = p.c, grid = document.querySelector(".nc3-mazo .nc3-grid");
+    if (!grid || MI) return;
+    if (enMarxa()) return;
+    const q = c.getBoundingClientRect(), fl = c.cloneNode(true);
+    fl.classList.add("nc3-vola"); fl.removeAttribute("data-accion"); fl.removeAttribute("data-lloc"); fl.removeAttribute("data-in"); fl.setAttribute("aria-hidden", "true");
+    Object.assign(fl.style, { left: q.left + "px", top: q.top + "px", width: q.width + "px", height: q.height + "px" });
+    document.body.appendChild(fl);
+    const A = AR = { c, fl, id: p.id, x0: p.x0, y0: p.y0, dx: p.x0 - q.left, dy: p.y0 - q.top, lloc: c.dataset.lloc, n: +c.dataset.n, k: c.dataset.k,
+      mogut: false, surt: false, forat: null, grid, x: p.x0, y: p.y0 };
+    if (A.lloc === "mazo") {
+      c.classList.add("nc3-forat"); A.forat = c;
+      A.retol = document.createElement("b"); A.retol.className = "nc3-solta"; A.retol.setAttribute("aria-hidden", "true"); A.retol.textContent = "Suelta para sacarla de tu rutina";
+      document.body.appendChild(A.retol);
+    } else c.classList.add("nc3-agafada");
+    document.body.classList.add("nc3-arr");
+    fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .3, to: 1.12 }); E.vibra("posa"); });
+    if (!quiet()) fl.animate([{ transform: "none" }, { transform: "scale(1.12) rotate(-3deg)" }], { duration: 200, easing: "cubic-bezier(.2,.9,.3,1.4)", fill: "forwards" });
+    else fl.style.transform = "scale(1.12) rotate(-3deg)";
+    A.raf = requestAnimationFrame(voraCarta);
+  }
+  function mouArr(x, y) {
+    const A = AR; A.x = x; A.y = y;
+    if (!A.mogut && Math.hypot(x - A.x0, y - A.y0) > 12) A.mogut = true;
+    A.fl.style.left = (x - A.dx) + "px"; A.fl.style.top = (y - A.dy) + "px";
+    const el = document.elementFromPoint(x, y), zona = document.querySelector(".nc3-solts");
+    const alMazo = el && el.closest(".nc3-mazo"), aBaix = el && el.closest(".nc3-solts");
+    if (alMazo) {
+      if (zona) zona.classList.remove("on");
+      if (A.retol) A.retol.classList.remove("on");
+      if (A.surt) { A.surt = false; A.forat.classList.remove("nc3-fora"); }
+      if (!A.forat) {                                            // una de baix, que entra al mazo
+        if (A.grid.querySelectorAll(".nc3-c").length >= MAX_MAZO) return;
+        A.forat = document.createElement("i"); A.forat.className = "nc3-c nc3-forat"; A.grid.appendChild(A.forat); renumera();
+      }
+      const sobre = el.closest(".nc3-c");
+      if (sobre && sobre !== A.forat && sobre.parentElement === A.grid) { const q = sobre.getBoundingClientRect(); mouForat(sobre, x < q.left + q.width / 2); }
+    } else if (aBaix) {
+      if (A.lloc === "mazo") { if (!A.surt) { A.surt = true; A.forat.classList.add("nc3-fora"); fx(E => E.vibra("toc")); } if (zona) zona.classList.add("on"); if (A.retol) A.retol.classList.add("on"); }
+      else if (A.forat) { A.forat.remove(); A.forat = null; renumera(); }
+    }
+  }
+  function mouForat(ref, abans) {
+    const A = AR, f = A.forat, g = A.grid;
+    if (abans ? ref.previousElementSibling === f : ref.nextElementSibling === f) return;      // ja hi és
+    const cs = [...g.children], q0 = new Map(cs.map(e => [e, e.getBoundingClientRect()]));
+    g.insertBefore(f, abans ? ref : ref.nextElementSibling);
+    renumera();
+    fx(E => E.vibra("toc"));
+    if (quiet()) return;
+    cs.forEach(e => {
+      if (e === f) return;
+      const a = q0.get(e), b = e.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) + Math.abs(dy) > 1) e.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.9,.3,1)" });
+    });
+  }
+  function renumera() {
+    const A = AR; if (!A) return;
+    [...A.grid.querySelectorAll(".nc3-c")].forEach((e, j) => {
+      const p = e.querySelector(".nc3-pos"); if (p) p.textContent = j + 1;
+      if (e === A.forat) { const pf = A.fl.querySelector(".nc3-pos"); if (pf) pf.textContent = j + 1; }
+    });
+  }
+  function voraCarta() {
+    const A = AR; if (!A) return;
+    const baix = innerHeight - 150, v = A.y < 110 ? -Math.ceil((110 - A.y) / 6) : A.y > baix ? Math.ceil((A.y - baix) / 6) : 0;
+    if (v) { window.scrollBy(0, v); mouArr(A.x, A.y); }
+    A.raf = requestAnimationFrame(voraCarta);
+  }
+  function deixa(ok) {
+    const A = AR; AR = null; ultimArr = Date.now();
+    cancelAnimationFrame(A.raf); document.body.classList.remove("nc3-arr");
+    const zona = document.querySelector(".nc3-solts"); if (zona) zona.classList.remove("on");
+    if (A.retol) A.retol.remove();
+    A.c.classList.remove("nc3-agafada");
+    if (ok && !A.mogut) { vola(A, A.c, () => { A.c.classList.remove("nc3-forat"); obreCartaRutina(A.c); }); return; }
+    let fet = null, desti = A.c;
+    if (ok && A.lloc === "mazo" && A.surt) { fet = () => treuDelMazo(A.n - 1); desti = null; }
+    else if (ok && A.lloc === "mazo") {
+      const ordre = [...A.grid.querySelectorAll(".nc3-c")].map(e => +e.dataset.n - 1);
+      if (ordre.some((v, j) => v !== j)) fet = () => reordena(ordre);
+      desti = A.forat;
+    } else if (ok && A.lloc === "sol" && A.forat) {
+      const j = [...A.grid.querySelectorAll(".nc3-c")].indexOf(A.forat), x = solts().find(y => y.k === A.k);
+      if (x) fet = () => posaAlMazo(x, j);
+      desti = A.forat;
+    }
+    vola(A, desti, () => {
+      if (fet && fet()) { S.nc3Mogut = true; guardar(); fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .34 }); E.vibra("tria"); }); }
+      if (typeof render === "function") render();
+    });
+  }
+  // la carta que vola va al seu lloc abans que la pàgina es torni a pintar
+  function vola(A, desti, fi) {
+    const q = desti && desti.isConnected ? desti.getBoundingClientRect() : null;
+    if (!q || quiet()) { A.fl.remove(); fi(); return; }
+    const an = A.fl.animate([{ left: A.fl.style.left, top: A.fl.style.top, transform: "scale(1.12) rotate(-3deg)" }, { left: q.left + "px", top: q.top + "px", transform: "none" }],
+      { duration: 190, easing: "cubic-bezier(.2,.9,.3,1)", fill: "forwards" });
+    let fet = false; const acaba = () => { if (fet) return; fet = true; A.fl.remove(); fi(); };
+    an.onfinish = acaba; setTimeout(acaba, 400);
   }
 
   /* ======================= LES SQUADS (l'Albert, 29-09: «la part del social molt guai, amb crear una squad, assignar
@@ -9631,18 +9881,24 @@ const Nit = (() => {
     try { const r = await api("GET", "/squads"); S.ui.squads = { ...r, at: Date.now() }; } catch (e) { return; }
     if (S.ui.vista === "social" && typeof render === "function") render();
   }
+  // LA GESTIÓ (29-09, l'Albert: «has de poder fer admin a la gent; tenir disponible tota la gestió del teu squad»): el líder i
+  // els admins conviden, treuen i posen el repte; el líder, a més, fa admins, passa el lideratge i canvia l'etiqueta
+  // (servidor: squads.py). A la cara de cadascú hi diu què és; els convidats hi surten fins que diuen que sí o que no.
   function htmlSquad(q, tot) {
-    const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
+    const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0, gestor = q.jo_lider || q.jo_admin;
     return `<div class="nsq" data-in="ns">
-      <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}</b>${q.jo_lider ? `<button class="nsq-etq-ed" data-accion="nsq-etq" data-id="${q.id}" aria-label="Cambiar la etiqueta">${I_LLAPIS}</button><i class="nsq-lider">Líder</i>` : ""}</div>
-      <div class="nsq-caras">${q.membres.map(m => { const cl = `nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}`, dins = `<img src="${caraDe(m.personatge)}" alt="" draggable="false"><small>${esc(m.yo ? "Tú" : m.nom)}</small>`;
-        // tocar la cara d'un altre n'obre el perfil (la llavor del que va proposar l'Àlex: l'entrenador que veu com van els seus)
-        return m.yo || !m.pid ? `<span class="${cl}">${dins}</span>` : `<button class="${cl}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(m.nom)}">${dins}</button>`; }).join("")}</div>
+      <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}</b>${q.jo_lider ? `<button class="nsq-etq-ed" data-accion="nsq-etq" data-id="${q.id}" aria-label="Cambiar la etiqueta">${I_LLAPIS}</button><i class="nsq-lider">Líder</i>` : q.jo_admin ? `<i class="nsq-lider nsq-admin">Admin</i>` : ""}</div>
+      <div class="nsq-caras">${q.membres.map(m => { const rol = m.lider ? "Líder" : m.admin ? "Admin" : "", cl = `nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}${m.admin ? " admin" : ""}`,
+          dins = `<span class="nsq-cara-i"><img src="${caraDe(m.personatge)}" alt="" draggable="false">${rol ? `<i class="nsq-rol">${rol}</i>` : ""}</span><small>${esc(m.yo ? "Tú" : m.nom)}</small>`;
+        // tocar la cara d'un altre: al líder i als admins, el que poden fer amb ell; als altres, el seu perfil
+        if (m.yo || !m.pid) return `<span class="${cl}">${dins}</span>`;
+        return gestor ? `<button class="${cl}" data-accion="nsq-membre" data-id="${q.id}" data-p="${esc(m.pid)}" aria-label="${esc(m.nom)}: qué hacer">${dins}</button>`
+          : `<button class="${cl}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(m.nom)}">${dins}</button>`; }).join("")}${(q.convidats || []).map(c => `<span class="nsq-cara convidat"><span class="nsq-cara-i"><img src="${caraDe(c.personatge)}" alt="" draggable="false"><i class="nsq-rol">Invitado</i></span><small>${esc(c.nom)}</small></span>`).join("")}</div>
       ${q.repte ? `<div class="nsq-repte${q.repte.fet ? " fet" : ""}"><div class="nsq-repte-t"><span>${NOM_REPTE[q.repte.tipus](q.repte.meta)}</span><b class="num">${n0(q.repte.progres)} / ${n0(q.repte.objectiu)}</b></div><div class="np3-barra"><i style="width:${pc.toFixed(1)}%"></i></div>${q.repte.fet ? `<small>¡Reto conseguido!</small>` : ""}</div>`
-        : q.jo_lider ? `<button class="nsq-b2" data-accion="nsq-repte" data-id="${q.id}">Poner el reto de la semana</button>` : `<p class="nsq-nota">Esta semana aún no hay reto.</p>`}
+        : gestor ? `<button class="nsq-b2" data-accion="nsq-repte" data-id="${q.id}">Poner el reto de la semana</button>` : `<p class="nsq-nota">Esta semana aún no hay reto.</p>`}
       ${q.crides.map(c => `<div class="nsq-cr"><span><span class="nsq-cr-t"><b>${esc(c.yo ? "Tú" : c.de)}</b> ${c.yo ? "vas" : "va"} al gym ${quanTxt(c.quan)}</span><small>${c.apuntats} ${c.apuntats === 1 ? "va" : "van"}</small></span>${c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button data-accion="nsq-apunta" data-c="${c.id}">Me apunto</button>`}</div>`).join("")}
       <div class="nsq-crida"><b>¿Vas al gym?</b><div class="nsq-quan">${QUAN.map(([m, t]) => `<button data-accion="nsq-crida" data-id="${q.id}" data-m="${m}">${t}</button>`).join("")}</div></div>
-      ${tot ? htmlDades(q) + `<div class="nsq-accions">${q.jo_lider ? `<button data-accion="nsq-invita" data-id="${q.id}">${I_MENU.inv}<span>Invitar</span></button><button data-accion="nsq-repte" data-id="${q.id}">${I_TU.est}<span>Reto</span></button>` : ""}<button data-accion="nsq-rutina" data-id="${q.id}">${I_MENU.rut}<span>Enviar mi rutina</span></button><button class="fora" data-accion="nsq-surt" data-id="${q.id}">${I_X}<span>Salir</span></button></div>` : ""}
+      ${tot ? htmlDades(q) + `<div class="nsq-accions">${gestor ? `<button data-accion="nsq-invita" data-id="${q.id}">${I_MENU.inv}<span>Invitar</span></button><button data-accion="nsq-repte" data-id="${q.id}">${I_TU.est}<span>Reto</span></button>` : ""}<button data-accion="nsq-rutina" data-id="${q.id}">${I_MENU.rut}<span>Enviar mi rutina</span></button><button class="fora" data-accion="nsq-surt" data-id="${q.id}">${I_X}<span>Salir</span></button></div>` : ""}
     </div>`;
   }
   // LES DADES DE LA SETMANA: els dies, per a tothom; la resta, amb el PRO (Albert: «ha de deixar pas al pla pro per mostrar
@@ -9746,6 +10002,36 @@ const Nit = (() => {
         : `<p>Solo puedes invitar a quien sea amigo tuyo y de todos los de la squad.</p>`); return;
     }
     if (a === "nsq-invita-si") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", `/squads/${id}/invita`, { pid: b.dataset.p }, "Invitación enviada."); return; }
+    // la gestió d'un de la squad: el perfil, fer-lo admin o treure-li, passar-li el lideratge i treure'l
+    const tancaFull = () => { const f = b.closest(".nsq-full"); if (f) f.remove(); };
+    if (a === "nsq-membre") {
+      const q = ((d && d.squads) || []).find(x => x.id === id), m = q && q.membres.find(x => x.pid === b.dataset.p); if (!q || !m) return;
+      S.ui.nsqGest = { id, pid: m.pid, nom: m.nom };
+      const pot = q.jo_lider || (!m.lider && !m.admin);              // un admin no toca el líder ni un altre admin
+      fullN(m.nom, `<div class="nsq-gest">
+        <button data-accion="nsq-perfil" data-p="${esc(m.pid)}">Ver su perfil</button>
+        ${q.jo_lider ? `<button data-accion="nsq-admin" data-id="${q.id}" data-p="${esc(m.pid)}" data-si="${m.admin ? 0 : 1}">${m.admin ? "Quitarle el admin" : "Hacerle admin"}</button>
+          <button data-accion="nsq-lider" data-id="${q.id}" data-p="${esc(m.pid)}">Pasarle el liderazgo</button>` : ""}
+        ${pot ? `<button class="fora" data-accion="nsq-treu" data-id="${q.id}" data-p="${esc(m.pid)}">Echarle de la squad</button>` : ""}</div>`);
+      return;
+    }
+    if (a === "nsq-perfil") { tancaFull(); if (typeof obrePerfil === "function") obrePerfil(b.dataset.p); return; }
+    if (a === "nsq-admin") {
+      tancaFull(); const si = b.dataset.si === "1", nom = (S.ui.nsqGest || {}).nom || "";
+      await fes("POST", `/squads/${id}/admin`, { pid: b.dataset.p, admin: si }, si ? `${nom} ya es admin.` : `${nom} ya no es admin.`); return;
+    }
+    if (a === "nsq-lider" || a === "nsq-treu") {
+      tancaFull(); S.ui.nsqGest = { ...(S.ui.nsqGest || {}), id, pid: b.dataset.p }; const nom = S.ui.nsqGest.nom || "";
+      confirma(a === "nsq-lider" ? { titol: `¿Pasarle el liderazgo a ${nom}?`, text: "Tú te quedas de admin.", si: "Pasar", no: "Cancelar", accio: "nsq-lider-si", ic: ic("medalla") }
+        : { titol: `¿Echar a ${nom} de la squad?`, text: "Podréis volver a invitarle.", si: "Echar", no: "Cancelar", accio: "nsq-treu-si" });
+      return;
+    }
+    if (a === "nsq-lider-si" || a === "nsq-treu-si") {
+      const g = S.ui.nsqGest || {}; if (!g.id || !g.pid) return;
+      if (a === "nsq-lider-si") await fes("POST", `/squads/${g.id}/lider`, { pid: g.pid }, `Ahora lidera ${g.nom}.`);
+      else await fes("POST", `/squads/${g.id}/treu`, { pid: g.pid }, `${g.nom} ya no está en la squad.`);
+      return;
+    }
   }
 
   /* ======================= L'ENTRADA (l'Albert, 29-09: «el login encara s'ha de canviar») =======================
@@ -11199,6 +11485,38 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nc3-c{position:relative;aspect-ratio:63/88;border:0;padding:4px;border-radius:12px;cursor:pointer;font:inherit;color:inherit;
   background:linear-gradient(145deg,var(--c1),var(--c2) 42%,var(--c3) 64%,var(--c1));box-shadow:0 12px 20px -14px rgb(0 0 0 / .95);transition:transform .15s}
 .nc3-c:active{transform:scale(.96)}
+.nc3-c{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.nc3-c img{-webkit-touch-callout:none;pointer-events:none}
+.nc3-pos{position:absolute;top:-9px;left:-9px;z-index:2;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#0b1119;color:var(--nt-tinta);font:400 12px/1 'Anton','Nunito',sans-serif;font-style:normal;box-shadow:0 0 0 2px rgb(var(--m-rgb) / .6)}
+.nc3-mazo,.nc3-solts{display:grid;gap:12px}
+.nc3-mazo .nc3-t{padding:0 4px}
+.nc3-forat{display:block;background:none!important;box-shadow:inset 0 0 0 2px rgb(var(--m-rgb) / .5)!important;border-radius:12px;padding:0}
+.nc3-forat > *{visibility:hidden}
+.nc3-forat.nc3-fora{box-shadow:inset 0 0 0 2px rgb(255 255 255 / .1)!important}
+.nc3-agafada{opacity:.3}
+.nc3-vola{position:fixed;z-index:90;margin:0;pointer-events:none;transform-origin:50% 50%;box-shadow:0 26px 44px -14px rgb(0 0 0 / .95),0 0 0 2px rgb(var(--m-rgb) / .95),0 0 30px rgb(var(--m-rgb) / .6)}
+.nc3-pista{margin:0 2px;font-size:13px;font-weight:800;color:var(--nt-suau)}
+.nc3-solts{position:relative;margin:0 -8px;padding:6px 8px 10px;border-radius:22px;transition:background .2s,box-shadow .2s}
+.nc3-solts.on{background:rgb(var(--l2-rgb) / .07);box-shadow:inset 0 0 0 2px rgb(var(--l2-rgb) / .55)}
+.nc3-solta{position:fixed;z-index:95;left:50%;top:calc(env(safe-area-inset-top) + 86px);translate:-50% -8px;opacity:0;pointer-events:none;transition:opacity .16s,translate .16s;padding:9px 16px;border-radius:999px;white-space:nowrap;background:rgb(var(--l2-rgb));box-shadow:0 12px 26px -10px rgb(0 0 0 / .8);color:#10131a;font-size:14px;font-weight:900}
+.nc3-solta.on{opacity:1;translate:-50% 0}
+.nc3-buit-t{margin:0;padding:22px 16px;border-radius:18px;background:#111923;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .06);color:var(--nt-suau);font-size:14px;font-weight:800;text-align:center}
+.nc3-rebuda{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:0;border-radius:18px;cursor:pointer;text-align:left;font:inherit;color:inherit;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1),0 0 0 1px rgb(var(--l2-rgb) / .35)}
+.nc3-rebuda img{flex:none;width:42px;height:42px;border-radius:50%;object-fit:cover;background:#0b1119}
+.nc3-rebuda span{flex:1;min-width:0;display:grid;gap:2px}
+.nc3-rebuda b{font-size:14px;font-weight:900;line-height:1.25}
+.nc3-rebuda small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.nc3-rebuda i{flex:none;font-style:normal;padding:8px 14px;border-radius:999px;background:rgb(var(--l2-rgb) / .16);color:rgb(var(--l2-rgb));font-size:13px;font-weight:900}
+.nc3-arx-b{display:flex;align-items:baseline;justify-content:space-between;width:100%;padding:12px 14px;border:0;border-radius:16px;cursor:pointer;background:#141c25;color:var(--nt-suau);font:900 15px/1 'Nunito',system-ui,sans-serif}
+.nc3-arx-b small{font:400 15px/1 'Anton','Nunito',sans-serif}
+.nc3-arx{display:grid;gap:8px}
+.nc3-arx-f{display:flex;align-items:center;gap:10px;padding:10px 10px 10px 14px;border-radius:16px;background:#141c25}
+.nc3-arx-f span{flex:1;min-width:0;display:grid;gap:2px}
+.nc3-arx-f b{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc3-arx-f small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.nc3-arx-f button{flex:none;height:36px;padding:0 14px;border:0;border-radius:999px;cursor:pointer;background:rgb(var(--m-rgb) / .16);color:rgb(var(--m-rgb));font:900 13px/1 'Nunito',system-ui,sans-serif}
+@media (prefers-reduced-motion:no-preference){body.nc3-arr .nc3-mazo .nc3-c:not(.nc3-forat){animation:nc3-tremola .24s ease-in-out infinite alternate}}
+@keyframes nc3-tremola{from{rotate:-.9deg}to{rotate:.9deg}}
 .nc3-in{display:flex;flex-direction:column;gap:4px;height:100%;border-radius:9px;padding:6px 5px 5px;overflow:hidden;background:linear-gradient(180deg,rgb(255 255 255 / .06),rgb(255 255 255 / .015) 40%),#19212a}
 .nc3-t{font-size:11px;font-weight:900;line-height:1.1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nc3-il{flex:1;min-height:0;display:grid;place-items:center;border-radius:7px;overflow:hidden}
@@ -11232,6 +11550,16 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
 .nsq-caras::-webkit-scrollbar{display:none}
 .nsq-cara{display:grid;justify-items:center;gap:4px;flex:none;width:58px}
 .nsq-cara img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08)}
+.nsq-cara-i{position:relative;display:block;width:52px;height:52px}
+.nsq-rol{position:absolute;left:50%;bottom:-6px;translate:-50% 0;padding:2px 6px;border-radius:999px;white-space:nowrap;font-style:normal;font-size:9.5px;font-weight:900;line-height:1.2;color:rgb(var(--mt-rgb));background:rgb(var(--m-rgb));box-shadow:0 0 0 2px #151c25}
+.nsq-cara.admin .nsq-rol{color:#10131a;background:rgb(var(--l-rgb))}
+.nsq-cara.convidat{opacity:.55}
+.nsq-cara.convidat .nsq-rol{color:var(--nt-tinta);background:#2a3441}
+.nsq-cara small{margin-top:4px}
+.nsq-admin{color:#10131a;background:rgb(var(--l-rgb))}
+.nsq-gest{display:grid;gap:8px;margin:14px 0 10px}
+.nsq-gest button{height:52px;border:0;border-radius:16px;cursor:pointer;background:#1c242e;color:var(--nt-tinta);font:900 15px/1 'Nunito',system-ui,sans-serif}
+.nsq-gest button.fora{color:#ff8f80}
 .nsq-cara.fet img{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
 .nsq-cara.lider img{outline:2px dashed rgb(var(--l-rgb) / .8);outline-offset:3px}
 .nsq-cara small{max-width:58px;font-size:11px;font-weight:900;color:var(--nt-suau);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
