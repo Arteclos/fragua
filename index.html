@@ -10894,9 +10894,14 @@ const Nit = (() => {
     if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo || esMenor()) return;
     const m = S.ui.mercat;
     if (!forca && m && Date.now() - m.at < 30000) return;
-    try { const r = await api("GET", "/mercat" + (S.ui.mercatGym ? "?gym=1" : "")); S.ui.mercat = { ...r, at: Date.now(), gym: !!S.ui.mercatGym }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
+    try { const r = await api("GET", "/mercat" + (S.ui.mercatGym ? "?gym=1" : S.ui.mercatSeg ? "?seguits=1" : "")); S.ui.mercat = { ...r, at: Date.now(), gym: !!S.ui.mercatGym }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
     if (S.ui.vista === "tienda" && S.ui.tiendaTab === "rutinas" && typeof render === "function") render();
   }
+  // LA REPUTACIÓ DEL CREADOR (29-09 vespre, LA LLISTA 4; l'Àlex: «MARCOS · Diamond Athlete · Verified · Creator 4.8»): les
+  // estrelles que li posen els qui han comprat i entrenat amb les seves rutines, separades de la força (el sigma) i de la
+  // constància (els entrenos). La mitjana no surt fins a tres valoracions (mercat.py).
+  const estr = x => (Math.round(x * 10) / 10).toFixed(1).replace(".", ",");
+  const repMini = o => o.creador && o.creador.estrelles != null ? `<small class="nm3-rep">${I_TU.est}<b>${estr(o.creador.estrelles)}</b> como creador</small>` : "";
   const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? d[2] : ""; };
   const marcM = m => (MAT[m] ? ` style="--mc:${MAT[m][1]}"` : "");
   // ELS MAZOS DE KLONK (29-09, REVISIO-PER-VENDRE §5.2): les plantilles de sempre, gratis, a la prestatgeria del mercat, perquè
@@ -10914,7 +10919,7 @@ const Nit = (() => {
   };
   const baralla = (o, extra = "") => `<button class="nm3-o${o.comprada ? " teva" : ""}" data-accion="nm3-obre" data-id="${o.id}" data-in="nb"${extra}>
       <span class="nm3-pila"${marcM(o.mat)}><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
-      ${o.mateix_gym ? `<em class="nm3-gym">De tu gym</em>` : ""}<b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small><small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
+      ${o.mateix_gym ? `<em class="nm3-gym">De tu gym</em>` : ""}<b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small>${repMini(o)}<small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
       <span class="nm3-peu">${o.comprada ? `<em class="nm3-tuya">Es tuya</em>` : `<em class="nm3-preu">${ic("moneda")}${n0(o.preu)}</em>`}<small>${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : o.nou ? "Nueva" : ""}</small></span></button>`;
   function vistaMercat() {
     if (esMenor()) return `<p class="nb2-av">El mercado de rutinas es para mayores de edad.</p>`;
@@ -10926,10 +10931,11 @@ const Nit = (() => {
     const meves = m.meves || [], ofertes = m.ofertes || [], teves = (S.rutinas || []).filter(r => !r.mercat);
     return `${teves.length ? `<div class="nm3-ven" data-in="nb"><div><b>Vende tus rutinas</b><p>Te llega el ${Math.round((m.part || .7) * 100)} % de cada venta, en oro.</p></div><button class="nm3-b" data-accion="nm3-ven">Vender una</button></div>` : ""}
       ${meves.length ? `<h2 class="nb2-t" data-in="nb">Tus ventas</h2><div class="nm3-meves">${meves.map(o => `<div class="nm3-meva" data-in="nb"><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"><span><b>${esc(o.titol)}</b><small>${n0(o.preu)} de oro · ${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : "sin ventas aún"}${o.estat === "amagat" ? " · oculta por denuncias" : ""}</small></span><button data-accion="nm3-retira" data-id="${o.id}">Retirar</button></div>`).join("")}</div>
-        ${m.guanyat ? `<p class="nm3-guanyat" data-in="nb">Llevas ${n0(m.guanyat)} de oro ganado vendiendo.</p>` : ""}` : ""}
+        ${m.guanyat ? `<p class="nm3-guanyat" data-in="nb">Llevas ${n0(m.guanyat)} de oro ganado vendiendo.</p>` : ""}
+        ${m.jo ? `<p class="nm3-guanyat" data-in="nb">${m.jo.estrelles != null ? `Como creador tienes ${estr(m.jo.estrelles)} de 5 con ${n0(m.jo.valoracions)} valoraciones. ` : ""}${n0(m.jo.entrenen)} ${m.jo.entrenen === 1 ? "persona entrena" : "personas entrenan"} con tus rutinas y ${n0(m.jo.seguidors)} te ${m.jo.seguidors === 1 ? "sigue" : "siguen"}.</p>` : ""}` : ""}
       <h2 class="nb2-t" data-in="nb">A la venta</h2>
-      ${m.te_gym ? `<div class="nm3-xips nm3-filtre" data-in="nb"><button class="chip" data-accion="nm3-gym" data-g="0" aria-pressed="${!S.ui.mercatGym}">Todas</button><button class="chip" data-accion="nm3-gym" data-g="1" aria-pressed="${!!S.ui.mercatGym}">De tu gym</button></div>` : ""}
-      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : S.ui.mercatGym ? `<p class="nb2-av">Aún nadie de tu gym vende rutinas. Solo salen quienes son públicos en el ranking del gym.</p>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}
+      <div class="nm3-xips nm3-filtre" data-in="nb"><button class="chip" data-accion="nm3-gym" data-g="0" aria-pressed="${!S.ui.mercatGym && !S.ui.mercatSeg}">Todas</button>${m.te_gym ? `<button class="chip" data-accion="nm3-gym" data-g="1" aria-pressed="${!!S.ui.mercatGym}">De tu gym</button>` : ""}<button class="chip" data-accion="nm3-gym" data-g="s" aria-pressed="${!!S.ui.mercatSeg}">Que sigues</button></div>
+      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : S.ui.mercatGym ? `<p class="nb2-av">Aún nadie de tu gym vende rutinas. Solo salen quienes son públicos en el ranking del gym.</p>` : S.ui.mercatSeg ? `<p class="nb2-av">Aún no sigues a nadie. En la ficha de una rutina, «Seguir» a quien la ha hecho.</p>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}
       <h2 class="nb2-t" data-in="nb">Mazos de KLONK</h2>
       <p class="nb2-av nm3-k-av" data-in="nb">Gratis y hechos con ciencia. Úsalos tal cual o cópialos y cámbialos a tu gusto.</p>
       <div class="nm3-grid">${(u => [RUTINA_BASE, ...PLANTILLAS].map(r => barallaKlonk(r, u)).join(""))(new Set())}</div>`;
@@ -10945,8 +10951,21 @@ const Nit = (() => {
          ${falta ? `<p class="nm3-nota">Te faltan ${n0(falta)} de oro.</p>` : ""}`;
     fullN(o.titol, `<div class="nm3-fitxa"><img class="nm3-gran" src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"${marcM(o.mat)}>
       <p class="nm3-meta">de ${o.pid ? `<button class="nm3-perfil" data-accion="nm3-perfil" data-p="${esc(o.pid)}">${esc(o.autor)}</button>` : esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""} · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK<br>${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
+      ${htmlRep(o)}
       ${accio}<div class="nm3-dies">${dies}</div>
       ${o.meva ? "" : `<button class="nm3-informa" data-accion="nm3-informa" data-id="${o.id}">Denunciar esta rutina</button>`}</div>`);
+  }
+  function htmlRep(o) {
+    const r = o.creador || {}, m = S.ui.mercat || {};
+    const cap = r.estrelles != null ? `${I_TU.est}<b>${estr(r.estrelles)}</b><small>de 5, con ${n0(r.valoracions)} valoraciones</small>` : `<b>Creador nuevo</b><small>${r.valoracions ? "Aún pocas valoraciones" : "Aún sin valoraciones"}</small>`;
+    const seg = o.meva ? "" : `<button class="nm3-seg${o.segueixo ? " on" : ""}" data-accion="nm3-segueix" data-id="${o.id}" aria-pressed="${!!o.segueixo}">${o.segueixo ? "Siguiendo" : "Seguir"}</button>`;
+    const min = m.min_dies || 2;
+    const valora = !o.comprada || o.meva ? ""
+      : o.pot_valorar ? `<div class="nm3-valora"><small id="nm3-valora-t">${o.la_meva ? "Tu valoración" : "¿Qué te ha parecido?"}</small><div class="nm3-estr">${[1, 2, 3, 4, 5].map(k => `<button data-accion="nm3-valora" data-id="${o.id}" data-e="${k}" aria-pressed="${(o.la_meva || 0) >= k}" aria-label="${k} de 5">${I_TU.est}</button>`).join("")}</div></div>`
+      : `<p class="nm3-nota">Podrás valorarla cuando hayas entrenado con ella ${min} días${o.dies_amb_ella ? ` (llevas ${o.dies_amb_ella})` : ""}.</p>`;
+    return `<div class="nm3-rep-b"><span class="nm3-rep-cap"><small>Como creador</small><span>${cap}</span></span>
+        <span class="nm3-rep-n"><b>${n0(r.entrenen || 0)}</b><small>${r.entrenen === 1 ? "entrena con sus rutinas" : "entrenan con sus rutinas"}</small></span>
+        <span class="nm3-rep-n"><b id="nm3-seguidors">${n0(r.seguidors || 0)} ${r.seguidors === 1 ? "seguidor" : "seguidores"}</b>${seg}</span></div>${valora}`;
   }
   function obreVenda() {
     const teves = (S.rutinas || []).filter(r => !r.mercat);
@@ -10967,7 +10986,25 @@ const Nit = (() => {
     if (a === "nm3-obre") return obreOferta(b.dataset.id);
     if (a === "nm3-ven") return obreVenda();
     if (a === "nm3-perfil") { document.querySelectorAll(".nsq-full").forEach(x => x.remove()); if (typeof obrePerfil === "function") obrePerfil(b.dataset.p); return; }
-    if (a === "nm3-gym") { S.ui.mercatGym = b.dataset.g === "1"; fx(E => { E.suena("tap"); E.vibra("tria"); }); return carregaMercat(true); }
+    if (a === "nm3-gym") { S.ui.mercatGym = b.dataset.g === "1"; S.ui.mercatSeg = b.dataset.g === "s"; fx(E => { E.suena("tap"); E.vibra("tria"); }); return carregaMercat(true); }
+    if (a === "nm3-segueix") {
+      let r; try { r = await api("POST", "/mercat/" + b.dataset.id + "/segueix"); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+      b.classList.toggle("on", !!r.segueixo); b.setAttribute("aria-pressed", String(!!r.segueixo)); b.textContent = r.segueixo ? "Siguiendo" : "Seguir";
+      const n = document.getElementById("nm3-seguidors"); if (n) n.textContent = `${n0(r.seguidors)} ${r.seguidors === 1 ? "seguidor" : "seguidores"}`;
+      fx(E => { E.suena(r.segueixo ? "or" : "tap"); E.vibra("tria"); });
+      if (S.ui.mercat) S.ui.mercat.at = 0;
+      return;
+    }
+    if (a === "nm3-valora") {
+      const k = +b.dataset.e;
+      try { await api("POST", "/mercat/" + b.dataset.id + "/valora", { estrelles: k }); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+      b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.e <= k)));
+      const t = document.getElementById("nm3-valora-t"); if (t) t.textContent = "Tu valoración";
+      fx(E => { E.suena("or"); E.vibra("fet"); });
+      if (typeof avis === "function") avis(`Valoración guardada: ${k} de 5.`);
+      if (S.ui.mercat) S.ui.mercat.at = 0;
+      return;
+    }
     if (a === "nm3-v") {
       S.ui.venda = { ...(S.ui.venda || {}), [b.dataset.k]: b.dataset.k === "p" ? +b.dataset.v : b.dataset.v };
       b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
@@ -12596,6 +12633,19 @@ body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .nm3-ej{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;color:#c9d2da}
 .nm3-ej img,.nm3-ej i{flex:none;width:30px;height:30px;border-radius:50%;object-fit:cover;background:#10171e}
 .nm3-nota{margin:0;font-size:13px;font-weight:700;line-height:1.4;color:#aab4be}
+/* LA REPUTACIÓ DEL CREADOR (29-09 vespre, LA LLISTA 4) */
+.nm3-rep{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:#8b98a4}
+.nm3-rep svg{width:13px;height:13px;color:#f3c74f}.nm3-rep b{color:var(--nt-tinta)}
+.nm3-rep-b{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px;align-items:stretch}
+.nm3-rep-b > span{display:grid;align-content:start;justify-items:center;gap:3px;padding:10px 6px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
+.nm3-rep-b small{font-size:11.5px;font-weight:800;line-height:1.25;color:#8b98a4}.nm3-rep-b b{font-size:15px;font-weight:900;color:var(--nt-tinta)}
+.nm3-rep-cap > span{display:grid;justify-items:center;gap:2px}.nm3-rep-cap svg{width:18px;height:18px;color:#f3c74f}
+.nm3-seg{height:30px;margin-top:4px;padding:0 12px;border:0;border-radius:999px;cursor:pointer;font:900 12.5px/1 'Nunito',system-ui,sans-serif;
+  background:rgb(var(--m-rgb) / .14);color:var(--nt-menta);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .45)}
+.nm3-seg.on{background:var(--nt-menta);color:#0d1217}
+.nm3-valora{display:grid;justify-items:center;gap:6px}.nm3-valora small{font-size:12.5px;font-weight:800;color:#8b98a4}
+.nm3-estr{display:flex;gap:6px}.nm3-estr button{width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:12px;cursor:pointer;
+  background:var(--fb-sup);color:#4a5561}.nm3-estr button svg{width:22px;height:22px}.nm3-estr button[aria-pressed="true"]{color:#f3c74f}
 .nm3-informa{justify-self:center;border:0;background:none;color:#8b98a4;font:800 12.5px 'Nunito',system-ui,sans-serif;text-decoration:underline;cursor:pointer}
 .nm3-venda{display:grid;gap:8px;text-align:left}
 .nm3-et{margin-top:6px;font-size:13px;font-weight:900;color:#c9d2da}
