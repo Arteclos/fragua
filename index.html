@@ -3032,6 +3032,20 @@ function refrescaTria() { const l = $("#tria-llista"); if (l) l.innerHTML = llis
 /* ---------------------------------------------------------------- els gestos */
 const nouId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 const copia = r => ({ id: nouId(), nombre: r.nombre, resumen: r.resumen || "", dias: r.dias.map(d => ({ t: d.t, ej: d.ej.map(e => [...e]) })) });
+// LES RUTINES TEVES: UNA DE FRANC, MÉS AMB EL PRO (29-09 vespre, LA LLISTA I; l'Albert: «diverses rutines, com a mazos, i
+// canviar entre elles; una de franc, més amb el Pro»). Compten les que fas tu (creades, copiades d'una plantilla,
+// importades o desades d'un enllaç). No compten les de KLONK (sempre de franc), les del mercat (ja s'han pagat) ni les que
+// t'envia un amic (porten `autor`): si no, rebre la rutina d'un amic toparia amb un Pro que encara no es ven, i compartir
+// rutines quedaria tallat. Les que ja tenies no es perden mai: el límit només no et deixa fer-ne una altra.
+const MAX_RUTINAS = 1;
+const esPro = () => !!(S.pro && S.pro.actiu);
+const rutinesMeves = () => (S.rutinas || []).filter(r => !r.mercat && !r.autor);
+const potNovaRutina = () => esPro() || rutinesMeves().length < MAX_RUTINAS;
+function murRutina() {
+  if (typeof esMenor === "function" && esMenor()) { avis("Ya tienes tu rutina. Borra una para hacer otra.", true); return; }
+  avis("Tu rutina gratis ya la tienes. Con KLONK PRO, todas las que quieras.");
+  if (document.body.classList.contains("v-nit")) veure("pro");
+}
 function accioRutina(acc, b) {
   switch (acc) {
     case "dia-obre": { const n = +b.dataset.dia; S.ui.diaObert = S.ui.diaObert === n ? null : n; guardar(); render(); return true; }
@@ -3048,8 +3062,8 @@ function accioRutina(acc, b) {
       Efectos.suena("gel-destral"); setTimeout(() => Efectos.suena("gel-trenca"), 280); setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); }, 650);
       Efectos.lluvia(1.2); Efectos.vibra("forja"); render(); avis(`«${r.nombre}» es tuya.`); return true;
     }
-    case "rut-nova": S.ui.edit = { id: nouId(), nombre: "Mi rutina", dias: [{ t: "Día 1", ej: [] }] }; guardar(); veure("editor"); return true;
-    case "rut-copiar": { const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r) return true; S.ui.edit = copia(r); S.ui.edit.nombre = r.nombre + " (mía)"; guardar(); veure("editor"); return true; }
+    case "rut-nova": if (!potNovaRutina()) { murRutina(); return true; } S.ui.edit = { id: nouId(), nombre: "Mi rutina", dias: [{ t: "Día 1", ej: [] }] }; guardar(); veure("editor"); return true;
+    case "rut-copiar": { if (!potNovaRutina()) { murRutina(); return true; } const r = totesRutinas().find(x => x.id === b.dataset.id); if (!r) return true; S.ui.edit = copia(r); S.ui.edit.nombre = r.nombre + " (mía)"; guardar(); veure("editor"); return true; }
     case "rut-editar": { const r = rutinaPropia(b.dataset.id); if (!r) return true; S.ui.edit = JSON.parse(JSON.stringify(r)); guardar(); veure("editor"); return true; }
     case "rut-borrar": { S.rutinas = (S.rutinas || []).filter(x => x.id !== b.dataset.id); guardar(); veure("rutinas"); Efectos.suena("apaga"); return true; }
     case "ed-dia": llegeixEditor(); S.ui.edit.dias.push({ t: "Día " + (S.ui.edit.dias.length + 1), ej: [] }); guardar(); render(); return true;
@@ -3071,6 +3085,7 @@ function accioRutina(acc, b) {
       llegeixEditor();
       const r = S.ui.edit, dies = r.dias.filter(d => d.ej.length);
       if (!dies.length) { avis("Añade al menos un ejercicio.", true); return true; }
+      if (!(S.rutinas || []).some(x => x.id === r.id) && !potNovaRutina()) { murRutina(); return true; }
       r.dias = dies; r.nombre = r.nombre.trim() || "Mi rutina";
       let encesa = false;
       // una rutina importada (src/importa.js): les sèries i repeticions llegides entren ara, en desar-la, i no abans
@@ -3323,6 +3338,7 @@ async function accioCompartir(acc, b) {
     case "rut-guarda-enllac": case "rut-guarda-rebuda": {
       const x = acc === "rut-guarda-enllac" ? S.ui.rutEnllac : ((S.recibidas || []).find(y => String(y.id) === b.dataset.id) || {}).rutina;
       if (!x) return true;
+      if (acc === "rut-guarda-enllac" && !potNovaRutina()) { tancaFull(); murRutina(); return true; }
       const nova0 = guardaRutinaDeFora(x);
       if (acc === "rut-guarda-rebuda") { const reb = (S.recibidas || []).find(y => String(y.id) === b.dataset.id); if (reb && reb.de) nova0.autor = String(reb.de).slice(0, 20); }
       if (acc === "rut-guarda-rebuda") { S.recibidas = S.recibidas.filter(y => String(y.id) !== b.dataset.id); api("DELETE", "/rutinas/recibidas/" + b.dataset.id).catch(() => {}); }
@@ -4045,7 +4061,7 @@ function vistaEmpieza() {
 
 function accioImporta(acc, b) {
   switch (acc) {
-    case "rut-importa": S.ui.impPas = "text"; obreFull(fullImporta(), "Importar tu rutina"); return true;
+    case "rut-importa": if (typeof potNovaRutina === "function" && !potNovaRutina()) { murRutina(); return true; } S.ui.impPas = "text"; obreFull(fullImporta(), "Importar tu rutina"); return true;
     case "imp-llegeix": llegeixImp(); return true;
     case "imp-torna": S.ui.impPas = "text"; refrescaResultatImp(); return true;
     case "rut-plantilles": obreFull(fullPlantilles(), "Plantillas de KLONK"); return true;
@@ -8718,6 +8734,8 @@ const Nit = (() => {
       if (c) { ev.preventDefault(); ev.stopPropagation(); klonk(c); return; }
       if (a) { ev.preventDefault(); ev.stopPropagation(); klonkAmic(a); return; }
     }
+    const mz = ev.target.closest('[data-accion="nmz-usa"]');
+    if (mz) { ev.preventDefault(); ev.stopPropagation(); usaMazo(mz.dataset.id); return; }
     const ra = ev.target.closest('[data-accion="nt-rangs"], [data-accion="nt-editapj"]');
     if (ra) { ev.preventDefault(); ev.stopPropagation(); if (ra.dataset.accion === "nt-rangs") obreRangs(); else obreEditaPj(); return; }
     const na = ev.target.closest('[data-accion="nc-apat"]');
@@ -9594,7 +9612,7 @@ const Nit = (() => {
     const plantilla = r => `<button class="nr-p" data-accion="rut-ver" data-id="${r.id}" data-in="nr"><img src="${R()}musculs-${tipusRutina(r)}.webp" alt="" draggable="false"><span><b>${esc(r.nombre)}</b><span class="nr-p-d">${htmlEstrellas(r)}<small>${nDies(r.dias.length)}, ${seriesSemana(r)} series</small></span></span>${I_TU.fle}</button>`;
     return `<h1 class="titol-pag">Rutinas</h1>
       <section class="nr">
-        <h2 class="nr-t">Tus rutinas</h2>
+        <h2 class="nr-t">Tus rutinas${typeof esPro === "function" && !esPro() ? `<small>${rutinesMeves().length} de ${MAX_RUTINAS}</small>` : ""}</h2>
         ${teves.length ? `<div class="nr-carr">${teves.map(r => cartaRutina(r, act)).join("")}</div>` : `<p class="nr-buit">Aún no tienes ninguna tuya: crea una, importa la que ya usas o copia una plantilla y cámbiala a tu gusto.</p>`}
         <div class="nr-dos" data-in="nr"><button class="nt-boto" data-accion="rut-nova">${I_NC.mes}Crear una nueva</button><button class="nt-boto" data-accion="rut-importa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Importar la mía</button></div>
         ${rebudes.length ? `<h2 class="nr-t">Te han compartido</h2>${rebudes.map(x => `<div class="nr-rebuda" data-in="nr"><span><b>${esc(x.rutina.nombre)}</b><small>de ${esc(x.de)}, ${nDies(x.rutina.dias.length)}</small></span><span class="nr-rebuda-acc"><button class="nt-boto2 accio" data-accion="rut-guarda-rebuda" data-id="${x.id}">Guardar</button><button class="nt-boto2" data-accion="rut-descarta-rebuda" data-id="${x.id}">Descartar</button></span></div>`).join("")}` : ""}
@@ -9843,7 +9861,7 @@ const Nit = (() => {
       if (k === "empieza") { const b = el.querySelector(".nt-boto"); tancaMira(true); if (b) b.click(); else { so(); dispara({ accion: "empezar", dia: String(n) }); } return; }
       if (k === "usa") { tancaMira(true); dispara({ accion: "rut-usar", id: r.id }); return; }
       // (29-09 vespre, l'Albert: «a l'editar, només aquell entreno»): l'editor de la carta, no el de la rutina sencera
-      if (k === "edita") { tancaMira(true); if (enMarxa()) return; mazoPropi(); S.ui.edc = { lloc: "mazo", i: n - 1 }; veure("edcarta"); return; }
+      if (k === "edita") { tancaMira(true); if (enMarxa() || !mazoPropi()) return; S.ui.edc = { lloc: "mazo", i: n - 1 }; veure("edcarta"); return; }
       if (k === "edita-sol") { tancaMira(true); const x = ctx && ctx.x; if (!x || x.font !== "sol") return; S.ui.edc = { lloc: "sol", id: x.d.id }; veure("edcarta"); return; }
       if (k === "treu") { tancaMira(true); if (treuDelMazo(ctx.i)) { fx(E => { E.suena("tap"); E.vibra("tria"); }); if (typeof render === "function") render(); if (typeof avis === "function") avis("La tienes abajo, en «Tus entrenos»."); } return; }
       if (k === "posa") { tancaMira(true); if (posaAlMazo(ctx.x)) { fx(E => { if (E.mostra) E.mostra(SO_POSA(), { volum: .34 }); E.vibra("tria"); }); if (typeof render === "function") render(); if (typeof avis === "function") avis("Añadida al final de tu rutina."); } return; }
@@ -10053,6 +10071,7 @@ const Nit = (() => {
   function mazoPropi() {
     const act = rutinaActual();
     if (typeof rutinaPropia === "function" && rutinaPropia(act.id)) { idsMazo(act); return act; }
+    if (typeof potNovaRutina === "function" && !potNovaRutina()) { murRutina(); return null; }
     const nova = { id: typeof nouId === "function" ? nouId() : "r" + Date.now().toString(36), nombre: act.nombre + " (mía)", resumen: act.resumen || "",
       dias: act.dias.map((d, i) => ({ id: nouIdCarta(), o: act.id + ":" + (i + 1), t: d.t, ej: d.ej.map(e => [...e]), klonk: true })) };
     nova.dias.forEach(d => { const il = (S.cartesIl || {})[d.o]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il }; });
@@ -10062,7 +10081,8 @@ const Nit = (() => {
   }
   function reordena(ordre) {
     if (enMarxa()) return false;
-    const r = mazoPropi(), dies = ordre.map(i => r.dias[i]);
+    const r = mazoPropi(); if (!r) return false;
+    const dies = ordre.map(i => r.dias[i]);
     if (dies.length !== r.dias.length || dies.some(d => !d) || new Set(dies).size !== dies.length) return false;
     r.dias = dies; guardar(); return true;
   }
@@ -10070,7 +10090,8 @@ const Nit = (() => {
   function treuDelMazo(i) {
     if (enMarxa()) return false;
     if (rutinaActual().dias.length <= 1) { if (typeof avis === "function") avis("Tu rutina necesita al menos un entreno.", true); return false; }
-    const r = mazoPropi(), [d] = r.dias.splice(i, 1);
+    const r = mazoPropi(); if (!r) return false;
+    const [d] = r.dias.splice(i, 1);
     if (!d) return false;
     const autor = "autor" in d ? d.autor : r.autor, mat = "autor" in d ? d.mat : r.mat;
     const sol = { id: d.id, ...(d.o ? { o: d.o } : {}), ...(d.src ? { src: d.src } : {}), t: d.t, ej: d.ej, ...(autor ? { autor, mat } : {}), ...(d.klonk ? { klonk: true } : {}), ...(d.pr ? { pr: true } : {}) };
@@ -10081,6 +10102,7 @@ const Nit = (() => {
   function posaAlMazo(x, j) {
     if (enMarxa()) return false;
     if (rutinaActual().dias.length >= MAX_MAZO) { if (typeof avis === "function") avis(`Tu rutina ya tiene ${MAX_MAZO} entrenos.`, true); return false; }
+    const r = mazoPropi(); if (!r) return false;
     const autor = "autor" in x.d ? x.d.autor : x.r.autor, mat = "autor" in x.d ? x.d.mat : x.r.mat;
     let d;
     if (x.font === "sol") { d = { ...x.d }; S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id); }
@@ -10088,7 +10110,6 @@ const Nit = (() => {
       d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(e => [...e]), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}), ...(x.d.pr ? { pr: true } : {}) };
       const il = (S.cartesIl || {})[clauCarta(x.r, x.n)]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il };
     }
-    const r = mazoPropi();
     // qui la va crear viatja amb la carta; una de teva dins d'un mazo d'algú altre ho diu (autor buit)
     if (autor) { d.autor = autor; d.mat = mat; } else if (r.autor) { d.autor = ""; delete d.mat; } else { delete d.autor; delete d.mat; }
     r.dias.splice(j == null || j < 0 ? r.dias.length : Math.min(j, r.dias.length), 0, d);
@@ -10121,11 +10142,36 @@ const Nit = (() => {
   const MAX_ENTRENOS = 10;
   const usats = ss => ss.filter(x => !(x.d && x.d.pr)).length;
   function espais(ss) {
-    const u = usats(ss), buits = Math.max(0, MAX_ENTRENOS - u);
-    const crea = u < MAX_ENTRENOS ? `<button class="nc3-c nc3-nou" data-accion="nc3-nou" data-in="nc3" aria-label="Crear un entreno"><span>${I_NC.mes}</span><b>Crear entreno</b></button>`
+    const pro = typeof esPro === "function" && esPro(), u = usats(ss), buits = pro ? 0 : Math.max(0, MAX_ENTRENOS - u);
+    const crea = pro || u < MAX_ENTRENOS ? `<button class="nc3-c nc3-nou" data-accion="nc3-nou" data-in="nc3" aria-label="Crear un entreno"><span>${I_NC.mes}</span><b>Crear entreno</b></button>`
       : jove() ? `<p class="nc3-ple">Tienes tus ${MAX_ENTRENOS} entrenos: archiva uno para crear otro.</p>`
       : `<button class="nc3-c nc3-nou nc3-pro" data-accion="nt-ves" data-v="pro" data-in="nc3"><span>${ic("medalla")}</span><b>Más entrenos con KLONK PRO</b></button>`;
     return crea + Array.from({ length: Math.max(0, buits - 1) }, () => `<span class="nc3-c nc3-lliure" aria-hidden="true"></span>`).join("");
+  }
+  // LES BARALLES (29-09 vespre, LA LLISTA I): a dalt de «Tu rutina», les teves rutines com a mazos (tres cartes en ventall) i
+  // les de KLONK amb què has entrenat (cada entreno sap de quina rutina era: s.rut), en un ordre que no es mou quan en tries
+  // una; la que fas servir hi és sempre. Tocar-ne una la fa la teva rutina. Al final, fer-ne una de nova (una de franc; més,
+  // amb el Pro). Cap enllaç a Rutinas: «Cambiar et porta a una finestra que no té res a veure» (l'Albert, 28-09); aquí es
+  // canvia a lloc.
+  function htmlMazos(act) {
+    const totes = typeof totesRutinas === "function" ? totesRutinas() : [act], meves = S.rutinas || [];
+    const usades = [...new Set(S.ses.filter(s => s.rut).sort((x, y) => (y.inicio || 0) - (x.inicio || 0)).map(s => s.rut))]
+      .map(id => !meves.some(r => r.id === id) && totes.find(r => r.id === id)).filter(Boolean);
+    let llista = [...meves, ...usades];
+    if (!llista.some(r => r.id === act.id)) llista = [act, ...llista];
+    const ventall = r => `<span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span>`;
+    const pot = typeof potNovaRutina !== "function" || potNovaRutina();
+    const nou = pot ? `<button class="nmz nmz-nou" data-accion="rut-nova"><span class="nmz-ic">${I_NC.mes}</span><b>Nueva rutina</b></button>`
+      : jove() ? "" : `<button class="nmz nmz-nou nmz-pro" data-accion="nt-ves" data-v="pro"><span class="nmz-ic">${ic("medalla")}</span><b>Más rutinas con PRO</b></button>`;
+    return `<div class="nmz-fila" data-in="nc3">${llista.map(r => `<button class="nmz${r.id === act.id ? " on" : ""}" data-accion="nmz-usa" data-id="${esc(r.id)}" aria-pressed="${r.id === act.id}">${ventall(r)}<b>${esc(r.nombre)}</b><small>${r.id === act.id ? "En uso" : nDies(r.dias.length)}</small></button>`).join("")}${nou}</div>`;
+  }
+  function usaMazo(id) {
+    const r = (typeof totesRutinas === "function" ? totesRutinas() : []).find(x => x.id === id);
+    if (!r || r.id === rutinaActual().id || enMarxa() || (typeof rutinaTeva === "function" && !rutinaTeva(r))) return;
+    S.rutinaActiva = r.id; guardar();
+    fx(E => { E.suena("tap"); E.vibra("tria"); });
+    if (typeof avis === "function") avis(`Ahora entrenas con «${r.nombre}».`);
+    if (typeof render === "function") render();
   }
   function vistaCartas() {
     const r = rutinaActual(); idsMazo(r);
@@ -10133,13 +10179,14 @@ const Nit = (() => {
     let k = 0;
     return `<h1 class="titol-pag">Tu rutina</h1>
       <section class="nc3">
+        ${htmlMazos(r)}
         <div class="nc3-mazo">
           <h2 class="nc3-h" data-in="nc3">${esc(r.nombre)}<small>${r.dias.length}</small></h2>
           <div class="nc3-grid">${r.dias.map((d, i) => cartaMini(r, i + 1, k++, "mazo")).join("")}</div>
           ${S.nc3Mogut ? "" : `<p class="nc3-pista" data-in="nc3">Mantén pulsada una carta para moverla.</p>`}
         </div>
         <div class="nc3-solts">
-          <h2 class="nc3-h" data-in="nc3">Tus entrenos<small>${usats(ss)} de ${MAX_ENTRENOS}</small></h2>
+          <h2 class="nc3-h" data-in="nc3">Tus entrenos<small>${usats(ss)}${typeof esPro === "function" && esPro() ? "" : ` de ${MAX_ENTRENOS}`}</small></h2>
           ${rebudes.map(x => `<button class="nc3-rebuda" data-accion="nc3-rebuda" data-id="${esc(String(x.id))}" data-in="nc3"><img src="${caraDe(x.personatge)}" alt="" draggable="false"><span><b>${esc(x.de || "Un amigo")} te ha enviado «${esc(x.rutina.nombre)}»</b><small>${nDies(x.rutina.dias.length)}: mírala y decide si la quieres</small></span><i>Ver</i></button>`).join("")}
           <div class="nc3-grid">${ss.map(x => cartaMini(x.r, x.n, k++, "sol", x.k)).join("")}${espais(ss)}</div>
         </div>
@@ -11038,7 +11085,8 @@ const Nit = (() => {
     const PECES = [["El plan hecho para ti", "Tus días, tu objetivo y tu material se convierten en tu rutina, que se ajusta cada cuatro a seis semanas con lo que apuntas."],
       ["El análisis de cada ejercicio", "Si te has estancado y qué hacer, tu mejor marca prevista y tus series por músculo comparadas con lo que funciona."],
       ["Tu plan de comida", "Con tu peso, tu objetivo y lo que tienes en casa."],
-      ["Las estadísticas de tu squad", "Las series, los kilos y los récords de cada uno, sin difuminar."]];
+      ["Las estadísticas de tu squad", "Las series, los kilos y los récords de cada uno, sin difuminar."],
+      ["Rutinas y entrenos sin límite", "Una rutina tuya y diez entrenos son gratis; con PRO, todos los que quieras."]];
     const cta = !compte ? `<button class="nx-compra" data-accion="vista" data-v="compte">Crea tu cuenta y te avisamos</button>`
       : ja ? `<p class="npro-fet">${I_CHECK}Te avisaremos cuando salga.</p>`
       : `<button class="nx-compra" data-accion="npro-avisa">Avísame cuando salga</button>`;
@@ -11819,6 +11867,17 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 /* ======================= RUTINAS ======================= */
 .nr{display:grid;gap:10px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nr-t{margin:6px 2px 0;font-size:18px;font-weight:900}
+.nr-t:has(small){display:flex;align-items:baseline;justify-content:space-between}.nr-t small{font:400 16px/1 'Anton','Nunito',sans-serif;color:var(--nt-suau)}
+/* LES BARALLES (29-09 vespre, LA LLISTA I): una fila que corre de costat, cada rutina un ventall de tres cartes */
+.nmz-fila{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 8px;scrollbar-width:none;overscroll-behavior-x:contain}
+.nmz-fila::-webkit-scrollbar{display:none}
+.nmz{flex:none;width:118px;display:grid;justify-items:center;align-content:start;gap:4px;padding:10px 8px 12px;border:0;border-radius:18px;cursor:pointer;
+  scroll-snap-align:start;text-align:center;font:inherit;color:var(--nt-tinta);background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nmz b{font-size:13px;font-weight:900;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nmz small{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.nmz.on{box-shadow:var(--fb-o1),0 0 0 2px var(--nt-menta)}.nmz.on small{color:var(--nt-menta)}
+.nmz-nou{background:rgb(var(--m-rgb) / .06);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .4);color:var(--nt-menta)}
+.nmz-ic{width:82px;height:80px;display:grid;place-items:center}.nmz-ic svg,.nmz-ic .nt-ic{width:28px;height:28px}
 .nr-buit{margin:0;font-size:13.5px;font-weight:700;color:var(--nt-suau)}
 .nr-carr{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -12px;padding:4px 12px 10px;scrollbar-width:none;overscroll-behavior-x:contain}
 .nr-carr::-webkit-scrollbar{display:none}
