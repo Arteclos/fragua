@@ -7272,7 +7272,6 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   }
   // després de cada render(): la pestanya del lloc on ets
   function despresRender(vista) {
-    if (typeof ajustaBarraIphone === "function") requestAnimationFrame(ajustaBarraIphone);   // el menú alçat a l'iPhone (app.js)
     if (!teBarra()) return;
     // l'entrada (sense la barra de baix) és NOMÉS mentre et fas el compte: triar el personatge des de Personaje no ho és, i
     // sense la barra no hi havia manera de tornar enrere
@@ -14617,25 +14616,33 @@ confirmaPagament();
 mirarEnllacRutina();
 
 // EL MENÚ DE BAIX A L'IPHONE (29-09-2026, l'Albert: «el menú encara surt pujat només entrar, i al canviar de pestanya
-// s'arregla»). Amb l'app instal·lada (status bar black-translucent i viewport-fit=cover), en obrir-la l'iPhone mida la
-// pàgina uns 50-60 punts més curta que la pantalla (a la captura, 155 píxels del fons #0d1217 sota el menú), i la portada,
-// que no es desplaça, no el fa tornar a mesurar: el menú (fixed, bottom 0) i la capa de la portada (.nt, inset 0) s'acaben
-// abans d'hora. La primera volta (un desplaçament d'un píxel) no hi feia res. Ara es mesura: on acaba el menú i on acaba la
-// pantalla, i es baixa la diferència. Només a l'iPhone amb l'app instal·lada i en vertical, i es torna a mesurar cada vegada
-// que la pàgina es pinta o canvia de mida: quan l'iPhone ho corregeix sol, la diferència torna a 0.
-function ajustaBarraIphone() {
-  const nav = document.getElementById("barra-nova"), capes = [...document.querySelectorAll(".nt")];
-  if (nav) nav.style.bottom = "";
-  capes.forEach(x => { x.style.bottom = ""; });
-  if (!nav || navigator.standalone !== true || !matchMedia("(orientation: portrait)").matches) return;
-  const r = nav.getBoundingClientRect();
-  if (!r.height) return;
-  const falta = Math.round(Math.max(screen.width, screen.height) - r.bottom);
-  if (falta > 2 && falta < 140) { nav.style.bottom = -falta + "px"; capes.forEach(x => { x.style.bottom = -falta + "px"; }); }
+// s'arregla»; i a la tercera: «per què no pots fer com la resta de tabs, que sí funciona?»). Amb l'app instal·lada
+// (black-translucent i viewport-fit=cover), en obrir-la l'iPhone deixa la pàgina uns 55 punts més curta que la pantalla
+// fins que la torna a mesurar. Una pestanya qualsevol l'hi fa tornar a mesurar perquè, en entrar-hi, la pàgina es
+// desbloqueja i fa molt de llarg; la portada està bloquejada (.fb-actiu) i no fa gens de llarg, i no. Per això, en obrir la
+// portada, es fa el mateix que en canviar de pestanya: es desbloqueja, s'hi posa un tros invisible que la fa llarga, es mou
+// dos píxels, i es torna a deixar com era, tot en dos fotogrames. Les dues voltes d'abans no hi feien res (moure-la un píxel
+// sense que fos llarga) o ho empitjoraven (baixar el menú la diferència mesurada: amb la pàgina bloquejada, l'iPhone
+// retalla el que surt per sota, i el menú sortia tallat).
+function desencallaIphone() {
+  const b = document.body;
+  if (navigator.standalone !== true || !b.classList.contains("fb-actiu") || document.querySelector(".nt-desencalla")) return;
+  const sp = document.createElement("div");
+  sp.className = "nt-desencalla"; sp.setAttribute("aria-hidden", "true");
+  sp.style.cssText = "height:200vh;width:1px;pointer-events:none;visibility:hidden";
+  b.classList.remove("fb-actiu"); b.appendChild(sp);
+  void document.documentElement.offsetHeight;
+  window.scrollTo(0, 2);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    window.scrollTo(0, 0); sp.remove();
+    if (document.querySelector("#vista .nt")) b.classList.add("fb-actiu");     // si encara és a la portada
+  }));
 }
-["load", "resize", "orientationchange", "pageshow"].forEach(e => window.addEventListener(e, () => requestAnimationFrame(ajustaBarraIphone)));
-if (window.visualViewport) window.visualViewport.addEventListener("resize", () => requestAnimationFrame(ajustaBarraIphone));
-[400, 1500, 4000].forEach(t => setTimeout(ajustaBarraIphone, t));
+// en obrir-la, i en tornar-hi des d'una altra app (l'iPhone la pot tornar a deixar curta); i dues vegades més al principi,
+// per si la primera arriba abans que l'iPhone hagi acabat d'obrir-la
+window.addEventListener("pageshow", () => setTimeout(desencallaIphone, 60));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(desencallaIphone, 120); });
+[350, 1500].forEach(t => setTimeout(desencallaIphone, t));
 
 </script>
 <script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
