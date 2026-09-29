@@ -7013,9 +7013,11 @@ const Versions = (() => {
   /* 28-09-2026, nit: l'Albert, «elimina les altres betes, només vull veure aquesta». Queden la de sempre i la Beta Noche
      (src/nit.js), que de moment és només la pantalla principal d'entrenar. Les versions d'abans (neta, marró, rumble,
      anime i l'original amb el menú nou) ja no surten al selector; el seu codi es queda aquí per si se'n vol reprendre res. */
+  /* 29-09-2026, matí: la de sempre, JUBILADA (l'Albert: «l'antiga ja la pots jubilar i ara només mostrar la nova per
+     defecte»). La Noche és l'app per a tothom, triï el que triés abans; el selector dels tres tocs ja no té res a triar.
+     La farga només torna si es demana amb la clau «farga» (les proves de les pantalles que la Noche encara reaprofita). */
   const LLISTA = [
-    { id: "actual", nom: "KLONK de siempre", desc: "La app tal como está." },
-    { id: "nit", nom: "Beta · Noche", desc: "Oscura y limpia, en todas las pantallas." },
+    { id: "nit", nom: "KLONK", desc: "La app." },
   ];
   // les versions que porten una pantalla principal nova (src/nit.js)
   const AMB_FORJA = ["nit"];
@@ -7025,8 +7027,8 @@ const Versions = (() => {
   // les pantalles de sempre que ja porten la pell de la Beta, revisades amb captures (src/forja-beta.js, body.bt-pell)
   const PELL = ["entreno", "comer", "registro", "ajustes", "estadisticas", "rutinas", "rutina", "tienda", "social", "amic", "gimnasios", "personaje", "editor", "compte", "eleccion", "datos"];
   const CLAU = "klonk-versio";
-  let actual = "actual";
-  try { const v = localStorage.getItem(CLAU); if (LLISTA.some(x => x.id === v)) actual = v; } catch (e) {}
+  let actual = "nit";
+  try { if (localStorage.getItem(CLAU) === "farga") actual = "actual"; } catch (e) {}
   // UN ENLLAÇ PER A LA BETA (29-09): klonk.fit/?v=nit deixa triada la Noche en aquell mòbil, sense els tres tocs; la de sempre
   // no canvia per a ningú més. El paràmetre es treu de l'adreça perquè no es comparteixi sense voler.
   try {
@@ -7244,6 +7246,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
   }
   // després de cada render(): la pestanya del lloc on ets
   function despresRender(vista) {
+    if (typeof ajustaBarraIphone === "function") requestAnimationFrame(ajustaBarraIphone);   // el menú alçat a l'iPhone (app.js)
     if (!teBarra()) return;
     // l'entrada (sense la barra de baix) és NOMÉS mentre et fas el compte: triar el personatge des de Personaje no ho és, i
     // sense la barra no hi havia manera de tornar enrere
@@ -7336,7 +7339,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
     // tres tocs ràpids al logo obren el selector (a la Beta Noche no hi ha logo: tres tocs a l'ELO)
     if (ev.target.closest('img[src$="logo.webp"], .fb-logo, .nt-elo')) {
       const t = Date.now(); tocs = tocs.filter(x => t - x < 1000); tocs.push(t);
-      if (tocs.length >= 3) { tocs = []; obreSelector(); }
+      if (tocs.length >= 3) { tocs = []; if (LLISTA.length > 1) obreSelector(); }
     }
   }, true);
   aplica();
@@ -14125,22 +14128,26 @@ if (teCompte()) carregaPla();
 confirmaPagament();
 mirarEnllacRutina();
 
-// L'IPHONE, EN OBRIR L'APP DES DE LA PANTALLA D'INICI (29-09-2026, l'Albert: «el menú encara surt pujat només entrar, i al
-// canviar de pestanya s'arregla»). En arrencar, l'iPhone mida la pantalla sense les dues zones segures i la barra de baix
-// (fixed, bottom 0) queda uns 80 punts alçada fins que hi ha un desplaçament; canviar de pestanya (veure → scrollTo) era el
-// que la baixava. Aquí se'n fa un d'un píxel en obrir-la i en tornar-hi, que no es veu.
-// A la portada de la Noche l'html i el body estan bloquejats (overflow hidden, 100 %: nit.js, .fb-actiu) i un scrollTo no hi
-// fa res; canviar de pestanya els desbloqueja, i per això baixava. Aquí es desbloquegen dos fotogrames, amb un píxel de més.
-function reposaPantalla() {
-  const h = document.documentElement.style, b = document.body.style, y = window.scrollY;
-  h.overflow = "auto"; b.overflow = "auto"; b.minHeight = "calc(100% + 1px)";
-  requestAnimationFrame(() => {
-    window.scrollTo(0, y + 1);
-    requestAnimationFrame(() => { window.scrollTo(0, y); h.overflow = ""; b.overflow = ""; b.minHeight = ""; });
-  });
+// EL MENÚ DE BAIX A L'IPHONE (29-09-2026, l'Albert: «el menú encara surt pujat només entrar, i al canviar de pestanya
+// s'arregla»). Amb l'app instal·lada (status bar black-translucent i viewport-fit=cover), en obrir-la l'iPhone mida la
+// pàgina uns 50-60 punts més curta que la pantalla (a la captura, 155 píxels del fons #0d1217 sota el menú), i la portada,
+// que no es desplaça, no el fa tornar a mesurar: el menú (fixed, bottom 0) i la capa de la portada (.nt, inset 0) s'acaben
+// abans d'hora. La primera volta (un desplaçament d'un píxel) no hi feia res. Ara es mesura: on acaba el menú i on acaba la
+// pantalla, i es baixa la diferència. Només a l'iPhone amb l'app instal·lada i en vertical, i es torna a mesurar cada vegada
+// que la pàgina es pinta o canvia de mida: quan l'iPhone ho corregeix sol, la diferència torna a 0.
+function ajustaBarraIphone() {
+  const nav = document.getElementById("barra-nova"), capes = [...document.querySelectorAll(".nt")];
+  if (nav) nav.style.bottom = "";
+  capes.forEach(x => { x.style.bottom = ""; });
+  if (!nav || navigator.standalone !== true || !matchMedia("(orientation: portrait)").matches) return;
+  const r = nav.getBoundingClientRect();
+  if (!r.height) return;
+  const falta = Math.round(Math.max(screen.width, screen.height) - r.bottom);
+  if (falta > 2 && falta < 140) { nav.style.bottom = -falta + "px"; capes.forEach(x => { x.style.bottom = -falta + "px"; }); }
 }
-window.addEventListener("load", () => setTimeout(reposaPantalla, 120));
-window.addEventListener("pageshow", ev => { if (ev.persisted) reposaPantalla(); });
+["load", "resize", "orientationchange", "pageshow"].forEach(e => window.addEventListener(e, () => requestAnimationFrame(ajustaBarraIphone)));
+if (window.visualViewport) window.visualViewport.addEventListener("resize", () => requestAnimationFrame(ajustaBarraIphone));
+[400, 1500, 4000].forEach(t => setTimeout(ajustaBarraIphone, t));
 
 </script>
 <script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
