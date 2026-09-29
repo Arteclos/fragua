@@ -8522,8 +8522,9 @@ const Nit = (() => {
   // la σ de KLσNK en el material de la teva divisió (src/elo.js: fusta, pedra, coure, bronze, ferro, acer, or, obsidiana,
   // criselefantí i estel·lar). Sense classificar, la de fusta, apagada.
   // el nom del rang és la sigma del seu material (l'Albert, 28-09: «posa "Sigma de oro" al text»); la sigma és femenina
-  const NOM_SIGMA = { madera: "Sigma de madera", piedra: "Sigma de piedra", cobre: "Sigma de cobre", bronce: "Sigma de bronce", hierro: "Sigma de hierro",
-    acero: "Sigma de acero", oro: "Sigma de oro", obsidiana: "Sigma de obsidiana", criselefantino: "Sigma criselefantina", estelar: "Sigma estelar" };
+  // i des del 29-09, sense «Sigma de» (l'Albert: «treu el text de sigma dels rangos, millor»): la sigma ja es veu, el nom és el material
+  const NOM_SIGMA = { madera: "Madera", piedra: "Piedra", cobre: "Cobre", bronce: "Bronce", hierro: "Hierro",
+    acero: "Acero", oro: "Oro", obsidiana: "Obsidiana", criselefantino: "Criselefantino", estelar: "Estelar" };
   const nomRang = (id, nom) => NOM_SIGMA[id] || nom;
   const sigma = (e, cls = "") => `<img class="nt-sigma ${cls}${e && e.elo != null ? "" : " apagada"}" src="${R()}sigma-${(e && e.elo != null && e.divisio && e.divisio.id) || "madera"}.webp" alt="" draggable="false">`;
   const I_TU = {
@@ -9824,7 +9825,7 @@ const Nit = (() => {
     try { const r = await api("GET", "/mercat" + (S.ui.mercatGym ? "?gym=1" : "")); S.ui.mercat = { ...r, at: Date.now(), gym: !!S.ui.mercatGym }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
     if (S.ui.vista === "tienda" && S.ui.tiendaTab === "rutinas" && typeof render === "function") render();
   }
-  const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? "Sigma de " + d[2].toLowerCase() : ""; };
+  const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? d[2] : ""; };
   const marcM = m => (MAT[m] ? ` style="--mc:${MAT[m][1]}"` : "");
   // ELS MAZOS DE KLONK (29-09, REVISIO-PER-VENDRE §5.2): les plantilles de sempre, gratis, a la prestatgeria del mercat, perquè
   // el primer dia no s'obri buit. Porten a la mateixa fitxa que a Rutinas (rut-ver), on es fan servir o es copien.
