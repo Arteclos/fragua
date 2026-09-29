@@ -5593,7 +5593,7 @@ const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span cl
 function filaRanking(f, so) {
   const v = f.valor;
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
-    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${typeof Nit === "object" && Nit.activa() && Nit.tagSq ? Nit.tagSq(f.tag) : ""}${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -8962,7 +8962,7 @@ const Nit = (() => {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
     return `<div class="ns-f" data-in="ns"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">
-      <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}<small>${quan ? esc(quan) : ""}</small></span>
+      <span class="ns-f-t"><b>${tagSq(it.tag)}${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}<small>${quan ? esc(quan) : ""}</small></span>
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
       ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
   }
@@ -8970,7 +8970,7 @@ const Nit = (() => {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
     return `<${f.pid ? `button class="ns-r" data-accion="social-perfil" data-p="${f.pid}"` : `div class="ns-r${f.yo ? " yo" : ""}"`} data-in="ns">
       <span class="ns-r-pos">${f.pos === 1 ? `<svg viewBox="0 0 24 24" aria-label="1"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 11H5z" fill="#e2c27a"/></svg>` : (f.pos ?? "–")}</span>
-      <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
+      <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${tagSq(f.tag)}${esc(nom)}</span>
       <span class="ns-r-v">${so.metrica === "rango" ? `${imgYunque(f.valor)}<b>${f.valor != null ? n0(f.valor) : "·"}</b>` : `<b>${n0(f.valor)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
   }
   function vistaSocial() {
@@ -9560,6 +9560,36 @@ const Nit = (() => {
      teva squad; a «Squads», totes, les invitacions i el que pot fer el líder. Les dades de la setmana: els dies, per a
      tothom; les sèries, els quilos i els rècords, amb el PRO (el cadenat porta a la Tienda). */
   const caraDe = p => R() + "pj/cara-" + (AVATARS.includes(p) ? p : "urba") + ".webp";
+  // L'ETIQUETA DE LA SQUAD (29-09, l'Albert: «com quan la gent es posava [FDK]Arteclos», «poques lletres»): de 2 a 4 lletres
+  // o xifres, del color que tria la squad, al costat del nom (servidor: squads.py, etiqueta; app.py, etiquetes)
+  const COL_SQ = { menta: "#86d9c6", lila: "#b8a4ff", or: "#e2c27a", coral: "#ff8f80", cel: "#7cc6ff", llima: "#b5e36a" };
+  const ETQ_MENORS = ["GYM", "FIT", "PWR", "IRON", "KLNK", "LOBO", "TORO", "LEON", "OSO", "RAYO", "FIRE", "ZEUS", "ORCA", "TITN", "ALFA", "NOVA"];
+  const esEtq = t => /^[A-Z0-9]{2,4}$/.test(t || "");
+  const tagSq = t => t && t.t ? `<i class="nsq-tag" style="--tc:${COL_SQ[t.c] || COL_SQ.menta}">[${esc(t.t)}]</i>` : "";
+  const I_LLAPIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function htmlEtq(menors) {
+    return `<div class="nsq-etq"><p class="nsq-prev" id="nsq-prev"></p>
+      ${jove() ? `<div class="nsq-tts">${(menors.length ? menors : ETQ_MENORS).map(t => `<button data-accion="nsq-tt" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>`
+        : `<input id="nsq-t" class="nsq-in" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="FDK" aria-label="La etiqueta de tu squad">
+           <small class="nsq-ajuda">De 2 a 4 letras o números. Saldrá al lado de vuestros nombres.</small>`}
+      <div class="nsq-cols" role="group" aria-label="Color">${Object.entries(COL_SQ).map(([k, v]) => `<button data-accion="nsq-col" data-c="${k}" style="--tc:${v}" aria-label="Color ${k}"></button>`).join("")}</div>
+      <button class="nx-compra nsq-fet" data-accion="nsq-fet">Listo</button></div>`;
+  }
+  function pintaEtq() {
+    const e = S.ui.sqEtq || {}, p = document.getElementById("nsq-prev");
+    const nick = (typeof sessio !== "undefined" && sessio && sessio.nick) || (S.personaje && S.personaje.nombre) || "Tú";
+    if (p) { p.innerHTML = `${tagSq({ t: e.t || "FDK", c: e.c })}<b>${esc(nick)}</b>`; p.classList.toggle("buida", !e.t); }
+    document.querySelectorAll('[data-accion="nsq-col"]').forEach(x => x.setAttribute("aria-pressed", String(x.dataset.c === e.c)));
+    document.querySelectorAll('[data-accion="nsq-tt"]').forEach(x => x.setAttribute("aria-pressed", String(x.dataset.t === e.t)));
+    const i = document.getElementById("nsq-t"); if (i && i.value !== (e.t || "")) i.value = e.t || "";
+    const f = document.querySelector('[data-accion="nsq-fet"]'); if (f) f.disabled = !esEtq(e.t);
+  }
+  document.addEventListener("input", ev => {
+    if (!ev.target || ev.target.id !== "nsq-t") return;
+    const v = ev.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+    if (ev.target.value !== v) ev.target.value = v;
+    S.ui.sqEtq = { ...(S.ui.sqEtq || {}), t: v }; pintaEtq();
+  });
   const NOM_REPTE = { dias: m => `${m} días de gym entre todos`, series: m => `${n0(m)} series entre todos`, kilos: m => `${n0(m)} kg entre todos`, todos: m => `Todos, ${m} días o más` };
   const QUAN = [[0, "Ahora"], [30, "En 30 min"], [60, "En 1 h"], [120, "En 2 h"]];
   function quanTxt(ts) {
@@ -9577,7 +9607,7 @@ const Nit = (() => {
   function htmlSquad(q, tot) {
     const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<div class="nsq" data-in="ns">
-      <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esc(q.nom)}</b>${q.jo_lider ? `<i class="nsq-lider">Líder</i>` : ""}</div>
+      <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}</b>${q.jo_lider ? `<button class="nsq-etq-ed" data-accion="nsq-etq" data-id="${q.id}" aria-label="Cambiar la etiqueta">${I_LLAPIS}</button><i class="nsq-lider">Líder</i>` : ""}</div>
       <div class="nsq-caras">${q.membres.map(m => { const cl = `nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}`, dins = `<img src="${caraDe(m.personatge)}" alt="" draggable="false"><small>${esc(m.yo ? "Tú" : m.nom)}</small>`;
         // tocar la cara d'un altre n'obre el perfil (la llavor del que va proposar l'Àlex: l'entrenador que veu com van els seus)
         return m.yo || !m.pid ? `<span class="${cl}">${dins}</span>` : `<button class="${cl}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(m.nom)}">${dins}</button>`; }).join("")}</div>
@@ -9637,9 +9667,23 @@ const Nit = (() => {
       const cos = typeof perCompartir === "function" ? perCompartir(r) : { nombre: r.nombre, dias: r.dias };
       await fes("POST", `/squads/${id}/rutina`, { rutina: cos }, `«${r.nombre}» enviada a tu squad.`); return;
     }
-    if (a === "nsq-nova") {
-      const noms = (d && d.noms) || [];
-      fullN("Elige el nombre", `<div class="nsq-noms">${noms.map(n => `<button data-accion="nsq-nom" data-nom="${esc(n)}">${esc(n)}</button>`).join("")}</div>`); return;
+    if (a === "nsq-nova" || a === "nsq-etq") {
+      const q = a === "nsq-etq" ? ((d && d.squads) || []).find(x => x.id === id) : null;
+      S.ui.sqEtq = { t: q && esEtq(q.nom) ? q.nom : "", c: (q && q.color) || "menta", sid: q ? q.id : null };
+      fullN(q ? "Vuestra etiqueta" : "La etiqueta de tu squad", htmlEtq((d && d.etiquetes_menors) || [])); pintaEtq();
+      const i = document.getElementById("nsq-t"); if (i) setTimeout(() => i.focus({ preventScroll: true }), 250);
+      return;
+    }
+    if (a === "nsq-col") { S.ui.sqEtq = { ...(S.ui.sqEtq || {}), c: b.dataset.c }; fx(E => E.suena("tap")); pintaEtq(); return; }
+    if (a === "nsq-tt") { S.ui.sqEtq = { ...(S.ui.sqEtq || {}), t: b.dataset.t }; fx(E => E.suena("tap")); pintaEtq(); return; }
+    if (a === "nsq-fet") {
+      const e = S.ui.sqEtq || {}, full = b.closest(".nsq-full");
+      if (!esEtq(e.t)) { if (typeof avis === "function") avis("De 2 a 4 letras o números.", true); return; }
+      b.disabled = true;
+      const fet = e.sid ? await fes("POST", `/squads/${e.sid}/etiqueta`, { tag: e.t, color: e.c }, `Ahora sois [${e.t}].`)
+        : await fes("POST", "/squads", { tag: e.t, color: e.c }, `[${e.t}] creada. Ahora invita a tu clan.`);
+      if (fet && full) full.remove(); else b.disabled = false;
+      return;
     }
     if (a === "nsq-nom") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", "/squads", { nom: b.dataset.nom }, `«${b.dataset.nom}» creada. Ahora invita a tu clan.`); return; }
     if (a === "nsq-repte") {
@@ -9985,7 +10029,7 @@ const Nit = (() => {
         <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
     return `<section class="na">${tanca}
       <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b></span>
-        <h1 class="na-nom">${esc(nom)}</h1>
+        <h1 class="na-nom">${tagSq(p.tag)}${esc(nom)}</h1>
         <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
       <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
       ${ratxa}
@@ -11166,6 +11210,23 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
 .nsq-accions button.fora svg{color:#ec9a9a}
 .nsq-full .nq-p{gap:12px;max-height:80vh;overflow:auto}
 .nsq-noms{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.nsq-tag{font-style:normal;font-weight:900;color:var(--tc,#86d9c6);margin-right:4px;letter-spacing:.02em}
+.nsq-etq{display:grid;gap:14px;width:100%;justify-items:center}
+.nsq-prev{margin:6px 0 0;font:900 24px/1.1 'Nunito',system-ui,sans-serif;color:var(--nt-tinta);text-align:center;word-break:break-word}
+.nsq-prev .nsq-tag{margin-right:6px}.nsq-prev.buida .nsq-tag{opacity:.35}
+.nsq-in{width:100%;height:56px;border:0;border-radius:16px;background:#10171e;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1);color:#e7edf2;font:900 26px/1 'Nunito',system-ui,sans-serif;text-align:center;letter-spacing:.3em;text-transform:uppercase}
+.nsq-in:focus{outline:none;box-shadow:inset 0 0 0 2px rgb(var(--m-rgb) / .7)}
+.nsq-in::placeholder{color:#4a5663}
+.nsq-ajuda{font-size:12.5px;font-weight:700;color:#8b98a4;text-align:center;line-height:1.35}
+.nsq-cols{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.nsq-cols button{width:36px;height:36px;border:0;border-radius:50%;cursor:pointer;background:var(--tc);box-shadow:inset 0 0 0 3px rgb(0 0 0 / .22)}
+.nsq-cols button[aria-pressed="true"]{box-shadow:0 0 0 3px #19212a,0 0 0 5px var(--tc)}
+.nsq-tts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
+.nsq-tts button{height:44px;border:0;border-radius:14px;background:#10171e;color:#e7edf2;font:900 15px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1);cursor:pointer}
+.nsq-tts button[aria-pressed="true"]{box-shadow:inset 0 0 0 2px rgb(var(--m-rgb))}
+.nsq-fet{width:100%}.nsq-fet:disabled{opacity:.45}
+.nsq-etq-ed{flex:none;width:30px;height:30px;margin-left:6px;border:0;border-radius:50%;display:inline-grid;place-items:center;background:rgb(255 255 255 / .06);color:#c9d2da;cursor:pointer}
+.nsq-etq-ed svg{width:16px;height:16px}
 .nsq-noms button,.nsq-rt button{min-height:44px;padding:6px 10px;border:0;border-radius:14px;cursor:pointer;background:#10171e;color:#e7edf2;font:900 13.5px/1.15 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
 .nsq-noms button:active,.nsq-rt button:active{transform:scale(.96)}
 .nsq-rt{display:grid;gap:6px;width:100%;text-align:left}.nsq-rt small{font-size:12.5px;font-weight:900;color:#8b98a4}
@@ -11462,7 +11523,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
