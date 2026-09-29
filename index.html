@@ -9105,18 +9105,18 @@ const Nit = (() => {
      El teu or a dalt, amb la pila de monedes; els tres paquets com a cartes, cadascun amb el seu tresor (la bossa, el cofre
      i el tresor del rei), i «Cómo se gana» en xips. La compra és la de sempre (app.js, compra-oro), i al menor no se li
      ensenya res que es pagui. El PRO i els looks de l'Urbà de la referència esperen que es puguin comprar de debò: un botó
-     que no compra res no hi ha de ser. La pestanya Material (la roba) és la de sempre. */
+     que no compra res no hi ha de ser. La pestanya Material (la roba), des del 29-09 a la Noche: fins llavors hi sortia la
+     botiga de la farga sencera, amb un segon «Tienda», un segon «Tu oro» amb la moneda vella i sense la pestanya Rutinas. */
   function vistaTienda() {
     const tab = ["material", "rutinas"].includes(S.ui.tiendaTab) ? S.ui.tiendaTab : "oro";
-    if (tab === "material") return window.vistaTienda();
     const oro = oroTotal();
     const PAQ = [["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]];
     const GUANYA = [["Cada serie", ORO.serie, I_TU.man], ["Entreno terminado", ORO.entreno, I_TU.est], ["Cada récord", ORO.record, I_TU.prog], ["Comida apuntada", ORO.comida, I_NC.gota], ["Subir de nivel", ORO.nivel, I_TU.pj]];
     return `<h1 class="titol-pag">Tienda</h1>
       <section class="nb2">
         <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
-        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="false">Material</button></div>
-        ${tab === "rutinas" ? vistaMercat() : esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
+        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="${tab === "material"}">Material</button></div>
+        ${tab === "rutinas" ? vistaMercat() : tab === "material" ? vistaMaterial() : esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
         <div class="nb2-paq">${PAQ.map(([k, n, q, e]) => `<article class="nb2-p" data-in="nb"><img src="${R()}or-${k}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${n0(q)}</b><small>de oro</small><span class="nb2-p-n">${n}</span><em>${e}</em><button class="nb2-compra" data-accion="compra-oro" data-p="${k}">Comprar</button></article>`).join("")}</div>
         <p class="nb2-av">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
         <p class="nb2-av">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>`}
@@ -9936,6 +9936,24 @@ const Nit = (() => {
     if (typeof render === "function") render();
   }
 
+  /* LA ROBA A LA NOCHE (29-09): el mateix catàleg (src/roba.js), les mateixes reserves i els mateixos desbloquejos que la
+     de sempre (servidor.js: carregaMaterial, robaOberta, reqRoba, preuRoba i les accions mat-*), amb el full de detall de
+     sempre, que ja és fosc. Al menor, les fotos sense preu (EL BOARD, 27-09, skill menors §7). */
+  function vistaMaterial() {
+    const mt = S.ui.material || {}, jv = jove();
+    if (typeof teCompte === "function" && teCompte() && !S.demo && Date.now() - (mt.at || 0) > 60000 && typeof carregaMaterial === "function") setTimeout(carregaMaterial, 0);
+    const peca = r => {
+      const k = r[0], t = (mt.meves || {})[k], tancada = !jv && !t && typeof robaOberta === "function" && !robaOberta(k);
+      return `<button class="nmat-p${t ? " reservat" : ""}" data-accion="mat-obre" data-k="${k}" data-in="nb">
+        <span class="nmat-foto"><img src="${A()}roba/${k}.webp" alt="" loading="lazy" width="600" height="600" draggable="false"><i class="nmat-ia">IA</i>${tancada ? `<i class="nmat-lock">${I_CANDAU}${esc(reqRoba(k))}</i>` : ""}</span>
+        <b class="nmat-nom">${esc(r[2])}</b>
+        ${jv ? "" : `<span class="nmat-peu"><em>${preuRoba(r[3])}</em><small>${t ? (t === "Única" ? "Reservado" : `Talla ${esc(t)}`) : "Reservar"}</small></span>`}
+      </button>`;
+    };
+    return `<p class="nb2-av">${jv ? "La ropa de KLONK, para ir al gimnasio con tu clan." : "La ropa de KLONK. Resérvala con tu talla: no pagas nada y te avisamos cuando esté a la venta."} Las fotos y los modelos están creados con IA.</p>
+      ${ROBA_GRUPS.map(([g, gn]) => { const L = ROBA.filter(r => r[1] === g); return L.length ? `<h2 class="nb2-t" data-in="nb">${esc(gn)}</h2><div class="nmat-g">${L.map(peca).join("")}</div>` : ""; }).join("")}`;
+  }
+
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
      menta; el que esborra, a sota i en corall. Es tanca tocant fora o amb Escape; el «sí» dispara l'acció de sempre. */
   const I_PAPERERA = '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12.5a1.5 1.5 0 0 0 1.5 1.4h5a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -10641,6 +10659,20 @@ body.v-nit .aj-avis{margin-top:16px;font-size:12px;color:var(--nt-suau);text-ali
 .nb2-av{margin:0;font-size:12px;font-weight:700;color:var(--nt-suau);text-align:center;line-height:1.4}
 .nb2-av a{color:var(--nt-menta)}
 .nb2-t{margin:4px 2px 0;font-size:18px;font-weight:900}
+.nmat-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.nmat-p{display:grid;align-content:start;gap:6px;padding:8px 8px 12px;border:0;border-radius:22px;cursor:pointer;text-align:left;font:inherit;color:var(--nt-tinta);background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1);transition:transform .15s ease}
+.nmat-p:active{transform:scale(.97)}
+.nmat-p.reservat{box-shadow:var(--fb-o1),0 0 0 2px rgb(var(--m-rgb) / .7)}
+.nmat-foto{position:relative;display:block;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#10171e}
+.nmat-foto img{width:100%;height:100%;object-fit:cover;display:block}
+.nmat-ia{position:absolute;right:6px;bottom:6px;padding:2px 7px;border-radius:999px;background:rgb(0 0 0 / .6);font-style:normal;font-size:10.5px;font-weight:900;color:#e8edf1}
+.nmat-lock{position:absolute;left:6px;top:6px;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:rgb(12 16 21 / .82);font-style:normal;font-size:11px;font-weight:900;color:var(--nt-or)}
+.nmat-lock svg{width:12px;height:12px}
+.nmat-nom{padding:0 4px;font-size:14px;font-weight:900;line-height:1.2}
+.nmat-peu{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:0 4px}
+.nmat-peu em{font-style:normal;font-size:15px;font-weight:900;color:var(--nt-or);font-variant-numeric:tabular-nums}
+.nmat-peu small{font-size:12px;font-weight:800;color:var(--nt-suau)}
+.nmat-p.reservat .nmat-peu small{color:rgb(var(--m-rgb))}
 .nb2-guanya{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .nb2-guanya div{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
 .nb2-guanya i{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#10171e;color:var(--nt-lila);flex:none}.nb2-guanya i svg{width:18px;height:18px}
