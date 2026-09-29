@@ -1425,7 +1425,7 @@ function rutinaActual() {
   const totes = typeof totesRutinas === "function" ? totesRutinas() : [RUTINA_BASE];
   return totes.find(r => r.id === S.rutinaActiva) || RUTINA_BASE;
 }
-function diaRutina(n) { const r = rutinaActual(), d = r.dias[n - 1]; return d ? { n, t: d.t, ej: d.ej, ...(d.id ? { id: d.id } : {}) } : null; }
+function diaRutina(n) { const r = rutinaActual(), d = r.dias[n - 1]; return d ? { n, t: d.t, ej: d.ej, ...(d.id ? { id: d.id } : {}), ...(d.pr ? { pr: true } : {}) } : null; }
 // LES CARTES AMB NOM PROPI (29-09-2026, l'Albert: «totes les cartes de la rutina en ordre, i les pots moure»). Des que el
 // mazo es pot reordenar, una carta ja no es pot reconèixer per la posició: cada dia d'una rutina teva porta un id (d.id),
 // la sessió el guarda (s.did), i d.o diu on era la carta abans de tenir-ne («rutina:dia»), perquè les sessions d'abans li
@@ -1817,9 +1817,17 @@ function resumenSets(sets, lastre) {
 function empezar(dia) {
   idsMazo(rutinaActual());                                  // la carta d'avui es recordarà pel seu id
   const d = diaRutina(dia) || diaRutina(1);
-  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, ...(d.id ? { did: d.id } : {}), dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
+  const s = { id: uid(), dia: d.n, rut: rutinaActual().id, ...(d.id ? { did: d.id } : {}), ...(d.pr ? { pr: true } : {}), dt: d.t, fecha: hoy(), inicio: Date.now(), fin: null, ej: [], pj: (S.personaje && S.personaje.tipo) || null };
+  // EL DÍA DE PR (29-09, METODE §3.9): als tres grans de debò, tres intents d'1 repetició com en una competició, amb el pes
+  // proposat a partir de la teva marca de les 8 setmanes (el 90, el 95 i el 100 %, arrodonits a 2,5 kg)
+  const fams = d.pr && typeof Elo === "object" ? Elo.families(S.ses, Date.now(), S.cfg) : {};
   // el que va fer l'última vegada, ja millorat (src/carga.js): una repetició més o el pes que toca
   s.ej = d.ej.map(([n, t, x, g]) => {
+    const vr = d.pr && typeof Elo === "object" ? Elo.variant(n, (S.cfg[n] || {}).carga) : null;
+    if (vr && !vr.est && vr.f === 1) {
+      const m = fams[vr.k] && fams[vr.k].v;
+      return { n, t, x, ...(g ? { g } : {}), sets: [0.9, 0.95, 1].map(p => ({ kg: m ? Math.round(m * p / 2.5) * 2.5 : null, reps: 1, ok: false })) };
+    }
     const p = progresion(n, t, x, s.id), c = cfgEj(n, t);
     const sets = p.sets ? p.sets.map(z => ({ kg: z.kg, reps: z.reps, ok: false }))
       : Array.from({ length: c.series }, () => ({ kg: x === "lastre" ? 0 : null, reps: null, ok: false }));
@@ -5628,7 +5636,7 @@ const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span cl
 function filaRanking(f, so) {
   const v = f.valor;
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
-    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -5689,7 +5697,7 @@ function vistaRankings(so) {
   const r = so.rank[claveRank(so)], sol = false, dins = !!(so.yo && so.yo.lligues);
   // LES LLIGUES (29-09): qui no hi és no surt enlloc, i ho ha de saber aquí mateix
   return `${dins ? "" : `<div class="lg-fora panel pad"><b>No estás en las ligas</b><p>Nadie te ve en estos rankings, ni como «Anónimo». Entra y sales como «Anónimo»; tu nickname, solo si lo eliges en Ajustes.</p><button class="btn clar marc" data-accion="lligues-on" data-v="1">Entrar en las ligas</button></div>`}
-    <div class="seg" role="group" aria-label="Qué ranking">${[["elo", "ELO"], ["dias", "Días de gym"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
+    <div class="seg seg-m" role="group" aria-label="Qué ranking">${[["elo", "ELO"], ["pl", "Powerlifting"], ["cali", "Calistenia"], ["dias", "Días"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
     <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.total} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
@@ -7111,7 +7119,92 @@ const Elo = (() => {
       falten: Object.keys(REF).filter(k => !ara_.per[k]).map(k => NOM[k]), pes, sexe,
       provisional: falta.dies || falta.families, falta, primer, estimat: Object.values(ara_.per).some(x => x.est) };
   }
-  return { calcula, coefDots, eloDe, quin, variant, families, DIVISIONS, NOM, FAMILIA, divisioDe, DIES_MIN };
+  // LA LLIGA DE POWERLIFTING (29-09, METODE §3.9; el bessó de servidor/pl.py, xifra a xifra): el Día de PR (una sessió amb
+  // pr: true), els tres grans DE DEBÒ amb barra, els intents d'1 repetició que has donat per vàlids amb els criteris de l'IPF
+  // (z.valid === true), el total d'una sola sessió (com en una competició) i l'IPF GL 2020 «classic», el número dels powerlifters
+  const GL = { h: [1199.72839, 1025.18162, 0.00921], m: [610.32796, 1045.59282, 0.03048] };
+  const puntsGl = (total, pes, sexe) => { const [a, b, c] = GL[sexe]; return total * 100 / (a - b * Math.exp(-c * pes)); };
+  function totalDia(s, cfg) {
+    const out = {};
+    if (!s || s.pr !== true) return out;
+    (Array.isArray(s.ej) ? s.ej : []).forEach(e => {
+      const vr = e && variant(e.n, estriDe(cfg, e.n)); if (!vr || vr.est || vr.f !== 1) return;
+      (Array.isArray(e.sets) ? e.sets : []).forEach(z => {
+        if (!z || !z.ok || z.valid !== true) return;
+        const kg = +z.kg, reps = +z.reps;
+        if (kg > 0 && reps === 1) out[vr.k] = Math.max(out[vr.k] || 0, kg);
+      });
+    });
+    return out;
+  }
+  // el millor Día de PR de l'últim any: {total, gl, fin, per} o null
+  function millorPl(st = S, ara = Date.now()) {
+    const p = (st && st.perfil) || {}, pes = +p.peso, sexe = p.sexo === "m" ? "m" : p.sexo === "h" ? "h" : null;
+    if (!(pes > 30) || !sexe) return null;
+    let best = null;
+    (Array.isArray(st.ses) ? st.ses : []).forEach(s => {
+      const fin = s ? +s.fin : 0;
+      if (!(fin > 0) || fin > ara || fin < ara - 365 * 864e5) return;
+      const per = totalDia(s, st.cfg);
+      if (!Object.keys(REF).every(k => per[k])) return;
+      const total = per.sentadilla + per.banca + per.peso_muerto, gl = puntsGl(total, pes, sexe);
+      if (!best || gl > best.gl) best = { total, gl, fin, per };
+    });
+    return best;
+  }
+  // LA LLIGA DE CALISTÈNIA (29-09, METODE §3.9; el bessó de servidor/cali.py): la dominada i el fons en paral·leles amb el
+  // teu pes o amb llast (el kg és el llast), la càrrega total en e1RM (la mitjana de les dues millors sessions de les 8
+  // setmanes), i l'índex = (dominada + fons) ÷ pes^0,67 (Jaric 2002). Provisional com l'ELO. La categoria, la de l'streetlifting.
+  const MOVS_CALI = [
+    [/^(dominadas|dominadas lastradas|dominada|dominada lastrada|pull-ups?|weighted pull-ups?)$/i, "dominada"],
+    [/^(fondos|fondos en paralelas|fondos en paralelas para pecho|fondos en paralelas para tríceps|fondos lastrados|dips?|weighted dips?)$/i, "fons"],
+  ];
+  const CATS = { h: [60, 70, 80, 90, 100], m: [50, 60, 70] };
+  const movCali = (n, carga) => { if (carga && carga !== "lastre") return null; const t = String(n || "").trim(); for (const [rx, k] of MOVS_CALI) if (rx.test(t)) return k; return null; };
+  function categoria(pes, sexe) {
+    const ll = CATS[sexe];
+    if (pes < ll[0]) return "-" + ll[0];
+    for (let i = 0; i < ll.length - 1; i++) if (pes < ll[i + 1]) return ll[i] + "-" + ll[i + 1];
+    return "+" + ll[ll.length - 1];
+  }
+  function marquesCali(ses, fins, cfg, pes) {
+    const des = fins - 56 * 864e5, per = {};
+    (Array.isArray(ses) ? ses : []).forEach(s => {
+      const fin = s ? +s.fin : 0;
+      if (!(fin > 0) || fin > fins || fin < des) return;
+      const millor = {};
+      (Array.isArray(s.ej) ? s.ej : []).forEach(e => {
+        const k = e && movCali(e.n, estriDe(cfg, e.n)); if (!k) return;
+        let m = 0;
+        (Array.isArray(e.sets) ? e.sets : []).forEach(z => {
+          if (!z || !z.ok) return;
+          const kg = Number.isFinite(+z.kg) ? +z.kg : 0, reps = +z.reps, total = pes + kg;
+          if (!(total > 0) || !(reps >= 1 && reps <= 10) || z.tipo === "c" || z.tipo === "d") return;
+          m = Math.max(m, total * (1 + reps / 30));
+        });
+        if (m > 0 && (!millor[k] || m > millor[k].v)) millor[k] = { v: m, de: e.n };
+      });
+      Object.entries(millor).forEach(([k, x]) => { (per[k] = per[k] || []).push({ v: x.v, de: x.de, fin }); });
+    });
+    const out = {};
+    ["dominada", "fons"].forEach(k => {
+      const ll = per[k]; if (!ll || !ll.length) return;
+      ll.sort((a, b) => b.v - a.v);
+      out[k] = { v: ll.length > 1 ? (ll[0].v + ll[1].v) / 2 : ll[0].v, de: ll[0].de, fins: ll.map(x => x.fin) };
+    });
+    return out;
+  }
+  function cali(st = S, ara = Date.now()) {
+    const p = (st && st.perfil) || {}, pes = +p.peso, sexe = p.sexo === "m" ? "m" : p.sexo === "h" ? "h" : null;
+    if (!(pes > 30) || !sexe) return null;
+    const m = marquesCali(st.ses, ara, st.cfg, pes), ks = Object.keys(m);
+    if (!ks.length) return null;
+    const fins = [].concat(...ks.map(k => m[k].fins));
+    return { index: ks.length === 2 ? (m.dominada.v + m.fons.v) / pes ** 0.67 : null,
+      provisional: ks.length < 2 || Math.max(...fins) - Math.min(...fins) < DIES_MIN, cat: categoria(pes, sexe),
+      per: Object.fromEntries(ks.map(k => [k, { v: m[k].v, de: m[k].de }])) };
+  }
+  return { calcula, coefDots, eloDe, quin, variant, families, DIVISIONS, NOM, FAMILIA, divisioDe, DIES_MIN, puntsGl, totalDia, millorPl, cali };
 })();
 
 /* ELS VERSIONS DE KLONK (28-09-2026): la Beta 1.0 es prova DINS de l'app que corre, sense tocar-la.
@@ -8544,6 +8637,18 @@ const Nit = (() => {
       setTimeout(() => { const c = document.querySelector("#barra-nova .nt-centre"); if (c && document.querySelector(".nt")) klonk(c, true); }, 90);
       return;
     }
+    // els criteris de l'IPF d'un intent del Día de PR (a l'entreno, no a la portada)
+    const ipc = ev.target.closest('[data-accion="ipf-crit"]');
+    if (ipc) {
+      ev.preventDefault(); ev.stopPropagation();
+      const s = activa(), e = s && s.ej[+ipc.dataset.i], z = e && e.sets[+ipc.dataset.j]; if (!z) return;
+      const m = Array.isArray(z.ipf) ? [...z.ipf] : [false, false, false];
+      m[+ipc.dataset.k] = !m[+ipc.dataset.k];
+      z.ipf = m; z.valid = m.length === 3 && m.every(Boolean);
+      guardar(); fx(E => { E.suena("tap"); E.vibra(z.valid ? "fet" : "tria"); });
+      if (typeof render === "function") render();
+      return;
+    }
     const sec = ev.target.closest(".nt");
     if (sec) {
       const roda = sec.querySelector(".nt-roda"), carta = ev.target.closest(".nt-carta");
@@ -8968,6 +9073,21 @@ const Nit = (() => {
   const ANELL = 2 * Math.PI * 25;
   const acabat = e => e.sets.length > 0 && e.sets.every(z => z.ok);
   const grupDe = n => (typeof Stats === "object" && Stats.GRUPO && Stats.GRUPO[n]) || "";
+  // ELS CRITERIS DE L'IPF (Technical Rulebook 2026; METODE §3.9): a cada intent fet d'un Día de PR, els tres que el fan
+  // vàlid, marcats per qui aixeca. Només amb els tres marcats l'intent compta per a la lliga de Powerlifting (z.valid).
+  const IPF = {
+    sentadilla: ["Cadera por debajo de la rodilla", "De pie y bloqueado al empezar y al acabar", "Sin rebote ni bajar la barra al subir"],
+    banca: ["La barra toca el pecho y se para", "Glúteos, hombros y cabeza en el banco", "Brazos bloqueados arriba"],
+    peso_muerto: ["Rodillas y hombros bloqueados arriba", "La barra no baja mientras sube", "Sin apoyarla en los muslos"],
+  };
+  const ipfDe = (s, e) => { if (!s || !s.pr || typeof Elo !== "object") return null; const vr = Elo.variant(e.n, (S.cfg[e.n] || {}).carga); return vr && !vr.est && vr.f === 1 ? IPF[vr.k] : null; };
+  function filaIpf(z, i, j, crit) {
+    if (+z.reps !== 1) return `<div class="ne-ipf"><small class="ne-ipf-nota">En el Día de PR solo cuentan los intentos de 1 repetición.</small></div>`;
+    const m = Array.isArray(z.ipf) ? z.ipf : [], val = z.valid === true;
+    return `<div class="ne-ipf${val ? " valid" : ""}" role="group" aria-label="Criterios de la IPF del intento ${j + 1}">
+      ${crit.map((t, k) => `<button class="ne-ipf-c" data-accion="ipf-crit" data-i="${i}" data-j="${j}" data-k="${k}" aria-pressed="${!!m[k]}">${I_CHECK}${esc(t)}</button>`).join("")}
+      <b class="ne-ipf-v">${val ? "Intento válido" : "Márcalos para que cuente"}</b></div>`;
+  }
   function filaSerie(z, i, j, lastre, ambLastre, c) {
     return `<div class="serie${z.ok ? " feta" : ""}${z.tipo ? " tipus-" + z.tipo : ""}">${botoTipus(z, i, j, j + 1)}
       ${lastre && !ambLastre ? `<span class="camp sense-kg">Tu peso</span>` : `<label class="camp"><span class="lector">${lastre ? "Lastre" : "Peso"} de la serie ${j + 1}</span><input inputmode="decimal" autocomplete="off" data-camp="kg" data-i="${i}" data-j="${j}" value="${fmt(z.kg)}" placeholder="${lastre ? "0" : ""}"><span class="u">${lastre ? "+kg" : "kg"}</span></label>`}
@@ -8983,15 +9103,15 @@ const Nit = (() => {
   let obrintFet = -1;
   function blocEj(s, e, i, esAra) {
     const c = cfgEj(e.n, e.t), p = progresion(e.n, e.t, e.x, s.id), lastre = e.x === "lastre", ambLastre = lastre && ambLlast(e.n);
-    const foto = fotoAnime(e.n), pgr = posGrup(s.ej, i, x => x.g), g = grupDe(e.n), fet = acabat(e);
+    const foto = fotoAnime(e.n), pgr = posGrup(s.ej, i, x => x.g), g = grupDe(e.n), fet = acabat(e), ipf = ipfDe(s, e);
     return `<section class="ne-ej exercici${esAra ? " ara" : ""}${fet ? " fet" : ""}" id="ej-${i}" data-in="ne" style="view-transition-name:ne-${i}">
       <div class="ne-ej-cap">${foto ? `<button class="ne-foto" data-accion="ej-foto" data-i="${i}" aria-label="Cómo se hace: ${esc(e.n)}"><img src="${foto}" alt="" draggable="false"></button>` : `<span class="ne-foto ne-foto-buit">${ic("manuella")}</span>`}
         <div class="ne-nom"><b>${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</b>
-          <div class="ne-xips">${g ? `<span class="ne-grup">${esc(g)}</span>` : ""}${fet ? `<button class="ne-plega" data-accion="nt-focus" data-i="${i}" aria-label="Hecho. Plegarlo">${I_CHECK}Hecho</button>` : chipProg(p, i)}</div>
+          <div class="ne-xips">${g ? `<span class="ne-grup">${esc(g)}</span>` : ""}${fet ? `<button class="ne-plega" data-accion="nt-focus" data-i="${i}" aria-label="Hecho. Plegarlo">${I_CHECK}Hecho</button>` : ipf ? "" : chipProg(p, i)}</div>
           ${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
-        <button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button></div>
+        ${ipf ? `<span class="objectiu">${e.sets.length} ${e.sets.length === 1 ? "intento" : "intentos"}</span>` : `<button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button>`}</div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div>
-      <div class="ne-series series">${e.sets.map((z, j) => filaSerie(z, i, j, lastre, ambLastre, c)).join("")}</div>
+      <div class="ne-series series">${e.sets.map((z, j) => filaSerie(z, i, j, lastre, ambLastre, c) + (ipf && z.ok ? filaIpf(z, i, j, ipf) : "")).join("")}</div>
       <div class="ne-peu">${esAra && !S.ui.ntRodetaVista ? PISTA : ""}
         <button class="btn" data-accion="mes-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Añadir serie</button>${e.sets.length > 1 ? `<button class="btn" data-accion="menys-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>Quitar la última</button>` : ""}</div>
     </section>`;
@@ -9742,6 +9862,14 @@ const Nit = (() => {
     const d = vals.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join(" ");
     return `<svg class="np3-linia" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path class="dibuixa" d="${d}" fill="none" stroke="#86d9c6" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(u).toFixed(1)}" cy="${Y(vals[u]).toFixed(1)}" r="3.4" fill="#e7edf2"/></svg>`;
   }
+  // el Día de PR, al final: el total amb els intents vàlids i els punts IPF GL, o què ha faltat
+  function htmlPrResum(s) {
+    const per = Elo.totalDia(s, S.cfg), falta = ["sentadilla", "banca", "peso_muerto"].filter(k => !per[k]);
+    if (falta.length) return `<div class="np3-pr"><span class="np3-tag">Día de PR</span><span>Sin total: falta un intento válido de ${falta.map(k => Elo.NOM[k].toLowerCase()).join(", ")}.</span></div>`;
+    const total = per.sentadilla + per.banca + per.peso_muerto, p = S.perfil || {}, sexe = p.sexo === "m" ? "m" : p.sexo === "h" ? "h" : null;
+    const gl = +p.peso > 30 && sexe ? Elo.puntsGl(total, +p.peso, sexe) : null;
+    return `<div class="np3-pr" data-so="record" data-quan="1400"><span class="np3-tag or">Día de PR</span><span><b>Total ${kgTxt(total)} kg</b>${gl != null ? `<em>${String(gl.toFixed(1)).replace(".", ",")} puntos IPF GL</em>` : ""}<small>${kgTxt(per.sentadilla)} + ${kgTxt(per.banca)} + ${kgTxt(per.peso_muerto)} kg</small></span></div>`;
+  }
   function pagsResum(d) {
     fontFirma();
     const cap = (tag, titol, sub) => `<div class="np3-cap"><span class="np3-tag">${tag}</span><b class="np3-titol">${titol}</b>${sub ? `<small class="np3-sub">${sub}</small>` : ""}</div>`;
@@ -9750,6 +9878,7 @@ const Nit = (() => {
       + `<div class="np3-files">${filaN(0, "Series", d.series)}${filaN(1, "Kilos", d.kg)}${filaN(2, "Minutos", d.min)}${filaN(3, "Ejercicios", d.ejercicios)}</div>`
       + (d.records.length ? `<div class="np3-recs">${d.records.map((x, i) => `<div class="np3-rec r-rec" style="--i:${i + 4}" data-so="record" data-quan="${1500 + i * 260}" data-n="${esc(x.n)}"><span class="np3-tag or">Récord</span><span class="r-rec-t"><b>${esc(x.n)}</b><small>${kgTxt(x.kg)} kg × ${x.reps}, máximo ${n0(x.v)} kg (${n0(x.abans)} antes)</small></span></div>`).join("")}</div>`
         : `<p class="np3-nota">${d.primeres ? `Primera marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}: desde hoy, cada vez que la superes será un récord.` : "Hoy sin récords. Llegan entrenando."}</p>`)
+      + (d.s && d.s.pr && typeof Elo === "object" ? htmlPrResum(d.s) : "")
       + (d.puntua ? "" : `<p class="np3-nota">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`)
       + (!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="np3-nota">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo: +50 XP y +15 de oro.</p>` : "")
       + `<p class="np3-acc"><button class="np3-b tg-boto" data-accion="tg-entreno">Compartir mi entreno</button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="np3-b" data-accion="clan-avisa">Avisar a mis amigos</button>` : ""}</p>`;
@@ -9815,9 +9944,13 @@ const Nit = (() => {
   // una carta es reconeix pel que porta (el títol i els exercicis): de cada una, només una, i cap que ja sigui al mazo
   const sigCarta = d => (d.t || "") + "|" + (d.ej || []).map(e => e[0]).join("+");
   const solR = d => ({ id: "sol:" + d.id, nombre: d.t, dias: [d], propia: !d.autor && !d.klonk, ...(d.autor ? { autor: d.autor, mat: d.mat } : {}) });
+  // EL DÍA DE PR (29-09, METODE §3.9; l'Albert: «una carta del Día de PR al mazo», «en el powerlifting s'ha de complir el
+  // criteri del powerlifting»): una carta de KLONK amb els tres grans, sempre a mà a «Tus entrenos» (menys als menors)
+  const CARTA_PR = { id: "klonk-pr", t: "Día de PR", ej: [["Sentadilla con barra", "c"], ["Press de banca con barra, agarre medio", "c"], ["Peso muerto con barra", "c"]], klonk: true, pr: true };
   function solts(r0) {
     const r = r0 || rutinaActual(), fora = new Set([...r.dias.map(sigCarta), ...(S.arxiu || []).map(a => a.k)]), out = [];
     const posa = x => { const k = sigCarta(x.d); if (fora.has(k)) return; fora.add(k); out.push({ ...x, k }); };
+    if (!jove()) posa({ d: CARTA_PR, r: solR(CARTA_PR), n: 1, font: "sol" });
     (S.entrenos || []).forEach(d => posa({ d, r: solR(d), n: 1, font: "sol" }));
     (S.rutinas || []).forEach(x => { if (x.id !== r.id) x.dias.forEach((d, i) => posa({ d, r: x, n: i + 1, font: "rut" })); });
     [RUTINA_BASE, ...PLANTILLAS].forEach(x => { if (x.id !== r.id) x.dias.forEach((d, i) => { if (S.ses.some(s => s.fin && esDeCarta(s, x, i + 1, d))) posa({ d, r: x, n: i + 1, font: "klonk" }); }); });
@@ -9848,7 +9981,7 @@ const Nit = (() => {
     const r = mazoPropi(), [d] = r.dias.splice(i, 1);
     if (!d) return false;
     const autor = "autor" in d ? d.autor : r.autor, mat = "autor" in d ? d.mat : r.mat;
-    const sol = { id: d.id, ...(d.o ? { o: d.o } : {}), ...(d.src ? { src: d.src } : {}), t: d.t, ej: d.ej, ...(autor ? { autor, mat } : {}), ...(d.klonk ? { klonk: true } : {}) };
+    const sol = { id: d.id, ...(d.o ? { o: d.o } : {}), ...(d.src ? { src: d.src } : {}), t: d.t, ej: d.ej, ...(autor ? { autor, mat } : {}), ...(d.klonk ? { klonk: true } : {}), ...(d.pr ? { pr: true } : {}) };
     S.entrenos = [sol, ...(S.entrenos || []).filter(x => x.id !== sol.id)];
     guardar(); return true;
   }
@@ -9860,7 +9993,7 @@ const Nit = (() => {
     let d;
     if (x.font === "sol") { d = { ...x.d }; S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id); }
     else {
-      d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(e => [...e]), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}) };
+      d = { id: nouIdCarta(), o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej.map(e => [...e]), ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}), ...(x.d.pr ? { pr: true } : {}) };
       const il = (S.cartesIl || {})[clauCarta(x.r, x.n)]; if (il) S.cartesIl = { ...S.cartesIl, [d.id]: il };
     }
     const r = mazoPropi();
@@ -9873,7 +10006,7 @@ const Nit = (() => {
   function arxiva(x) {
     if (!x || ("autor" in x.d ? x.d.autor : x.r.autor)) return false;
     if (x.font === "sol") S.entrenos = (S.entrenos || []).filter(y => y.id !== x.d.id);
-    const d = x.font === "sol" ? x.d : { o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej, ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}) };
+    const d = x.font === "sol" ? x.d : { o: x.r.id + ":" + x.n, ...(x.d.id ? { src: x.d.id } : {}), t: x.d.t, ej: x.d.ej, ...(x.font === "klonk" || x.d.klonk ? { klonk: true } : {}), ...(x.d.pr ? { pr: true } : {}) };
     S.arxiu = [{ k: x.k, d, quan: Date.now() }, ...(S.arxiu || []).filter(a => a.k !== x.k)];
     guardar(); return true;
   }
@@ -10158,13 +10291,20 @@ const Nit = (() => {
   // L'ELO DE GYM (29-09, METODE §3.9): les tres famílies, d'on surt cadascuna (el gran, o una variant «estimada») i, si és
   // provisional, què falta: una segona família, o entrenar amb barra un altre dia amb una setmana de marge
   const ELO_COM = `<p class="suau">1000 es quien está justo en medio de los que compiten en powerlifting sin equipo, de tu sexo y tu peso. Cuentan tus dos mejores días de las últimas 8 semanas. El press inclinado, el multipower, la sentadilla frontal y la trap bar cuentan convertidos, como «estimado»; las máquinas no: un kilo de máquina no pesa lo mismo en cada gimnasio.</p>`;
+  // la Calistènia (29-09, cali.py): la dominada i el fons, l'índex i la categoria; provisional, només per a tu
+  const htmlCaliElo = () => { const k = typeof Elo === "object" && Elo.cali ? Elo.cali() : null; if (!k) return "";
+    const falta = !k.per.dominada ? "te faltan dominadas" : !k.per.fons ? "te faltan fondos" : "provisional: otro día de dominadas o fondos, con una semana de margen";
+    return `<div class="nelo-f nelo-pl"><span><b>Calistenia</b><small>Dominada y fondos · categoría ${esc(k.cat)} kg</small></span><span class="nelo-v">${k.index != null && !k.provisional
+      ? `<small>índice</small><b>${String(k.index.toFixed(1)).replace(".", ",")}</b>` : `<small>${falta}</small><b>·</b>`}</span></div>`; };
+  const htmlPlElo = () => { const m = typeof Elo === "object" && Elo.millorPl ? Elo.millorPl() : null;
+    return m ? `<div class="nelo-f nelo-pl"><span><b>Powerlifting</b><small>Total de tu mejor Día de PR</small></span><span class="nelo-v"><small>${kgTxt(m.total)} kg</small><b>${String(m.gl.toFixed(1)).replace(".", ",")} GL</b></span></div>` : ""; };
   const diaDe = ms => { try { return new Date(ms).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(",", ""); } catch (x) { return ""; } };
   function htmlElo() {
     const e = eloDe();
     // sense pes o sense sexe no hi ha ELO (el DOTS els necessita): es diu què falta i on es posa (29-09: dos de cada tres
     // comptes de la Beta no tenien el sexe posat, i el full només deia «aún no tienes ELO»)
     if (e.elo == null && (e.motiu === "pes" || e.motiu === "sexe")) return `<div class="nelo"><p>${e.motiu === "pes" ? "Pon tu peso en Ajustes: el ELO es tu fuerza para tu peso." : "Elige tu sexo en Ajustes: cada uno se compara con los de su sexo."}</p><button class="nt-boto2" data-accion="nt-ves" data-v="ajustes">Ir a Ajustes</button>${ELO_COM}</div>`;
-    if (e.elo == null) return `<div class="nelo"><p>Aún no tienes ELO. Sale de tu fuerza con barra en tres familias: <b>empuje</b> (press de banca), <b>pierna</b> (sentadilla) y <b>bisagra</b> (peso muerto).</p>${ELO_COM}</div>`;
+    if (e.elo == null) return `<div class="nelo"><p>Aún no tienes ELO. Sale de tu fuerza con barra en tres familias: <b>empuje</b> (press de banca), <b>pierna</b> (sentadilla) y <b>bisagra</b> (peso muerto).</p>${htmlPlElo()}${htmlCaliElo()}${ELO_COM}</div>`;
     const fila = k => { const x = e.per && e.per[k];
       return `<div class="nelo-f${x ? "" : " nelo-sense"}"><span><b>${Elo.FAMILIA[k]}</b><small>${x ? esc(x.de) + (x.est ? " · estimado" : "") : `Sin marca: ${Elo.NOM[k].toLowerCase()} con barra`}</small></span>`
         + `<span class="nelo-v">${x ? `<small>${kgTxt(x.e1rm)} kg</small><b>${n0(x.elo)}</b>` : "<b>·</b>"}</span></div>`; };
@@ -10174,7 +10314,7 @@ const Nit = (() => {
     return `<div class="nelo"><div class="nelo-cap">${sigma(e, "nelo-sig")}<span><b class="nelo-n">${n0(e.elo)}</b><small>${esc(nomRang(e.divisio.id, e.divisio.nom))}${e.provisional ? " · provisional" : ""}</small></span></div>
       ${e.provisional ? `<p class="nelo-prov">Provisional, y solo lo ves tú: te falta ${falta.join(" y ")}. Así nadie tiene ELO por un solo día.</p>` : ""}
       <div class="nelo-fs">${["banca", "sentadilla", "peso_muerto"].map(fila).join("")}</div>
-      ${ELO_COM}</div>`;
+      ${htmlPlElo()}${htmlCaliElo()}${ELO_COM}</div>`;
   }
   // un full de la Noche per triar (el nom, el repte, a qui convides)
   function fullN(titol, cos) {
@@ -11895,7 +12035,18 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nelo-fs{display:grid;gap:6px}
 .nelo-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:rgb(255 255 255 / .04)}
 .nelo-f span{display:grid;gap:1px}.nq-p .nelo .nelo-f b{font-size:15px;font-weight:900;line-height:1.25}.nelo-f small{font-size:12.5px;font-weight:700;color:var(--nt-suau)}
-.nelo-f.nelo-sense{opacity:.6}.nelo-v{justify-items:end;text-align:right}.nq-p .nelo .nelo-v b{font-size:18px;color:rgb(var(--m2-rgb))}
+.nelo-f.nelo-sense{opacity:.6}
+/* les quatre lligues en una fila (29-09): la base .seg és de dues columnes */
+.seg.seg-m{grid-template-columns:auto 1.3fr 1.1fr auto}.seg.seg-m button{padding:0 10px;font-size:14px}.nelo-pl{background:rgb(var(--l-rgb) / .12)}
+.ne-ipf{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-2px 0 8px 44px}
+.ne-ipf-c{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:4px 10px;border:0;border-radius:999px;font:800 12px/1.2 'Nunito',system-ui,sans-serif;
+  color:var(--nt-suau);background:rgb(255 255 255 / .05);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08);text-align:left}
+.ne-ipf-c svg{width:12px;height:12px;opacity:.25}.ne-ipf-c[aria-pressed="true"]{color:var(--nt-tinta);background:rgb(var(--m-rgb) / .14);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .45)}
+.ne-ipf-c[aria-pressed="true"] svg{opacity:1;color:var(--nt-menta)}
+.ne-ipf-v{flex-basis:100%;font-size:12px;font-weight:900;color:var(--nt-suau)}.ne-ipf.valid .ne-ipf-v{color:var(--nt-menta)}
+.ne-ipf-nota{font-size:12px;font-weight:700;color:var(--nt-suau)}
+.np3-pr{display:flex;align-items:center;gap:10px;margin:8px 0}.np3-pr span:last-child{display:grid}.np3-pr small{font-size:12px;opacity:.8}
+.np3-pr em{font-style:normal;font-weight:800;color:var(--nt-menta)}.nelo-v{justify-items:end;text-align:right}.nq-p .nelo .nelo-v b{font-size:18px;color:rgb(var(--m2-rgb))}
 .nt-elo.prov b{opacity:.7}.nt-elo.prov{box-shadow:var(--nt-o1),0 0 0 1px rgb(var(--l-rgb) / .35)}
 .ns-r-sig{width:20px;height:20px;object-fit:contain;vertical-align:-4px;margin-right:4px}
 .nsq-gest button{height:52px;border:0;border-radius:16px;cursor:pointer;background:#1c242e;color:var(--nt-tinta);font:900 15px/1 'Nunito',system-ui,sans-serif}
