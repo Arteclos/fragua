@@ -5532,9 +5532,9 @@ const GERMANDATS = [[0, "madera", "Hermandad de Madera"], [5000, "piedra", "Herm
   [500000, "oro", "Hermandad de Oro"], [1000000, "obsidiana", "Hermandad de Obsidiana"], [2000000, "criselefantino", "Hermandad Criselefantina"],
   [5000000, "estelar", "Hermandad Estelar"]];
 const germandatDe = g => { if (!g || !g.klonk) return null; const xp = g.xp_gim ?? g.xp ?? 0; let y = GERMANDATS[0]; GERMANDATS.forEach(t => { if (xp >= t[0]) y = t; }); return { id: y[1], nom: y[2] }; };
-const genKlonk = n => `${n0(n)} ${n === 1 ? "herrero" : "herreros"}`;         // la gent de KLONK són herreros (l'Albert, 27-09-2026)
+const genKlonk = n => `${n0(n)} ${n === 1 ? "persona" : "personas"}`;         // abans «herreros», de la farga (jubilada el 29-09-2026)
 const filaRangGim = g => { const t = germandatDe(g);
-  return `<div class="rk-fila rg-fila${g.meu ? " yo" : ""}"><span class="rk-pos num">${g.pos}</span>${t ? `<img class="yunque" src="${ACTIUS}yunques/${t.id}.webp" alt="${esc(t.nom)}" title="${esc(t.nom)}">` : "<span></span>"}<span class="rk-nom"><b>${esc(g.nom)}</b><small>${g.meu ? "Tu gimnasio · " : ""}${genKlonk(g.klonk)}</small></span><span class="rk-val num or">${n0(g.xp)} XP</span></div>`; };
+  return `<div class="rk-fila rg-fila${g.meu ? " yo" : ""}"><span class="rk-pos num">${g.pos}</span>${t ? `<img class="yunque" src="${ACTIUS}${typeof Nit === "object" && Nit.activa() ? `beta/nit/sigma-${t.id}.webp` : `yunques/${t.id}.webp`}" alt="${esc(t.nom)}" title="${esc(t.nom)}">` : "<span></span>"}<span class="rk-nom"><b>${esc(g.nom)}</b><small>${g.meu ? "Tu gimnasio · " : ""}${genKlonk(g.klonk)}</small></span><span class="rk-val num or">${n0(g.xp)} XP</span></div>`; };
 // El gimnàs més dur, a dalt de la pestanya Gimnasios: la teva ciutat o el teu país (el del teu gimnàs).
 const rgCarrega = {};
 async function carregaRangGims(amb) {
@@ -5656,7 +5656,7 @@ function vistaRankings(so) {
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
     <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.total} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
-      + (sol ? `<p class="suau petit" style="margin:10px 0 0">Aún no hay nadie de tu clan. <button class="enllac" data-accion="soc-tab" data-t="clan">Añade a alguien por su nickname</button></p>` : "") : `<p class="suau petit">Cargando…</p>`}</div>
+      + (sol ? `<p class="suau petit" style="margin:10px 0 0">Aún no tienes amigos en KLONK. <button class="enllac" data-accion="soc-tab" data-t="clan">Añade a alguien por su nickname</button></p>` : "") : `<p class="suau petit">Cargando…</p>`}</div>
     ${S.ui.errSocial ? `<p class="falta">${esc(S.ui.errSocial)}</p>` : ""}`;
 }
 // El clan: les sol·licituds que t'arriben, a dalt i marcades; afegir pel nickname exacte; les que esperen; i el clan.
@@ -5664,15 +5664,15 @@ function vistaClan(so) {
   const cl = so.clan || {}, reb = cl.rebudes || [], env = cl.enviades || [], am = cl.amics || [];
   const rx = pid => { const r = (cl.ratxes || {})[pid]; return r && r.setmanes ? ` <span class="rx-badge" title="${r.setmanes} ${r.setmanes === 1 ? "semana" : "semanas"} seguidas llegando los dos a vuestros días">${flama(true, "rx-f")}<b class="num">${r.setmanes}</b></span>` : ""; };
   const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}${rx(p.pid)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
-  return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren entrar en tu clan</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
+  return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren ser tus amigos</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
     ${am.length ? panellFeed() : ""}
     <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
       <div id="c-sug" class="clan-sug" aria-live="polite"></div>
-      <p class="suau petit" style="margin:0">Le llega una solicitud y entra en tu clan cuando la acepta. <button type="button" class="enllac" data-accion="clan-comparteix">Pasar mi nickname</button></p></form>
+      <p class="suau petit" style="margin:0">Le llega una solicitud y, cuando la acepta, sois amigos. <button type="button" class="enllac" data-accion="clan-comparteix">Pasar mi nickname</button></p></form>
     ${panellInvita()}
     ${env.length ? `<div class="panel pad"><b class="clan-t">Esperando respuesta</b>${env.map(p => fila(p, `<button class="enllac" data-accion="clan-cancela" data-p="${p.pid}">Cancelar</button>`)).join("")}</div>` : ""}
     ${(S.ui.clanNick || "").trim().length >= 2 ? (setTimeout(() => suggereix(S.ui.clanNick), 0), "") : ""}
-    <div class="panel pad"><b class="clan-t">Tu clan${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
+    <div class="panel pad"><b class="clan-t">Tus amigos${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
       ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`, true)).join("")
         : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : "Cargando…"}</p>`}</div>`;
 }
@@ -5690,12 +5690,12 @@ async function carregaClanInici() {
 function miniClan() {
   const so = soc();
   if (S.demo || !teCompte() || !so.participa || !(so.yo && so.yo.gimnas))
-    return `<div class="fantasma fusta">${imgYunque(null, "mini-y")}<div class="pista">Entra en Social y compite con tu clan</div></div>`;
+    return `<div class="fantasma fusta">${imgYunque(null, "mini-y")}<div class="pista">Entra en Social y compite con tus amigos</div></div>`;
   const rr = so.rank["rango|amigos|general"], rd = so.rank["dias|amigos|-"], ara = Date.now();
   if (ara - Math.min((rr || {}).at || 0, (rd || {}).at || 0) > 600000 && ara - (intent.inici || 0) > 60000) { intent.inici = ara; setTimeout(carregaClanInici, 0); }
   const r = rr && rr.yo ? rr : rd && rd.yo ? rd : null;
   if (!rr && !rd) return '<div class="buit">Cargando…</div>';
-  if (!r || r.total <= 1) return `${imgYunque(so.yo ? so.yo.poder : null, "mini-y")}<div class="buit">Añade a alguien a tu clan</div>`;
+  if (!r || r.total <= 1) return `${imgYunque(so.yo ? so.yo.poder : null, "mini-y")}<div class="buit">Añade a un amigo</div>`;
   return `${imgYunque(so.yo ? so.yo.poder : null, "mini-y")}<div class="gran num">${r.yo.pos}.º</div><div class="dada">de ${r.total}, en ${r === rr ? "fuerza" : "días"}</div>`;
 }
 // Després d'un entreno: si has pujat de yunque o de lloc al rànquing del clan, una celebració pròpia. Es mira quan el
@@ -5949,7 +5949,7 @@ function vistaGimnasios() {
 }
 function cosGimnasos() {
   setTimeout(iniciaMapa, 0);
-  return `<form class="gim-cerca" data-form="gim-cerca" role="search"><input id="g-q" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Nombre del gimnasio" aria-label="Nombre del gimnasio" value="${esc(S.ui.gimCerca || "")}"><button class="btn clar marc" type="submit">BUSCAR</button></form>
+  return `<form class="gim-cerca" data-form="gim-cerca" role="search"><input id="g-q" type="search" enterkeyhint="search" autocomplete="off" maxlength="60" placeholder="Nombre del gimnasio" aria-label="Nombre del gimnasio" value="${esc(S.ui.gimCerca || "")}"><button class="btn clar marc" type="submit">${typeof Nit === "object" && Nit.activa() ? "Buscar" : "BUSCAR"}</button></form>
     <div class="mapa-caixa panel"><div id="mapa" role="application" aria-label="Mapa de gimnasios"></div></div>
     <div class="fila envolta" style="justify-content:center;margin:10px 0"><button class="btn marc" data-accion="gim-jo">Mi ubicación</button><button class="btn marc" data-accion="gim-busca">Buscar en esta zona</button></div>
     <div id="gim-fitxa"></div><div id="gim-llista"><p class="suau petit" style="text-align:center">${gims.length ? "" : "Buscando los gimnasios de tu zona…"}</p></div>
@@ -5959,11 +5959,12 @@ function cosGimnasos() {
 async function iniciaMapa() {
   const el = $("#mapa"); if (!el) return;
   try { await carregaLeaflet(); } catch (e) { el.innerHTML = `<p class="falta" style="padding:20px">${esc(e.message)}</p>`; return; }
-  if (!$("#mapa")) return;
+  const el2 = $("#mapa");
+  if (!el2 || el2._leaflet_id) return;   // dues pintades seguides programaven dues vegades el mateix mapa (29-09)
   // la zona: on vas deixar el mapa; si no, el teu gimnàs; si no, Barcelona
   const g0 = soc().yo && soc().yo.gimnas;
   const c = S.ui.mapaCentre || (g0 && g0.lat != null ? [g0.lat, g0.lon] : [41.3874, 2.1686]);
-  mapa = L.map("mapa", { zoomControl: true, attributionControl: true }).setView(c, S.ui.mapaZoom || 14);
+  mapa = L.map(el2, { zoomControl: true, attributionControl: true }).setView(c, S.ui.mapaZoom || 14);
   // Les teselles d'OpenStreetMap, enfosquides amb CSS (.mapa-fosc): les fosques de CARTO ja demanen clau (26/09).
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "mapa-fosc",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
@@ -8083,9 +8084,11 @@ const Nit = (() => {
     if (!it) return;
     const que = QUE[tipusDeNoms((it.exercicis || []).map(e => e.nom))];
     const quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
-    el.innerHTML = `<img class="nt-amic-av" src="${CARA()}" alt="" draggable="false">
-      <span class="nt-amic-t"><b>${esc(it.nom)}</b> ${que ? `ha entrenado ${que}` : "ha entrenado"}${quan && quan !== "hoy" ? ` <small>${quan}</small>` : ""}</span>
-      <button class="nt-klonk-amic">KLσNK!</button>`;
+    // la cara de l'amic (no la teva), quan ho ha fet (també «hoy»), i el KLσNK! de debò: s'envia, i queda enviat (29-09)
+    const fet = it.meva === KLONK_REACCIO;
+    el.innerHTML = `<img class="nt-amic-av" src="${caraDe(it.personatge)}" alt="" draggable="false">
+      <span class="nt-amic-t"><b>${esc(it.nom)}</b> ${que ? `ha entrenado ${que}` : "ha entrenado"}${quan ? ` <small>${quan}</small>` : ""}</span>
+      <button class="nt-klonk-amic${fet ? " fet" : ""}" data-id="${esc(it.id)}" aria-pressed="${fet}">${fet ? I_CHECK : ""}KLσNK!</button>`;
     el.hidden = false;
     entra([el], 0);
   }
@@ -8294,6 +8297,7 @@ const Nit = (() => {
   // el KLσNK a un amic: el mateix gest, petit (demo: no s'envia res encara)
   function klonkAmic(b) {
     so();
+    enviaKlonk(b);
     if (quiet()) return;
     b.animate([{ transform: "scale(1)" }, { transform: "scale(1.1,.86)", offset: .2 }, { transform: "scale(.96,1.05)", offset: .5 }, { transform: "scale(1)" }], { duration: 520, easing: "cubic-bezier(.2,.9,.3,1)" });
     const sec = b.closest(".nt"), fx = sec && sec.querySelector(".nt-fx"); if (!fx) return;
@@ -8308,6 +8312,15 @@ const Nit = (() => {
     }
     const av = sec.querySelector(".nt-amic-av");
     if (av) av.animate([{ filter: "brightness(1)" }, { filter: "brightness(1.5) drop-shadow(0 0 10px var(--nt-menta-glow))", offset: .3 }, { filter: "brightness(1)" }], { duration: 700 });
+  }
+  // el KLσNK! a l'amic, de debò (el de la portada només feia l'animació, l'Albert, 29-09): la reacció del clan, i queda
+  // enviat; si ja ho era, només l'animació
+  async function enviaKlonk(b) {
+    if (b.classList.contains("fet") || !b.dataset.id || typeof api !== "function") return;
+    const f = S.ui.feed, it = f && (f.items || []).find(x => x.id === b.dataset.id); if (!it) return;
+    b.classList.add("fet"); b.setAttribute("aria-pressed", "true"); b.innerHTML = I_CHECK + "KLσNK!";
+    try { const r = await api("POST", `/clan/feed/${encodeURIComponent(it.id)}/reaccio`, { tipus: KLONK_REACCIO }); it.meva = KLONK_REACCIO; if (r && r.reaccions) it.reaccions = r.reaccions; }
+    catch (e) { b.classList.remove("fet"); b.setAttribute("aria-pressed", "false"); b.textContent = "KLσNK!"; if (typeof avis === "function") avis(e.message || "Sin conexión.", true); }
   }
   // cada peça respon al dit (sense fer res més: és una demostració)
   function premsa(p) {
@@ -8950,10 +8963,24 @@ const Nit = (() => {
      sempre: són els passos d'entrada. */
   const KLONK_REACCIO = "fuego";
   const diesQueden = () => { const d = (new Date().getDay() + 6) % 7; return 6 - d; };
+  // LES ICONES DE SOCIAL (29-09): squads, amics, rànquings, gimnasos (abans, una caixa de regal i una silueta)
+  const I_SOC = {
+    squad: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><circle cx="5" cy="10" r="2.4"/><circle cx="19" cy="10" r="2.4"/><path d="M6.5 20a5.5 5.5 0 0 1 11 0M1.5 19a3.6 3.6 0 0 1 5-3.3M22.5 19a3.6 3.6 0 0 0-5-3.3"/></g></svg>',
+    amics: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.5" cy="8" r="3.5"/><path d="M3 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></g></svg>',
+    rank: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></g></svg>',
+    gim: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><path d="M9 9.5h6M8.5 8v3M15.5 8v3"/></g></svg>',
+  };
+  // la squad en petit, a dalt de Social: l'etiqueta, les cares i quants sou; tocar-la hi entra (l'Albert: «a dalt, una vegada
+  // creada, poder accedir a la teva squad; allà veuries tots els teus col·legues»)
+  function htmlSquadMini(q) {
+    const n = q.membres.length;
+    return `<button class="nsq-mini" data-accion="ns-dins" data-t="squads" data-in="ns"><span class="nsq-mini-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}<small>Tu squad · ${n} ${n === 1 ? "miembro" : "miembros"}</small></span>
+      <span class="nsq-mini-caras">${q.membres.slice(0, 5).map(m => `<img src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false">`).join("")}</span>${I_TU.fle}</button>`;
+  }
   function guerraHero(meu, riv) {
     const tot = (meu.xp || 0) + (riv.xp || 0) || 1, pc = Math.round(100 * (meu.xp || 0) / tot), q = diesQueden();
     return `<div class="ns-g-c">${ic("cresta")}<small>${esc(meu.nom)}</small><b class="g-meu">${pc} %</b></div>
-      <div class="ns-g-mig"><b>Guerra semanal</b><small>${q === 0 ? "Último día" : `Quedan ${q} ${q === 1 ? "día" : "días"}`}</small>
+      <div class="ns-g-mig"><b>Guerra de gyms</b><small>${q === 0 ? "Último día" : `Quedan ${q} ${q === 1 ? "día" : "días"}`}</small>
         <span class="ns-g-barra"><i style="--p:${pc}%"></i></span><small class="ns-g-peu">Cada entreno tuyo suma para ${esc(meu.nom)}</small></div>
       <div class="ns-g-c">${ic("cresta-riv")}<small>${esc(riv.nom)}</small><b class="g-riv">${100 - pc} %</b></div>`;
   }
@@ -8982,7 +9009,7 @@ const Nit = (() => {
     const dins = S.ui.socDins;
     if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads") {
       if (dins !== "squads") S.ui.socTab = dins;
-      const nom = { clan: "Tu clan", rank: "Rankings", gimnasios: "Gimnasios", squads: "Squads" }[dins];
+      const nom = { clan: "Amigos", rank: "Rankings", gimnasios: "Gimnasios", squads: "Squads" }[dins];
       const cos = dins === "squads" ? vistaSquads() : dins === "clan" ? vistaClan(so) : dins === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
       refrescaSocial(so, dins);
       return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag">${nom}</h1></div>${cos}`;
@@ -8992,23 +9019,20 @@ const Nit = (() => {
     const so2 = soc(); refrescaSocial(so2, "rank");
     const r = so2.rank[claveRank(so2)], feed = (S.ui.feed && S.ui.feed.items) || [], n = ((so2.clan || {}).rebudes || []).length;
     const [meu, riv] = guerraDades();
-    const clan = feed.slice(0, 4);
     const rank = r && r.llista ? r.llista.slice(0, 5) : null;
     return `<h1 class="titol-pag">Social</h1>
       <section class="ns">
         ${(() => { carregaSquads(); const q = S.ui.squads, inv = q ? q.invitacions.length : 0;
-          if (q && q.squads.length) return htmlSquad(q.squads[0], false) + (inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads" data-in="ns">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : "");
+          if (q && q.squads.length) return q.squads.map(htmlSquadMini).join("") + (inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads" data-in="ns">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : "");
           if (q) return `<button class="nsq-crea" data-accion="${inv ? "ns-dins" : "nsq-nova"}" data-t="squads" data-in="ns"><span class="nsq-crea-caras">${AVATARS.slice(1, 5).map(a => `<img src="${caraDe(a)}" alt="" draggable="false">`).join("")}</span><span><b>${inv ? (inv === 1 ? "Te han invitado a una squad" : `Tienes ${inv} invitaciones`) : "Crea tu squad"}</b><small>${inv ? "Mira quién te espera" : "Tu gente, un reto por semana y avisos de «voy al gym»"}</small></span>${I_TU.fle}</button>`;
           return ""; })()}
-        <div class="ns-guerra" data-in="ns">${guerraHero(meu, riv)}</div>
-        <div class="ns-bloc" data-in="ns"><h2>Actividad del clan</h2>${clan.length ? clan.map(filaClan).join("") : `<p class="ns-buit">Cuando los de tu clan entrenen, saldrán aquí para que les hagas KLσNK!</p>`}</div>
-        <div class="ns-bloc" data-in="ns"><h2>Ranking de amigos</h2>${rank ? (rank.length ? rank.map(f => filaRank(f, so2)).join("") + (r.yo && r.yo.pos > rank.length ? filaRank(r.yo, so2) : "") : `<p class="ns-buit">Aún no hay nadie de tu clan.</p>`) : `<p class="ns-buit">Cargando…</p>`}</div>
-        <button class="nt-boto ns-invita" data-accion="ns-dins" data-t="clan" data-in="ns">${I_MENU.inv}Invitar amigos</button>
+        <div class="ns-bloc" data-in="ns"><div class="ns-bloc-cap"><h2>Ranking de amigos</h2><button class="ns-mes" data-accion="ns-dins" data-t="rank">Rankings${I_TU.fle}</button></div>${rank ? (rank.length ? rank.map(f => filaRank(f, so2)).join("") + (r.yo && r.yo.pos > rank.length ? filaRank(r.yo, so2) : "") : `<p class="ns-buit">Aún no tienes amigos en KLONK. Añádelos en «Amigos».</p>`) : `<p class="ns-buit">Cargando el ranking…</p>`}</div>
+        <button class="ns-guerra" data-accion="ns-dins" data-t="gimnasios" data-in="ns" aria-label="Guerra de gyms: ver los gimnasios">${guerraHero(meu, riv)}</button>
         <div class="ns-bot" data-in="ns">
-          <button data-accion="ns-dins" data-t="squads">${I_MENU.inv}<b>Squads</b>${S.ui.squads && S.ui.squads.invitacions.length ? `<i class="ns-xapa">${S.ui.squads.invitacions.length}</i>` : ""}</button>
-          <button data-accion="ns-dins" data-t="clan">${I_TU.pj}<b>Mi clan</b>${n ? `<i class="ns-xapa">${n}</i>` : ""}</button>
-          <button data-accion="ns-dins" data-t="rank">${I_TU.prog}<b>Rankings</b></button>
-          <button data-accion="ns-dins" data-t="gimnasios">${I_MENU.gim}<b>Gimnasios</b></button>
+          <button data-accion="ns-dins" data-t="squads">${I_SOC.squad}<b>Squads</b>${S.ui.squads && S.ui.squads.invitacions.length ? `<i class="ns-xapa">${S.ui.squads.invitacions.length}</i>` : ""}</button>
+          <button data-accion="ns-dins" data-t="clan">${I_SOC.amics}<b>Amigos</b>${n ? `<i class="ns-xapa">${n}</i>` : ""}</button>
+          <button data-accion="ns-dins" data-t="rank">${I_SOC.rank}<b>Rankings</b></button>
+          <button data-accion="ns-dins" data-t="gimnasios">${I_SOC.gim}<b>Gimnasios</b></button>
         </div>
       </section>`;
   }
@@ -9475,7 +9499,7 @@ const Nit = (() => {
         : `<p class="np3-nota">${d.primeres ? `Primera marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}: desde hoy, cada vez que la superes será un récord.` : "Hoy sin récords. Llegan entrenando."}</p>`)
       + (d.puntua ? "" : `<p class="np3-nota">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`)
       + (!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="np3-nota">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo: +50 XP y +15 de oro.</p>` : "")
-      + `<p class="np3-acc"><button class="np3-b tg-boto" data-accion="tg-entreno">Compartir mi entreno</button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="np3-b" data-accion="clan-avisa">Avisar a mi clan</button>` : ""}</p>`;
+      + `<p class="np3-acc"><button class="np3-b tg-boto" data-accion="tg-entreno">Compartir mi entreno</button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="np3-b" data-accion="clan-avisa">Avisar a mis amigos</button>` : ""}</p>`;
     const amb = d.mejoras.filter(m => m.vals.length >= 2), sense = d.mejoras.filter(m => m.vals.length < 2);
     const p2 = cap("Progreso", "Cómo mejoras", "Tu máximo estimado en cada ejercicio, entreno a entreno")
       + `<div class="np3-files">${amb.map((m, i) => `<div class="np3-fila np3-graf" style="--i:${i}"><span class="np3-fila-c"></span><span class="np3-fila-l">${esc(m.n)}</span>${linia(m.vals)}<b class="np3-pc ${m.canvi >= 0 ? "puja" : "baixa"}">${m.canvi >= 0 ? "+" : ""}${n0(m.canvi * 100)}%</b></div>`).join("")}</div>`
@@ -9493,7 +9517,7 @@ const Nit = (() => {
     const p4 = cap("Fuerza", "Tu fuerza", fz.pocas ? "Con dos semanas más de entrenos verás cuánto subes cada mes." : `De media en tus ${fz.ejercicios} ejercicios, contra el mes anterior`)
       + (fz.pocas ? "" : `<div class="np3-gran ${fz.cambio >= 0 ? "puja" : "baixa"}"><b class="num" data-compta="${Math.round(fz.cambio * 100)}" data-signe="${fz.cambio >= 0 ? "+" : ""}" data-quan="400">0</b><small>% este mes</small></div>`)
       + `<div class="np3-files">${filaN(0, millors === 1 ? "Ejercicio mejor" : "Ejercicios mejor", millors)}${filaN(1, d.records.length === 1 ? "Récord hoy" : "Récords hoy", d.records.length)}</div>`
-      + `<div class="np3-ranking" id="r-ranking">${sigma(eloDe(), "")}<div>${soc().participa && !S.demo ? `<b>Tu puesto en el ranking</b><small>Calculando…</small>` : `<b>El ranking de tu clan</b><small>Compite con tus amigos y con tu zona, anónimo si quieres. Actívalo en Social.</small>`}</div></div>`;
+      + `<div class="np3-ranking" id="r-ranking">${sigma(eloDe(), "")}<div>${soc().participa && !S.demo ? `<b>Tu puesto en el ranking</b><small>Calculando…</small>` : `<b>El ranking de tus amigos</b><small>Compite con tus amigos y con tu zona, anónimo si quieres. Actívalo en Social.</small>`}</div></div>`;
     const puja = d.des.nivel > d.abans.nivel;
     const p5 = cap("Experiencia", `Nivel ${puja ? d.des.nivel : d.abans.nivel}`)
       + `<div class="np3-gran xp"><b class="num" id="r-xp">+0 XP</b></div>`
@@ -9632,6 +9656,19 @@ const Nit = (() => {
       <div class="nsq-taula${pro ? "" : " tancat"}"><div class="nsq-f cap"><span></span><span>Días</span><span>Series</span><span>Kg</span><span>Récords</span></div>
       ${q.membres.map(m => `<div class="nsq-f"><span><img src="${caraDe(m.personatge)}" alt="" draggable="false">${esc(m.yo ? "Tú" : m.nom)}</span><b>${m.dies}</b><b class="p">${n0(m.series)}</b><b class="p">${n0(m.kilos)}</b><b class="p">${m.records}</b></div>`).join("")}</div></div>`;
   }
+  // L'ACTIVITAT és de la squad (l'Albert, 29-09: «l'activitat del clan en realitat no existeix; és una cosa que veuries amb
+  // la teva squad només»): els entrenos del feed dels que són a les teves squads, i els teus
+  function activitatSquad(squads) {
+    const pids = new Set(squads.flatMap(q => q.membres.filter(m => m.pid).map(m => m.pid)));
+    const f = S.ui.feed;
+    if (!f && typeof api === "function" && typeof teCompte === "function" && teCompte() && !S.demo && !S.ui.feedCarregant) {
+      S.ui.feedCarregant = true;
+      api("GET", "/clan/feed").then(r => { S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; S.ui.feedCarregant = false; if (S.ui.vista === "social" && typeof render === "function") render(); })
+        .catch(() => { S.ui.feedCarregant = false; });
+    }
+    const its = ((f && f.items) || []).filter(it => it.yo || pids.has(it.pid)).slice(0, 8);
+    return `<div class="ns-bloc" data-in="ns"><h2>Actividad de tu squad</h2>${its.length ? its.map(filaClan).join("") : `<p class="ns-buit">${f ? "Cuando los de tu squad entrenen, saldrán aquí para que les hagas KLσNK!" : "Cargando…"}</p>`}</div>`;
+  }
   function vistaSquads() {
     const d = S.ui.squads;
     carregaSquads();
@@ -9639,6 +9676,7 @@ const Nit = (() => {
     return `<section class="nsq-pag">
       ${d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}
       ${d.squads.map(q => htmlSquad(q, true)).join("")}
+      ${d.squads.length ? activitatSquad(d.squads) : ""}
       ${d.squads.length < 3 ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
     </section>`;
   }
@@ -9683,12 +9721,20 @@ const Nit = (() => {
       const e = S.ui.sqEtq || {}, full = b.closest(".nsq-full");
       if (!esEtq(e.t)) { if (typeof avis === "function") avis("De 2 a 4 letras o números.", true); return; }
       b.disabled = true;
-      const fet = e.sid ? await fes("POST", `/squads/${e.sid}/etiqueta`, { tag: e.t, color: e.c }, `Ahora sois [${e.t}].`)
-        : await fes("POST", "/squads", { tag: e.t, color: e.c }, `[${e.t}] creada. Ahora invita a tu clan.`);
-      if (fet && full) full.remove(); else b.disabled = false;
+      if (e.sid) {
+        const fet = await fes("POST", `/squads/${e.sid}/etiqueta`, { tag: e.t, color: e.c }, `Ahora sois [${e.t}].`);
+        if (fet && full) full.remove(); else b.disabled = false;
+        return;
+      }
+      let r;
+      try { r = await api("POST", "/squads", { tag: e.t, color: e.c }); }
+      catch (err) { b.disabled = false; if (typeof avis === "function") avis(err.message, true); return; }
+      if (full) full.remove();
+      await carregaSquads(true);
+      celebraSquad(e.t, e.c, r && r.id);
       return;
     }
-    if (a === "nsq-nom") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", "/squads", { nom: b.dataset.nom }, `«${b.dataset.nom}» creada. Ahora invita a tu clan.`); return; }
+    if (a === "nsq-nom") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", "/squads", { nom: b.dataset.nom }, `«${b.dataset.nom}» creada. Ahora invita a tus amigos.`); return; }
     if (a === "nsq-repte") {
       const R2 = (d && d.reptes) || {};
       fullN("El reto de la semana", Object.entries(R2).map(([t, metes]) => `<div class="nsq-rt"><small>${{ dias: "Días de gym entre todos", series: "Series entre todos", kilos: "Kilos entre todos", todos: "Que todos entrenen" }[t]}</small><div>${metes.map(m => `<button data-accion="nsq-repte-si" data-id="${id}" data-t="${t}" data-m="${m}">${t === "todos" ? m + " días" : n0(m)}</button>`).join("")}</div></div>`).join("")); return;
@@ -9697,7 +9743,7 @@ const Nit = (() => {
     if (a === "nsq-invita") {
       let c = []; try { c = (await api("GET", `/squads/${id}/candidats`)).candidats; } catch (e) { if (typeof avis === "function") avis(e.message, true); return; }
       fullN("Invitar a tu squad", c.length ? `<div class="nsq-cands">${c.map(x => `<button data-accion="nsq-invita-si" data-id="${id}" data-p="${x.pid}"><img src="${caraDe(x.personatge)}" alt="" draggable="false"><span>${esc(x.nom)}</span></button>`).join("")}</div>`
-        : `<p>Solo puedes invitar a quien sea de tu clan y del de todos los de la squad.</p>`); return;
+        : `<p>Solo puedes invitar a quien sea amigo tuyo y de todos los de la squad.</p>`); return;
     }
     if (a === "nsq-invita-si") { const f = b.closest(".nsq-full"); if (f) f.remove(); await fes("POST", `/squads/${id}/invita`, { pid: b.dataset.p }, "Invitación enviada."); return; }
   }
@@ -10023,7 +10069,7 @@ const Nit = (() => {
     const xif = [];
     if (p.xp != null) xif.push([n0(p.xp), "XP"]);
     xif.push([n0(p.dies || 0), p.dies === 1 ? "día de gym" : "días de gym"]);
-    if (p.clan && p.clan.pos) xif.push([`${p.clan.pos}.º`, `de ${p.clan.total} en tu clan`]);
+    if (p.clan && p.clan.pos) xif.push([`${p.clan.pos}.º`, `de ${p.clan.total} entre tus amigos`]);
     const grups = Object.entries(p.poder_grups || {});
     const gim = p.gimnas ? [p.gimnas.nom, p.gimnas.ciutat].filter(Boolean).join(", ") : "";
     const desde = typeof desdeTxt === "function" ? desdeTxt(p.desde) : "";
@@ -10066,7 +10112,7 @@ const Nit = (() => {
     return `<section class="npro">
       <div class="npro-cap"><span class="npro-ic">${ic("medalla")}</span><h1 class="npro-t">KLONK PRO</h1><p class="npro-sub">Aún no está a la venta. Esto es lo que estamos preparando:</p></div>
       <ul class="npro-l">${PECES.map(([t, d]) => `<li><b>${t}</b><span>${d}</span></li>`).join("")}</ul>
-      <p class="npro-nota">Lo que ya tienes no pasa a ser de pago: el rango, tus rutinas, las cartas, el clan y los rankings siguen gratis.</p>
+      <p class="npro-nota">Lo que ya tienes no pasa a ser de pago: el rango, tus rutinas, las cartas, los amigos, las squads y los rankings siguen gratis.</p>
       ${cta}
     </section>`;
   }
@@ -10092,7 +10138,7 @@ const Nit = (() => {
         ${jv ? "" : `<span class="nmat-peu"><em>${preuRoba(r[3])}</em><small>${t ? (t === "Única" ? "Reservado" : `Talla ${esc(t)}`) : "Reservar"}</small></span>`}
       </button>`;
     };
-    return `<p class="nb2-av">${jv ? "La ropa de KLONK, para ir al gimnasio con tu clan." : "La ropa de KLONK. Resérvala con tu talla: no pagas nada y te avisamos cuando esté a la venta."} Las fotos y los modelos están creados con IA.</p>
+    return `<p class="nb2-av">${jv ? "La ropa de KLONK, para ir al gimnasio con tus amigos." : "La ropa de KLONK. Resérvala con tu talla: no pagas nada y te avisamos cuando esté a la venta."} Las fotos y los modelos están creados con IA.</p>
       ${ROBA_GRUPS.map(([g, gn]) => { const L = ROBA.filter(r => r[1] === g); return L.length ? `<h2 class="nb2-t" data-in="nb">${esc(gn)}</h2><div class="nmat-g">${L.map(peca).join("")}</div>` : ""; }).join("")}`;
   }
 
@@ -10100,15 +10146,35 @@ const Nit = (() => {
      amb la celebració de la farga («¡NUEVO YUNQUE!», l'enclusa i «A LA FRAGUA»), perquè salta per un esdeveniment i cap
      escombrada de pàgines la veia. Ara: la sigma del material nou, o el lloc nou, i «Seguir», que passa a la següent
      (servidor.js, mostraPujada, en fa la cua). */
+  // LA SQUAD NOVA (29-09): l'etiqueta que entra gran, amb la llum del seu color, i «Invitar» (els amics reben la invitació
+  // i decideixen si entren)
+  function celebraSquad(tag, color, sid) {
+    const vell = document.querySelector(".npj"); if (vell) vell.remove();
+    const el = document.createElement("div"), c = COL_SQ[color] || COL_SQ.menta;
+    el.className = "npj npj-sq"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Squad creada");
+    el.style.setProperty("--tc", c);
+    el.innerHTML = `<div class="npj-vel"></div><div class="npj-p"><small class="npj-tag">Squad creada</small>
+      <span class="npj-etq"><i class="npj-llum"></i><b>[${esc(tag)}]</b></span>
+      <p class="npj-d">Invita a tus amigos: les llega la invitación y deciden si entran.</p>
+      <button class="nx-compra npj-ok" data-npj="invita">Invitar amigos</button><button class="npj-link" data-npj="tanca">Luego</button></div>`;
+    document.body.appendChild(el);
+    fx(E => { if (!E.suena("cofre")) E.suena("fanfarria"); E.vibra("fet"); });
+    el.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-npj]"); if (!b) return;
+      el.remove();
+      if (b.dataset.npj === "invita" && sid) dispara({ accion: "nsq-invita", id: sid });
+    });
+    const pn = el.querySelector(".npj-p"); pn.tabIndex = -1; pn.focus({ preventScroll: true });
+  }
   function celebraPujada(p) {
     const vell = document.querySelector(".npj"); if (vell) vell.remove();
     const el = document.createElement("div"), rang = p.t === "yunque";
-    el.className = "npj"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", rang ? "Nuevo rango" : "Subes en tu clan");
+    el.className = "npj"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", rang ? "Nuevo rango" : "Subes entre tus amigos");
     const cos = rang
       ? `<small class="npj-tag">Nuevo rango</small><span class="npj-sig"><i class="npj-llum"></i><img src="${sigmaMat(p.y.id)}" alt="" draggable="false"></span>
          <b class="npj-t">${esc(nomRang(p.y.id, p.y.nom))}</b><p class="npj-d">${p.poder != null ? `${n0(p.poder)} de fuerza para tu peso: ` : ""}has subido de rango.</p>`
-      : `<small class="npj-tag">Tu clan</small><span class="npj-pos"><b class="de">${p.de}.º</b><svg viewBox="0 0 40 24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><b>${p.a}.º</b></span>
-         <b class="npj-t">Subes en tu clan</b><p class="npj-d">Ahora eres ${p.a}.º de ${p.total} en fuerza.</p>`;
+      : `<small class="npj-tag">Tus amigos</small><span class="npj-pos"><b class="de">${p.de}.º</b><svg viewBox="0 0 40 24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><b>${p.a}.º</b></span>
+         <b class="npj-t">Subes entre tus amigos</b><p class="npj-d">Ahora eres ${p.a}.º de ${p.total} en fuerza.</p>`;
     el.innerHTML = `<div class="npj-vel"></div><div class="npj-p">${cos}<button class="nx-compra npj-ok" data-npj="seguir">Seguir</button>${rang ? "" : `<button class="npj-link" data-npj="tanca" data-accion="inici-clan">Ver el ranking</button>`}</div>`;
     document.body.appendChild(el);
     fx(E => { if (rang) { if (!E.suena("cofre")) E.suena("fanfarria"); E.vibra("yunque"); } else { E.suena("triar"); E.vibra("fet"); } });
@@ -10342,6 +10408,7 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-amic-av{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--nt-sup-2);box-shadow:0 0 0 1.5px rgb(var(--l-rgb) / .5)}
 .nt-amic-t{flex:1;font-size:13.5px;color:var(--nt-suau);font-weight:700;line-height:1.25}.nt-amic-t b{color:var(--nt-tinta)}
 .nt-amic-t small{font-size:11px;opacity:.8}
+.nt-klonk-amic.fet{background:rgb(var(--m-rgb) / .16)}.nt-klonk-amic svg{width:14px;height:14px;margin-right:5px;vertical-align:-2px}
 .nt-klonk-amic{height:34px;padding:0 14px;border-radius:999px;border:0;font:900 13.5px/1 inherit;font-family:inherit;color:var(--nt-menta);letter-spacing:.02em;
   background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:inset 0 1px 0 rgb(255 255 255 / .08),0 0 0 1px rgb(var(--m-rgb) / .3),0 6px 14px -8px rgb(0 0 0 / .9);text-shadow:var(--nt-text-o)}
 /* LA BARRA DE BAIX: cinc llocs, el del mig és el botó del KLONK */
@@ -11213,6 +11280,22 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
 .nsq-accions button.fora svg{color:#ec9a9a}
 .nsq-full .nq-p{gap:12px;max-height:80vh;overflow:auto}
 .nsq-noms{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+button.ns-guerra{width:100%;border:0;font:inherit;color:inherit;text-align:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.ns-guerra:active{transform:scale(.985)}
+.ns-bloc-cap{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ns-mes{display:inline-flex;align-items:center;gap:2px;height:34px;padding:0 6px 0 14px;border:0;border-radius:999px;cursor:pointer;background:rgb(var(--m-rgb) / .12);color:rgb(var(--m-rgb));font:900 13.5px/1 'Nunito',system-ui,sans-serif}
+.ns-mes svg{width:18px;height:18px}
+.ns-bot button svg{width:24px;height:24px}
+.nsq-mini{display:flex;align-items:center;gap:12px;width:100%;padding:14px 12px 14px 16px;border:0;border-radius:22px;cursor:pointer;text-align:left;color:var(--nt-tinta);font:inherit;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1),0 0 0 1px rgb(var(--l-rgb) / .22)}
+.nsq-mini:active{transform:scale(.985)}
+.nsq-mini-t{flex:1;min-width:0;display:grid;gap:2px;font:900 22px/1.1 'Nunito',system-ui,sans-serif}
+.nsq-mini-t small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.nsq-mini-caras{display:flex}.nsq-mini-caras img{width:32px;height:32px;margin-left:-8px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #171e27}
+.nsq-mini > svg{width:20px;height:20px;color:var(--nt-suau);flex:none}
+.npj-etq{position:relative;display:grid;place-items:center;min-width:220px;height:150px}
+.npj-etq b{position:relative;font:900 64px/1 'Nunito',system-ui,sans-serif;letter-spacing:.02em;color:var(--tc)}
+.npj-sq .npj-llum{background:radial-gradient(circle,color-mix(in srgb,var(--tc) 45%,transparent),transparent 68%)}
+@media (prefers-reduced-motion:no-preference){.npj-etq b{animation:npj-sig .8s cubic-bezier(.34,1.56,.64,1) .1s both}}
 .nsq-tag{font-style:normal;font-weight:900;color:var(--tc,#86d9c6);margin-right:4px;letter-spacing:.02em}
 .nsq-etq{display:grid;gap:14px;width:100%;justify-items:center}
 .nsq-prev{margin:6px 0 0;font:900 24px/1.1 'Nunito',system-ui,sans-serif;color:var(--nt-tinta);text-align:center;word-break:break-word}
