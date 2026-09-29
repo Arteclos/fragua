@@ -11721,6 +11721,15 @@ body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(104px + env(safe
    la pàgina curta i el menú de baix pujat); la capa .nt, fixa i sense gestos, és la que no es mou */
 html:has(body.v-nit.fb-actiu),body.v-nit.fb-actiu{overflow:visible}
 body.v-nit.fb-actiu #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh + 2px)}
+/* I TOTES LES PÀGINES, no només la portada (29-09 nit, vist a l'iPhone simulat de l'iMac amb l'app instal·lada): una pàgina
+   curta com Amigos no fa llarg i l'iPhone la deixa amb el menú de baix 62 punts alçat (87 punts buits a sota, contra 24) */
+body.v-nit #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh + 2px)}
+/* LA FRANJA DE L'HORA, amb l'app instal·lada (29-09 nit, vist a l'iPhone simulat de l'iMac): la pàgina passava per sota de
+   l'hora i la bateria en baixar, i no es llegien. Una franja del color de la pàgina, fixa, que s'esvaeix cap avall; per
+   sobre del contingut (la barra de Progreso és a 39) i per sota de tot el que s'obre al damunt (els efectes, 50; els fulls,
+   80 i més). Al Safari no cal: la hi posa ell */
+@media (display-mode: standalone){body.v-nit::before{content:"";position:fixed;z-index:45;left:0;right:0;top:0;height:calc(env(safe-area-inset-top,0px) + 12px);
+  pointer-events:none;background:linear-gradient(to bottom,var(--nt-fons) calc(100% - 12px),rgb(13 18 23 / 0))}}
 .nt-barra button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nt-barra .nt-centre{background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%)}
 .nt-tab{position:relative;transition:opacity .2s}
