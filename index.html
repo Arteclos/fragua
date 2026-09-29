@@ -9756,7 +9756,7 @@ const Nit = (() => {
       : `<button class="nm3-b gran" data-accion="nm3-compra" data-id="${o.id}" data-preu="${o.preu}"${falta ? " disabled" : ""}>${ic("moneda")}Comprar por ${n0(o.preu)} de oro</button>
          ${falta ? `<p class="nm3-nota">Te faltan ${n0(falta)} de oro.</p>` : ""}`;
     fullN(o.titol, `<div class="nm3-fitxa"><img class="nm3-gran" src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"${marcM(o.mat)}>
-      <p class="nm3-meta">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""} · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK<br>${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
+      <p class="nm3-meta">de ${o.pid ? `<button class="nm3-perfil" data-accion="nm3-perfil" data-p="${esc(o.pid)}">${esc(o.autor)}</button>` : esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""} · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK<br>${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
       ${accio}<div class="nm3-dies">${dies}</div>
       ${o.meva ? "" : `<button class="nm3-informa" data-accion="nm3-informa" data-id="${o.id}">Denunciar esta rutina</button>`}</div>`);
   }
@@ -9778,6 +9778,7 @@ const Nit = (() => {
     const a = b.dataset.accion;
     if (a === "nm3-obre") return obreOferta(b.dataset.id);
     if (a === "nm3-ven") return obreVenda();
+    if (a === "nm3-perfil") { document.querySelectorAll(".nsq-full").forEach(x => x.remove()); if (typeof obrePerfil === "function") obrePerfil(b.dataset.p); return; }
     if (a === "nm3-gym") { S.ui.mercatGym = b.dataset.g === "1"; fx(E => { E.suena("tap"); E.vibra("tria"); }); return carregaMercat(true); }
     if (a === "nm3-v") {
       S.ui.venda = { ...(S.ui.venda || {}), [b.dataset.k]: b.dataset.k === "p" ? +b.dataset.v : b.dataset.v };
@@ -10941,6 +10942,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nw-dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .nm3-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .nm3-filtre{margin:-4px 0 2px}
+.nm3-perfil{border:0;padding:0;background:none;color:rgb(var(--m-rgb));font:inherit;font-weight:900;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .nm3-gym{justify-self:start;margin:-2px 0 2px;padding:3px 8px;border-radius:999px;background:rgb(var(--m-rgb) / .16);color:rgb(var(--m-rgb));font-style:normal;font-size:11.5px;font-weight:900}
 .nm3-o{display:grid;gap:3px;padding:10px 10px 12px;border:0;border-radius:20px;text-align:left;cursor:pointer;background:linear-gradient(180deg,#1f2733,#171e27);color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;box-shadow:var(--nt-o1)}
 .nm3-o.teva{box-shadow:0 0 0 1.5px rgb(var(--m-rgb) / .6),var(--nt-o1)}
