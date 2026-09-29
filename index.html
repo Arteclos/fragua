@@ -3206,13 +3206,17 @@ function matDeRutina(r) {
   if (r.autor) return MATS_SIGMA.includes(r.mat) ? r.mat : null;
   try { const e = typeof Elo === "object" ? Elo.calcula() : null; return e && e.elo != null && !e.provisional && e.divisio && MATS_SIGMA.includes(e.divisio.id) ? e.divisio.id : null; } catch (x) { return null; }
 }
-const perCompartir = r => { const mat = matDeRutina(r); return { nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })),
+// un exercici tal com viatja: els quatre primers (nom, tipus, càrrega i superserie) i, si en té, el pla de les sèries (29-09 nit)
+const ejCompartit = e => { const p = plaDe(e); if (!p) return e.slice(0, 4); const b = e.slice(0, 4).map(v => v == null ? "" : String(v)); while (b.length < 4) b.push(""); return [...b, { s: p }]; };
+const perCompartir = r => { const mat = matDeRutina(r); return { nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(ejCompartit) })),
   cfg: cfgDeRutina(r), ...(mat ? { mat } : {}) }; };
 // Una rutina que ve de fora (un enllaç o un amic) es mira abans de fer-la servir: noms curts, poques coses.
 function rutinaValida(x) {
   if (!x || typeof x.nombre !== "string" || !Array.isArray(x.dias) || !x.dias.length || x.dias.length > 14) return null;
   const dias = x.dias.map(d => ({ t: String(d.t || "Día").slice(0, 40), ej: (Array.isArray(d.ej) ? d.ej : []).slice(0, 25)
     .filter(e => Array.isArray(e) && typeof e[0] === "string").map(e => { const x2 = ["lastre", "fino"].includes(e[2]) ? e[2] : "", g = typeof e[3] === "string" && /^[A-Z]$/.test(e[3]) ? e[3] : "";
+      const p = plaNet(e[4]);     // el pla de les sèries, si en porta (29-09 nit)
+      if (p) return [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", x2, g, p];
       return g ? [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", x2, g] : [e[0].slice(0, 80), e[1] === "c" ? "c" : "a", ...(x2 ? [x2] : [])]; }) }));
   dias.forEach(normalitzaGrups);
   // les sèries i repeticions de qui l'envia: només les dels seus exercicis, i només números dins de marge
@@ -4114,7 +4118,12 @@ function normalitzaGrups(dia) {
     e[3] = nova;
     if (e[2] == null) e[2] = "";
   });
-  ej.forEach(e => { if (!e[3] && e.length > 3) e.length = e[2] ? 3 : 2; });
+  // un exercici amb el pla de les sèries (e[4], 29-09 nit) es queda amb els cinc llocs: escurçar-lo el perdia en silenci en
+  // treure un exercici, reordenar-los o fer una superserie a l'editor de la carta
+  ej.forEach(e => {
+    if (e.length > 4 && e[4] && typeof e[4] === "object") { if (e[2] == null) e[2] = ""; if (!e[3]) e[3] = ""; return; }
+    if (!e[3] && e.length > 3) e.length = e[2] ? 3 : 2;
+  });
 }
 // Unir l'exercici j amb el següent (o separar-los si ja hi van junts)
 function uneixSeguent(dia, j) {
@@ -4222,10 +4231,23 @@ function aplicaEspecials(sets, cfg, c) {
    cinquè element de cada exercici de la carta, {s: [{tipo, r: [mín, màx], pct}]}, i així cada carta té el seu (un press
    fort el dilluns i lleuger el dijous) i es mou amb l'exercici. Sense, l'entreno surt com sempre de S.cfg. El pes de les de
    treball el proposa la progressió (carga.js); el de les altres, un percentatge: C, de la primera de treball; D, de la d'abans;
-   P, de la teva marca de les 8 setmanes; M, el mateix de la d'abans. Encara no viatja quan es comparteix (perCompartir). */
+   P, de la teva marca de les 8 setmanes; M, el mateix de la d'abans. Viatja quan es comparteix (perCompartir, rutinaValida i,
+   al servidor, app.py RutinaDia), des del 29-09 nit. */
 const PLA_MAX = 12;
 const PCT_PLA = { c: 50, d: 75, p: 100 };
 const plaDe = e => Array.isArray(e) && e[4] && Array.isArray(e[4].s) && e[4].s.length ? e[4].s : null;
+// un pla que ve de fora (un enllaç, un amic, la squad): només tipus coneguts, repeticions d'1 a 50 (el màxim pot quedar
+// obert) i percentatges de 5 a 150, com els deixa l'editor; com a molt PLA_MAX sèries (29-09 nit)
+function plaNet(v) {
+  const s = v && Array.isArray(v.s) ? v.s.slice(0, PLA_MAX) : null; if (!s) return null;
+  const rep = n => Number.isInteger(n) && n >= 1 && n <= 50;
+  const out = s.filter(q => q && typeof q === "object").map(q => {
+    const tipo = ["", "c", "d", "f", "m", "p"].includes(q.tipo) ? q.tipo : "";
+    const r = Array.isArray(q.r) && rep(q.r[0]) && (q.r[1] == null || (rep(q.r[1]) && q.r[1] >= q.r[0])) ? [q.r[0], q.r[1] == null ? null : q.r[1]] : [8, 12];
+    return { tipo, r, ...(PCT_PLA[tipo] && Number.isInteger(q.pct) && q.pct >= 5 && q.pct <= 150 ? { pct: q.pct } : {}) };
+  });
+  return out.length ? { s: out } : null;
+}
 // una còpia de debò d'un exercici de carta: el pla no es pot compartir entre dues còpies
 const copiaEj = e => e.map(v => v && typeof v === "object" ? JSON.parse(JSON.stringify(v)) : v);
 // el pla que surt de la configuració d'avui de l'exercici (quan s'obre per primer cop a l'editor)
