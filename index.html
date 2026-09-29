@@ -8882,7 +8882,7 @@ const Nit = (() => {
     return `<section class="nt-tu">
       <div class="nt-tu-dalt">
         <div class="nt-tu-dreta">
-          <div class="nt-tu-fitxa" data-in="tu"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
+          <div class="nt-tu-fitxa" data-in="tu"><button class="nt-tu-av-b" data-accion="nt-editapj" aria-label="Cambiar de personaje"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><i class="nt-tu-av-ed">${I_LLAPIS}</i></button><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
             <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
           <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
@@ -8893,6 +8893,7 @@ const Nit = (() => {
           </div>
         </div>
       </div>
+      ${htmlProgTu()}
       <div class="nt-tu-mazo" data-in="tu">
         <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="rutinas">Rutinas</button></div>
         <button class="nt-tu-mazo-b" data-accion="nt-ves" data-v="cartas"><span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span><span><b>${esc(r.nombre)}</b><small>${nDies(r.dias.length)}, en uso</small></span>${I_TU.fle}</button>
@@ -8902,11 +8903,28 @@ const Nit = (() => {
         <button class="nt-tu-scan" data-accion="nt-ves" data-v="espejo"><span class="nt-tu-v-ic">${I_TU.scan}</span><b>Escáner de cuerpo</b><small>Mira cómo cambia tu cuerpo</small></button>
       </div>`}
       <div class="nt-tu-bot" data-in="tu">
-        <button data-accion="nt-editapj">${I_TU.pj}<b>Editar personaje</b>${I_TU.fle}</button>
-        <button data-accion="nt-ves" data-v="estadisticas">${I_TU.prog}<b>Progreso</b>${I_TU.fle}</button>
         <button data-accion="nt-ves" data-v="tienda" data-t="oro">${I_TU.bot}<b>Tienda</b>${I_TU.fle}</button>
       </div>
     </section>`;
+  }
+  // EL PROGRESO A LA VISTA (29-09 vespre, l'Albert: «la part de progreso és important i queda amagada; s'hauria de visualitzar
+  // per si algú vol fer clic i entrar a les estadístiques»): els dies de gym de les últimes 8 setmanes, la d'ara destacada, i
+  // com vas aquesta setmana. Tota la targeta porta a les estadístiques.
+  function setmanesDies(n) {
+    const dl = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.getTime(); };
+    const ara = dl(Date.now()), dies = Array.from({ length: n }, () => new Set());
+    S.ses.forEach(s => { if (!s.fin || !s.fecha) return; const k = Math.round((ara - dl(s.fecha + "T12:00:00")) / (7 * 864e5)); if (k >= 0 && k < n) dies[n - 1 - k].add(s.fecha); });
+    return dies.map(x => x.size);
+  }
+  function htmlProgTu() {
+    const ds = setmanesDies(8), ara = ds[ds.length - 1];
+    const vol = (() => { const dl = new Date(); dl.setHours(0, 0, 0, 0); dl.setDate(dl.getDate() - ((dl.getDay() + 6) % 7)); let v = 0;
+      S.ses.forEach(s => { if (s.fin && s.fecha && new Date(s.fecha + "T12:00:00") >= dl) (s.ej || []).forEach(e => { if (e.x !== "lastre") (e.sets || []).forEach(z => { if (z && z.ok) v += (+z.kg || 0) * (+z.reps || 0); }); }); }); return v; })();
+    const mx = Math.max(3, ...ds);
+    return `<button class="nt-tu-prog" data-accion="nt-ves" data-v="estadisticas" data-in="tu">
+        <span class="nt-tu-prog-t"><small>Tu progreso</small><b>Esta semana, ${ara} ${ara === 1 ? "día" : "días"}</b>${vol ? `<span>${n0(Math.round(vol))} kg levantados</span>` : ""}<em>Tus estadísticas${I_TU.fle}</em></span>
+        <span class="nt-tu-prog-g" aria-hidden="true">${ds.map((d, i) => `<i class="${i === ds.length - 1 ? "ara" : ""}" style="--h:${Math.max(6, d / mx * 100)}%"></i>`).join("")}</span>
+      </button>`;
   }
   // ELS RANGS: la sigma de cada material, del més baix al més alt, amb el teu marcat
   function obreRangs() {
@@ -11485,6 +11503,28 @@ body.v-nit .serie .i.tipus-f,.nt-rt-l.f{background:rgb(240 144 126 / .14);color:
 .nt-tu-fle{display:grid;width:16px;height:16px;color:var(--nt-suau)}.nt-tu-fle svg{width:16px;height:16px}
 .nt-tu-bot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .nt-tu-bot button:first-child{grid-column:span 2}
+.nt-tu-av-b{position:relative;grid-row:span 2;padding:0;border:0;background:none;border-radius:50%;cursor:pointer}
+.nt-tu-av-b .nt-tu-av{display:block}
+.nt-tu-av-ed{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:#1b2530;color:var(--nt-menta);box-shadow:0 0 0 2px #0d1217}
+.nt-tu-av-ed svg{width:13px;height:13px}
+.nt-tu-prog{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;width:100%;padding:14px 16px;border:0;border-radius:22px;cursor:pointer;text-align:left;color:var(--nt-tinta);
+  font:inherit;background:radial-gradient(90% 140% at 100% 0%,rgb(var(--m-rgb) / .14),transparent 60%),var(--fb-sup);box-shadow:var(--fb-o1),0 0 0 1px rgb(var(--m-rgb) / .18)}
+.nt-tu-prog-t{display:grid;gap:3px}.nt-tu-prog-t small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}.nt-tu-prog-t b{font-size:16px;font-weight:900}
+.nt-tu-prog-t span{font-size:13.5px;font-weight:700;color:var(--nt-suau);font-variant-numeric:tabular-nums}
+.nt-tu-prog-t em{display:inline-flex;align-items:center;gap:4px;font-style:normal;font-size:13px;font-weight:900;color:var(--nt-menta)}.nt-tu-prog-t em svg{width:14px;height:14px}
+.nt-tu-prog-g{display:flex;align-items:flex-end;gap:5px;height:54px}
+.nt-tu-prog-g i{width:9px;height:var(--h);border-radius:4px;background:rgb(255 255 255 / .12)}.nt-tu-prog-g i.ara{background:var(--nt-menta);box-shadow:0 0 10px -2px var(--nt-menta-glow)}
+/* LES PESTANYES DE LES ESTADÍSTIQUES, A BAIX (29-09 vespre, l'Albert: «accedir als botons de dalt fa pal; hauries de poder canviar
+   entre finestres amb el dit a prop de la manuella, sense que estigui tan a prop per clicar-la»): flotant, per sobre del botó
+   del mig amb aire, on arriba el polze */
+body.v-nit #vista[data-vista="estadisticas"] > .tabs-t{position:fixed;left:50%;transform:translateX(-50%);z-index:39;margin:0;
+  bottom:calc(104px + max(6px,calc(env(safe-area-inset-bottom) - 16px)));width:min(calc(100vw - 32px),420px);box-sizing:border-box;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px;border-radius:999px;background:rgb(22 29 37 / .94);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 14px 30px -12px rgb(0 0 0 / .95),0 0 0 1px var(--nt-vora)}
+body.v-nit #vista[data-vista="estadisticas"] > .tabs-t .chip{justify-content:center;min-width:0;padding:0 6px}
+/* les files d'Ejercicios, tan amples com la pàgina (eren botons a la mida del text, cada una d'un ample) */
+body.v-nit .ej-fila{width:100%}
+body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]{padding-bottom:calc(172px + env(safe-area-inset-bottom))}
 /* TÚ, 29-09: el mazo amunt i, on hi havia «Tus mejores marcas», el PRO i l'escàner */
 .nt-tu-mazo{display:grid;gap:4px}
 .nt-tu-mazo-c{display:flex;align-items:center;justify-content:space-between}
