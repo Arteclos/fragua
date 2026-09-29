@@ -5635,7 +5635,8 @@ const pjBo = t => Object.prototype.hasOwnProperty.call(PERSONAJES, t) ? t : "her
 const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span class="av-img"><img src="${imgPersonaje(pjBo(tipo))}" alt="" loading="lazy"></span><b class="num">${nivell || 1}</b></span>`;
 function filaRanking(f, so) {
   const v = f.valor;
-  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
+  const emb = f.emblema && typeof Nit === "object" && Nit.emb ? Nit.emb(f.emblema, "mini") : "";
+  return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span><span class="ns-av-w">${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}${emb}</span>
     <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
@@ -9257,7 +9258,7 @@ const Nit = (() => {
   // creada, poder accedir a la teva squad; allà veuries tots els teus col·legues»)
   function htmlSquadMini(q) {
     const n = q.membres.length;
-    return `<button class="nsq-mini" data-accion="ns-dins" data-t="squads" data-in="ns"><span class="nsq-mini-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}<small>Tu squad · ${n} ${n === 1 ? "miembro" : "miembros"}</small></span>
+    return `<button class="nsq-mini" data-accion="ns-dins" data-t="squads" data-in="ns">${badgeEmb(q.emblema)}<span class="nsq-mini-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}<small>Tu squad · ${n} ${n === 1 ? "miembro" : "miembros"}</small></span>
       <span class="nsq-mini-caras">${q.membres.slice(0, 5).map(m => `<img src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false">`).join("")}</span>${I_TU.fle}</button>`;
   }
   const queTxt = q => q === 0 ? "Último día" : `Quedan ${q} ${q === 1 ? "día" : "días"}`;
@@ -9310,7 +9311,7 @@ const Nit = (() => {
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
-    return `<div class="ns-f" data-in="ns"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">
+    return `<div class="ns-f" data-in="ns"><span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "mini")}</span>
       <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
       ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
@@ -10182,6 +10183,21 @@ const Nit = (() => {
   const esEtq = t => /^[A-Z0-9]{2,4}$/.test(t || "");
   const tagSq = t => t && t.t ? `<i class="nsq-tag" style="--tc:${COL_SQ[t.c] || COL_SQ.menta}">[${esc(t.t)}]</i>` : "";
   const I_LLAPIS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // ELS EMBLEMES (29-09, Hub 928; servidor: squads.py): vuit formes fetes per codi, del color de la squad, amb l'anella del
+  // nivell (1, fusta; 2, plata; 3, or; 4, menta; 5, lila). El dibuix bo arriba amb les imatges; la forma i el nivell, ja.
+  const FORMES_EMB = {
+    escut: "M12 2.5l8 3v6.2c0 4.6-3.3 8.6-8 10.3-4.7-1.7-8-5.7-8-10.3V5.5z",
+    llamp: "M13.5 2L4.5 13.5h6.2L9 22l10-12.6h-6.4z",
+    flama: "M12 2.2c.9 3.6 5.8 5.6 5.8 11.3A5.8 5.8 0 0 1 6.2 13.5c0-2.6 1.4-4.5 2.7-6.2.5 1.9 1.6 3 2.6 3.2-.4-2.7.1-5.6.5-8.3z",
+    corona: "M3 8.2l4.6 3.6L12 5l4.4 6.8L21 8.2l-1.9 10.6H4.9z",
+    estrella: "M12 2.4l2.9 6.2 6.8.8-5 4.6 1.4 6.7L12 17.3l-6.1 3.4 1.4-6.7-5-4.6 6.8-.8z",
+    enclusa: "M3 7.5h12.5c3.2 0 5.5 1.7 5.5 3.9h-5.2c-.9 0-1.3.6-1.3 1.3v2.1h2.2v2.9H7.1v-2.9h2.2v-1.8C6 13 3 10.6 3 7.5z",
+    muntanya: "M1.8 20.2L9.2 6.6l3.9 6.3 2.6-3.6 6.5 10.9z",
+    manuella: "M2 10.2h1.8V7.1h3.1v9.8H3.8v-3.1H2zM22 10.2h-1.8V7.1h-3.1v9.8h3.1v-3.1H22zM7.8 11h8.4v2H7.8z",
+  };
+  const NOM_FORMA = { escut: "Escudo", llamp: "Rayo", flama: "Llama", corona: "Corona", estrella: "Estrella", enclusa: "Yunque", muntanya: "Montaña", manuella: "Mancuerna" };
+  const svgEmb = f => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${FORMES_EMB[f] || FORMES_EMB.escut}"/></svg>`;
+  const badgeEmb = (e, cls = "") => e && e.f ? `<i class="emb n${Math.min(5, Math.max(1, +e.n || 1))}${cls ? " " + cls : ""}" style="--ec:${COL_SQ[e.c] || COL_SQ.menta}" aria-label="${esc(NOM_FORMA[e.f] || "Emblema")}, nivel ${+e.n || 1}">${svgEmb(e.f)}</i>` : "";
   function htmlEtq(menors) {
     return `<div class="nsq-etq"><p class="nsq-prev" id="nsq-prev"></p>
       ${jove() ? `<div class="nsq-tts">${(menors.length ? menors : ETQ_MENORS).map(t => `<button data-accion="nsq-tt" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>`
@@ -10235,10 +10251,23 @@ const Nit = (() => {
   // LA GESTIÓ (29-09, l'Albert: «has de poder fer admin a la gent; tenir disponible tota la gestió del teu squad»): el líder i
   // els admins conviden, treuen i posen el repte; el líder, a més, fa admins, passa el lideratge i canvia l'etiqueta
   // (servidor: squads.py). A la cara de cadascú hi diu què és; els convidats hi surten fins que diuen que sí o que no.
+  // l'emblema de la squad: el nivell (la millor ratxa, no baixa), la ratxa d'ara i el que falta per al següent; qui la
+  // gestiona en canvia la forma; i cadascú tria si el porta a l'avatar (sense triar, el de la primera squad)
+  function portaEmb(q) { const d = S.ui.squads || {}, j = d.jo_emblema; return j === q.id || (!j && d.squads && d.squads[0] && d.squads[0].id === q.id); }
+  function htmlEmbSquad(q, gestor) {
+    const e = q.emblema, r = +e.ratxa || 0, porta = portaEmb(q);
+    return `<div class="nsq-emb">${badgeEmb(e, "xl")}
+      <span class="nsq-emb-t"><b>${esc(NOM_FORMA[e.f] || "Emblema")} · nivel ${e.n}</b>
+        <small>${r ? `${r} ${r === 1 ? "semana seguida" : "semanas seguidas"} entrenando todos, 2 días o más` : "Si todos entrenáis 2 días esta semana, empieza la racha"}</small>
+        <small>${e.seguent ? `Nivel ${+e.n + 1} a las ${e.seguent} semanas seguidas${e.millor ? ` (vuestra mejor racha: ${e.millor})` : ""}` : "Nivel máximo"}</small></span>
+      ${gestor ? `<button class="nsq-etq-ed" data-accion="nsq-emb" data-id="${q.id}" aria-label="Cambiar el emblema">${I_LLAPIS}</button>` : ""}</div>
+      <button class="nsq-b2 nsq-porta${porta ? " on" : ""}" data-accion="nsq-porta" data-id="${q.id}" aria-pressed="${porta}">${porta ? "Lo llevas en tu avatar" : "Llevarlo en tu avatar"}</button>`;
+  }
   function htmlSquad(q, tot) {
     const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0, gestor = q.jo_lider || q.jo_admin;
     return `<div class="nsq" data-in="ns">
       <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}</b>${q.jo_lider ? `<button class="nsq-etq-ed" data-accion="nsq-etq" data-id="${q.id}" aria-label="Cambiar la etiqueta">${I_LLAPIS}</button><i class="nsq-lider">Líder</i>` : q.jo_admin ? `<i class="nsq-lider nsq-admin">Admin</i>` : ""}</div>
+      ${tot && q.emblema ? htmlEmbSquad(q, gestor) : ""}
       <div class="nsq-caras">${q.membres.map(m => { const rol = m.lider ? "Líder" : m.admin ? "Admin" : "", cl = `nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}${m.admin ? " admin" : ""}`,
           dins = `<span class="nsq-cara-i"><img src="${caraDe(m.personatge)}" alt="" draggable="false">${rol ? `<i class="nsq-rol">${rol}</i>` : ""}</span><small>${esc(m.yo ? "Tú" : m.nom)}</small>`;
         // tocar la cara d'un altre: al líder i als admins, el que poden fer amb ell; als altres, el seu perfil
@@ -10335,6 +10364,13 @@ const Nit = (() => {
     };
     if (a === "nsq-crida") { b.disabled = true; so(); await fes("POST", `/squads/${id}/crida`, { minuts: +b.dataset.m }, "Aviso enviado a tu squad."); b.disabled = false; return; }
     if (a === "nsq-apunta") { S.ui.crNou = +b.dataset.c; await fes("POST", `/squads/crida/${b.dataset.c}/apunta`, null, "¡Te apuntas! Allí os veis."); setTimeout(() => { S.ui.crNou = null; }, 1500); return; }
+    if (a === "nsq-emb") {
+      const d0 = S.ui.squads || {}, q = (d0.squads || []).find(x => x.id === id); if (!q) return;
+      fullN("El emblema de la squad", `<div class="nsq-formes">${(d0.formes || Object.keys(FORMES_EMB)).map(f => `<button class="nsq-forma${q.emblema && q.emblema.f === f ? " on" : ""}" data-accion="nsq-emb-f" data-id="${q.id}" data-f="${f}" aria-pressed="${!!(q.emblema && q.emblema.f === f)}">${badgeEmb({ f, c: q.color || "menta", n: q.emblema ? q.emblema.n : 1 })}<small>${NOM_FORMA[f]}</small></button>`).join("")}</div><p class="nsq-nota">El nivel sube cuando todos entrenáis: no se pierde.</p>`);
+      return;
+    }
+    if (a === "nsq-emb-f") { const full = b.closest(".nsq-full"); b.disabled = true; if (await fes("POST", `/squads/${id}/emblema`, { forma: b.dataset.f }, "Emblema cambiado.") && full) full.remove(); else b.disabled = false; return; }
+    if (a === "nsq-porta") { const q = ((d && d.squads) || []).find(x => x.id === id); const porta = q && portaEmb(q); b.disabled = true; await fes("POST", "/yo/emblema", { squad: porta ? "cap" : id }, porta ? "Ya no llevas emblema." : "Ahora lo llevas en tu avatar."); b.disabled = false; return; }
     if (a === "nsq-recarrega") { b.disabled = true; so(); await carregaSquads(true); if (S.ui.sqErr && typeof avis === "function") avis("Sigue sin cargar. Prueba en un momento.", true); b.disabled = false; return; }
     if (a === "nsq-accepta") { await fes("POST", `/squads/${id}/accepta`, null, "Ya eres de la squad."); return; }
     if (a === "nsq-rebutja") { await fes("POST", `/squads/${id}/rebutja`, null); return; }
@@ -10763,7 +10799,7 @@ const Nit = (() => {
     const ratxa = r ? `<div class="na-rx${r.setmanes ? " viva" : ""}"><b>${r.setmanes ? `${r.setmanes} ${r.setmanes === 1 ? "semana seguida" : "semanas seguidas"} juntos` : "Empezad una racha"}</b>
         <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
     return `<section class="na">${tanca}
-      <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b></span>
+      <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b>${badgeEmb(p.emblema, "gran")}</span>
         <h1 class="na-nom">${esc(nom)}</h1>
         <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
       <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
@@ -12070,6 +12106,21 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nsq-avis{width:100%;height:44px;border:0;border-radius:999px;cursor:pointer;background:#10171e;color:rgb(var(--m-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
 .nsq-pag{display:grid;gap:14px}
 .nsq-err{display:grid;justify-items:center;gap:10px;padding:18px 0}
+/* ELS EMBLEMES: la forma del color de la squad, l'anella del nivell */
+.emb{position:relative;display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#10171e;box-shadow:0 0 0 2px var(--er,#9a6a3c)}
+.emb svg{width:62%;height:62%;fill:var(--ec,#86d9c6)}
+.emb.n1{--er:#9a6a3c}.emb.n2{--er:#c0c8d0}.emb.n3{--er:#f0b73a}
+.emb.n4{--er:#86d9c6;box-shadow:0 0 0 2px var(--er),0 0 10px -2px var(--er)}.emb.n5{--er:#b8a4ff;box-shadow:0 0 0 2px var(--er),0 0 14px -1px var(--er)}
+.emb.mini{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;box-shadow:0 0 0 1.5px var(--er),0 0 0 3px #0d1217}
+.emb.gran{position:absolute;left:-6px;bottom:0;width:40px;height:40px;box-shadow:0 0 0 2.5px var(--er),0 0 0 5px #0d1217}
+.emb.xl{width:64px;height:64px;box-shadow:0 0 0 3px var(--er),0 0 18px -4px var(--er)}
+.ns-av-w{position:relative;display:inline-grid;flex:none}
+.nsq-emb{display:flex;align-items:center;gap:14px;padding:10px 4px 4px}.nsq-emb-t{flex:1;display:grid;gap:2px}
+.nsq-emb-t b{font-size:15px;font-weight:900}.nsq-emb-t small{font-size:12.5px;font-weight:700;color:var(--nt-suau);line-height:1.35}
+.nsq-porta.on{color:var(--nt-menta);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .45)}
+.nsq-formes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin:10px 0}
+.nsq-forma{display:grid;justify-items:center;gap:6px;padding:10px 0;border:0;border-radius:16px;background:rgb(255 255 255 / .04);color:var(--nt-suau);font:800 12px/1.2 'Nunito',system-ui,sans-serif}
+.nsq-forma.on{background:rgb(var(--m-rgb) / .14);color:var(--nt-tinta);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .45)}
 .nsq-inv{display:flex;align-items:center;gap:10px;padding:12px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);font-size:14px;font-weight:800}
 .nsq-inv > span:first-child{flex:1}.nsq-inv-b{display:flex;gap:6px}
 .nsq-nova{height:52px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px}.nsq-nova svg{width:20px;height:20px}
@@ -12424,7 +12475,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
