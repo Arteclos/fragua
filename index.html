@@ -9971,7 +9971,7 @@ const Nit = (() => {
       ${d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}
       ${d.squads.map(q => htmlSquad(q, true)).join("")}
       ${d.squads.length ? activitatSquad(d.squads) : ""}
-      ${d.squads.length < 3 ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
+      ${d.squads.length < (d.max_squads || 5) ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
     </section>`;
   }
   function htmlElo() {
