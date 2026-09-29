@@ -12012,7 +12012,6 @@ const Mirall = (() => {
     }
     return o;
   }
-  const rgbVar = (nom, def) => { const v = getComputedStyle(document.body).getPropertyValue(nom).trim().split(/[\s,]+/).map(Number); return v.length === 3 && v.every(x => x >= 0 && x <= 255) ? v : def; };
   // EL QUE HA CANVIAT, PÍXEL A PÍXEL: la silueta d'avui (línia contínua), la de la foto amb què compares (puntejada),
   // el que és cos avui i no ho era (ha crescut) i al revés (ha baixat). Només compta la franja estreta vora les dues
   // línies (3 % del tors): una zona gran que no coincideix no és múscul, és un braç posat un pèl diferent.
@@ -12031,7 +12030,9 @@ const Mirall = (() => {
     for (let i = 0; i < N; i++) { a[i] = A[i * 4 + 3] > 127 ? 1 : 0; b[i] = B[i * 4 + 3] > 127 ? 1 : 0; }
     const T = ara.eix.T * (ara.escala || 1) * k, D = Math.max(2, Math.round(T * 0.03));
     const da = dilata(a, w, h, D), db = dilata(b, w, h, D);
-    const mc = rgbVar("--m-rgb", [134, 217, 198]), lc = rgbVar("--l-rgb", [168, 155, 224]);
+    // el que creix i el que baixa porten colors de SIGNIFICAT, fixos (29-09): amb els del tema, als avatars monocroms (el
+    // blanc i gris del chad) les dues taques sortien iguals i no es distingien
+    const mc = [134, 217, 198], lc = [168, 155, 224];
     const out = new ImageData(w, h), p = out.data;
     const posa = (i, c, al) => { p[i * 4] = c[0]; p[i * 4 + 1] = c[1]; p[i * 4 + 2] = c[2]; p[i * 4 + 3] = al; };
     let crec = 0, baixa = 0;
@@ -12144,7 +12145,7 @@ const Mirall = (() => {
 .mr-l-hoy{border-top:2px solid rgb(var(--m-rgb,134 217 198))}
 .mr-l-antes{border-top:2px dashed #fff}
 .mr-ley .mr-l-crece,.mr-ley .mr-l-baja{width:12px;height:12px;border-radius:3px}
-.mr-l-crece{background:rgb(var(--m-rgb,134 217 198) / .55)}.mr-l-baja{background:rgb(var(--l-rgb,168 155 224) / .55)}
+.mr-l-crece{background:rgb(134 217 198 / .55)}.mr-l-baja{background:rgb(168 155 224 / .55)}
 .mr-l-tog{border:0;border-radius:999px;padding:5px 10px;background:rgb(255 255 255 / .08);color:inherit;font:inherit}
 .mr-l-tog[aria-pressed="false"]{opacity:.5}
 .mr-sola .mr-ara{clip-path:none}
