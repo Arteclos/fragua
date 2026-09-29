@@ -11335,6 +11335,16 @@ body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .nw-camp input{width:100%;min-width:0;box-sizing:border-box}
 .nw-dies .chip{min-width:0}
 .nw-dies{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.nw-dies .chip{min-height:44px;padding:0}
+/* els números dels dies, centrats al cercle (29-09: la .dia de la farga en fa una graella de tres columnes, 44px 1fr auto) */
+body.v-nit .nw-dies .chip.dia{display:grid;grid-template-columns:none;gap:0;place-items:center;text-align:center;padding:0;width:auto}
+/* «Revisa tu correo» a la Noche (29-09): era el panell de la farga (el marc de coure, la serif i el taronja) */
+body.v-nit .avis-correu.marc{clip-path:none;border-radius:18px;background:#19212a;box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35);color:#c9d2da;padding:12px 12px 12px 16px;align-items:center}
+body.v-nit .avis-correu.marc::before{content:none}
+body.v-nit .avis-correu,body.v-nit .avis-correu *{font-family:'Nunito',system-ui,sans-serif}
+body.v-nit .avis-correu span{font-size:14px;font-weight:700;line-height:1.45}
+body.v-nit .avis-correu b.or{color:var(--nt-tinta);font-weight:900}
+body.v-nit .avis-correu .enllac{color:rgb(var(--m-rgb));font-weight:900}
+body.v-nit .avis-correu .tanca-x{border:0;background:rgb(255 255 255 / .07);color:#c9d2da}
 .nw-casella{display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:#aab4be;line-height:1.4}
 .nw-casella input{width:20px;height:20px;flex:none;accent-color:rgb(var(--m-rgb,134 217 198))}
 .nw-casella a,.nw-nota a{color:rgb(var(--m-rgb,134 217 198))}
@@ -14057,10 +14067,17 @@ mirarEnllacRutina();
 // canviar de pestanya s'arregla»). En arrencar, l'iPhone mida la pantalla sense les dues zones segures i la barra de baix
 // (fixed, bottom 0) queda uns 80 punts alçada fins que hi ha un desplaçament; canviar de pestanya (veure → scrollTo) era el
 // que la baixava. Aquí se'n fa un d'un píxel en obrir-la i en tornar-hi, que no es veu.
+// A la portada de la Noche l'html i el body estan bloquejats (overflow hidden, 100 %: nit.js, .fb-actiu) i un scrollTo no hi
+// fa res; canviar de pestanya els desbloqueja, i per això baixava. Aquí es desbloquegen dos fotogrames, amb un píxel de més.
 function reposaPantalla() {
-  requestAnimationFrame(() => { const y = window.scrollY; window.scrollTo(0, y + 1); requestAnimationFrame(() => window.scrollTo(0, y)); });
+  const h = document.documentElement.style, b = document.body.style, y = window.scrollY;
+  h.overflow = "auto"; b.overflow = "auto"; b.minHeight = "calc(100% + 1px)";
+  requestAnimationFrame(() => {
+    window.scrollTo(0, y + 1);
+    requestAnimationFrame(() => { window.scrollTo(0, y); h.overflow = ""; b.overflow = ""; b.minHeight = ""; });
+  });
 }
-window.addEventListener("load", () => setTimeout(reposaPantalla, 80));
+window.addEventListener("load", () => setTimeout(reposaPantalla, 120));
 window.addEventListener("pageshow", ev => { if (ev.persisted) reposaPantalla(); });
 
 </script>
