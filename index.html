@@ -6870,7 +6870,7 @@ async function puja(intents = 0) {
     S.modificat = Date.now(); cos.modificat = S.modificat;
     try {
       const r = await apiCompte("PUT", "/estat", { versio_base: versio, estat: cos }, ESPERA_XARXA);
-      darrerPujat = txt; desaVersio(r.versio); aplicaOr(r.or, r.desbloq); senseXarxa(false);
+      darrerPujat = txt; desaVersio(r.versio); aplicaOr(r.or, r.desbloq); aplicaPro(r); senseXarxa(false);
       if (canvis === gen) pendent = false;               // el que ha canviat mentre pujava, puja a la següent
       return "ok";
     } catch (e) {
@@ -6900,6 +6900,7 @@ async function baixaEstat(primer) {
     // resposta: si no, el saldo del servidor s'empassava l'or de l'entreno que encara no havia vist (27-09-2026).
     const alDia = darrerPujat !== null && JSON.stringify(perPujar()) === darrerPujat;
     aplicaOr(alDia ? r.or : null, r.desbloq);
+    aplicaPro(r);
     senseXarxa(false);
     if (typeof miraRebudes === "function") setTimeout(miraRebudes, 1200);      // una rutina que t'ha enviat un amic
     if (primer || !alDia || !r.estat) { pendent = true; await puja(); }
@@ -6909,6 +6910,9 @@ async function baixaEstat(primer) {
   }
 }
 // L'or el mana el servidor: saldo del servidor, més el que s'ha guanyat al mòbil des de l'última pujada.
+// EL PRO (29-09-2026 vespre): el diu el servidor amb l'estat (servidor/pro.py). Només si la resposta en porta la clau: una
+// resposta sense (una versió vella del servidor, o una prova) no el toca. I cap altre lloc no el posa.
+function aplicaPro(r) { if (r && Object.prototype.hasOwnProperty.call(r, "pro")) S.pro = r.pro && r.pro.actiu ? r.pro : null; }
 function aplicaOr(o, desbloq) {
   if (o) S.or_srv = { ...o, guanyatAqui: oroGanado() };
   if (desbloq) S.desbloq = desbloq;
