@@ -4430,7 +4430,7 @@ function panellInvita() {
   if (teCompte() && !S.demo && S.ui.invAt === undefined) { S.ui.invAt = 0; setTimeout(carregaInvita, 0); }
   return `<div class="panel pad inv-panell"><b class="clan-t">Invitar con un enlace</b>
     <p class="suau petit" style="margin:4px 0 10px">Quien lo abra te pide entrar, y entra cuando tú aceptes. Vale 7 días y para 10 personas.</p>
-    ${inv ? `<p class="petit inv-estat">Tu enlace vale hasta el ${dataCurta(inv.caduca)}. Lo han usado ${inv.usos} de ${inv.max}.</p>
+    ${inv ? `<p class="petit inv-estat">${inv.caduca > 0 ? `Tu enlace vale hasta el ${dataCurta(inv.caduca)}.` : "Tu enlace está activo."}${Number.isFinite(inv.usos) && Number.isFinite(inv.max) ? ` Lo han usado ${inv.usos} de ${inv.max}.` : ""}</p>
       <div class="fila envolta"><button class="btn clar marc tg-boto" data-accion="inv-comparteix">${I_ENLLAC}<span>Compartir el enlace</span></button><button class="enllac" data-accion="inv-anula">Anularlo</button></div>`
       : `<button class="btn clar marc tg-boto" data-accion="inv-nova">${I_ENLLAC}<span>Crear el enlace</span></button>`}</div>`;
 }
@@ -5709,18 +5709,23 @@ function vistaRankings(so) {
 function vistaClan(so) {
   const cl = so.clan || {}, reb = cl.rebudes || [], env = cl.enviades || [], am = cl.amics || [];
   const rx = pid => { const r = (cl.ratxes || {})[pid]; return r && r.setmanes ? ` <span class="rx-badge" title="${r.setmanes} ${r.setmanes === 1 ? "semana" : "semanas"} seguidas llegando los dos a vuestros días">${flama(true, "rx-f")}<b class="num">${r.setmanes}</b></span>` : ""; };
-  const fila = (p, dreta, perfil) => `<div class="clan-fila">${avatar(p.personatge, p.nivell)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}${rx(p.pid)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
+  const cara = p => typeof Nit === "object" && Nit.activa() && Nit.caraDe ? `<span class="ns-av-w"><img class="ns-av" src="${Nit.caraDe(p.personatge)}" alt="" draggable="false"></span>` : avatar(p.personatge, p.nivell);
+  const fila = (p, dreta, perfil) => `<div class="clan-fila">${cara(p)}${perfil ? `<button class="clan-nom clan-perfil" data-accion="social-perfil" data-p="${p.pid}">${esc(p.nom)}${rx(p.pid)}</button>` : `<span class="clan-nom">${esc(p.nom)}</span>`}<span class="clan-acc">${dreta}</span></div>`;
+  // (29-09 vespre, l'Albert: «has de poder veure també tota la llista d'amigos en algun lloc») la llista, just sota les
+  // sol·licituds; a la Noche, sense el feed (ja és a baix de Social)
+  const nit = typeof Nit === "object" && Nit.activa();
+  const llista = `<div class="panel pad"><b class="clan-t">Tus amigos${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
+      ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`, true)).join("")
+        : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : "Cargando…"}</p>`}</div>`;
   return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren ser tus amigos</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
-    ${am.length ? panellFeed() : ""}
+    ${nit ? llista : am.length ? panellFeed() : ""}
     <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
       <div id="c-sug" class="clan-sug" aria-live="polite"></div>
       <p class="suau petit" style="margin:0">Le llega una solicitud y, cuando la acepta, sois amigos. <button type="button" class="enllac" data-accion="clan-comparteix">Pasar mi nickname</button></p></form>
     ${panellInvita()}
     ${env.length ? `<div class="panel pad"><b class="clan-t">Esperando respuesta</b>${env.map(p => fila(p, `<button class="enllac" data-accion="clan-cancela" data-p="${p.pid}">Cancelar</button>`)).join("")}</div>` : ""}
     ${(S.ui.clanNick || "").trim().length >= 2 ? (setTimeout(() => suggereix(S.ui.clanNick), 0), "") : ""}
-    <div class="panel pad"><b class="clan-t">Tus amigos${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
-      ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`, true)).join("")
-        : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : "Cargando…"}</p>`}</div>`;
+    ${nit ? "" : llista}`;
 }
 // La fitxa «Tu clan» de l'entrada (l'Albert, 26-09-2026 nit: «canviaria la visió de volumen semanal per la posició al
 // ranking de amigos; i que fent clic puguis entrar»). El lloc al rànquing de força del clan; si encara no hi tens rang,
@@ -9311,8 +9316,10 @@ const Nit = (() => {
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
-    return `<div class="ns-f" data-in="ns"><span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "mini")}</span>
-      <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>
+    const qui = `<span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "mini")}</span>
+      <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}${it.amb_la_teva ? ` <em class="ns-tuya">con tu rutina</em>` : ""}<small>${quan ? esc(quan) : ""}</small></span>`;
+    // tocar-lo (la cara o el text) n'obre el perfil (29-09 vespre, l'Albert: «hauria de poder fer clic a cada amigo»)
+    return `<div class="ns-f" data-in="ns">${!it.yo && it.pid ? `<button class="ns-f-qui" data-accion="social-perfil" data-p="${esc(it.pid)}" aria-label="Perfil de ${esc(it.nom)}">${qui}</button>` : qui}
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
       ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
   }
@@ -9337,6 +9344,30 @@ const Nit = (() => {
   function blocActivitatAmics(feed) {
     return `<div class="ns-bloc ns-feed" data-in="ns"><h2>Actividad de tus amigos</h2>${feed.length ? feed.slice(0, 12).map(filaClan).join("")
       : `<p class="ns-buit">${S.ui.feed ? "Cuando tus amigos entrenen, saldrán aquí para que les hagas KLσNK!" : "Cargando…"}</p>`}</div>`;
+  }
+  // EL BLOC DE LA SQUAD (29-09 vespre, l'Albert: «quan ja l'has creat t'hauria de sortir directament el rànquing de
+  // l'squad»; «si en tens més d'una, poder canviar entre elles amb una icona de l'squad»; «el bàner de crear, dins de
+  // ranking de tu squad»; «s'hauria de veure el progrés de cadascú»). Sense squad, el bàner i prou (un sol botó de crear);
+  // amb squad, el seu rànquing si és encès i, si no, com va cadascú aquesta setmana cap als 2 dies que fan pujar l'emblema.
+  const bannerCrea = inv => `<button class="nsq-crea" data-accion="${inv ? "ns-dins" : "nsq-nova"}" data-t="squads"><span class="nsq-crea-caras">${AVATARS.slice(1, 5).map(a => `<img src="${caraDe(a)}" alt="" draggable="false">`).join("")}</span><span><b>${inv ? (inv === 1 ? "Te han invitado a una squad" : `Tienes ${inv} invitaciones`) : "Crea tu squad"}</b><small>${inv ? "Mira quién te espera" : "Tu gente, un reto por semana y avisos de «voy al gym»"}</small></span>${I_TU.fle}</button>`;
+  function progresSquad(q) {
+    const fets = q.membres.filter(m => (m.dies || 0) >= 2).length, gest = q.jo_lider || q.jo_admin;
+    return `<p class="nsq-prog-t"><b>${fets} de ${q.membres.length}</b> ya han hecho sus 2 días esta semana${fets === q.membres.length ? ": semana completa para el emblema" : ""}</p>
+      <div class="nsq-prog">${q.membres.map(m => `<div class="nsq-prog-f${(m.dies || 0) >= 2 ? " fet" : ""}"><img src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false"><span>${esc(m.yo ? "Tú" : m.nom)}</span><i style="--p:${Math.min(100, (m.dies || 0) / 2 * 100)}%"></i><b>${m.dies || 0}</b></div>`).join("")}</div>
+      ${gest ? `<button class="nt-boto2 ns-rk-b" data-accion="ns-dins" data-t="squads">Encender el ranking</button>` : ""}`;
+  }
+  function blocSquad() {
+    carregaSquads();
+    const q = S.ui.squads, inv = q ? q.invitacions.length : 0;
+    const cap = t => `<div class="ns-bloc-cap"><h2>${t}</h2><button class="ns-mes" data-accion="ns-dins" data-t="squads">Squads${I_TU.fle}</button></div>`;
+    if (!q) return `<div class="ns-bloc nsq-bloc" data-in="ns">${cap("Tu squad")}<p class="ns-buit">${S.ui.sqErr ? "No se ha podido cargar." : "Cargando…"}</p></div>`;
+    if (!q.squads.length) return `<div class="ns-bloc nsq-bloc" data-in="ns">${cap("Tu squad")}${bannerCrea(inv)}</div>`;
+    const sel = q.squads.find(x => x.id === S.ui.sqSel) || q.squads[0], rk = sel.ranking && sel.ranking.on;
+    const nom = `${q.squads.length > 1 ? "" : badgeEmb(sel.emblema)}${esEtq(sel.nom) ? tagSq({ t: sel.nom, c: sel.color }) : esc(sel.nom)}`;
+    const tria = q.squads.length > 1 ? `<div class="nsq-tria" role="tablist" aria-label="Tus squads">${q.squads.map(x => `<button class="nsq-tria-b${x.id === sel.id ? " on" : ""}" data-accion="nsq-sel" data-id="${x.id}" role="tab" aria-selected="${x.id === sel.id}">${badgeEmb(x.emblema)}<small>${esc(x.nom)}</small></button>`).join("")}</div>` : "";
+    const cos = rk ? (sel.ranking.llista.length ? sel.ranking.llista.slice(0, 8).map(f => filaSqR(f, sel.ranking.mesura)).join("") : `<p class="ns-buit">Nadie de la squad sale todavía en el ranking.</p>`) : progresSquad(sel);
+    return `<div class="ns-bloc nsq-bloc" data-in="ns">${cap(rk ? `Ranking de ${nom}` : nom)}${tria}${cos}
+      ${inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : ""}</div>`;
   }
   function blocRankSquad() {
     const q = S.ui.squads, sq = q && q.squads.find(x => x.ranking && x.ranking.on);
@@ -9374,11 +9405,7 @@ const Nit = (() => {
     const feed = (S.ui.feed && S.ui.feed.items) || [], n = ((so2.clan || {}).rebudes || []).length;
     return `<h1 class="titol-pag">Social</h1>
       <section class="ns">
-        ${(() => { carregaSquads(); const q = S.ui.squads, inv = q ? q.invitacions.length : 0;
-          if (q && q.squads.length) return q.squads.map(htmlSquadMini).join("") + (inv ? `<button class="nsq-avis" data-accion="ns-dins" data-t="squads" data-in="ns">Tienes ${inv === 1 ? "una invitación" : inv + " invitaciones"} a una squad</button>` : "");
-          if (q) return `<button class="nsq-crea" data-accion="${inv ? "ns-dins" : "nsq-nova"}" data-t="squads" data-in="ns"><span class="nsq-crea-caras">${AVATARS.slice(1, 5).map(a => `<img src="${caraDe(a)}" alt="" draggable="false">`).join("")}</span><span><b>${inv ? (inv === 1 ? "Te han invitado a una squad" : `Tienes ${inv} invitaciones`) : "Crea tu squad"}</b><small>${inv ? "Mira quién te espera" : "Tu gente, un reto por semana y avisos de «voy al gym»"}</small></span>${I_TU.fle}</button>`;
-          return ""; })()}
-        ${blocRankSquad()}
+        ${blocSquad()}
         <button class="ns-guerra" data-accion="ns-dins" data-t="${S.ui.guerra && !S.ui.guerra.d ? "gimnasios" : "guerra"}" data-in="ns" aria-label="Guerra de gyms">${guerraHero(S.ui.guerra)}</button>
         <div class="ns-bot" data-in="ns">
           <button data-accion="ns-dins" data-t="squads">${I_SOC.squad}<b>Squads</b>${S.ui.squads && S.ui.squads.invitacions.length ? `<i class="ns-xapa">${S.ui.squads.invitacions.length}</i>` : ""}</button>
@@ -10364,6 +10391,7 @@ const Nit = (() => {
     };
     if (a === "nsq-crida") { b.disabled = true; so(); await fes("POST", `/squads/${id}/crida`, { minuts: +b.dataset.m }, "Aviso enviado a tu squad."); b.disabled = false; return; }
     if (a === "nsq-apunta") { S.ui.crNou = +b.dataset.c; await fes("POST", `/squads/crida/${b.dataset.c}/apunta`, null, "¡Te apuntas! Allí os veis."); setTimeout(() => { S.ui.crNou = null; }, 1500); return; }
+    if (a === "nsq-sel") { S.ui.sqSel = id; fx(E => { E.suena("tap"); E.vibra("tria"); }); if (typeof render === "function") render(); return; }
     if (a === "nsq-emb") {
       const d0 = S.ui.squads || {}, q = (d0.squads || []).find(x => x.id === id); if (!q) return;
       fullN("El emblema de la squad", `<div class="nsq-formes">${(d0.formes || Object.keys(FORMES_EMB)).map(f => `<button class="nsq-forma${q.emblema && q.emblema.f === f ? " on" : ""}" data-accion="nsq-emb-f" data-id="${q.id}" data-f="${f}" aria-pressed="${!!(q.emblema && q.emblema.f === f)}">${badgeEmb({ f, c: q.color || "menta", n: q.emblema ? q.emblema.n : 1 })}<small>${NOM_FORMA[f]}</small></button>`).join("")}</div><p class="nsq-nota">El nivel sube cuando todos entrenáis: no se pierde.</p>`);
@@ -12106,6 +12134,18 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nsq-avis{width:100%;height:44px;border:0;border-radius:999px;cursor:pointer;background:#10171e;color:rgb(var(--m-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
 .nsq-pag{display:grid;gap:14px}
 .nsq-err{display:grid;justify-items:center;gap:10px;padding:18px 0}
+.nsq-bloc .nsq-crea{box-shadow:none;background:rgb(255 255 255 / .03)}
+.nsq-bloc .ns-bloc-cap h2{display:flex;align-items:center;gap:8px}.nsq-bloc .ns-bloc-cap h2 .emb{width:30px;height:30px}
+.nsq-tria{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}.nsq-tria::-webkit-scrollbar{display:none}
+.nsq-tria-b{display:flex;align-items:center;gap:6px;flex:none;height:40px;padding:0 12px 0 5px;border:0;border-radius:999px;background:rgb(255 255 255 / .04);color:var(--nt-suau);font:900 13px/1 'Nunito',system-ui,sans-serif}
+.nsq-tria-b.on{background:rgb(var(--m-rgb) / .14);color:var(--nt-tinta);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .45)}.nsq-tria-b .emb{width:30px;height:30px}
+.nsq-prog-t{margin:0;font-size:13px;font-weight:700;color:var(--nt-suau)}.nsq-prog-t b{color:var(--nt-tinta)}
+.nsq-prog{display:grid;gap:6px}
+.nsq-prog-f{display:grid;grid-template-columns:32px auto 1fr 22px;align-items:center;gap:8px;font-size:13.5px;font-weight:800}
+.nsq-prog-f img{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#10171e}
+.nsq-prog-f i{height:6px;border-radius:999px;background:linear-gradient(90deg,var(--nt-menta) var(--p),rgb(255 255 255 / .08) var(--p))}
+.nsq-prog-f b{text-align:right;font-variant-numeric:tabular-nums}.nsq-prog-f.fet b{color:var(--nt-menta)}
+.ns-f-qui{display:contents;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
 /* ELS EMBLEMES: la forma del color de la squad, l'anella del nivell */
 .emb{position:relative;display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;background:#10171e;box-shadow:0 0 0 2px var(--er,#9a6a3c)}
 .emb svg{width:62%;height:62%;fill:var(--ec,#86d9c6)}
@@ -12475,7 +12515,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
