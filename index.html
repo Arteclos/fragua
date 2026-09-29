@@ -9493,7 +9493,9 @@ const Nit = (() => {
     const pc = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<div class="nsq" data-in="ns">
       <div class="nsq-cap"><span class="np3-tag">Squad</span><b class="nsq-nom">${esc(q.nom)}</b>${q.jo_lider ? `<i class="nsq-lider">Líder</i>` : ""}</div>
-      <div class="nsq-caras">${q.membres.map(m => `<span class="nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}"><img src="${caraDe(m.personatge)}" alt="" draggable="false"><small>${esc(m.yo ? "Tú" : m.nom)}</small></span>`).join("")}</div>
+      <div class="nsq-caras">${q.membres.map(m => { const cl = `nsq-cara${m.avui ? " fet" : ""}${m.lider ? " lider" : ""}`, dins = `<img src="${caraDe(m.personatge)}" alt="" draggable="false"><small>${esc(m.yo ? "Tú" : m.nom)}</small>`;
+        // tocar la cara d'un altre n'obre el perfil (la llavor del que va proposar l'Àlex: l'entrenador que veu com van els seus)
+        return m.yo || !m.pid ? `<span class="${cl}">${dins}</span>` : `<button class="${cl}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(m.nom)}">${dins}</button>`; }).join("")}</div>
       ${q.repte ? `<div class="nsq-repte${q.repte.fet ? " fet" : ""}"><div class="nsq-repte-t"><span>${NOM_REPTE[q.repte.tipus](q.repte.meta)}</span><b class="num">${n0(q.repte.progres)} / ${n0(q.repte.objectiu)}</b></div><div class="np3-barra"><i style="width:${pc.toFixed(1)}%"></i></div>${q.repte.fet ? `<small>¡Reto conseguido!</small>` : ""}</div>`
         : q.jo_lider ? `<button class="nsq-b2" data-accion="nsq-repte" data-id="${q.id}">Poner el reto de la semana</button>` : `<p class="nsq-nota">Esta semana aún no hay reto.</p>`}
       ${q.crides.map(c => `<div class="nsq-cr"><span><span class="nsq-cr-t"><b>${esc(c.yo ? "Tú" : c.de)}</b> ${c.yo ? "vas" : "va"} al gym ${quanTxt(c.quan)}</span><small>${c.apuntats} ${c.apuntats === 1 ? "va" : "van"}</small></span>${c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button data-accion="nsq-apunta" data-c="${c.id}">Me apunto</button>`}</div>`).join("")}
@@ -10895,6 +10897,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nsq-nom{font:400 28px/1 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);text-shadow:3px 3px 0 rgb(var(--l3-rgb))}
 .nsq-lider{margin-left:auto;padding:4px 10px;border-radius:999px;font-style:normal;font-size:12px;font-weight:900;color:rgb(var(--mt-rgb));background:rgb(var(--m-rgb))}
 .nsq-caras{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px}
+button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cursor:pointer}
 .nsq-caras::-webkit-scrollbar{display:none}
 .nsq-cara{display:grid;justify-items:center;gap:4px;flex:none;width:58px}
 .nsq-cara img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08)}
