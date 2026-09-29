@@ -3,7 +3,12 @@
    gimnàs no hi havia xarxa, no s'obria. Ara, per a tot el que és de klonk.fit: PRIMER LA XARXA, sempre (així ningú no es
    queda amb una versió vella: cada càrrega amb xarxa porta la d'ara i en desa la còpia), i NOMÉS si no n'hi ha, la còpia
    de l'última vegada. L'API és un altre domini i no hi passa. Si falla la xarxa i no hi ha còpia, surt l'error de sempre. */
-const CAU = "klonk-v1";
+const CAU = "klonk-v2";
+// LA FLUÏDESA (29-09 vespre, l'Albert: «que al principi va més lent; carregar-ho tot perquè sigui fluida»). Les imatges, els
+// sons i els fitxers (tot el que no és la pàgina): DEL MÒBIL AL MOMENT, si ja hi són, i per darrere es demana la xarxa i es
+// desa la d'ara per a la vegada següent (stale-while-revalidate). La pàgina: primer la xarxa (així es veu la versió d'ara),
+// però si en 3 s no ha arribat, la còpia de l'última vegada, i la de la xarxa queda desada per a la propera.
+const PACIENCIA = 3000;
 const MAX_BYTES = 3 * 1024 * 1024;         // el que és més gros (el model 3D sencer, un vídeo) no es desa
 
 self.addEventListener("install", e => {
@@ -23,9 +28,33 @@ self.addEventListener("fetch", e => {
   // perquè obrir-les no substitueixi la còpia de l'app
   const arrel = new URL(self.registration.scope).pathname;
   const pagina = req.mode === "navigate" && (url.pathname === arrel || url.pathname === arrel + "index.html");
+  if (!pagina && req.mode !== "navigate") {
+    e.respondWith((async () => {
+      const c = await caches.open(CAU), desat = await c.match(req);
+      const xarxa = fetch(req).then(r => {
+        const mida = +(r && r.headers.get("content-length") || 0);
+        if (r && r.ok && r.type === "basic" && (!mida || mida <= MAX_BYTES)) c.put(req, r.clone()).catch(() => {});
+        return r;
+      });
+      if (desat) { e.waitUntil(xarxa.catch(() => {})); return desat; }
+      return xarxa;
+    })());
+    return;
+  }
   e.respondWith((async () => {
     try {
-      const r = await fetch(req);
+      const xarxa = fetch(req);
+      if (pagina) {
+        const c = await caches.open(CAU), desat = await c.match("./");
+        if (desat) {
+          const guanya = await Promise.race([xarxa.then(r => ({ r })), new Promise(res => setTimeout(() => res(null), PACIENCIA))]);
+          if (!guanya) {
+            e.waitUntil(xarxa.then(r => { if (r && r.ok && r.type === "basic") return c.put(new Request("./"), r.clone()); }).catch(() => {}));
+            return desat;
+          }
+        }
+      }
+      const r = await xarxa;
       if (r && r.ok && r.type === "basic") {
         const mida = +(r.headers.get("content-length") || 0);
         if (!mida || mida <= MAX_BYTES) {

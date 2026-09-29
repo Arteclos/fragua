@@ -8290,6 +8290,25 @@ const Nit = (() => {
     const i = el.querySelector(".nt-g-barra i");
     if (i && i.animate && !quiet()) i.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 900, easing: "cubic-bezier(.2,.9,.25,1)", delay: 120, fill: "backwards" });
   }
+  // PRECARREGAR (29-09 vespre, l'Albert: «carregar-ho tot de manera que llavors sigui molt fluida, encara que trigui una mica
+  // més»): quan la portada ja és pintada i el mòbil està lliure, les dades de Social (la squad, l'activitat, els amics i la
+  // guerra) i les imatges que més es veuen (les cares, els metalls, els músculs), d'una en una, perquè en obrir cada pestanya
+  // ja hi siguin. Un cop per obertura de l'app, i mai en un entreno en marxa ni sense compte.
+  let precarregat = false;
+  function precarrega() {
+    if (precarregat || S.demo || typeof teCompte !== "function" || !teCompte() || activa()) return;
+    precarregat = true;
+    const lliure = f => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 1500));
+    lliure(async () => {
+      try { await carregaSquads(); } catch (e) {}
+      try { if (!S.ui.feed || Date.now() - (S.ui.feed.at || 0) > 60000) { const r = await api("GET", "/clan/feed"); S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; } } catch (e) {}
+      try { await carregaGuerraD(); } catch (e) {}
+      try { if (typeof carregaClan === "function") await carregaClan(false); } catch (e) {}
+      const imatges = [...AVATARS.map(a => R() + "pj/cara-" + a + ".webp"), ...Elo.DIVISIONS.map(d => R() + "sigma-" + d[1] + ".webp"),
+        ...["empuje", "tiron", "pierna", "brazos", "cuerpo"].map(t => R() + "musculs-" + t + ".webp")];
+      for (const u of imatges) { try { await fetch(u, { priority: "low" }); } catch (e) {} }
+    });
+  }
   // LES TARGETES D'UN SOL COP (29-09, l'Albert: «una vegada donaves a enviar klonk, després ja no ha de sortir»; «ho faria
   // aparèixer com a targeta una vegada, igual que lo d'activa notificacions»; «igual que les apps professionals, per no ratllar
   // la penya amb coses que no vol»). A la portada, com a molt UNA, a baix: es fa i se'n va, o es tanca amb la creu i no torna.
@@ -10266,7 +10285,7 @@ const Nit = (() => {
   function htmlEtq(menors) {
     return `<div class="nsq-etq"><p class="nsq-prev" id="nsq-prev"></p>
       ${jove() ? `<div class="nsq-tts">${(menors.length ? menors : ETQ_MENORS).map(t => `<button data-accion="nsq-tt" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>`
-        : `<input id="nsq-t" class="nsq-in" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="FDK" aria-label="La etiqueta de tu squad">
+        : `<input id="nsq-t" class="nsq-in" maxlength="4" autocapitalize="characters" autocomplete="off" spellcheck="false" enterkeyhint="done" placeholder="FDK" aria-label="La etiqueta de tu squad">
            <small class="nsq-ajuda">De 2 a 4 letras o números. Saldrá al lado de vuestros nombres.</small>`}
       <div class="nsq-cols" role="group" aria-label="Color">${Object.entries(COL_SQ).map(([k, v]) => `<button data-accion="nsq-col" data-c="${k}" style="--tc:${v}" aria-label="Color ${k}"></button>`).join("")}</div>
       <button class="nx-compra nsq-fet" data-accion="nsq-fet">Listo</button></div>`;
@@ -10280,6 +10299,10 @@ const Nit = (() => {
     const i = document.getElementById("nsq-t"); if (i && i.value !== (e.t || "")) i.value = e.t || "";
     const f = document.querySelector('[data-accion="nsq-fet"]'); if (f) f.disabled = !esEtq(e.t);
   }
+  document.addEventListener("keydown", ev => {
+    if (!ev.target || ev.target.id !== "nsq-t" || ev.key !== "Enter") return;
+    ev.preventDefault(); const f = document.querySelector('.nsq-full [data-accion="nsq-fet"]'); if (f && !f.disabled) f.click();
+  });
   document.addEventListener("input", ev => {
     if (!ev.target || ev.target.id !== "nsq-t") return;
     const v = ev.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
@@ -10498,7 +10521,29 @@ const Nit = (() => {
     el.innerHTML = `<div class="nq-vel" data-nq="no"></div><div class="nq-p"><b>${esc(titol)}</b>${cos}<button class="nq-si nq-tanca" data-nq="no">Cerrar</button></div>`;
     document.body.appendChild(el);
     if (!quiet()) el.querySelector(".nq-p").animate([{ opacity: 0, transform: "translateY(30px)" }, { opacity: 1, transform: "none" }], { duration: 360, easing: "cubic-bezier(.2,.9,.25,1.1)" });
-    el.addEventListener("click", ev => { const t = ev.target.closest("[data-nq]"); if (t) { ev.preventDefault(); ev.stopPropagation(); el.remove(); } });
+    // AMB EL TECLAT OBERT (29-09 vespre, l'Albert, a l'iPhone: «quan selecciono el color, salta la pantalla; i quan poso Listo,
+    // també; no s'està creant l'squad»). Tocar un botó tanca el teclat, el full es mou i el clic queia al vel, que el tancava
+    // sense fer res. Ara: el botó es fa en aixecar el dit al damunt (amb el dit capturat, encara que el full es mogui), el clic
+    // de després ja no el torna a fer, i el vel només tanca si el dit hi ha baixat (un clic que hi cau d'un botó, no).
+    let baix = null, x0 = 0, y0 = 0;
+    const teTeclat = () => !!el.querySelector("input:not([type=checkbox]):not([type=radio]), textarea");
+    el.addEventListener("pointerdown", ev => {
+      baix = ev.target; x0 = ev.clientX; y0 = ev.clientY;
+      const b = ev.target.closest && ev.target.closest(".nq-p button[data-accion]");
+      if (b && teTeclat() && b.setPointerCapture) { try { b.setPointerCapture(ev.pointerId); } catch (er) {} }
+    });
+    el.addEventListener("pointerup", ev => {
+      const b = baix && baix.closest && baix.closest(".nq-p button[data-accion]");
+      if (!b || !teTeclat() || b.disabled || Math.hypot(ev.clientX - x0, ev.clientY - y0) > 14) return;
+      b.dataset.pu = String(Date.now()); b.click();
+    });
+    el.addEventListener("click", ev => {
+      const b = ev.target.closest && ev.target.closest("button[data-accion]");
+      if (ev.isTrusted && b && b.dataset.pu && Date.now() - +b.dataset.pu < 900) { ev.preventDefault(); ev.stopPropagation(); return; }
+      const t = ev.target.closest("[data-nq]");
+      if (t && t.classList.contains("nq-vel") && !(baix && baix.closest && baix.closest(".nq-vel"))) { ev.preventDefault(); ev.stopPropagation(); return; }
+      if (t) { ev.preventDefault(); ev.stopPropagation(); el.remove(); }
+    }, true);
     fx(E => { E.suena("tap"); E.vibra("tria"); });
     return el;
   }
@@ -11337,6 +11382,10 @@ body.v-nit #barra-nova .nt-barra{position:relative;display:flex;align-items:cent
 /* la portada fa servir la mateixa barra que la resta (l'Albert, 28-09, al mòbil: «el menú surt alçat aquí i a les altres
    pestanyes bé»): la que portava a dins quedava alçada a l'iPhone */
 body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+/* la portada, desbloquejada i llarga com les altres pestanyes (29-09 vespre: amb l'html i el body bloquejats, l'iPhone deixava
+   la pàgina curta i el menú de baix pujat); la capa .nt, fixa i sense gestos, és la que no es mou */
+html:has(body.v-nit.fb-actiu),body.v-nit.fb-actiu{overflow:visible}
+body.v-nit.fb-actiu #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh + 2px)}
 .nt-barra button{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .nt-barra .nt-centre{background:radial-gradient(circle at 50% 30%,#2a3541,#161d24 72%)}
 .nt-tab{position:relative;transition:opacity .2s}
@@ -12657,7 +12706,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     const sec = document.querySelector(".nt"); if (!sec) return;
     const roda = sec.querySelector(".nt-roda"); if (roda) activaRoda(roda);
     entrada(sec);
-    carregaGuerra(sec); carregaAmic(sec);
+    carregaGuerra(sec); carregaAmic(sec); precarrega();
   }
   estil();
   return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
@@ -15291,9 +15340,14 @@ function desencallaIphone() {
 }
 // en obrir-la, i en tornar-hi des d'una altra app (l'iPhone la pot tornar a deixar curta); i dues vegades més al principi,
 // per si la primera arriba abans que l'iPhone hagi acabat d'obrir-la
-window.addEventListener("pageshow", () => setTimeout(desencallaIphone, 60));
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(desencallaIphone, 120); });
-[350, 1500].forEach(t => setTimeout(desencallaIphone, t));
+// LA QUARTA VOLTA (29-09 vespre, l'Albert: «el menú a la pàgina principal s'ha tornat a pujar»): desencallar-la en obrir-la no
+// aguanta, perquè la portada es torna a bloquejar a cada visita. Ara la portada de la Noche NO bloqueja la pàgina (ni l'html ni
+// el body amb overflow:hidden) i la deixa llarga, com qualsevol altra pestanya, que és el que l'iPhone mesura bé; la portada
+// ja és una capa fixa (.nt: position:fixed, overflow:hidden, touch-action:none) que no es mou amb el dit (l'estil, a nit.js).
+// La funció es queda per a la Forja (la pell d'abans), que sí que bloqueja.
+window.addEventListener("pageshow", () => setTimeout(() => { if (!document.body.classList.contains("v-nit")) desencallaIphone(); }, 60));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !document.body.classList.contains("v-nit")) setTimeout(desencallaIphone, 120); });
+[350, 1500].forEach(t => setTimeout(() => { if (!document.body.classList.contains("v-nit")) desencallaIphone(); }, t));
 
 </script>
 <script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
