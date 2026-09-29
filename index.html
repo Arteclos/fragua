@@ -3173,7 +3173,7 @@ function cfgDeRutina(r) {
 const MATS_SIGMA = ["madera", "piedra", "cobre", "bronce", "hierro", "acero", "oro", "obsidiana", "criselefantino", "estelar"];
 function matDeRutina(r) {
   if (r.autor) return MATS_SIGMA.includes(r.mat) ? r.mat : null;
-  try { const e = typeof Elo === "object" ? Elo.calcula() : null; return e && e.elo != null && e.divisio && MATS_SIGMA.includes(e.divisio.id) ? e.divisio.id : null; } catch (x) { return null; }
+  try { const e = typeof Elo === "object" ? Elo.calcula() : null; return e && e.elo != null && !e.provisional && e.divisio && MATS_SIGMA.includes(e.divisio.id) ? e.divisio.id : null; } catch (x) { return null; }
 }
 const perCompartir = r => { const mat = matDeRutina(r); return { nombre: String(r.nombre).slice(0, 60), resumen: String(r.resumen || "").slice(0, 200), dias: r.dias.map(d => ({ t: String(d.t).slice(0, 40), ej: d.ej.map(e => e.slice(0, 4)) })),
   cfg: cfgDeRutina(r), ...(mat ? { mat } : {}) }; };
@@ -5502,8 +5502,9 @@ const ZONAS = [["01", "Álava"], ["02", "Albacete"], ["03", "Alicante"], ["04", 
   ["31", "Navarra"], ["32", "Ourense"], ["34", "Palencia"], ["36", "Pontevedra"], ["37", "Salamanca"], ["38", "Santa Cruz de Tenerife"], ["40", "Segovia"], ["41", "Sevilla"],
   ["42", "Soria"], ["43", "Tarragona"], ["44", "Teruel"], ["45", "Toledo"], ["46", "Valencia"], ["47", "Valladolid"], ["49", "Zamora"], ["50", "Zaragoza"], ["XX", "Fuera de España"]];
 const nomZona = k => (ZONAS.find(z => z[0] === k) || [0, ""])[1];
-const soc = () => { const so = { visible: "anonimo", participa: false, menor: null, rank: {}, metrica: "rango", ambit: "gimnasio", grupo: "general", ...(S.social || {}) };
+const soc = () => { const so = { visible: "anonimo", participa: false, menor: null, rank: {}, metrica: "elo", ambit: "gimnasio", grupo: "general", ...(S.social || {}) };
   if (so.ambit === "amigos") so.ambit = "gimnasio";          // el rànquing dels amics ja no existeix (29-09, METODE §3.9)
+  if (so.metrica === "rango") so.metrica = "elo";            // la lliga de força és l'ELO de Gym (29-09), no el Temple
   return so; };
 
 async function api(met, ruta, cos) {
@@ -5597,6 +5598,8 @@ const YUNQUES = [[0, "madera", "Madera"], [100, "piedra", "Piedra"], [250, "cobr
 // Sense temple encara (qui acaba d'entrar i no ha entrenat), el de fusta, amb `sense` (l'Albert, 27-09-2026).
 const yunqueDe = p => { let y = YUNQUES[0]; if (p != null) YUNQUES.forEach(t => { if (p >= t[0]) y = t; }); return { id: y[1], nom: y[2], des: y[0], sense: p == null }; };
 // a la Beta Noche el rang és la sigma del mateix material (src/nit.js)
+// el metall de l'ELO de cadascú a la lliga (29-09): el sigma de la seva divisió
+const imgElo = (v, cls = "") => { if (v == null || typeof Elo !== "object" || typeof Nit !== "object" || !Nit.sigmaSrc) return ""; const d = Elo.divisioDe(v); return `<img class="yunque nt-sigma ${cls}" src="${Nit.sigmaSrc(d[1])}" alt="${d[2]}" title="${d[2]}">`; };
 const imgYunque = (p, cls = "") => { const y = yunqueDe(p); if (!y) return ""; if (typeof Nit === "object" && Nit.activa()) return `<img class="yunque nt-sigma ${cls}" src="${Nit.sigmaSrc(y.id)}" alt="Rango ${y.nom}" title="${y.nom}">`; return `<img class="yunque ${cls}" src="${ACTIUS}yunques/${y.id}.webp" alt="Rango ${y.nom}" title="${y.nom}">`; };
 function fullYunques() {
   const so = soc(), p = so.yo && so.yo.poder, meu = yunqueDe(p);
@@ -5625,7 +5628,7 @@ const avatar = (tipo, nivell, cls = "") => `<span class="avatar ${cls}"><span cl
 function filaRanking(f, so) {
   const v = f.valor;
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span>${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel) : avatar(f.personatge, f.nivell)}
-    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -5686,7 +5689,7 @@ function vistaRankings(so) {
   const r = so.rank[claveRank(so)], sol = false, dins = !!(so.yo && so.yo.lligues);
   // LES LLIGUES (29-09): qui no hi és no surt enlloc, i ho ha de saber aquí mateix
   return `${dins ? "" : `<div class="lg-fora panel pad"><b>No estás en las ligas</b><p>Nadie te ve en estos rankings, ni como «Anónimo». Entra y sales como «Anónimo»; tu nickname, solo si lo eliges en Ajustes.</p><button class="btn clar marc" data-accion="lligues-on" data-v="1">Entrar en las ligas</button></div>`}
-    <div class="seg" role="group" aria-label="Qué ranking">${[["rango", "Rango"], ["dias", "Días de gym"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
+    <div class="seg" role="group" aria-label="Qué ranking">${[["elo", "ELO"], ["dias", "Días de gym"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
     <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.total} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
@@ -5904,6 +5907,8 @@ async function accioSocial(acc, b) {
       try {
         const r = await api("POST", "/lligues", cos);
         S.social = { ...soc(), yo: { ...(soc().yo || {}), lligues: r.lligues, disciplines: r.disciplines }, rank: {} }; guardar();
+        // el rànquing s'ha de tornar a demanar ara: sense això, el fre dels 30 s el deixava a «Cargando…» (29-09)
+        Object.keys(intent).forEach(k => { delete intent[k]; });
         if (acc === "lligues-on") { Efectos.suena(r.lligues ? "triar" : "apaga"); avis(!r.lligues ? "Ya no sales en ningún ranking." : r.publico ? "Estás en las ligas, con tu nickname." : "Estás en las ligas, como «Anónimo»."); }
       } catch (e) { avis(e.message, true); }
       render(); return true;
@@ -6969,10 +6974,20 @@ const ACC_COMPTE = new Set(["compte-mode", "compte-edat", "compte-surt", "compte
    Un 2,5 % més de força són uns +23 punts. Les divisions (els metalls) van de 150 en 150 (0,75 desviacions) i són una
    tria de joc, no una dada: a 80 kg, un home entra a Bronze amb uns 81 kg de banca (1× el seu pes) i a Or amb 131.
 
-   QUI NO FA CAP DELS TRES, «sense classificar»: com les partides de classificació d'un joc, n'hi ha prou amb una sèrie
-   bona d'un d'ells. Les màquines no hi compten perquè un quilo d'una màquina no és el mateix a cada gimnàs.
-   Aquí és el càlcul al mòbil, per a la Beta. El rànquing entre persones l'ha de fer el servidor amb les sessions
-   acceptades (METODE.md §3.1); fins llavors, el Temple de sempre segueix fent el rànquing. */
+   L'ELO DE GYM (29-09, METODE §3.9; l'Albert, amb l'Àlex i l'Adrià: «no és el mateix un press de banca estirat que un
+   inclinat»; «el primer dia no podem marcar el teu ELO»; «algú molt més fort no pot quedar per sota»):
+   - TRES FAMÍLIES, cadascuna amb el seu gran de competició: empènyer (la banca), cama (la sentadilla) i bisagra (el pes
+     mort). Les variants que tenen un factor publicat hi compten passades al gran (la marca ÷ el factor) i amb la marca
+     «estimat»: el press inclinat i la banca al Smith, la sentadilla frontal i al Smith, i la trap bar. Les màquines, les
+     manuelles, el rumanès, el dèficit o el parcial no: cap factor val per a tothom (s'equipararan amb la nostra gent).
+   - EL GRAN DE DEBÒ MANA: si a les 8 setmanes hi ha la banca de debò, la família surt d'ella; les variants només hi
+     entren quan no n'hi ha. Així una variant no pot guanyar mai l'aixecament que representa.
+   - PROVISIONAL, i només per a tu, fins que tinguis DUES famílies i els teus entrenos amb barra facin UNA SETMANA de
+     marge (6 dies i mig, perquè dilluns a dilluns compti encara que el segon dia hi vagis una hora abans). Provisional,
+     el rànquing de la squad no te'l compta i les teves cartes surten sense marc.
+   El moviment surt del nom, i l'estri, de com el carregues (Ajustes de l'exercici; si no hi has dit res, el de sempre:
+   un «Press inclinado» sense dir res és amb manuelles, com a carga.js). El mateix càlcul, xifra a xifra, a
+   servidor/elo.py: el rànquing entre persones el fa el servidor. */
 const Elo = (() => {
   const DOTS = {
     h: [[-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093], 40, 210],
@@ -6985,41 +7000,88 @@ const Elo = (() => {
     peso_muerto: { h: [4.98311, -0.03082, 4.48413, 0.18958], m: [4.91209, -0.16871, 4.2032, 0.21418] },
   };
   const NOM = { sentadilla: "Sentadilla", banca: "Press de banca", peso_muerto: "Peso muerto" };
+  const FAMILIA = { sentadilla: "Pierna", banca: "Empuje", peso_muerto: "Bisagra" };
   // els noms de l'app que són l'aixecament de competició (amb barra); qualsevol altre, encara que s'hi assembli, no
   const ES = [
     [/^(sentadilla|sentadilla con barra|sentadilla profunda con barra|sentadilla trasera|back squat|squat)$/i, "sentadilla"],
     [/^(press de banca|press banca|press de banca con barra|press de banca con barra, agarre medio|press banca con barra|bench press|banca)$/i, "banca"],
     [/^(peso muerto|peso muerto con barra|peso muerto sumo|peso muerto convencional|deadlift|sumo deadlift)$/i, "peso_muerto"],
   ];
+  // EL MOVIMENT per nom: [nom, moviment, l'estri si no n'has dit cap]. L'ordre importa: el primer que encaixa.
+  const MOV = [
+    [/^(sentadilla|sentadilla con barra|sentadilla profunda con barra|sentadilla trasera|sentadilla olímpica|sentadilla con barra, pies (abiertos|juntos)|back squat|squat)$/i, "sq", "barra"],
+    [/^sentadilla en (multipower|smith)$/i, "sq", "multipower"],
+    [/^(sentadilla frontal|sentadilla frontal con barra|sentadilla frontal con agarre de cargada|front squat)$/i, "fsq", "barra"],
+    [/^(press de banca|press banca|press de banca con barra|press de banca con barra, agarre medio|press banca con barra|press de banca estilo powerlifting|press de banca con agarre abierto|bench press|banca)$/i, "bp", "barra"],
+    [/^press (de )?banca en (multipower|smith)$/i, "bp", "multipower"],
+    [/^(press inclinado|incline bench press)$/i, "ibp", "mancuernas"],
+    [/^(press inclinado con barra|press inclinado con barra, agarre medio|press de banca inclinado con barra)$/i, "ibp", "barra"],
+    [/^press inclinado en (multipower|smith)$/i, "ibp", "multipower"],
+    [/^(peso muerto|peso muerto con barra|peso muerto sumo|peso muerto convencional|deadlift|sumo deadlift)$/i, "dl", "barra"],
+    [/^(peso muerto con barra hexagonal|peso muerto hexagonal|peso muerto con trap bar|trap bar deadlift)$/i, "tbdl", "placas"],
+  ];
+  // EL FACTOR per moviment i estri: [família, factor, estimat]. La marca de la variant ÷ el factor = la del gran (METODE §3.9)
+  const FACTOR = {
+    "sq|barra": ["sentadilla", 1, false],
+    "sq|multipower": ["sentadilla", 1, true],        // al Smith, igual o una mica per sobre (Cotterman 2005)
+    "fsq|barra": ["sentadilla", 0.82, true],         // la frontal, 0,78-0,85 de la de darrere en entrenats (de segona mà)
+    "bp|barra": ["banca", 1, false],
+    "bp|multipower": ["banca", 0.95, true],          // al Smith, un 3 % per sota (Saeterbakken 2011) i 10,9 kg (Cotterman 2005)
+    "ibp|barra": ["banca", 0.85, true],              // l'inclinat: 0,97 sense entrenar (Marques 2025) i 0,78 entrenats
+    "ibp|multipower": ["banca", 0.81, true],         // l'inclinat al Smith: els dos factors junts
+    "dl|barra": ["peso_muerto", 1, false],
+    "tbdl|*": ["peso_muerto", 1.07, true],           // la trap bar, un 6-8 % per sobre (Lake 2017, Swinton 2011)
+  };
+  const DIES_MIN = 6.5 * 864e5;
   const DIVISIONS = [[0, "madera", "Madera", "#9a6a3c"], [300, "piedra", "Piedra", "#8f9296"], [450, "cobre", "Cobre", "#c7713f"],
     [600, "bronce", "Bronce", "#b3813f"], [750, "hierro", "Hierro", "#6f7880"], [900, "acero", "Acero", "#8fb0c8"],
     [1050, "oro", "Oro", "#f0b73a"], [1200, "obsidiana", "Obsidiana", "#5b4a78"], [1350, "criselefantino", "Criselefantino", "#e9dcc0"],
     [1500, "estelar", "Estelar", "#7fd0ff"]];
   const quin = n => { const t = String(n || "").trim(); for (const [rx, k] of ES) if (rx.test(t)) return k; return null; };
-  const ambBarra = n => typeof cargaDe !== "function" || cargaDe(n) === "barra";
+  // la família d'un exercici amb el seu estri: {k, f, est} o null si no compta
+  function variant(n, carga) {
+    const t = String(n || "").trim();
+    for (const [rx, mov, def] of MOV) {
+      if (!rx.test(t)) continue;
+      const f = FACTOR[mov + "|" + (carga || def)] || FACTOR[mov + "|*"];
+      return f ? { k: f[0], f: f[1], est: f[2] } : null;
+    }
+    return null;
+  }
   function coefDots(pes, sexe) {
     const [[a, b, c, d, e], lo, hi] = DOTS[sexe], x = Math.min(Math.max(pes, lo), hi);
     return 500 / (a + b * x + c * x * x + d * x ** 3 + e * x ** 4);
   }
   const epley = (kg, reps) => kg * (1 + reps / 30);
-  // l'e1RM de cada aixecament fins a `fins` (ms): la mitjana de les dues millors sessions de les 8 setmanes d'abans
-  function marques(ses, fins) {
+  const estriDe = (cfg, n) => { const c = cfg && typeof n === "string" && cfg[n] && cfg[n].carga; return typeof c === "string" && c ? c : null; };
+  // per família, fins a `fins` (ms): la mitjana de les dues millors sessions de les 8 setmanes d'abans, amb el gran de debò
+  // si n'hi ha i, si no, les variants (estimat); i quan va ser cada sessió que hi compta
+  function families(ses, fins, cfg) {
     const des = fins - 56 * 864e5, per = {};
-    ses.forEach(s => {
-      if (!s.fin || s.fin > fins || s.fin < des) return;
-      s.ej.forEach(e => {
-        const k = quin(e.n); if (!k || !ambBarra(e.n)) return;
+    (Array.isArray(ses) ? ses : []).forEach(s => {
+      const fin = s ? +s.fin : 0;
+      if (!(fin > 0) || fin > fins || fin < des) return;
+      const millor = {};
+      (Array.isArray(s.ej) ? s.ej : []).forEach(e => {
+        const vr = e && variant(e.n, estriDe(cfg, e.n)); if (!vr) return;
         let m = 0;
-        e.sets.forEach(z => {
-          if (!z.ok || !(z.kg > 0) || !(z.reps >= 1 && z.reps <= 10)) return;
-          if (typeof serieCompta === "function" && !serieCompta(z)) return;
+        (Array.isArray(e.sets) ? e.sets : []).forEach(z => {
+          if (!z || !z.ok || !(z.kg > 0) || !(z.reps >= 1 && z.reps <= 10) || z.tipo === "c" || z.tipo === "d") return;
           m = Math.max(m, epley(z.kg, z.reps));
         });
-        if (m > 0) (per[k] = per[k] || []).push(m);
+        if (!(m > 0)) return;
+        const v = m / vr.f, clau = vr.k + (vr.est ? "~" : "");
+        if (!millor[clau] || v > millor[clau].v) millor[clau] = { v, de: e.n };
       });
+      Object.entries(millor).forEach(([clau, x]) => { (per[clau] = per[clau] || []).push({ v: x.v, de: x.de, fin }); });
     });
     const out = {};
-    Object.entries(per).forEach(([k, v]) => { v.sort((x, y) => y - x); out[k] = v.length > 1 ? (v[0] + v[1]) / 2 : v[0]; });
+    Object.keys(REF).forEach(k => {
+      const real = per[k] || [], llista = real.length ? real : (per[k + "~"] || []);
+      if (!llista.length) return;
+      llista.sort((a, b) => b.v - a.v);
+      out[k] = { v: llista.length > 1 ? (llista[0].v + llista[1].v) / 2 : llista[0].v, est: !real.length, de: llista[0].de, fins: llista.map(x => x.fin) };
+    });
     return out;
   }
   function eloDe(k, e1rm, pes, sexe) {
@@ -7028,25 +7090,28 @@ const Elo = (() => {
     return Math.round(1000 + 200 * z);
   }
   const divisioDe = elo => { let d = DIVISIONS[0]; DIVISIONS.forEach(t => { if (elo >= t[0]) d = t; }); return d; };
-  // el que es veu: l'ELO (o per què no n'hi ha), la divisió, el que falta per a la següent i el canvi de la setmana
+  // el que es veu: l'ELO (o per què no n'hi ha), la divisió, el que falta per a la següent, el canvi de la setmana, i si és
+  // provisional (i per què) o estimat
   function calcula(st = S, ara = Date.now()) {
     const p = st.perfil || {}, pes = +p.peso, sexe = p.sexo === "m" ? "m" : p.sexo === "h" ? "h" : null;
     if (!(pes > 30) || !sexe) return { elo: null, motiu: !(pes > 30) ? "pes" : "sexe" };
     const fa = t => {
-      const m = marques(st.ses || [], t), per = {};
-      Object.entries(m).forEach(([k, v]) => { per[k] = { e1rm: Math.round(v * 10) / 10, elo: eloDe(k, v, pes, sexe) }; });
+      const f = families(st.ses || [], t, st.cfg), per = {};
+      Object.entries(f).forEach(([k, x]) => { per[k] = { e1rm: Math.round(x.v * 10) / 10, elo: eloDe(k, x.v, pes, sexe), de: x.de, est: x.est }; });
       const vs = Object.values(per).map(x => x.elo);
-      return { per, elo: vs.length ? Math.round(vs.reduce((x, y) => x + y, 0) / vs.length) : null };
+      return { per, elo: vs.length ? Math.round(vs.reduce((x, y) => x + y, 0) / vs.length) : null, fins: [].concat(...Object.values(f).map(x => x.fins)) };
     };
     const ara_ = fa(ara), abans = fa(ara - 7 * 864e5);
     if (ara_.elo == null) return { elo: null, motiu: "classificacio" };
     const d = divisioDe(ara_.elo), i = DIVISIONS.indexOf(d), seg = DIVISIONS[i + 1] || null;
+    const primer = Math.min(...ara_.fins), falta = { dies: Math.max(...ara_.fins) - primer < DIES_MIN, families: Object.keys(ara_.per).length < 2 };
     return { elo: ara_.elo, per: ara_.per, divisio: { id: d[1], nom: d[2], color: d[3], des: d[0] },
       seguent: seg ? { nom: seg[2], falta: seg[0] - ara_.elo, des: seg[0] } : null,
       setmana: abans.elo != null ? ara_.elo - abans.elo : null,
-      falten: Object.keys(REF).filter(k => !ara_.per[k]).map(k => NOM[k]), pes, sexe };
+      falten: Object.keys(REF).filter(k => !ara_.per[k]).map(k => NOM[k]), pes, sexe,
+      provisional: falta.dies || falta.families, falta, primer, estimat: Object.values(ara_.per).some(x => x.est) };
   }
-  return { calcula, coefDots, eloDe, quin, DIVISIONS, NOM, divisioDe };
+  return { calcula, coefDots, eloDe, quin, variant, families, DIVISIONS, NOM, FAMILIA, divisioDe, DIES_MIN };
 })();
 
 /* ELS VERSIONS DE KLONK (28-09-2026): la Beta 1.0 es prova DINS de l'app que corre, sense tocar-la.
@@ -7516,7 +7581,7 @@ const ForjaBeta = (() => {
     const d = e.divisio, sg = e.seguent, pct = sg ? Math.max(4, Math.min(100, Math.round(100 * (e.elo - d.des) / (sg.des - d.des)))) : 100;
     const files = Object.entries(Elo.NOM).map(([k, nom]) => {
       const x = e.per[k];
-      return x ? `<li><span>${nom}</span><small>1RM estimado ${String(x.e1rm).replace(".", ",")} kg</small><b style="color:${Elo.divisioDe(x.elo)[3]}">${n0(x.elo)}</b></li>`
+      return x ? `<li><span>${nom}</span><small>${x.est ? `${esc(x.de)}, estimado` : `1RM estimado ${String(x.e1rm).replace(".", ",")} kg`}</small><b style="color:${Elo.divisioDe(x.elo)[3]}">${n0(x.elo)}</b></li>`
         : `<li class="fe-falta"><span>${nom}</span><small>Sin marca: súmala y afina tu ELO</small><b>?</b></li>`;
     }).join("");
     return `<div class="fe"><div class="fe-cap"><span class="fe-ic" style="color:${d.color}">${I.enclusa}</span><b class="fe-num">${n0(e.elo)}</b><span class="fe-div" style="color:${d.color}">${d.nom}</span></div>
@@ -8066,7 +8131,7 @@ const Nit = (() => {
   function cap() {
     const e = eloDe(), foc = fetAvui();
     return `<header class="nt-cap">
-      <span class="nt-xip nt-elo nt-press" data-in="cap" role="button" data-accion="nt-elo" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${nomRang(e.divisio.id, e.divisio.nom)}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
+      <span class="nt-xip nt-elo nt-press${e.provisional ? " prov" : ""}" data-in="cap" role="button" data-accion="nt-elo" aria-label="${e.elo != null ? `Tu ELO${e.provisional ? " provisional" : ""}: ${e.elo}, ${nomRang(e.divisio.id, e.divisio.nom)}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
       <span class="nt-xip nt-ratxa${foc ? " on" : ""}" data-in="cap" role="button" data-accion="nt-ves" data-v="estadisticas" data-tab="racha" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
       <span class="nt-buit"></span>
       <span class="nt-xip nt-or" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro" aria-label="Tu oro: ${n0(oroTotal())}. Tienda">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
@@ -9142,7 +9207,7 @@ const Nit = (() => {
   const CORONA = '<svg viewBox="0 0 24 24" aria-label="1"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 11H5z" fill="#e2c27a"/></svg>';
   function filaSqR(f, mesura) {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
-    const val = mesura === "forca" ? (f.valor != null ? `${imgYunque(f.valor)}<b>${n0(f.valor)}</b>` : "<b>·</b>") : `<b>${n0(f.valor || 0)}</b><small>${f.valor === 1 ? "día" : "días"}</small>`;
+    const val = mesura === "forca" ? (f.valor != null ? `<img class="ns-r-sig" src="${sigmaMat(Elo.divisioDe(f.valor)[1])}" alt="" draggable="false"><b>${n0(f.valor)}</b>` : "<b>·</b>") : `<b>${n0(f.valor || 0)}</b><small>${f.valor === 1 ? "día" : "días"}</small>`;
     return `<${f.pid ? `button class="ns-r" data-accion="social-perfil" data-p="${esc(f.pid)}"` : `div class="ns-r${f.yo ? " yo" : ""}"`} data-in="ns">
       <span class="ns-r-pos">${f.pos === 1 ? CORONA : (f.pos ?? "–")}</span>
       <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
@@ -9167,7 +9232,7 @@ const Nit = (() => {
     if (!rk.on && !gestor) return `<div class="nsq-rk"><div class="nsq-rk-cap"><b>Ranking de la squad</b><small>Apagado</small></div></div>`;
     return `<div class="nsq-rk">
       <div class="nsq-rk-cap"><b>Ranking de la squad</b>${gestor ? interruptor("nsq-rk-on", rk.on, "Ranking de la squad", ` data-id="${q.id}"`) : ""}</div>
-      ${rk.on ? `${gestor ? `<div class="nsq-rk-m" role="group" aria-label="Qué cuenta">${[["forca", "Fuerza"], ["constancia", "Constancia"]].map(([m, t]) => `<button class="chip" data-accion="nsq-rk-m" data-id="${q.id}" data-m="${m}" aria-pressed="${rk.mesura === m}">${t}</button>`).join("")}</div>` : `<small class="nsq-rk-d">${rk.mesura === "forca" ? "Por fuerza" : "Por constancia: días de gym este mes"}</small>`}
+      ${rk.on ? `${gestor ? `<div class="nsq-rk-m" role="group" aria-label="Qué cuenta">${[["forca", "Fuerza"], ["constancia", "Constancia"]].map(([m, t]) => `<button class="chip" data-accion="nsq-rk-m" data-id="${q.id}" data-m="${m}" aria-pressed="${rk.mesura === m}">${t}</button>`).join("")}</div>` : `<small class="nsq-rk-d">${rk.mesura === "forca" ? "Por fuerza: el ELO de cada uno" : "Por constancia: días de gym este mes"}</small>`}
         ${rk.llista.length ? rk.llista.map(f => filaSqR(f, rk.mesura)).join("") : `<p class="ns-buit">Nadie sale todavía.</p>`}
         <button class="nsq-rk-jo" data-accion="nsq-rk-vis" data-id="${q.id}" data-v="${q.jo_visible ? 0 : 1}">${q.jo_visible ? "No salir en el ranking" : "Salir en el ranking"}</button>` : ""}
     </div>`;
@@ -10090,12 +10155,26 @@ const Nit = (() => {
       ${d.squads.length < (d.max_squads || 5) ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
     </section>`;
   }
+  // L'ELO DE GYM (29-09, METODE §3.9): les tres famílies, d'on surt cadascuna (el gran, o una variant «estimada») i, si és
+  // provisional, què falta: una segona família, o entrenar amb barra un altre dia amb una setmana de marge
+  const ELO_COM = `<p class="suau">1000 es quien está justo en medio de los que compiten en powerlifting sin equipo, de tu sexo y tu peso. Cuentan tus dos mejores días de las últimas 8 semanas. El press inclinado, el multipower, la sentadilla frontal y la trap bar cuentan convertidos, como «estimado»; las máquinas no: un kilo de máquina no pesa lo mismo en cada gimnasio.</p>`;
+  const diaDe = ms => { try { return new Date(ms).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(",", ""); } catch (x) { return ""; } };
   function htmlElo() {
     const e = eloDe();
-    if (e.elo == null) return `<div class="nelo"><p>Aún no tienes ELO. Sale de tres ejercicios con barra: <b>sentadilla</b>, <b>press de banca</b> y <b>peso muerto</b>. Con una buena serie de uno de ellos, aparece.</p>
-      <p class="suau">Las máquinas no cuentan: un kilo de máquina no pesa lo mismo en cada gimnasio. El número de los rankings es otro, el Temple, que cuenta todos tus ejercicios.</p></div>`;
-    return `<div class="nelo"><p>Tu ELO es <b>${n0(e.elo)}</b>, ${esc(nomRang(e.divisio.id, e.divisio.nom))}. Sale de tu sentadilla, tu press de banca y tu peso muerto con barra, comparados con los de competición de tu peso: 1000 es el del medio.</p>
-      <p class="suau">Las máquinas no cuentan. El número de los rankings es otro, el Temple, que cuenta todos tus ejercicios.</p></div>`;
+    // sense pes o sense sexe no hi ha ELO (el DOTS els necessita): es diu què falta i on es posa (29-09: dos de cada tres
+    // comptes de la Beta no tenien el sexe posat, i el full només deia «aún no tienes ELO»)
+    if (e.elo == null && (e.motiu === "pes" || e.motiu === "sexe")) return `<div class="nelo"><p>${e.motiu === "pes" ? "Pon tu peso en Ajustes: el ELO es tu fuerza para tu peso." : "Elige tu sexo en Ajustes: cada uno se compara con los de su sexo."}</p><button class="nt-boto2" data-accion="nt-ves" data-v="ajustes">Ir a Ajustes</button>${ELO_COM}</div>`;
+    if (e.elo == null) return `<div class="nelo"><p>Aún no tienes ELO. Sale de tu fuerza con barra en tres familias: <b>empuje</b> (press de banca), <b>pierna</b> (sentadilla) y <b>bisagra</b> (peso muerto).</p>${ELO_COM}</div>`;
+    const fila = k => { const x = e.per && e.per[k];
+      return `<div class="nelo-f${x ? "" : " nelo-sense"}"><span><b>${Elo.FAMILIA[k]}</b><small>${x ? esc(x.de) + (x.est ? " · estimado" : "") : `Sin marca: ${Elo.NOM[k].toLowerCase()} con barra`}</small></span>`
+        + `<span class="nelo-v">${x ? `<small>${kgTxt(x.e1rm)} kg</small><b>${n0(x.elo)}</b>` : "<b>·</b>"}</span></div>`; };
+    const falta = [];
+    if (e.falta && e.falta.families) falta.push(`una segunda familia (${e.falten.map(n => n.toLowerCase()).join(" o ")} con barra)`);
+    if (e.falta && e.falta.dies) falta.push(`entrenar con barra otra vez a partir del ${diaDe(e.primer + Elo.DIES_MIN)}`);
+    return `<div class="nelo"><div class="nelo-cap">${sigma(e, "nelo-sig")}<span><b class="nelo-n">${n0(e.elo)}</b><small>${esc(nomRang(e.divisio.id, e.divisio.nom))}${e.provisional ? " · provisional" : ""}</small></span></div>
+      ${e.provisional ? `<p class="nelo-prov">Provisional, y solo lo ves tú: te falta ${falta.join(" y ")}. Así nadie tiene ELO por un solo día.</p>` : ""}
+      <div class="nelo-fs">${["banca", "sentadilla", "peso_muerto"].map(fila).join("")}</div>
+      ${ELO_COM}</div>`;
   }
   // un full de la Noche per triar (el nom, el repte, a qui convides)
   function fullN(titol, cos) {
@@ -11810,6 +11889,15 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nelo{display:grid;gap:10px;margin:12px 0 14px;text-align:left}
 .nelo p{margin:0;font-size:15px;font-weight:800;line-height:1.45;color:var(--nt-tinta)}
 .nelo p.suau{font-size:13.5px;color:var(--nt-suau)}
+.nelo-cap{display:flex;align-items:center;gap:12px}.nelo-cap .nt-sigma{width:52px;height:52px}
+.nelo-cap span{display:grid}.nq-p .nelo .nelo-n{font-size:34px;font-weight:900;line-height:1;color:var(--nt-tinta)}.nelo-cap small{font-size:13.5px;font-weight:800;color:var(--nt-suau)}
+.nelo p.nelo-prov{padding:10px 12px;border-radius:14px;background:rgb(var(--l-rgb) / .14);box-shadow:inset 0 0 0 1px rgb(var(--l-rgb) / .3);font-size:13.5px}
+.nelo-fs{display:grid;gap:6px}
+.nelo-f{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:rgb(255 255 255 / .04)}
+.nelo-f span{display:grid;gap:1px}.nq-p .nelo .nelo-f b{font-size:15px;font-weight:900;line-height:1.25}.nelo-f small{font-size:12.5px;font-weight:700;color:var(--nt-suau)}
+.nelo-f.nelo-sense{opacity:.6}.nelo-v{justify-items:end;text-align:right}.nq-p .nelo .nelo-v b{font-size:18px;color:rgb(var(--m2-rgb))}
+.nt-elo.prov b{opacity:.7}.nt-elo.prov{box-shadow:var(--nt-o1),0 0 0 1px rgb(var(--l-rgb) / .35)}
+.ns-r-sig{width:20px;height:20px;object-fit:contain;vertical-align:-4px;margin-right:4px}
 .nsq-gest button{height:52px;border:0;border-radius:16px;cursor:pointer;background:#1c242e;color:var(--nt-tinta);font:900 15px/1 'Nunito',system-ui,sans-serif}
 .nsq-gest button.fora{color:#ff8f80}
 .nsq-cara.fet img{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
