@@ -5709,7 +5709,7 @@ function rangGimnasos(so) {
   const nom = a => (tots[a] && tots[a].on) || (a === "ciudad" ? "Tu ciudad" : "Tu país");
   const cos = !r ? '<p class="suau petit" style="text-align:center">Cargando…</p>'
     : r.err ? `<p class="falta">${esc(r.err)}</p>`
-    : !r.llista.length ? '<p class="suau petit" style="text-align:center;margin:10px 0 0">Aún no hay gimnasios con gente de KLONK aquí. El tuyo puede ser el primero.</p>'
+    : !(r.llista || []).length ? '<p class="suau petit" style="text-align:center;margin:10px 0 0">Aún no hay gimnasios con gente de KLONK aquí. El tuyo puede ser el primero.</p>'
     : r.llista.slice(0, 10).map(filaRangGim).join("") + (r.meu && r.meu.pos > 10 ? `<div class="rk-punts">…</div>${filaRangGim(r.meu)}` : "");
   return `<section class="bloc rang-gims"><h2 class="pestanya marc">El gimnasio más duro</h2><div class="panel pad">
     <div class="seg" role="group" aria-label="Dónde">${["ciudad", "pais"].map(a => `<button data-accion="rg-ambit" data-a="${a}" aria-pressed="${amb === a}">${esc(nom(a))}</button>`).join("")}</div>
@@ -5838,7 +5838,7 @@ function vistaClan(so) {
   const nit = typeof Nit === "object" && Nit.activa();
   const llista = `<div class="panel pad"><b class="clan-t">Tus amigos${am.length ? ` <span class="suau">(${am.length})</span>` : ""}</b>
       ${am.length ? am.map(p => fila(p, S.ui.clanTreu === p.pid ? `<button class="btn marc" data-accion="clan-treu-si" data-p="${p.pid}">Quitar</button><button class="enllac" data-accion="clan-treu-no">No</button>` : `<button class="enllac" data-accion="clan-treu" data-p="${p.pid}">Quitar</button>`, true)).join("")
-        : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : "Cargando…"}</p>`}</div>`;
+        : `<p class="suau petit" style="margin:8px 0 0">${cl.at ? "Todavía no hay nadie. Pide a tus amigos su nickname, o pásales el tuyo." : S.ui.clanErr ? `No se ha podido cargar tu lista de amigos. <button class="enllac" data-accion="soc-tab" data-t="clan">Reintentar</button>` : "Cargando…"}</p>`}</div>`;
   return `${reb.length ? `<div class="panel pad clan-reb"><b class="or clan-t">Quieren ser tus amigos</b>${reb.map(p => fila(p, `<button class="btn clar marc" data-accion="clan-accepta" data-p="${p.pid}">Aceptar</button><button class="clan-x" data-accion="clan-rebutja" data-p="${p.pid}" aria-label="Rechazar a ${esc(p.nom)}">×</button>`)).join("")}</div>` : ""}
     ${nit ? llista : am.length ? panellFeed() : ""}
     <form class="form panel pad" data-form="clan-nick"><label>Añadir a alguien por su nickname<span class="clan-envia"><input id="c-nick" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="21" enterkeyhint="search" aria-autocomplete="list" aria-controls="c-sug" placeholder="Su nickname" value="${esc(S.ui.clanNick || "")}"><button class="btn clar marc" type="submit">AÑADIR</button></span></label>
@@ -5983,12 +5983,18 @@ async function carregaClan(forca) {
   try {
     const [s, a, rx] = await Promise.all([api("GET", "/amigos/solicitudes"), api("GET", "/amigos"), api("GET", "/amigos/ratxes").catch(() => [])]);
     const nou = { rebudes: s.rebudes || [], enviades: s.enviades || [], amics: a || [] }, cl = soc().clan || {};
-    nou.ratxes = Object.fromEntries((rx || []).map(r => [r.pid, r]));
+    nou.ratxes = Object.fromEntries((Array.isArray(rx) ? rx : []).map(r => [r.pid, r]));     // les ratxes són un detall: una resposta estranya no s'endú la llista
     const canvia = JSON.stringify([cl.rebudes, cl.enviades, cl.amics]) !== JSON.stringify([nou.rebudes, nou.enviades, nou.amics]);
     const nouClan = JSON.stringify(cl.amics || []) !== JSON.stringify(nou.amics);     // algú ha entrat o sortit: els rànquings, de nou
     S.social = { ...soc(), clan: { ...nou, at: Date.now() }, ...(nouClan && cl.at ? { rank: {} } : {}) }; guardar();
-    if (S.ui.vista === "social" && tabSoc() !== "gimnasios" && (forca || canvia)) render();
-  } catch (e) { if (forca) avis(e.message, true); }
+    const eraErr = !!S.ui.clanErr; S.ui.clanErr = null;
+    if (S.ui.vista === "social" && tabSoc() !== "gimnasios" && (forca || canvia || eraErr)) render();
+  } catch (e) {
+    // (29-09 nit, a l'iPhone simulat) sense això «Tus amigos» es quedava a «Cargando…» per sempre si la xarxa fallava (al
+    // gimnàs, sovint): ara ho diu i es pot tornar a provar, com les squads
+    if (forca) avis(e.message, true);
+    S.ui.clanErr = e.message || "Sin conexión."; if (S.ui.vista === "social") render();
+  }
 }
 async function enviaSollicitud(nick) {
   nick = (nick || "").trim().replace(/^@/, "");
