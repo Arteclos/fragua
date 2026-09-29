@@ -8044,7 +8044,7 @@ const Nit = (() => {
   function cap() {
     const e = eloDe(), foc = fetAvui();
     return `<header class="nt-cap">
-      <span class="nt-xip nt-elo nt-press" data-in="cap" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${nomRang(e.divisio.id, e.divisio.nom)}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
+      <span class="nt-xip nt-elo nt-press" data-in="cap" role="button" data-accion="nt-elo" aria-label="${e.elo != null ? `Tu ELO: ${e.elo}, ${nomRang(e.divisio.id, e.divisio.nom)}` : "Tu ELO: sin clasificar"}">${sigma(e, "nt-medalla")}<b>${e.elo != null ? n0(e.elo) : "?"}</b><i class="nt-sheen"></i></span>
       <span class="nt-xip nt-ratxa${foc ? " on" : ""}" data-in="cap" role="button" data-accion="nt-ves" data-v="estadisticas" data-tab="racha" aria-label="${ratxa()} días de gimnasio este año">${ic(foc ? "flama-on" : "flama", "nt-flama")}<b>${ratxa()}</b></span>
       <span class="nt-buit"></span>
       <span class="nt-xip nt-or" data-in="cap" role="button" data-accion="nt-ves" data-v="tienda" data-t="oro" aria-label="Tu oro: ${n0(oroTotal())}. Tienda">${ic("moneda")}<b>${n0(oroTotal())}</b><span class="nt-mesor">${ic("mes")}</span></span>
@@ -8074,22 +8074,22 @@ const Nit = (() => {
     </section>`;
   }
 
-  // LA GUERRA: el teu gimnàs contra el que tens al davant (o al darrere, si vas primer) al rànquing de la ciutat
+  // LA GUERRA DE GYMS (29-09, de debò: servidor guerra.py): el teu gimnàs contra el rival de la setmana. Sense rival, o
+  // sense dades, la línia no surt (fins al 29-09 ensenyava una guerra d'exemple, l'Aiguajoc contra el Vivagym).
+  async function carregaGuerraD(forca) {
+    if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return null;
+    const g = S.ui.guerra;
+    if (!forca && g && Date.now() - g.at < 60000) return g;
+    try { const r = await api("GET", "/gimnasios/guerra"); S.ui.guerra = { d: r.guerra, motiu: r.motiu || null, at: Date.now() }; } catch (e) { return S.ui.guerra || null; }
+    return S.ui.guerra;
+  }
+  const pcGuerra = (meu, riv) => { const tot = (meu.punts || 0) + (riv.punts || 0); return tot ? Math.round(100 * (meu.punts || 0) / tot) : 50; };
   async function carregaGuerra(sec) {
     const el = sec.querySelector(".nt-guerra");
     if (!el) return;
-    let meu = null, riv = null;
-    if (typeof api === "function" && typeof teCompte === "function" && teCompte() && !S.demo) {
-      let d = S.ui.ntGuerra;
-      if (!d || Date.now() - d.at > 300000) { try { d = S.ui.ntGuerra = { at: Date.now(), r: await api("GET", "/gimnasios/ranking?ambit=ciudad") }; } catch (e) { d = null; } }
-      const r = d && d.r;
-      meu = r && r.meu;
-      riv = meu && r.llista && (r.llista.find(x => x.pos === meu.pos - 1) || r.llista.find(x => x.pos === meu.pos + 1));
-    }
-    // L'Albert (28-09 nit): «simula de moment els dos que hi ha; cada setmana, batalla de gyms de la zona». Mentre el
-    // servidor no porti la batalla setmanal, la línia ensenya el seu gimnàs contra el Vivagym amb una xifra d'exemple.
-    if (!meu || !riv) { meu = { nom: "Aiguajoc", xp: 62 }; riv = { nom: "Vivagym", xp: 38 }; }
-    const tot = (meu.xp || 0) + (riv.xp || 0) || 1, pc = Math.round(100 * (meu.xp || 0) / tot);
+    const g = await carregaGuerraD(), d = g && g.d, meu = d && d.meu, riv = d && d.rival;
+    if (!meu || !riv) { el.hidden = true; return; }
+    const pc = pcGuerra(meu, riv);
     el.innerHTML = `<span class="nt-g nt-g-meu">${ic("cresta")}<span><small>${esc(meu.nom)}</small><b>${pc} %</b></span></span>
       <span class="nt-g-barra"><i style="--p:${pc}%"></i><small>Tu entreno de hoy suma</small></span>
       <span class="nt-g nt-g-riv"><span><small>${esc(riv.nom)}</small><b>${100 - pc} %</b></span>${ic("cresta-riv")}</span>`;
@@ -8356,6 +8356,10 @@ const Nit = (() => {
   }
   document.addEventListener("click", ev => {
     if (!esNit()) return;
+    // L'ELO DE DALT (29-09, l'Albert: «no em mostra l'elo quan sí que en tinc»): tocar-lo diu d'on surt. Sense cap dels tres
+    // aixecaments amb barra no n'hi ha (elo.js); el número dels rànquings és el Temple, que compta tots els exercicis.
+    const xe = ev.target.closest('[data-accion="nt-elo"]');
+    if (xe) { ev.preventDefault(); ev.stopPropagation(); fullN("Tu ELO", htmlElo()); return; }
     const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-arx"], [data-accion="nc3-recupera"], [data-accion="nc3-rebuda"]');
     if (nc) {
       ev.preventDefault(); ev.stopPropagation();
@@ -9005,16 +9009,52 @@ const Nit = (() => {
     return `<button class="nsq-mini" data-accion="ns-dins" data-t="squads" data-in="ns"><span class="nsq-mini-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : esc(q.nom)}<small>Tu squad · ${n} ${n === 1 ? "miembro" : "miembros"}</small></span>
       <span class="nsq-mini-caras">${q.membres.slice(0, 5).map(m => `<img src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false">`).join("")}</span>${I_TU.fle}</button>`;
   }
-  function guerraHero(meu, riv) {
-    const tot = (meu.xp || 0) + (riv.xp || 0) || 1, pc = Math.round(100 * (meu.xp || 0) / tot), q = diesQueden();
+  const queTxt = q => q === 0 ? "Último día" : `Quedan ${q} ${q === 1 ? "día" : "días"}`;
+  function guerraHero(g) {
+    const d = g && g.d, meu = d && d.meu, riv = d && d.rival;
+    if (!meu) return `<div class="ns-g-c">${ic("cresta")}</div><div class="ns-g-mig"><b>Guerra de gyms</b><small>${g ? "Elige tu gimnasio para entrar" : "Cargando…"}</small></div><div class="ns-g-c">${ic("cresta-riv")}</div>`;
+    if (!riv) return `<div class="ns-g-c">${ic("cresta")}<small>${esc(meu.nom)}</small></div><div class="ns-g-mig"><b>Guerra de gyms</b><small>Esta semana, aún sin rival</small></div><div class="ns-g-c sense">${ic("cresta-riv")}<small>?</small></div>`;
+    const pc = pcGuerra(meu, riv);
     return `<div class="ns-g-c">${ic("cresta")}<small>${esc(meu.nom)}</small><b class="g-meu">${pc} %</b></div>
-      <div class="ns-g-mig"><b>Guerra de gyms</b><small>${q === 0 ? "Último día" : `Quedan ${q} ${q === 1 ? "día" : "días"}`}</small>
+      <div class="ns-g-mig"><b>Guerra de gyms</b><small>${queTxt(d.queden)}</small>
         <span class="ns-g-barra"><i style="--p:${pc}%"></i></span><small class="ns-g-peu">Cada entreno tuyo suma para ${esc(meu.nom)}</small></div>
       <div class="ns-g-c">${ic("cresta-riv")}<small>${esc(riv.nom)}</small><b class="g-riv">${100 - pc} %</b></div>`;
   }
-  function guerraDades() {
-    const d = S.ui.ntGuerra, r = d && d.r, meu = r && r.meu, riv = meu && r.llista && (r.llista.find(x => x.pos === meu.pos - 1) || r.llista.find(x => x.pos === meu.pos + 1));
-    return meu && riv ? [meu, riv] : [{ nom: "Aiguajoc", xp: 62 }, { nom: "Vivagym", xp: 38 }];
+  // LA PÀGINA DE LA GUERRA (l'Albert, 29-09: «s'ha de poder fer clic i llavors veuries els dos gyms, on estan, quanta gent
+  // tenen»): els dos gimnasos cara a cara, qui va guanyant i per quant, la teva part, com es guanya i la setmana passada
+  const n1 = x => { const v = Math.round((x || 0) * 10) / 10; return (v % 1 ? v.toFixed(1) : String(v)).replace(".", ","); };
+  function kmEntre(a, b) {
+    if (a.lat == null || a.lon == null || b.lat == null || b.lon == null) return null;
+    const R = 6371, rad = x => x * Math.PI / 180, dLa = rad(b.lat - a.lat), dLo = rad(b.lon - a.lon);
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLo / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function vistaGuerra() {
+    const g = S.ui.guerra;
+    carregaGuerraD().then(x => { if (x && x !== g && S.ui.vista === "social" && S.ui.socDins === "guerra" && typeof render === "function") render(); });
+    if (!g) return `<p class="ns-buit">Cargando la guerra…</p>`;
+    const d = g.d;
+    if (!d) return `<div class="ngw"><p class="ngw-estat">Elige tu gimnasio para entrar en la guerra de gyms.</p><button class="nt-boto2 ngw-gims" data-accion="ns-dins" data-t="gimnasios">Elegir gimnasio</button></div>`;
+    const meu = d.meu, riv = d.rival, pc = riv ? pcGuerra(meu, riv) : 100, km = riv ? kmEntre(meu, riv) : null, jo = meu.meus || 0;
+    const estat = !riv ? "Esta semana tu gimnasio aún no tiene rival. En cuanto haya otro gimnasio libre en tu zona, empieza."
+      : meu.punts > riv.punts ? `Vais ganando por ${n1(meu.punts - riv.punts)} ${meu.punts - riv.punts === 1 ? "entreno" : "entrenos"} por persona.`
+      : meu.punts < riv.punts ? `Vais perdiendo por ${n1(riv.punts - meu.punts)} ${riv.punts - meu.punts === 1 ? "entreno" : "entrenos"} por persona.` : "Vais empatados.";
+    const fitxa = (x, cls, icona) => `<div class="ngw-g ${cls}">${ic(icona)}<b class="ngw-nom">${esc(x.nom)}</b><small class="ngw-lloc">${esc(x.adreca || x.ciutat || "")}</small>
+      <span class="ngw-xifra"><b>${n1(x.punts)}</b><small>entrenos por persona</small></span>
+      <span class="ngw-dada"><b>${x.klonk}</b> ${x.klonk === 1 ? "persona" : "personas"} de KLONK</span>
+      <span class="ngw-dada"><b>${x.entrenos}</b> ${x.entrenos === 1 ? "entreno" : "entrenos"} esta semana</span></div>`;
+    const ant = d.anterior;
+    return `<section class="ngw">
+      <div class="ngw-cap" data-in="ns"><small>${queTxt(d.queden)}</small></div>
+      <div class="ngw-vs" data-in="ns">${fitxa(meu, "ngw-meu", "cresta")}<b class="ngw-x">VS</b>${riv ? fitxa(riv, "ngw-riv", "cresta-riv") : `<div class="ngw-g ngw-riv buit">${ic("cresta-riv")}<b class="ngw-nom">Sin rival</b><small class="ngw-lloc">de momento</small></div>`}</div>
+      ${riv ? `<div class="ngw-marcador" data-in="ns"><div class="ngw-barra"><i style="--p:${pc}%"></i></div><div class="ngw-pc"><b class="g-meu">${pc} %</b><b class="g-riv">${100 - pc} %</b></div></div>` : ""}
+      <p class="ngw-estat" data-in="ns">${estat}</p>
+      ${km != null ? `<p class="ngw-nota" data-in="ns">Estáis a ${km < 1 ? Math.round(km * 1000) + " m" : n1(km) + " km"} el uno del otro.</p>` : ""}
+      <div class="ngw-tu" data-in="ns">${meu.no_comptes ? "Aún no sumas: sal en los rankings de Social para contar para tu gimnasio." : `Tu parte: <b>${jo}</b> ${jo === 1 ? "entreno" : "entrenos"} esta semana.`}</div>
+      <p class="ngw-regla" data-in="ns">Gana el gimnasio que más entrena por persona: los días que entrena cada uno, de lunes a domingo, entre los de KLONK que van.</p>
+      ${ant ? `<p class="ngw-ant" data-in="ns">La semana pasada, ${ant.guanya === "meu" ? `ganasteis a ${esc(ant.rival)}` : ant.guanya === "rival" ? `ganó ${esc(ant.rival)}` : `empate con ${esc(ant.rival)}`}: ${n1(ant.punts)} contra ${n1(ant.punts_rival)}.</p>` : ""}
+      <button class="nt-boto2 ngw-gims" data-accion="ns-dins" data-t="gimnasios" data-in="ns">Ver todos los gimnasios</button>
+    </section>`;
   }
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
@@ -9035,10 +9075,10 @@ const Nit = (() => {
     const so = soc(), yo = so.yo, gim = yo && yo.gimnas;
     if (S.demo || !yo || !gim || !so.participa) return window.vistaSocial ? window.vistaSocial() : "";
     const dins = S.ui.socDins;
-    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads") {
-      if (dins !== "squads") S.ui.socTab = dins;
-      const nom = { clan: "Amigos", rank: "Rankings", gimnasios: "Gimnasios", squads: "Squads" }[dins];
-      const cos = dins === "squads" ? vistaSquads() : dins === "clan" ? vistaClan(so) : dins === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
+    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads" || dins === "guerra") {
+      if (dins !== "squads" && dins !== "guerra") S.ui.socTab = dins;
+      const nom = { clan: "Amigos", rank: "Rankings", gimnasios: "Gimnasios", squads: "Squads", guerra: "Guerra de gyms" }[dins];
+      const cos = dins === "squads" ? vistaSquads() : dins === "guerra" ? vistaGuerra() : dins === "clan" ? vistaClan(so) : dins === "gimnasios" ? rangGimnasos(so) + cosGimnasos() : vistaRankings(so);
       refrescaSocial(so, dins);
       return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag">${nom}</h1></div>${cos}`;
     }
@@ -9046,7 +9086,6 @@ const Nit = (() => {
     if (so.metrica !== "rango" || so.ambit !== "amigos" || so.grupo !== "general") { S.social = { ...so, metrica: "rango", ambit: "amigos", grupo: "general" }; }
     const so2 = soc(); refrescaSocial(so2, "rank");
     const r = so2.rank[claveRank(so2)], feed = (S.ui.feed && S.ui.feed.items) || [], n = ((so2.clan || {}).rebudes || []).length;
-    const [meu, riv] = guerraDades();
     const rank = r && r.llista ? r.llista.slice(0, 5) : null;
     return `<h1 class="titol-pag">Social</h1>
       <section class="ns">
@@ -9055,7 +9094,7 @@ const Nit = (() => {
           if (q) return `<button class="nsq-crea" data-accion="${inv ? "ns-dins" : "nsq-nova"}" data-t="squads" data-in="ns"><span class="nsq-crea-caras">${AVATARS.slice(1, 5).map(a => `<img src="${caraDe(a)}" alt="" draggable="false">`).join("")}</span><span><b>${inv ? (inv === 1 ? "Te han invitado a una squad" : `Tienes ${inv} invitaciones`) : "Crea tu squad"}</b><small>${inv ? "Mira quién te espera" : "Tu gente, un reto por semana y avisos de «voy al gym»"}</small></span>${I_TU.fle}</button>`;
           return ""; })()}
         <div class="ns-bloc" data-in="ns"><div class="ns-bloc-cap"><h2>Ranking de amigos</h2><button class="ns-mes" data-accion="ns-dins" data-t="rank">Rankings${I_TU.fle}</button></div>${rank ? (rank.length ? rank.map(f => filaRank(f, so2)).join("") + (r.yo && r.yo.pos > rank.length ? filaRank(r.yo, so2) : "") : `<p class="ns-buit">Aún no tienes amigos en KLONK. Añádelos en «Amigos».</p>`) : `<p class="ns-buit">Cargando el ranking…</p>`}</div>
-        <button class="ns-guerra" data-accion="ns-dins" data-t="gimnasios" data-in="ns" aria-label="Guerra de gyms: ver los gimnasios">${guerraHero(meu, riv)}</button>
+        <button class="ns-guerra" data-accion="ns-dins" data-t="${S.ui.guerra && !S.ui.guerra.d ? "gimnasios" : "guerra"}" data-in="ns" aria-label="Guerra de gyms">${guerraHero(S.ui.guerra)}</button>
         <div class="ns-bot" data-in="ns">
           <button data-accion="ns-dins" data-t="squads">${I_SOC.squad}<b>Squads</b>${S.ui.squads && S.ui.squads.invitacions.length ? `<i class="ns-xapa">${S.ui.squads.invitacions.length}</i>` : ""}</button>
           <button data-accion="ns-dins" data-t="clan">${I_SOC.amics}<b>Amigos</b>${n ? `<i class="ns-xapa">${n}</i>` : ""}</button>
@@ -9070,8 +9109,8 @@ const Nit = (() => {
     const v = document.getElementById("vista"); if (!v || !v.querySelector(".ns")) return;
     if (typeof api === "function" && typeof teCompte === "function" && teCompte() && !S.demo) {
       let canvi = false;
-      const d = S.ui.ntGuerra;
-      if (!d || Date.now() - d.at > 300000) { try { S.ui.ntGuerra = { at: Date.now(), r: await api("GET", "/gimnasios/ranking?ambit=ciudad") }; canvi = true; } catch (e) {} }
+      const g0 = S.ui.guerra, g1 = await carregaGuerraD();
+      if (g1 && g1 !== g0) canvi = true;
       const f = S.ui.feed;
       if (!f || Date.now() - (f.at || 0) > 60000) { try { const r = await api("GET", "/clan/feed"); S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; canvi = true; } catch (e) {} }
       if (canvi && S.ui.vista === "social" && !S.ui.socDins && typeof render === "function") { render(); return; }
@@ -9935,6 +9974,13 @@ const Nit = (() => {
       ${d.squads.length ? activitatSquad(d.squads) : ""}
       ${d.squads.length < 3 ? `<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button>` : ""}
     </section>`;
+  }
+  function htmlElo() {
+    const e = eloDe();
+    if (e.elo == null) return `<div class="nelo"><p>Aún no tienes ELO. Sale de tres ejercicios con barra: <b>sentadilla</b>, <b>press de banca</b> y <b>peso muerto</b>. Con una buena serie de uno de ellos, aparece.</p>
+      <p class="suau">Las máquinas no cuentan: un kilo de máquina no pesa lo mismo en cada gimnasio. El número de los rankings es otro, el Temple, que cuenta todos tus ejercicios.</p></div>`;
+    return `<div class="nelo"><p>Tu ELO es <b>${n0(e.elo)}</b>, ${esc(nomRang(e.divisio.id, e.divisio.nom))}. Sale de tu sentadilla, tu press de banca y tu peso muerto con barra, comparados con los de competición de tu peso: 1000 es el del medio.</p>
+      <p class="suau">Las máquinas no cuentan. El número de los rankings es otro, el Temple, que cuenta todos tus ejercicios.</p></div>`;
   }
   // un full de la Noche per triar (el nom, el repte, a qui convides)
   function fullN(titol, cos) {
@@ -11006,6 +11052,32 @@ body.v-nit .rk-nom{text-decoration:none}
 .ns-g-barra{display:block;width:100%;height:8px;border-radius:99px;overflow:hidden;background:var(--nt-lila)}
 .ns-g-barra i{display:block;height:100%;width:var(--p);border-radius:99px;transform-origin:left;background:linear-gradient(90deg,rgb(var(--m3-rgb)),var(--nt-menta));box-shadow:0 0 12px -2px var(--nt-menta-glow)}
 .ns-g-peu{font-size:10.5px !important}
+.ns-g-c.sense{opacity:.45}
+.ngw{display:grid;gap:14px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.ngw-cap{display:flex;justify-content:center}
+.ngw-cap small{padding:7px 16px;border-radius:999px;background:#141c25;color:var(--nt-suau);font-size:13px;font-weight:900}
+.ngw-vs{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ngw-x{position:absolute;left:50%;top:42px;translate:-50% 0;z-index:1;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#0b1119;box-shadow:0 0 0 2px rgb(255 255 255 / .1),0 8px 18px -8px rgb(0 0 0 / .9);font:400 16px/1 'Anton','Nunito',sans-serif;color:var(--nt-tinta)}
+.ngw-g{display:grid;justify-items:center;align-content:start;gap:6px;padding:18px 10px 16px;border-radius:24px;text-align:center;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1)}
+.ngw-g.ngw-meu{box-shadow:var(--fb-o1),0 0 0 1.5px rgb(var(--m-rgb) / .45)}
+.ngw-g.ngw-riv{box-shadow:var(--fb-o1),0 0 0 1.5px rgb(var(--l-rgb) / .45)}
+.ngw-g.buit{opacity:.55}
+.ngw-g .nt-ic{width:56px;height:56px;filter:drop-shadow(0 6px 10px rgb(0 0 0 / .5))}
+.ngw-nom{font-size:16px;font-weight:900;line-height:1.2}
+.ngw-lloc{font-size:12px;font-weight:800;color:var(--nt-suau);line-height:1.3}
+.ngw-xifra{display:grid;margin-top:4px}
+.ngw-xifra b{font:400 36px/1 'Anton','Nunito',sans-serif}
+.ngw-g.ngw-meu .ngw-xifra b{color:var(--nt-menta)}.ngw-g.ngw-riv .ngw-xifra b{color:var(--nt-lila)}
+.ngw-xifra small{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.ngw-dada{font-size:12.5px;font-weight:800;color:var(--nt-suau)}.ngw-dada b{color:var(--nt-tinta)}
+.ngw-marcador{display:grid;gap:6px}
+.ngw-barra{height:10px;border-radius:99px;overflow:hidden;background:var(--nt-lila)}
+.ngw-barra i{display:block;height:100%;width:var(--p);border-radius:99px;background:linear-gradient(90deg,rgb(var(--m3-rgb)),var(--nt-menta));box-shadow:0 0 12px -2px var(--nt-menta-glow)}
+.ngw-pc{display:flex;justify-content:space-between}.ngw-pc b{font-size:15px;font-weight:900}.ngw-pc .g-meu{color:var(--nt-menta)}.ngw-pc .g-riv{color:var(--nt-lila)}
+.ngw-estat{margin:0;text-align:center;font-size:17px;font-weight:900;line-height:1.3}
+.ngw-tu{padding:14px 16px;border-radius:18px;background:#141c25;font-size:14px;font-weight:800;color:var(--nt-suau);text-align:center}.ngw-tu b{color:var(--nt-tinta)}
+.ngw-regla,.ngw-nota,.ngw-ant{margin:0;font-size:13px;font-weight:800;color:var(--nt-suau);text-align:center;line-height:1.45}
+.ngw-gims{justify-self:center}
 .ns-bloc{display:grid;gap:8px;padding:12px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
 .ns-bloc h2{margin:0 2px 2px;font-size:17px;font-weight:900}
 .ns-buit{margin:0;padding:6px 4px;font-size:13.5px;font-weight:700;color:var(--nt-suau)}
@@ -11558,6 +11630,9 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
 .nsq-cara small{margin-top:4px}
 .nsq-admin{color:#10131a;background:rgb(var(--l-rgb))}
 .nsq-gest{display:grid;gap:8px;margin:14px 0 10px}
+.nelo{display:grid;gap:10px;margin:12px 0 14px;text-align:left}
+.nelo p{margin:0;font-size:15px;font-weight:800;line-height:1.45;color:var(--nt-tinta)}
+.nelo p.suau{font-size:13.5px;color:var(--nt-suau)}
 .nsq-gest button{height:52px;border:0;border-radius:16px;cursor:pointer;background:#1c242e;color:var(--nt-tinta);font:900 15px/1 'Nunito',system-ui,sans-serif}
 .nsq-gest button.fora{color:#ff8f80}
 .nsq-cara.fet img{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 16px -2px rgb(var(--m-rgb) / .8)}
