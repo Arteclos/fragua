@@ -8232,6 +8232,8 @@ const Nit = (() => {
       fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.05, volum: .3 }); E.vibra("gira"); });
       return;
     }
+    const mk = ev.target.closest('[data-accion^="nm3-"]');
+    if (mk && typeof api === "function") { ev.preventDefault(); ev.stopPropagation(); accioMercat(mk); return; }
     const ec = ev.target.closest('[data-accion="esc-compra"], [data-accion="esc-compra-si"]');
     if (ec) {
       ev.preventDefault(); ev.stopPropagation();
@@ -9074,7 +9076,7 @@ const Nit = (() => {
      ensenya res que es pagui. El PRO i els looks de l'Urbà de la referència esperen que es puguin comprar de debò: un botó
      que no compra res no hi ha de ser. La pestanya Material (la roba) és la de sempre. */
   function vistaTienda() {
-    const tab = S.ui.tiendaTab === "material" ? "material" : "oro";
+    const tab = ["material", "rutinas"].includes(S.ui.tiendaTab) ? S.ui.tiendaTab : "oro";
     if (tab === "material") return window.vistaTienda();
     const oro = oroTotal();
     const PAQ = [["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]];
@@ -9082,13 +9084,13 @@ const Nit = (() => {
     return `<h1 class="titol-pag">Tienda</h1>
       <section class="nb2">
         <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
-        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="true">Oro</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="false">Material</button></div>
-        ${esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
+        <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="false">Material</button></div>
+        ${tab === "rutinas" ? vistaMercat() : esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
         <div class="nb2-paq">${PAQ.map(([k, n, q, e]) => `<article class="nb2-p" data-in="nb"><img src="${R()}or-${k}.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"><b>${n0(q)}</b><small>de oro</small><span class="nb2-p-n">${n}</span><em>${e}</em><button class="nb2-compra" data-accion="compra-oro" data-p="${k}">Comprar</button></article>`).join("")}</div>
         <p class="nb2-av">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
         <p class="nb2-av">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>`}
-        <h2 class="nb2-t" data-in="nb">Cómo se gana</h2>
-        <div class="nb2-guanya">${GUANYA.map(([n, q, i]) => `<div data-in="nb"><i>${i}</i><span>${n}</span><b>+${q}</b></div>`).join("")}</div>
+        ${tab === "oro" ? `<h2 class="nb2-t" data-in="nb">Cómo se gana</h2>
+        <div class="nb2-guanya">${GUANYA.map(([n, q, i]) => `<div data-in="nb"><i>${i}</i><span>${n}</span><b>+${q}</b></div>`).join("")}</div>` : ""}
       </section>`;
   }
 
@@ -9687,11 +9689,133 @@ const Nit = (() => {
     if (typeof avis === "function") avis("Escáner listo. Elige la pose.");
   }
 
+  /* ======================= EL MERCADO DE RUTINAS (l'Albert, 29-09: «volem també posar-li de vendre rutines») =======
+     Tienda → Rutinas. Un adult ven un mazo seu per or i en cobra el 70 %; el que compra se l'endú sencer (servidor/
+     mercat.py). A la vista de tothom no hi ha cap text del venedor: el títol surt de l'enfocament i dels dies, i la vista
+     prèvia porta «Día N» i els exercicis del catàleg. La portada és el primer exercici, dibuixat amb l'avatar de qui la ven
+     si el té (si no, amb l'Urbà; si no n'hi ha cap de dibuixat, els músculs). */
+  const ENFOCS = { hipertrofia: "Hipertrofia", fuerza: "Fuerza", gluteo: "Glúteo y pierna", torso: "Torso", brazos: "Brazos", inicio: "Para empezar", avanzado: "Avanzado", definicion: "Definición" };
+  const PREUS_M = [200, 400, 800, 1500];
+  let mercatPendent = null;
+  function portadaEj(nom, av) {
+    const sl = slug(nom || "");
+    if (sl && av && EJ_AV[av] && EJ_AV[av].includes(sl)) return `${R()}ej-gran/${av}/${sl}.webp`;
+    if (sl && EJ_ANIME.has(sl)) return `${R()}ej-gran/${sl}.webp`;
+    return `${R()}musculs-cuerpo.webp`;
+  }
+  async function carregaMercat(forca) {
+    if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo || esMenor()) return;
+    const m = S.ui.mercat;
+    if (!forca && m && Date.now() - m.at < 30000) return;
+    try { const r = await api("GET", "/mercat"); S.ui.mercat = { ...r, at: Date.now() }; } catch (e) { S.ui.mercat = { error: e.message || "Sin conexión", at: Date.now() }; }
+    if (S.ui.vista === "tienda" && S.ui.tiendaTab === "rutinas" && typeof render === "function") render();
+  }
+  const baralla = (o, extra = "") => `<button class="nm3-o${o.comprada ? " teva" : ""}" data-accion="nm3-obre" data-id="${o.id}" data-in="nb"${extra}>
+      <span class="nm3-pila"><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
+      <b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)} · ${o.exercicis} ejercicios</small>
+      <span class="nm3-peu">${o.comprada ? `<em class="nm3-tuya">Es tuya</em>` : `<em class="nm3-preu">${ic("moneda")}${n0(o.preu)}</em>`}<small>${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : o.nou ? "Nueva" : ""}</small></span></button>`;
+  function vistaMercat() {
+    if (esMenor()) return `<p class="nb2-av">El mercado de rutinas es para mayores de edad.</p>`;
+    if (S.demo || typeof teCompte !== "function" || !teCompte()) return `<div class="nm3-buit"><b>Compra y vende rutinas</b><p>Con tu cuenta puedes vender tus mazos por oro y comprar los de otros.</p><button class="nm3-b" data-accion="vista" data-v="compte">Crear mi cuenta</button></div>`;
+    const m = S.ui.mercat;
+    carregaMercat();
+    if (!m) return `<p class="nb2-av">Abriendo el mercado…</p>`;
+    if (m.error && !m.ofertes) return `<p class="nb2-av">No hemos podido abrir el mercado: ${esc(m.error)}</p>`;
+    const meves = m.meves || [], ofertes = m.ofertes || [], teves = (S.rutinas || []).filter(r => !r.mercat);
+    return `${teves.length ? `<div class="nm3-ven" data-in="nb"><div><b>Vende tus rutinas</b><p>Te llega el ${Math.round((m.part || .7) * 100)} % de cada venta, en oro.</p></div><button class="nm3-b" data-accion="nm3-ven">Vender una</button></div>` : ""}
+      ${meves.length ? `<h2 class="nb2-t" data-in="nb">Tus ventas</h2><div class="nm3-meves">${meves.map(o => `<div class="nm3-meva" data-in="nb"><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"><span><b>${esc(o.titol)}</b><small>${n0(o.preu)} de oro · ${o.vendes ? `${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : "sin ventas aún"}${o.estat === "amagat" ? " · oculta por denuncias" : ""}</small></span><button data-accion="nm3-retira" data-id="${o.id}">Retirar</button></div>`).join("")}</div>
+        ${m.guanyat ? `<p class="nm3-guanyat" data-in="nb">Llevas ${n0(m.guanyat)} de oro ganado vendiendo.</p>` : ""}` : ""}
+      <h2 class="nb2-t" data-in="nb">A la venta</h2>
+      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}`;
+  }
+  async function obreOferta(id) {
+    let o;
+    try { o = await api("GET", "/mercat/" + id); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+    const oro = oroTotal(), falta = Math.max(0, o.preu - oro);
+    const dies = o.previa.map(d => `<div class="nm3-dia"><b>${esc(d.t)}</b><div>${d.ej.map(n => { const f = fotoAnime(n); return `<span class="nm3-ej">${f ? `<img src="${f}" alt="" draggable="false">` : `<i></i>`}${esc(n)}</span>`; }).join("")}</div></div>`).join("");
+    const accio = o.meva ? `<p class="nm3-nota">Es tu rutina.</p>`
+      : o.comprada ? `<button class="nm3-b gran" data-accion="nm3-guarda" data-id="${o.id}">Guardar en mis rutinas</button>`
+      : `<button class="nm3-b gran" data-accion="nm3-compra" data-id="${o.id}" data-preu="${o.preu}"${falta ? " disabled" : ""}>${ic("moneda")}Comprar por ${n0(o.preu)} de oro</button>
+         ${falta ? `<p class="nm3-nota">Te faltan ${n0(falta)} de oro.</p>` : ""}`;
+    fullN(o.titol, `<div class="nm3-fitxa"><img class="nm3-gran" src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false">
+      <p class="nm3-meta">de ${esc(o.autor)} · ${o.dies} ${o.dies === 1 ? "día" : "días"} · ${o.exercicis} ejercicios${o.vendes ? ` · ${n0(o.vendes)} ${o.vendes === 1 ? "venta" : "ventas"}` : ""}</p>
+      ${accio}<div class="nm3-dies">${dies}</div>
+      ${o.meva ? "" : `<button class="nm3-informa" data-accion="nm3-informa" data-id="${o.id}">Denunciar esta rutina</button>`}</div>`);
+  }
+  function obreVenda() {
+    const teves = (S.rutinas || []).filter(r => !r.mercat);
+    if (!teves.length) return;
+    const v = S.ui.venda = { r: (S.ui.venda && teves.some(x => x.id === S.ui.venda.r) ? S.ui.venda.r : teves[0].id), e: (S.ui.venda || {}).e || "hipertrofia", p: (S.ui.venda || {}).p || 400 };
+    const part = (S.ui.mercat && S.ui.mercat.part) || .7;
+    const xips = (k, llista) => `<div class="nm3-xips">${llista.map(([val, nom]) => `<button class="chip" data-accion="nm3-v" data-k="${k}" data-v="${val}" aria-pressed="${String(v[k]) === String(val)}">${esc(nom)}</button>`).join("")}</div>`;
+    fullN("Vender una rutina", `<div class="nm3-venda">
+      <span class="nm3-et">Qué rutina</span>${xips("r", teves.map(r => [r.id, r.nombre]))}
+      <span class="nm3-et">Para qué es</span>${xips("e", Object.entries(ENFOCS))}
+      <span class="nm3-et">Precio</span>${xips("p", PREUS_M.map(p => [p, n0(p) + " de oro"]))}
+      <p class="nm3-nota" id="nm3-cobres">Por cada venta te llegan ${n0(Math.round(v.p * part))} de oro.</p>
+      <p class="nm3-nota">Se verá tu nickname. El nombre de tu rutina y los títulos de los días solo los ve quien la compra.</p>
+      <button class="nm3-b gran" data-accion="nm3-publica">Poner a la venta</button></div>`);
+  }
+  async function accioMercat(b) {
+    const a = b.dataset.accion;
+    if (a === "nm3-obre") return obreOferta(b.dataset.id);
+    if (a === "nm3-ven") return obreVenda();
+    if (a === "nm3-v") {
+      S.ui.venda = { ...(S.ui.venda || {}), [b.dataset.k]: b.dataset.k === "p" ? +b.dataset.v : b.dataset.v };
+      b.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", String(c === b)));
+      const cob = document.getElementById("nm3-cobres"); if (cob) cob.textContent = `Por cada venta te llegan ${n0(Math.round(S.ui.venda.p * ((S.ui.mercat && S.ui.mercat.part) || .7)))} de oro.`;
+      fx(E => { E.suena("tap"); E.vibra("tria"); });
+      return;
+    }
+    if (a === "nm3-publica") {
+      const v = S.ui.venda || {}, r = (S.rutinas || []).find(x => x.id === v.r); if (!r) return;
+      try { await api("POST", "/mercat", { rutina: perCompartir(r), enfoc: v.e, preu: v.p }); }
+      catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+      document.querySelectorAll(".nsq-full").forEach(x => x.remove());
+      fx(E => { if (!E.suena("cofre")) E.suena("or"); E.vibra("forja"); });
+      if (typeof avis === "function") avis("Tu rutina está a la venta.");
+      return carregaMercat(true);
+    }
+    if (a === "nm3-compra") {
+      mercatPendent = b.dataset.id;
+      return confirma({ titol: `¿Comprar por ${n0(+b.dataset.preu)} de oro?`, text: "La rutina entera pasa a ser tuya y la tienes en Rutinas.", si: "Comprar", no: "Ahora no", accio: "nm3-compra-si", ic: ic("moneda") });
+    }
+    if (a === "nm3-compra-si" || a === "nm3-guarda") {
+      const id = a === "nm3-guarda" ? b.dataset.id : mercatPendent; if (!id) return;
+      let r;
+      try { r = await api("POST", `/mercat/${id}/compra`); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+      if (r.or && typeof aplicaOr === "function") aplicaOr(r.or);
+      if (!(S.rutinas || []).some(x => x.mercat === id)) { const nova = guardaRutinaDeFora(r.rutina); nova.mercat = id; }
+      if (typeof guardarYa === "function") guardarYa();
+      document.querySelectorAll(".nsq-full").forEach(x => x.remove());
+      fx(E => { if (!E.suena("cofre")) E.suena("or"); E.vibra("forja"); if (E.lluvia) E.lluvia(.8); });
+      if (typeof avis === "function") avis(`«${r.rutina.nombre}» es tuya. La tienes en Rutinas.`);
+      return carregaMercat(true);
+    }
+    if (a === "nm3-retira") {
+      mercatPendent = b.dataset.id;
+      return confirma({ titol: "¿Retirarla del mercado?", text: "Quien ya la compró la sigue teniendo.", si: "Retirar", no: "Dejarla", accio: "nm3-retira-si" });
+    }
+    if (a === "nm3-retira-si") {
+      try { await api("POST", `/mercat/${mercatPendent}/retira`); } catch (e) { if (typeof avis === "function") avis(e.message || "Sin conexión.", true); return; }
+      return carregaMercat(true);
+    }
+    if (a === "nm3-informa") {
+      mercatPendent = b.dataset.id;
+      return confirma({ titol: "¿Denunciar esta rutina?", text: "Si varias personas la denuncian, deja de verse mientras la revisamos.", si: "Denunciar", no: "Cancelar", accio: "nm3-informa-si" });
+    }
+    if (a === "nm3-informa-si") {
+      try { await api("POST", `/mercat/${mercatPendent}/informa`); } catch (e) {}
+      document.querySelectorAll(".nsq-full").forEach(x => x.remove());
+      if (typeof avis === "function") avis("Gracias. La revisamos.");
+    }
+  }
+
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
      menta; el que esborra, a sota i en corall. Es tanca tocant fora o amb Escape; el «sí» dispara l'acció de sempre. */
   const I_PAPERERA = '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12.5a1.5 1.5 0 0 0 1.5 1.4h5a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function confirma(o) {
-    if (document.querySelector(".nq")) return;
+    if (document.querySelector(".nq:not(.nsq-full)")) return;
     const el = document.createElement("div");
     el.className = "nq"; el.setAttribute("role", "alertdialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "nq-t");
     el.innerHTML = `<div class="nq-vel" data-nq="no"></div><div class="nq-p">
@@ -10780,6 +10904,48 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nw-camp input:focus{outline:none;box-shadow:inset 0 0 0 2px rgb(var(--m-rgb,134 217 198))}
 .nw-edat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.nw-edat .chip{min-height:42px}
 .nw-dos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nm3-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.nm3-o{display:grid;gap:3px;padding:10px 10px 12px;border:0;border-radius:20px;text-align:left;cursor:pointer;background:linear-gradient(180deg,#1f2733,#171e27);color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif;box-shadow:var(--nt-o1)}
+.nm3-o.teva{box-shadow:0 0 0 1.5px rgb(var(--m-rgb) / .6),var(--nt-o1)}
+.nm3-pila{position:relative;display:block;aspect-ratio:3/4;margin:4px 6px 10px}
+.nm3-pila i,.nm3-pila img{position:absolute;inset:0;border-radius:14px}
+.nm3-pila i{background:#2a3440;box-shadow:0 0 0 1px rgb(255 255 255 / .08)}
+.nm3-pila i:first-child{transform:rotate(-7deg) translate(-4px,2px);opacity:.55}
+.nm3-pila i:nth-child(2){transform:rotate(5deg) translate(4px,1px);opacity:.8}
+.nm3-pila img{width:100%;height:100%;object-fit:cover;background:#10171e;box-shadow:0 0 0 2px rgb(var(--l-rgb) / .55),0 10px 18px -10px rgb(0 0 0 / .9)}
+.nm3-t{font-size:14.5px;font-weight:900;line-height:1.2}
+.nm3-de{font-size:12px;font-weight:700;color:#8b98a4;line-height:1.3}
+.nm3-peu{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px}.nm3-peu small{font-size:11.5px;font-weight:800;color:#8b98a4}
+.nm3-preu{display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 5px;border-radius:999px;background:rgb(226 194 122 / .12);color:#e2c27a;font-style:normal;font-weight:900;font-size:14px}
+.nm3-preu svg{width:18px;height:18px}
+.nm3-tuya{font-style:normal;font-weight:900;font-size:13px;color:rgb(var(--m-rgb))}
+.nm3-ven{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(135deg,rgb(var(--l2-rgb) / .35),rgb(var(--l3-rgb) / .25));box-shadow:0 0 0 1px rgb(var(--l-rgb) / .35)}
+.nm3-ven b{font-size:16px;font-weight:900}.nm3-ven p{margin:2px 0 0;font-size:13px;font-weight:700;color:#c9d2da}
+.nm3-b{flex:none;height:44px;padding:0 18px;border:0;border-radius:999px;cursor:pointer;background:var(--fb-accio-grad);color:var(--fb-accio-tinta);font:900 15px/1 'Nunito',system-ui,sans-serif;box-shadow:var(--fb-o-accio)}
+.nm3-b.gran{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:54px;border-radius:18px;font-size:16.5px}
+.nm3-b.gran svg{width:24px;height:24px}
+.nm3-b:disabled{opacity:.45;box-shadow:none;cursor:default}
+.nm3-meves{display:grid;gap:8px}
+.nm3-meva{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:12px;padding:8px 10px;border-radius:16px;background:#171e27;box-shadow:0 0 0 1px rgb(255 255 255 / .06)}
+.nm3-meva img{width:44px;height:58px;border-radius:10px;object-fit:cover}
+.nm3-meva b{display:block;font-size:14.5px;font-weight:900}.nm3-meva small{font-size:12.5px;font-weight:700;color:#8b98a4}
+.nm3-meva button{border:0;border-radius:999px;padding:8px 12px;background:rgb(255 255 255 / .07);color:#c9d2da;font:900 13px 'Nunito',system-ui,sans-serif;cursor:pointer}
+.nm3-guanyat{margin:2px 2px 0;font-size:13.5px;font-weight:800;color:#e2c27a}
+.nm3-buit{display:grid;gap:8px;justify-items:start;padding:16px;border-radius:20px;background:#171e27}.nm3-buit b{font-size:17px;font-weight:900}.nm3-buit p{margin:0;font-size:14px;font-weight:700;color:#aab4be}
+.nm3-fitxa{display:grid;gap:12px;text-align:left}
+.nm3-gran{width:min(62%,220px);aspect-ratio:3/4;justify-self:center;object-fit:cover;border-radius:18px;box-shadow:0 0 0 2px rgb(var(--l-rgb) / .55),0 18px 30px -16px rgb(0 0 0 / .9)}
+.nm3-meta{margin:0;text-align:center;font-size:13.5px;font-weight:800;color:#8b98a4}
+.nm3-dies{display:grid;gap:10px;max-height:34vh;overflow:auto}
+.nm3-dia b{display:block;margin-bottom:6px;font-size:14px;font-weight:900}
+.nm3-dia > div{display:grid;gap:6px}
+.nm3-ej{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:700;color:#c9d2da}
+.nm3-ej img,.nm3-ej i{flex:none;width:30px;height:30px;border-radius:50%;object-fit:cover;background:#10171e}
+.nm3-nota{margin:0;font-size:13px;font-weight:700;line-height:1.4;color:#aab4be}
+.nm3-informa{justify-self:center;border:0;background:none;color:#8b98a4;font:800 12.5px 'Nunito',system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.nm3-venda{display:grid;gap:8px;text-align:left}
+.nm3-et{margin-top:6px;font-size:13px;font-weight:900;color:#c9d2da}
+.nm3-xips{display:flex;flex-wrap:wrap;gap:6px}
+.nm3-xips .chip{min-height:38px}
 .nx{display:grid;gap:14px;padding-bottom:18px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nx-t{margin:2px 2px 0;font:900 26px/1.1 'Nunito',system-ui,sans-serif;letter-spacing:-.01em}
 .nx-heroi{position:relative;height:300px;border-radius:24px;overflow:hidden;background-color:#0b1016;box-shadow:var(--nt-o2);
