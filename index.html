@@ -8460,7 +8460,7 @@ const Nit = (() => {
         <button class="nt-cal-perfil" data-accion="nt-ves" data-v="personaje" data-cal-in><img src="${CARA()}" alt="" draggable="false"><b>${esc(nom)}</b>${I_MENU.fle}</button>
         ${jove() ? "" : `<button class="nt-cal-pro" data-accion="nt-ves" data-v="pro" data-cal-in>${ic("medalla")}<span>KLONK PRO</span></button>`}
         <i class="nt-cal-sep" data-cal-in></i>
-        <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("cartas", "Mis cartas", I_MENU.rut, " data-cal-in")}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
+        <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("cartas", "Tu rutina", I_MENU.rut, " data-cal-in")}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
         <i class="nt-cal-sep" data-cal-in></i>
         <div class="nt-cal-grup">${fila("estadisticas", "Progreso", I_MENU.prog, " data-cal-in")}${fila("gimnasios", "Gimnasios", I_MENU.gim, " data-cal-in")}${fila("social", "Invitar amigos", I_MENU.inv, ' data-soc="clan" data-cal-in')}${fila("ajustes", "Ajustes", I_MENU.ajust, " data-cal-in")}</div>
       </nav>`;
@@ -8559,8 +8559,8 @@ const Nit = (() => {
         </div>
       </div>
       <div class="nt-tu-mazo" data-in="tu">
-        <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="cartas">Mis cartas</button></div>
-        <button class="nt-tu-mazo-b" data-accion="nt-ves" data-v="rutinas"><span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span><span><b>${esc(r.nombre)}</b><small>${r.dias.length} ${r.dias.length === 1 ? "carta" : "cartas"}, en uso</small></span>${I_TU.fle}</button>
+        <div class="nt-tu-mazo-c"><h2 class="nt-tu-t">Tu mazo</h2><button data-accion="nt-ves" data-v="rutinas">Rutinas</button></div>
+        <button class="nt-tu-mazo-b" data-accion="nt-ves" data-v="cartas"><span class="nt-tu-mini">${r.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span><span><b>${esc(r.nombre)}</b><small>${nDies(r.dias.length)}, en uso</small></span>${I_TU.fle}</button>
       </div>
       ${jove() ? "" : `<div class="nt-tu-venta" data-in="tu">
         <button class="nt-tu-pro" data-accion="nt-ves" data-v="pro"><span class="nt-tu-v-ic">${ic("medalla")}</span><b>KLONK PRO</b><small>Tu plan, hecho para ti</small></button>
@@ -9282,7 +9282,7 @@ const Nit = (() => {
     if (!d) return;
     const I = infoCarta(r, n), m = MAT[I.mat], rc = el.getBoundingClientRect(), q = quiet();
     fontFirma();
-    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar", enUs = r.id === rutinaActual().id;
+    const boto = el.querySelector(".nt-boto"), segueix = !!boto && boto.dataset.accion !== "empezar", enUs = r.id === rutinaActual().id, deEntrenos = el.classList.contains("nc3-c");
     const portades = ["musculs", ...[...new Set(d.ej.map(e => slug(e[0])))].filter(x => EJ_ANIME.has(x)).slice(0, 8)];
     const ov = document.createElement("div");
     ov.className = "nm"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Carta: " + d.t);
@@ -9291,7 +9291,7 @@ const Nit = (() => {
       <button class="nm-x" data-nm="tanca" aria-label="Cerrar">${I_X}</button>
       <div class="nm-escena"><div class="nm-carta nm-t${I.tier}"><div class="nm-gir">${caraCarta(n, I)}${caraCarta(n, I, true)}</div></div></div>
       <p class="nm-prova" aria-live="polite"></p>
-      <div class="nm-acc"><button class="nm-b nm-ic" data-nm="gira" aria-label="Girar">${I_GIRA}</button><button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button></div>
+      <div class="nm-acc"><button class="nm-b nm-ic" data-nm="gira" aria-label="Girar">${I_GIRA}</button><button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? (deEntrenos ? "edita" : "empieza") : "usa"}">${enUs ? (deEntrenos ? "Editar" : segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button></div>
       <div class="nm-comp nm-portp" data-nm="noport" hidden><div class="nm-comp-p" data-nm="res" role="group" aria-label="Portada">
         <b class="nm-comp-t">Portada</b>
         <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : (teDibuix(p) ? `${R()}ej-gran/${teDibuix(p)}/${p}.webp` : `${R()}ej-gran/${p}.webp`)}" alt="" draggable="false"></button>`).join("")}</div>
@@ -9359,6 +9359,7 @@ const Nit = (() => {
       if (k === "una" || k === "totes") { tancaMira(true); dispara(k === "una" ? { accion: "rut-compartir-dia", id: r.id, dia: String(n) } : { accion: "rut-compartir", id: r.id }); return; }
       if (k === "empieza") { const b = el.querySelector(".nt-boto"); tancaMira(true); if (b) b.click(); else { so(); dispara({ accion: "empezar", dia: String(n) }); } return; }
       if (k === "usa") { tancaMira(true); dispara({ accion: "rut-usar", id: r.id }); return; }
+      if (k === "edita") { tancaMira(true); dispara({ accion: "rut-lapiz", dia: String(n) }); return; }
       if (k === "port") {
         const p = ov.querySelector(".nm-portp"); p.hidden = false;
         if (Math.round(M.objA / 180) % 2 !== 0) gira(1);
@@ -9526,23 +9527,28 @@ const Nit = (() => {
     return `<button class="nc3-c t${I.tier}" data-accion="nc3-mira" data-r="${esc(r.id)}" data-n="${n}" data-in="nc3" style="--c1:${m[0]};--c2:${m[1]};--c3:${m[2]};--i:${k}" aria-label="${esc(I.d.t)}, hecha ${I.fetes} veces">
       <span class="nc3-in"><span class="nc3-t">${esc(I.d.t)}</span><span class="nc3-il${il.ej ? " ej" : ""}"><img src="${il.src}" alt="" draggable="false" loading="lazy"></span></span><span class="nc3-n">${I.fetes}</span></button>`;
   }
+  /* TU RUTINA I ELS SEUS ENTRENOS (l'Albert, 29-09 08:40-08:50, des del mòbil: «l'accés a rutinas hauria de ser el clic
+     que ara diu Programa de Alex, i s'obre directament la pàgina de cartes»; «no són tus cartas, són tus entrenos»; «ha de
+     sortir primer tu rutina, i a baix tus entrenos»; i «en comptes d'empezar ha de posar editar: des d'allà no es comença a
+     entrenar»). A dalt, la rutina en ús; a sota, els seus dies; i la Colección KLONK. Les altres rutines, a «Cambiar». */
   function vistaCartas() {
     const filtre = S.ui.nc3Filtre || "tot", passa = d => filtre === "tot" || tipusDia(d) === filtre;
-    const teves = (S.rutinas || []).flatMap(r => r.dias.map((d, i) => ({ r, n: i + 1, d }))).filter(x => passa(x.d));
+    const ru = rutinaActual(), teves = ru.dias.map((d, i) => ({ r: ru, n: i + 1, d }));
     const klonk = [RUTINA_BASE, ...PLANTILLAS].flatMap(r => r.dias.map((d, i) => ({ r, n: i + 1, d })));
     const fetes = new Set(S.ses.filter(s => s.fin).map(s => (s.rut || "") + ":" + s.dia));
     const col = klonk.map((x, i) => ({ ...x, num: i + 1, te: fetes.has(x.r.id + ":" + x.n) })), got = col.filter(x => x.te).length;
     const FILT = [["tot", "Todas"], ["empuje", "Empuje"], ["tiron", "Tirón"], ["pierna", "Pierna"], ["brazos", "Brazos"], ["cuerpo", "Cuerpo"]];
     let k = 0;
-    return `<h1 class="titol-pag">Mis cartas</h1>
+    return `<h1 class="titol-pag">Tu rutina</h1>
       <section class="nc3">
-        <div class="nc3-portes" data-in="nc3"><button class="nc3-porta on" aria-current="page">${I_MENU.rut}<span>Colección</span></button><button class="nc3-porta" data-accion="nt-ves" data-v="rutinas">${I_PORT}<span>Mazos</span></button>
-          <span class="nc3-compte" aria-label="${teves.length + got} cartas">${teves.length + got}</span></div>
-        <div class="nc3-filtres" data-in="nc3">${FILT.map(([f, nom]) => `<button class="chip" data-accion="nc3-filtre" data-f="${f}" aria-pressed="${f === filtre}">${nom}</button>`).join("")}</div>
-        ${teves.length ? `<h2 class="nc3-h" data-in="nc3">Tus cartas<small>${teves.length}</small></h2><div class="nc3-grid">${teves.map(x => cartaMini(x.r, x.n, k++)).join("")}</div>` : ""}
+        <div class="nc3-rut" data-in="nc3"><span class="nt-tu-mini">${ru.dias.slice(0, 3).map(d => `<i style="background-image:url('${R()}musculs-${tipusDia(d)}.webp')"></i>`).join("")}</span>
+          <span class="nc3-rut-t"><b>${esc(ru.nombre)}</b><small>${nDies(ru.dias.length)}, en uso</small></span><button class="nc3-canvia" data-accion="nt-ves" data-v="rutinas">Cambiar</button></div>
+        <h2 class="nc3-h" data-in="nc3">Tus entrenos<small>${teves.length}</small></h2>
+        <div class="nc3-grid">${teves.map(x => cartaMini(x.r, x.n, k++)).join("")}</div>
         <h2 class="nc3-h" data-in="nc3">Colección KLONK<small>${got} / ${col.length}</small></h2>
+        <div class="nc3-filtres" data-in="nc3">${FILT.map(([f, nom]) => `<button class="chip" data-accion="nc3-filtre" data-f="${f}" aria-pressed="${f === filtre}">${nom}</button>`).join("")}</div>
         <div class="nc3-prog" data-in="nc3"><i style="width:${(got / Math.max(1, col.length) * 100).toFixed(1)}%"></i></div>
-        <div class="nc3-grid">${col.filter(x => passa(x.d)).map(x => x.te ? cartaMini(x.r, x.n, k++) : `<button class="nc3-buit" data-accion="nc3-buit" data-in="nc3" style="--i:${k++}" aria-label="Carta ${x.num}, por conseguir"><b>${x.num}</b></button>`).join("")}</div>
+        <div class="nc3-grid">${col.filter(x => passa(x.d)).map(x => x.te ? cartaMini(x.r, x.n, k++) : `<button class="nc3-buit" data-accion="nc3-buit" data-in="nc3" style="--i:${k++}" aria-label="Entreno ${x.num}, por conseguir"><b>${x.num}</b></button>`).join("")}</div>
       </section>`;
   }
 
@@ -11059,6 +11065,10 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 /* ======================= MIS CARTAS ======================= */
 .nc3{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nc3-portes{display:flex;align-items:center;gap:8px;padding:8px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
+.nc3-rut{display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;border-radius:22px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--fb-o1),0 0 0 1px rgb(var(--m-rgb) / .22)}
+.nc3-rut-t{flex:1;min-width:0;display:grid;gap:2px}
+.nc3-rut-t b{font-size:17px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nc3-rut-t small{font-size:13px;font-weight:800;color:var(--nt-suau)}
+.nc3-canvia{flex:none;height:38px;padding:0 16px;border:0;border-radius:999px;cursor:pointer;background:rgb(255 255 255 / .06);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1);color:var(--nt-tinta);font:900 14px/1 'Nunito',system-ui,sans-serif}
 .nc3-porta{display:grid;justify-items:center;gap:4px;min-width:78px;padding:10px 8px 8px;border:0;border-radius:16px;background:#10171e;color:var(--nt-suau);font:900 12.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer}
 .nc3-porta svg{width:24px;height:24px}
 .nc3-porta.on{color:var(--nt-tinta);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .6)}
@@ -14042,6 +14052,16 @@ if (teCompte()) baixaEstat(false);
 if (teCompte()) carregaPla();
 confirmaPagament();
 mirarEnllacRutina();
+
+// L'IPHONE, EN OBRIR L'APP DES DE LA PANTALLA D'INICI (29-09-2026, l'Albert: «el menú encara surt pujat només entrar, i al
+// canviar de pestanya s'arregla»). En arrencar, l'iPhone mida la pantalla sense les dues zones segures i la barra de baix
+// (fixed, bottom 0) queda uns 80 punts alçada fins que hi ha un desplaçament; canviar de pestanya (veure → scrollTo) era el
+// que la baixava. Aquí se'n fa un d'un píxel en obrir-la i en tornar-hi, que no es veu.
+function reposaPantalla() {
+  requestAnimationFrame(() => { const y = window.scrollY; window.scrollTo(0, y + 1); requestAnimationFrame(() => window.scrollTo(0, y)); });
+}
+window.addEventListener("load", () => setTimeout(reposaPantalla, 80));
+window.addEventListener("pageshow", ev => { if (ev.persisted) reposaPantalla(); });
 
 </script>
 <script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
