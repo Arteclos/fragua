@@ -7292,6 +7292,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       if (v === "compte") return () => Nit.vistaCompte();
       if (v === "eleccion") return () => Nit.vistaEleccion();
       if (v === "datos") return () => Nit.vistaDatos();
+      if (v === "amic") return () => Nit.vistaAmic();
       // el mirall (l'escàner de cos) i Progreso: a la Noche no tenen portada pròpia, i sense això queien a la de la farga
       if (v === "espejo") return () => Nit.vistaEscaner();
       if (v === "progreso") { S.ui.vista = "estadisticas"; return typeof vistaEstadisticas === "function" ? () => vistaEstadisticas() : null; }
@@ -8881,7 +8882,7 @@ const Nit = (() => {
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
-    return `<div class="ns-f" data-in="ns"><img class="ns-av" src="${CARA()}" alt="" draggable="false">
+    return `<div class="ns-f" data-in="ns"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">
       <span class="ns-f-t"><b>${esc(it.nom)}</b> ${que ? `entrenó ${que}` : "entrenó"}<small>${quan ? esc(quan) : ""}</small></span>
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
       ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
@@ -8890,7 +8891,7 @@ const Nit = (() => {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
     return `<${f.pid ? `button class="ns-r" data-accion="social-perfil" data-p="${f.pid}"` : `div class="ns-r${f.yo ? " yo" : ""}"`} data-in="ns">
       <span class="ns-r-pos">${f.pos === 1 ? `<svg viewBox="0 0 24 24" aria-label="1"><path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-2 11H5z" fill="#e2c27a"/></svg>` : (f.pos ?? "–")}</span>
-      <img class="ns-av" src="${CARA()}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
+      <img class="ns-av" src="${f.yo ? CARA() : caraDe(f.personatge)}" alt="" draggable="false"><span class="ns-r-nom">${esc(nom)}</span>
       <span class="ns-r-v">${so.metrica === "rango" ? `${imgYunque(f.valor)}<b>${f.valor != null ? n0(f.valor) : "·"}</b>` : `<b>${n0(f.valor)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
   }
   function vistaSocial() {
@@ -9849,6 +9850,42 @@ const Nit = (() => {
       <span class="nrb-nom">«${esc(r.nombre)}»</span><small class="nrb-dades">${r.dias.length} ${r.dias.length === 1 ? "día" : "días"} y ${n} ${n === 1 ? "ejercicio" : "ejercicios"}</small>
       ${botoN(`data-accion="rebuda-veure" data-id="${esc(String(nova.id))}"`, "Ver rutina", "nw-si")}
       <button class="nrb-luego" data-accion="rebuda-despres">Luego</button></div></div>`;
+  }
+
+  /* EL PERFIL D'UN AMIC (29-09): el que demanava l'Albert el 27-09 («al inspeccionar que et mostri rango, días de gym,
+     puntos, xp, el temple, el gym al que va, el nivell»), a la Noche: la seva cara amb el nivell a l'anell, el seu sigma
+     (el material surt del seu temple, com al rànquing), les xifres, la ratxa compartida si sou del mateix clan, el sigma de
+     cada grup, i el gimnàs i des de quan (el servidor només els dona quan toca: app.py, /v1/perfil). Les mateixes dades
+     i els mateixos botons (amic-tanca, carregaAmic) que la de sempre. */
+  const sigmaMat = id => R() + "sigma-" + id + ".webp";
+  function vistaAmic() {
+    const a = S.ui.amic || {}, p = a.p;
+    const tanca = `<button class="na-x" data-accion="amic-tanca" aria-label="Cerrar el perfil">${I_X}</button>`;
+    if (!p) {
+      // la global (servidor.js): dins d'aquest mòdul, «carregaAmic» és la del bloc de l'amic de la portada
+      if (a.pid && typeof window.carregaAmic === "function") window.carregaAmic(a.pid); else setTimeout(() => veure("social"), 0);
+      return `<section class="na">${tanca}<p class="na-carrega">Cargando…</p></section>`;
+    }
+    const nom = p.nick || "Tu amigo", y = typeof yunqueDe === "function" ? yunqueDe(p.poder) : { id: "madera", nom: "Madera", sense: true };
+    const xif = [];
+    if (p.xp != null) xif.push([n0(p.xp), "XP"]);
+    xif.push([n0(p.dies || 0), p.dies === 1 ? "día de gym" : "días de gym"]);
+    if (p.clan && p.clan.pos) xif.push([`${p.clan.pos}.º`, `de ${p.clan.total} en tu clan`]);
+    const grups = Object.entries(p.poder_grups || {});
+    const gim = p.gimnas ? [p.gimnas.nom, p.gimnas.ciutat].filter(Boolean).join(", ") : "";
+    const desde = typeof desdeTxt === "function" ? desdeTxt(p.desde) : "";
+    const r = p.ratxa;
+    const ratxa = r ? `<div class="na-rx${r.setmanes ? " viva" : ""}"><b>${r.setmanes ? `${r.setmanes} ${r.setmanes === 1 ? "semana seguida" : "semanas seguidas"} juntos` : "Empezad una racha"}</b>
+        <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
+    return `<section class="na">${tanca}
+      <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b></span>
+        <h1 class="na-nom">${esc(nom)}</h1>
+        <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
+      <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
+      ${ratxa}
+      ${grups.length ? `<div class="na-grups">${grups.map(([g, v]) => { const yg = yunqueDe(v); return `<div><img src="${sigmaMat(yg.id)}" alt="" draggable="false"><small>${esc(g)}</small></div>`; }).join("")}</div>` : ""}
+      ${gim || desde ? `<p class="na-peu">${gim ? `<span>${esc(gim)}</span>` : ""}${desde ? `<span>${esc(desde)}</span>` : ""}</p>` : ""}
+    </section>`;
   }
 
   /* CONFIRMAR, amb el disseny de la Noche (descartar un entreno, l'Albert, 28-09 nit). El que no fa mal és el botó gran de
@@ -11003,6 +11040,26 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nrb-p .nw-b{width:100%;margin-top:8px}
 .nrb-luego{border:0;background:none;padding:8px;color:#8b98a4;font:800 14px 'Nunito',system-ui,sans-serif;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.nrb-p{animation:none}}
+.na{position:relative;display:grid;gap:16px;padding:8px 2px 20px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.na-x{position:absolute;top:0;right:0;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:50%;background:rgb(255 255 255 / .07);color:#c9d2da;cursor:pointer}
+.na-x svg{width:20px;height:20px}
+.na-carrega{margin:40px 0;text-align:center;color:#8b98a4;font-weight:800}
+.na-cap{display:grid;justify-items:center;gap:8px;padding-top:8px}
+.na-cara{position:relative;width:118px;height:118px}
+.na-cara img{width:100%;height:100%;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:0 0 0 3px rgb(var(--m-rgb) / .75),0 0 36px -8px rgb(var(--m-rgb) / .7)}
+.na-nv{position:absolute;right:-4px;bottom:2px;min-width:34px;height:34px;padding:0 6px;display:grid;place-items:center;border-radius:999px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:0 0 0 2px rgb(var(--l-rgb) / .8);font-size:15px;font-weight:900}
+.na-nom{margin:6px 0 0;font:900 28px/1.1 'Nunito',system-ui,sans-serif;letter-spacing:-.01em;text-align:center;word-break:break-word}
+.na-rang{display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;background:#171e27;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .07)}
+.na-rang img{width:40px;height:40px;object-fit:contain}.na-rang b{display:block;font-size:15px;font-weight:900}.na-rang small{font-size:12.5px;font-weight:800;color:#8b98a4}
+.na-xif{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.na-xif div{display:grid;justify-items:center;gap:2px;padding:14px 6px;border-radius:18px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:var(--nt-o1);text-align:center}
+.na-xif b{font-size:24px;font-weight:900;color:rgb(var(--m2-rgb))}.na-xif small{font-size:12px;font-weight:800;color:#8b98a4;line-height:1.25}
+.na-rx{display:grid;gap:2px;padding:14px 16px;border-radius:18px;background:rgb(var(--l2-rgb) / .22);box-shadow:inset 0 0 0 1px rgb(var(--l-rgb) / .3)}
+.na-rx.viva{background:rgb(var(--m-rgb) / .12);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35)}
+.na-rx b{font-size:16px;font-weight:900}.na-rx small{font-size:13px;font-weight:700;color:#c9d2da;line-height:1.4}
+.na-grups{display:flex;justify-content:center;gap:18px}
+.na-grups div{display:grid;justify-items:center;gap:4px}.na-grups img{width:52px;height:52px;object-fit:contain}.na-grups small{font-size:12.5px;font-weight:800;color:#aab4be}
+.na-peu{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:0;font-size:13px;font-weight:800;color:#8b98a4}
 .nx{display:grid;gap:14px;padding-bottom:18px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nx-t{margin:2px 2px 0;font:900 26px/1.1 'Nunito',system-ui,sans-serif;letter-spacing:-.01em}
 .nx-heroi{position:relative;height:300px;border-radius:24px;overflow:hidden;background-color:#0b1016;box-shadow:var(--nt-o2);
@@ -11156,7 +11213,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec);
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp" };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
