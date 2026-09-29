@@ -9748,6 +9748,19 @@ const Nit = (() => {
   }
   const nomSigma = m => { const d = typeof Elo === "object" && Elo.DIVISIONS ? Elo.DIVISIONS.find(x => x[1] === m) : null; return d ? "Sigma de " + d[2].toLowerCase() : ""; };
   const marcM = m => (MAT[m] ? ` style="--mc:${MAT[m][1]}"` : "");
+  // ELS MAZOS DE KLONK (29-09, REVISIO-PER-VENDRE §5.2): les plantilles de sempre, gratis, a la prestatgeria del mercat, perquè
+  // el primer dia no s'obri buit. Porten a la mateixa fitxa que a Rutinas (rut-ver), on es fan servir o es copien.
+  // la portada, el primer exercici dibuixat que encara no porti cap altre mazo de la prestatgeria (dues plantilles comencen igual)
+  const barallaKlonk = (r, usats) => {
+    const noms = [...new Set((r.dias || []).flatMap(d => d.ej.map(e => e[0])))], av = avatarId();
+    const dib = n => { const sl = slug(n); return (EJ_AV[av] || []).includes(sl) || EJ_ANIME.has(sl); };
+    const p = noms.find(n => dib(n) && !usats.has(slug(n))) || noms[0];
+    if (p) usats.add(slug(p));
+    return `<button class="nm3-o nm3-k" data-accion="rut-ver" data-id="${r.id}" data-in="nb">
+      <span class="nm3-pila"><i></i><i></i><img src="${portadaEj(p, av)}" alt="" draggable="false"></span>
+      <b class="nm3-t">${esc(r.nombre)}</b><small class="nm3-de">de KLONK · ${nDies(r.dias.length)}</small><small class="nm3-de">${noms.length} ejercicios</small>
+      <span class="nm3-peu"><em class="nm3-gratis">Gratis</em></span></button>`;
+  };
   const baralla = (o, extra = "") => `<button class="nm3-o${o.comprada ? " teva" : ""}" data-accion="nm3-obre" data-id="${o.id}" data-in="nb"${extra}>
       <span class="nm3-pila"${marcM(o.mat)}><i></i><i></i><img src="${portadaEj(o.portada, o.personatge)}" alt="" draggable="false"></span>
       ${o.mateix_gym ? `<em class="nm3-gym">De tu gym</em>` : ""}<b class="nm3-t">${esc(o.titol)}</b><small class="nm3-de">de ${esc(o.autor)}${o.mat ? ` · ${nomSigma(o.mat)}` : ""}</small><small class="nm3-de">${o.exercicis} ejercicios · ${n0(o.entrenos || 0)} ${o.entrenos === 1 ? "entreno" : "entrenos"} en KLONK</small>
@@ -9765,7 +9778,10 @@ const Nit = (() => {
         ${m.guanyat ? `<p class="nm3-guanyat" data-in="nb">Llevas ${n0(m.guanyat)} de oro ganado vendiendo.</p>` : ""}` : ""}
       <h2 class="nb2-t" data-in="nb">A la venta</h2>
       ${m.te_gym ? `<div class="nm3-xips nm3-filtre" data-in="nb"><button class="chip" data-accion="nm3-gym" data-g="0" aria-pressed="${!S.ui.mercatGym}">Todas</button><button class="chip" data-accion="nm3-gym" data-g="1" aria-pressed="${!!S.ui.mercatGym}">De tu gym</button></div>` : ""}
-      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : S.ui.mercatGym ? `<p class="nb2-av">Aún nadie de tu gym vende rutinas. Solo salen quienes son públicos en el ranking del gym.</p>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}`;
+      ${ofertes.length ? `<div class="nm3-grid">${ofertes.map(o => baralla(o)).join("")}</div>` : S.ui.mercatGym ? `<p class="nb2-av">Aún nadie de tu gym vende rutinas. Solo salen quienes son públicos en el ranking del gym.</p>` : `<p class="nb2-av">Aún no hay rutinas a la venta. Pon la tuya la primera.</p>`}
+      <h2 class="nb2-t" data-in="nb">Mazos de KLONK</h2>
+      <p class="nb2-av nm3-k-av" data-in="nb">Gratis y hechos con ciencia. Úsalos tal cual o cópialos y cámbialos a tu gusto.</p>
+      <div class="nm3-grid">${(u => [RUTINA_BASE, ...PLANTILLAS].map(r => barallaKlonk(r, u)).join(""))(new Set())}</div>`;
   }
   async function obreOferta(id) {
     let o;
@@ -11085,6 +11101,8 @@ button.nsq-cara{border:0;background:none;padding:0;color:inherit;font:inherit;cu
 .nm3-peu{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px}.nm3-peu small{font-size:11.5px;font-weight:800;color:#8b98a4}
 .nm3-preu{display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 5px;border-radius:999px;background:rgb(226 194 122 / .12);color:#e2c27a;font-style:normal;font-weight:900;font-size:14px}
 .nm3-preu svg{width:18px;height:18px}
+.nm3-gratis{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:rgb(var(--m-rgb) / .14);color:rgb(var(--m-rgb));font-style:normal;font-weight:900;font-size:13px}
+.nm3-k-av{text-align:left;margin:-4px 2px 0}
 .nm3-tuya{font-style:normal;font-weight:900;font-size:13px;color:rgb(var(--m-rgb))}
 .nm3-ven{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:20px;background:linear-gradient(135deg,rgb(var(--l2-rgb) / .35),rgb(var(--l3-rgb) / .25));box-shadow:0 0 0 1px rgb(var(--l-rgb) / .35)}
 .nm3-ven b{font-size:16px;font-weight:900}.nm3-ven p{margin:2px 0 0;font-size:13px;font-weight:700;color:#c9d2da}
