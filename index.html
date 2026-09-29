@@ -9282,18 +9282,22 @@ const Nit = (() => {
         <div class="ne-nom"><b>${pgr ? `<span class="grup-tag">${esc(e.g)}${pgr.pos}</span>` : ""}${esc(e.n)}</b>
           <div class="ne-xips">${g ? `<span class="ne-grup">${esc(g)}</span>` : ""}${fet ? `<button class="ne-plega" data-accion="nt-focus" data-i="${i}" aria-label="Hecho. Plegarlo">${I_CHECK}Hecho</button>` : ipf ? "" : chipProg(p, i)}</div>
           ${lastre ? `<div class="seg-llast" role="group" aria-label="Con qué peso"><button data-accion="ej-lastre" data-i="${i}" data-v="0" aria-pressed="${!ambLastre}">Tu peso</button><button data-accion="ej-lastre" data-i="${i}" data-v="1" aria-pressed="${ambLastre}">+ Lastre</button></div>` : ""}</div>
-        ${ipf ? `<span class="objectiu">${e.sets.length} ${e.sets.length === 1 ? "intento" : "intentos"}</span>` : `<button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${e.sets.filter(serieCompta).length} × ${c.min === c.max ? c.min : c.min + "-" + c.max}</button>`}</div>
+        ${ipf ? `<span class="objectiu">${e.sets.length} ${e.sets.length === 1 ? "intento" : "intentos"}</span>` : `<button class="objectiu" data-accion="cfg-ej" data-i="${i}" aria-label="Series, repeticiones y cómo se carga">${objEj(e, c)}</button>`}</div>
       <div class="carga-lloc" id="carga-${i}">${htmlCarga(kgEsquema(e), cargaDe(e.n, e.x))}</div>
       <div class="ne-series series">${e.sets.map((z, j) => filaSerie(z, i, j, lastre, ambLastre, c) + (ipf && z.ok ? filaIpf(z, i, j, ipf) : "")).join("")}</div>
       <div class="ne-peu">${esAra && !S.ui.ntRodetaVista ? PISTA : ""}
         <button class="btn" data-accion="mes-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Añadir serie</button>${e.sets.length > 1 ? `<button class="btn" data-accion="menys-serie" data-i="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>Quitar la última</button>` : ""}</div>
     </section>`;
   }
+  // «2 × 6-10»: les de treball (les normals i la F; ni l'escalfament, ni el drop set, ni el myo-reps, ni l'intent de PR) i
+  // el rang del pla si en té, o el de la configuració (29-09 nit: amb un pla de dues deia «3 × 6-10»)
+  const objEj = (e, c) => { const tr = e.sets.filter(z => !z.tipo || z.tipo === "f"), o = (tr.find(z => Array.isArray(z.obj)) || {}).obj, r = o || [c.min, c.max];
+    return `${tr.length} × ${r[0] === r[1] ? r[0] : r[0] + "-" + r[1]}`; };
   function filaFeta(x, k) {
     const fx2 = fotoAnime(x.n), cx = cfgEj(x.n, x.t), gx = grupDe(x.n), n = x.sets.filter(z => z.ok).length;
     return `<button class="ne-fila fet" id="ej-${k}" data-accion="nt-focus" data-i="${k}" data-in="ne" style="view-transition-name:ne-${k}" aria-label="${esc(x.n)}: hecho, ${n} ${n === 1 ? "serie" : "series"}. Tócalo para verlo">
       ${fx2 ? `<img src="${fx2}" alt="" draggable="false">` : `<i class="ne-fila-buit">${ic("manuella")}</i>`}<span class="ne-fila-n">${esc(x.n)}</span>${gx ? `<span class="ne-grup g-${slug(gx)}">${esc(gx)}</span>` : ""}
-      <span class="ne-obj">${x.sets.filter(serieCompta).length} × ${cx.min === cx.max ? cx.min : cx.min + "-" + cx.max}</span><i class="ne-estat" aria-hidden="true">${I_CHECK}</i></button>`;
+      <span class="ne-obj">${objEj(x, cx)}</span><i class="ne-estat" aria-hidden="true">${I_CHECK}</i></button>`;
   }
   function vistaEntreno() {
     const s = activa();
@@ -10509,11 +10513,15 @@ const Nit = (() => {
     return (S.entrenos || []).find(d => d.id === e.id) || null;
   }
   const especialsTxt = cf => cf ? [cf.esc ? `${cf.esc} de calentamiento` : "", cf.drop ? "drop set" : "", cf.fallo ? "al fallo" : ""].filter(Boolean).join(", ") : "";
+  // les especials, en lletres dels colors de la fulla i de l'entreno (29-09 nit, vist a l'iPhone: el text sencer no hi cabia
+  // i sortia en quatre línies de lletra minúscula)
+  const lletresTipus = tt => tt.length ? `<span class="nce-ll" aria-hidden="true">${tt.map(t => `<i class="nt-rt-l ${t}">${t.toUpperCase()}</i>`).join("")}</span>` : "";
+  const tipusCfg = cf => cf ? [...Array(Math.max(0, Math.min(3, cf.esc || 0))).fill("c"), cf.fallo ? "f" : "", cf.drop ? "d" : ""].filter(Boolean) : [];
   function filaEdEj(d, x, j) {
     const [n, t, , g] = x, c = cfgEj(n, t), pg = posGrup(d.ej, j, y => y[3]), junt = !!(g && d.ej[j + 1] && d.ej[j + 1][3] === g), esp = especialsTxt(S.cfg[n]);
     return `<div class="nce-f${pg ? " en-grup" : ""}" data-j="${j}">
-        <button class="nce-esq" data-accion="nce-cfg" data-j="${j}" aria-label="Series y tipo de serie de ${esc(n)}">${(tp => tp ? `<b>${esc(tp.cap)}</b>${tp.extra ? `<small>${esc(tp.extra)}</small>` : ""}`
-          : `<b>${c.series}×${c.min === c.max ? c.min : c.min + "-" + c.max}</b>${esp ? `<small>${esc(esp)}</small>` : ""}`)(plaDe(x) ? txtPla(plaDe(x)) : null)}</button>
+        <button class="nce-esq" data-accion="nce-cfg" data-j="${j}" aria-label="Series y tipo de serie de ${esc(n)}${(tp => tp && tp.extra ? `: ${esc(tp.extra)}` : esp ? `: ${esc(esp)}` : "")(plaDe(x) ? txtPla(plaDe(x)) : null)}">${(tp => tp ? `<b>${esc(tp.cap)}</b>${lletresTipus(plaDe(x).map(q => q.tipo).filter(Boolean))}`
+          : `<b>${c.series}×${c.min === c.max ? c.min : c.min + "-" + c.max}</b>${lletresTipus(tipusCfg(S.cfg[n]))}`)(plaDe(x) ? txtPla(plaDe(x)) : null)}</button>
         ${fotoAnime(n) ? `<img src="${fotoAnime(n)}" alt="" draggable="false">` : `<span class="nce-sf">${ic("manuella")}</span>`}
         <span class="nce-n">${pg ? `<i class="grup-tag">${esc(g)}${pg.pos}</i>` : ""}<b>${esc(n)}</b><small>${esc(grupDe(n))}</small></span>
         <button class="nce-x" data-accion="nce-treu" data-j="${j}" aria-label="Quitar ${esc(n)}">${I_X}</button></div>`
@@ -11447,7 +11455,7 @@ const Nit = (() => {
       const t = q.tipo || "", r = Array.isArray(q.r) ? q.r : [8, 12];
       if (!t) num++;
       const extra = PCT_PLA[t] ? `<span class="npl-p"><input class="npl-in" inputmode="numeric" data-pla="pct" data-k="${k}" value="${q.pct != null ? q.pct : PCT_PLA[t]}" aria-label="Porcentaje"><small>${PCT_TXT[t]}</small></span>`
-        : t === "m" ? `<small class="npl-nota">mismo peso, tras 15 s</small>` : t === "f" ? `<small class="npl-nota">hasta no poder más</small>` : "<span></span>";
+        : t === "m" ? `<small class="npl-nota">mismo peso, tras 15 s</small>` : t === "f" ? `<small class="npl-nota">hasta no poder más</small>` : "<span></span>";
       return `<div class="npl-f"><button class="npl-t nt-rt-l ${t || "n"}" data-accion="npl-tipus" data-k="${k}" data-n="${num}" aria-label="Serie ${k + 1}: ${esc(((TIPUS.find(x => x[0] === t) || TIPUS[0])[1]).toLowerCase())}. Cambiar el tipo">${t ? t.toUpperCase() : num}</button>
         <span class="npl-r"><input class="npl-in" inputmode="numeric" data-pla="min" data-k="${k}" value="${r[0] != null ? r[0] : ""}" aria-label="Repeticiones mínimas"><i>–</i><input class="npl-in" inputmode="numeric" data-pla="max" data-k="${k}" value="${r[1] != null ? r[1] : ""}" aria-label="Repeticiones máximas"><small>reps</small></span>
         ${extra}<button class="npl-x" data-accion="npl-treu" data-k="${k}" aria-label="Quitar la serie"${pl.length <= 1 ? " disabled" : ""}>${I_X}</button></div>`;
@@ -12683,6 +12691,8 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nce-f img,.nce-sf{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#10171e;display:grid;place-items:center}.nce-sf .nt-ic{width:20px;height:20px;opacity:.5}
 .nce-esq{display:grid;justify-items:center;gap:1px;min-width:64px;min-height:44px;padding:4px 8px;border:0;border-radius:12px;background:rgb(var(--m-rgb) / .1);color:var(--nt-menta);font:900 14px/1.1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .3)}
 .nce-esq small{max-width:84px;font-size:10.5px;font-weight:800;color:var(--nt-suau);text-align:center}
+.nce-ll{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:84px;margin-top:2px}
+.nce-ll .nt-rt-l{width:16px;height:16px;border-radius:5px;font-size:10px;line-height:1}
 .nce-n{display:grid;justify-items:start;gap:2px;min-width:0;text-align:left}.nce-n b{font-size:14.5px;font-weight:900;line-height:1.2}.nce-n small{font-size:12px;font-weight:700;color:var(--nt-suau)}
 .nce-f .nce-n .grup-tag{display:inline;width:auto;height:auto;margin:0;padding:0;background:none;box-shadow:none;border:0;font-style:normal;font-size:11px;font-weight:900;color:var(--nt-lila)}
 .nce-x{width:32px;height:32px;border:0;border-radius:50%;background:none;color:var(--nt-suau);display:grid;place-items:center;padding:0}.nce-x svg{width:14px;height:14px}
