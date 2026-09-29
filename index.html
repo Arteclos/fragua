@@ -1925,7 +1925,7 @@ const pjDe = (S, s) => s.pj || S.pjOrigen || (S.personaje && S.personaje.tipo) |
 // EL DIA COMPLET («FORJA PERFECTA»; l'Albert, 27-09-2026: «si fan tots els exercicis, dona més XP i or, i un badge en
 // acabar; però com a mínim cal guardar una sèrie»): totes les sèries de treball de l'entreno fetes (l'escalfament i el drop
 // set no compten: són opcionals) i com a mínim COMPLET_MIN, perquè una rutina d'un exercici no el cobri cada dia. Dona
-// +50 XP (aquí) i +15 d'or (ORO.completo, a app.js). El servidor ho compta igual: servidor/sincro.py, completa().
+// +50 XP (aquí) i +5 d'or (ORO.completo, a app.js; eren 15 fins al 29-09). El servidor ho compta igual: servidor/sincro.py, completa().
 const COMPLET_MIN = 6;
 function completa(s) {
   const feina = s.ej.flatMap(e => e.sets.filter(z => z.tipo !== "c" && z.tipo !== "d"));
@@ -2123,7 +2123,7 @@ function mediaSemanaAno(S, ahora = new Date()) {
 // Les fites de la ratxa: números rodons, que són els que agraden (Albert: «bosses de diners en funció dels
 // reptes amb números rodons»). Cada fita paga una bossa d'or una sola vegada a la vida.
 const HITOS = [5, 10, 15, 20, 30, 50, 75, 100, 150, 200, 250, 300, 365, 500, 730, 1000];
-const bolsa = h => h * 5;
+const bolsa = h => h;          // (29-09 vespre, METODE §3.7) 1 d'or per dia de la fita; abans, 5 (app.js, oroTarifa)
 /* ---- LES METES DE DIES (27-09-2026). L'Albert: «dels dies de compromís no diguis este año, perquè potser ja som a
    desembre... digues a quin objectiu vols arribar ara», i «quan facis els cinc dies o els 10, 15, 20». Cada meta compta
    els dies de gimnàs des del dia que la tries, i un dia no compta per a dues metes: van en cadena, i la primera que no
@@ -5297,14 +5297,14 @@ function pagEntreno(d) {
   const tiles = [[d.min, "minutos"], [d.series, d.series === 1 ? "serie" : "series"], [d.kg, "kg movidos"], [d.ejercicios, d.ejercicios === 1 ? "ejercicio" : "ejercicios"]];
   return `<div class="gran or entra" style="--d:.05s">¡ENTRENO FORJADO!</div>
     <div class="r-sub entra" style="--d:.2s">Día ${d.s.dia}, ${esc((d.s.dt || "").toLowerCase())}</div>
-    ${d.completa ? `<div class="r-perfecta entra" style="--d:.3s" data-so="record" data-quan="500"><b>FORJA PERFECTA</b><small>Día completo: no te has dejado nada${d.puntua ? ". +50 XP y +15 de oro" : ""}.</small></div>` : ""}
+    ${d.completa ? `<div class="r-perfecta entra" style="--d:.3s" data-so="record" data-quan="500"><b>FORJA PERFECTA</b><small>Día completo: no te has dejado nada${d.puntua ? `. +50 XP y +${ORO.completo} de oro` : ""}.</small></div>` : ""}
     <div class="r-tiles">${tiles.map(([v, et], i) => `<div class="r-tile marc entra" style="--d:${(0.45 + i * 0.28).toFixed(2)}s"><b class="or num" data-compta="${v}" data-quan="${450 + i * 280}">0</b><span>${et}</span></div>`).join("")}</div>
     <h3 class="r-h entra" style="--d:1.6s">${d.records.length ? (d.records.length === 1 ? "Un récord" : `${d.records.length} récords`) : d.primeres ? "Primeras marcas" : "Récords"}</h3>
     ${d.records.length ? `<div class="r-recs">${d.records.map((r, i) => `<div class="r-rec entra" style="--d:${(1.8 + i * 0.3).toFixed(2)}s" data-so="record" data-quan="${1800 + i * 300}" data-n="${esc(r.n)}"><span class="r-medalla">${I_MEDALLA}</span><span class="r-rec-t"><b>${esc(r.n)}</b><small>${kgTxt(r.kg)} kg × ${r.reps}. Tu máximo estimado: ${n0(r.v)} kg (${n0(r.abans)} antes)</small></span></div>`).join("")}</div>`
       : d.primeres ? `<p class="r-nota entra" style="--d:1.8s">Has puesto tu marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}. Desde hoy, cada vez que la superes será un récord.</p>`
       : `<p class="r-nota entra" style="--d:1.8s">Hoy no has batido ninguno. La constancia también forja: los récords llegan.</p>`}
     ${d.puntua ? "" : `<p class="r-nota entra" style="--d:2.2s">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`}
-    ${!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="r-nota entra" style="--d:2.3s">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo, «Forja perfecta»: +50 XP y +15 de oro.</p>` : ""}
+    ${!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="r-nota entra" style="--d:2.3s">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo, «Forja perfecta»: +50 XP y +${ORO.completo} de oro.</p>` : ""}
     <p class="entra r-accions" style="--d:2.4s"><button class="btn marc tg-boto" data-accion="tg-entreno">${I_TG}<span>Compartir mi entreno</span></button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="btn marc" data-accion="clan-avisa">Avisar a mi clan</button>` : ""}</p>`;
 }
 function pagMejoras(d) {
@@ -9672,7 +9672,10 @@ const Nit = (() => {
     const tab = ["material", "rutinas"].includes(S.ui.tiendaTab) ? S.ui.tiendaTab : "oro";
     const oro = oroTotal();
     const PAQ = [["bolsa", "Bolsa de oro", 500, "0,99 €"], ["cofre", "Cofre de oro", 1200, "1,99 €"], ["tesoro", "Tesoro del rey", 3000, "4,99 €"]];
-    const GUANYA = [["Cada serie", ORO.serie, I_TU.man], ["Entreno terminado", ORO.entreno, I_TU.est], ["Cada récord", ORO.record, I_TU.prog], ["Comida apuntada", ORO.comida, I_NC.gota], ["Subir de nivel", ORO.nivel, I_TU.pj]];
+    // (29-09 vespre, METODE §3.7) només el que paga: l'entreno, el dia complet i els àpats; les sèries, els rècords i el nivell
+    // donen XP, no or
+    const GUANYA = [["Cada serie", ORO.serie, I_TU.man], ["Entreno terminado", ORO.entreno, I_TU.est], ["Día completo", ORO.completo, I_TU.est], ["Cada récord", ORO.record, I_TU.prog],
+      ["Comida apuntada, hasta 3 al día", ORO.comida, I_NC.gota], ["Subir de nivel", ORO.nivel, I_TU.pj]].filter(x => x[1] > 0);
     return `<h1 class="titol-pag">Tienda</h1>
       <section class="nb2">
         <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
@@ -9985,13 +9988,13 @@ const Nit = (() => {
     fontFirma();
     const cap = (tag, titol, sub) => `<div class="np3-cap"><span class="np3-tag">${tag}</span><b class="np3-titol">${titol}</b>${sub ? `<small class="np3-sub">${sub}</small>` : ""}</div>`;
     const p1 = cap("Entreno", "¡Hecho!", `Día ${d.s.dia}, ${esc(d.s.dt || "")}`)
-      + (d.completa ? `<div class="np3-perf" data-so="record" data-quan="600"><span class="np3-tag or">Perfecto</span><span>Día completo${d.puntua ? ": +50 XP y +15 de oro" : ""}</span></div>` : "")
+      + (d.completa ? `<div class="np3-perf" data-so="record" data-quan="600"><span class="np3-tag or">Perfecto</span><span>Día completo${d.puntua ? `: +50 XP y +${ORO.completo} de oro` : ""}</span></div>` : "")
       + `<div class="np3-files">${filaN(0, "Series", d.series)}${filaN(1, "Kilos", d.kg)}${filaN(2, "Minutos", d.min)}${filaN(3, "Ejercicios", d.ejercicios)}</div>`
       + (d.records.length ? `<div class="np3-recs">${d.records.map((x, i) => `<div class="np3-rec r-rec" style="--i:${i + 4}" data-so="record" data-quan="${1500 + i * 260}" data-n="${esc(x.n)}"><span class="np3-tag or">Récord</span><span class="r-rec-t"><b>${esc(x.n)}</b><small>${kgTxt(x.kg)} kg × ${x.reps}, máximo ${n0(x.v)} kg (${n0(x.abans)} antes)</small></span></div>`).join("")}</div>`
         : `<p class="np3-nota">${d.primeres ? `Primera marca en ${d.primeres === 1 ? "un ejercicio" : `${d.primeres} ejercicios`}: desde hoy, cada vez que la superes será un récord.` : "Hoy sin récords. Llegan entrenando."}</p>`)
       + (d.s && d.s.pr && typeof Elo === "object" ? htmlPrResum(d.s) : "")
       + (d.puntua ? "" : `<p class="np3-nota">Hoy ya habías puntuado: este entreno suma a tus gráficas, pero no da experiencia ni oro.</p>`)
-      + (!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="np3-nota">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo: +50 XP y +15 de oro.</p>` : "")
+      + (!d.completa && d.puntua && d.perFer && d.feina >= Stats.COMPLET_MIN ? `<p class="np3-nota">Te has dejado ${d.perFer === 1 ? "una serie" : `${d.perFer} series`}. Con el día completo: +50 XP y +${ORO.completo} de oro.</p>` : "")
       + `<p class="np3-acc"><button class="np3-b tg-boto" data-accion="tg-entreno">Compartir mi entreno</button>${soc().participa && ((soc().clan || {}).amics || []).length && S.ui.clanAvisat !== hoy() ? `<button class="np3-b" data-accion="clan-avisa">Avisar a mis amigos</button>` : ""}</p>`;
     const amb = d.mejoras.filter(m => m.vals.length >= 2), sense = d.mejoras.filter(m => m.vals.length < 2);
     const p2 = cap("Progreso", "Cómo mejoras", "Tu máximo estimado en cada ejercicio, entreno a entreno")
@@ -14302,20 +14305,30 @@ const esTeu = t => (S.desbloq || []).includes(t) || !PERSONAJES[t].precio;
 const nivelOk = t => Stats.nivellMaxPj(S) >= (PERSONAJES[t].nivel || 1);
 
 /* ---------------------------------------------------------------- l'or */
-// L'or que has guanyat surt del que has fet (com l'XP): 25 per entreno, 2 per sèrie, 10 per rècord, 3 per
-// cada àpat apuntat (6 al dia com a molt) i 40 per nivell pujat. Així no es pot inflar marcant i
-// desmarcant; al total s'hi suma el comprat i se li resta el gastat.
-const ORO = { entreno: 25, serie: 2, record: 10, comida: 3, nivel: 40, completo: 15 };   // completo: el dia complet (Stats.completa)
+// L'OR, SEGONS METODE §3.7 (29-09-2026 vespre; l'Albert: «arregla-ho... que equilibri bé perquè ens surtin els números»):
+// uns 30 d'or per dia de gimnàs, faci el que faci: 20 per l'entreno (un al dia), 5 pel dia complet, 1 per àpat apuntat
+// (fins a 3 al dia) i la bossa de cada fita a 1 per dia. Ja no depèn de les sèries, dels rècords ni del nivell, que és el
+// que es podia inflar. ORO_VELL és la tarifa d'abans: només serveix per a la foto (S.orFoto), perquè el que ja tenies
+// guanyat es quedi. Al total s'hi suma el comprat i se li resta el gastat. El servidor ho compta igual (sincro.py).
+const ORO = { entreno: 20, serie: 0, record: 0, comida: 1, nivel: 0, completo: 5 };   // completo: el dia complet (Stats.completa)
+const ORO_VELL = { entreno: 25, serie: 2, record: 10, comida: 3, nivel: 40, completo: 15 };
 // Només el que puntua (un entreno al dia) dona or; i cada fita de ratxa, la seva bossa, una sola vegada.
-function oroGanado() {
+function oroTarifa(T, comides, bossa) {
   const xp = Stats.experiencia(S);
   let menjars = 0;
-  Object.values(S.reg).forEach(ll => { menjars += Math.min(6, new Set(ll.map(r => r.comida)).size); });
+  Object.values(S.reg).forEach(ll => { menjars += Math.min(comides, new Set(ll.map(r => r.comida)).size); });
   const dt = Stats.diasTotal(S);
-  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + Stats.bolsa(h), 0) + (S.metasAnyOk || []).filter(y => /^[0-9]{4}$/.test(String(y))).reduce((a, y) => a + Stats.bolsa((S.metaAny || {})[y] || 0), 0)
-    + Stats.metes(S).fetes.reduce((a, m) => a + Stats.bolsa(m.dies), 0);
-  return ORO.entreno * xp.sesiones + ORO.serie * xp.series + ORO.record * xp.records + ORO.completo * xp.completos + ORO.comida * menjars + ORO.nivel * (xp.nivel - 1) + bosses;
+  const bosses = Stats.HITOS.filter(h => h <= dt).reduce((a, h) => a + h * bossa, 0) + (S.metasAnyOk || []).filter(y => /^[0-9]{4}$/.test(String(y))).reduce((a, y) => a + ((S.metaAny || {})[y] || 0) * bossa, 0)
+    + Stats.metes(S).fetes.reduce((a, m) => a + m.dies * bossa, 0);
+  return T.entreno * xp.sesiones + T.serie * xp.series + T.record * xp.records + T.completo * xp.completos + T.comida * menjars + T.nivel * (xp.nivel - 1) + bosses;
 }
+function oroGanado() {
+  const nou = oroTarifa(ORO, 3, 1), f = S.orFoto;
+  return f && Number.isFinite(f.vell) && Number.isFinite(f.base) ? f.vell + nou - f.base : nou;
+}
+// LA FOTO DEL CANVI (METODE §3.7): el primer cop que s'obre amb la tarifa nova, qui ja tenia entrenos es queda l'or que tenia.
+// Amb compte, el saldo el mana el servidor, que en fa una d'igual (sincro.py, fes_foto).
+try { if (!S.orFoto && (S.ses || []).some(s => s.fin)) S.orFoto = { vell: oroTarifa(ORO_VELL, 6, 5), base: oroTarifa(ORO, 3, 1), quan: Date.now() }; } catch (e) {}
 // Amb compte, el saldo el mana el servidor (src/compte.js, oroServidor); sense, el càlcul del mòbil.
 const oroTotal = () => { const sv = typeof oroServidor === "function" ? oroServidor() : null; return sv != null ? sv : Math.max(0, oroGanado() + (S.oroComprado || 0) - (S.oroGastado || 0)); };
 // La força del personatge (0 fluix, 1 fort): puja amb el nivell fins al 20.
@@ -14790,7 +14803,7 @@ function vistaTienda() {
       `<button class="paquet marc" data-accion="compra-oro" data-p="${k2}">${MONEDA}<div><div class="n or">${q} de oro</div><div class="suau petit">${n}</div></div><div style="text-align:right"><div class="preu-e">${e}</div><div class="aviat">Comprar</div></div></button>`).join("")}
     <p class="suau petit" style="text-align:center">Con tarjeta o PayPal. Solo pueden comprar las personas mayores de edad. El oro no compra nivel: los personajes buenos siguen pidiendo entrenar.</p>
     <p class="suau petit" style="text-align:center">El oro llega en el momento. Al comprarlo aceptas que la entrega empiece ya y renuncias al derecho de desistimiento. <a href="condiciones/" target="_blank" rel="noopener">Condiciones de uso</a></p>`}
-    ${bloc("Cómo se gana", `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div><div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
+    ${bloc("Cómo se gana", `${ORO.serie ? `<div class="reg"><div>Cada serie</div><div class="preu">+${ORO.serie}</div><span></span></div>` : ""}<div class="reg"><div>Cada entreno terminado</div><div class="preu">+${ORO.entreno}</div><span></span></div><div class="reg"><div>Cada récord</div><div class="preu">+${ORO.record}</div><span></span></div><div class="reg"><div>Cada comida apuntada</div><div class="preu">+${ORO.comida}</div><span></span></div><div class="reg"><div>Cada nivel que subes</div><div class="preu">+${ORO.nivel}</div><span></span></div>`, "graf")}`;
   }
   return h;
 }
@@ -15152,7 +15165,7 @@ document.addEventListener("click", ev => {
         if (!(typeof Nit === "object" && Nit.activa() && Nit.serieFeta(r, b.dataset.i, b.dataset.j))) { Efectos.lanza(r.left + r.width / 2, r.top + r.height / 2, 30, 1.2); Efectos.suena("yunque"); }
         Efectos.vibra("serie");
         Efectos.flota("+10 XP", r.left + r.width / 2, r.top - 6);
-        setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
+        if (ORO.serie) setTimeout(() => Efectos.flota(`+${ORO.serie} oro`, r.left + r.width / 2 - 34, r.top + 4, "oro"), 220);
         if (record) setTimeout(() => { popRecord(e.n, prAbans, Stats.e1rm(z.kg || 0, z.reps)); if (!Efectos.suena("record")) Efectos.suena("xp"); Efectos.vibra("record"); Efectos.lluvia(0.8); }, 350);
         reacciona("serie");
       }
