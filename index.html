@@ -4500,7 +4500,7 @@ async function dibuixaTargeta(d) {
     if (pj) tgConte(ctx, pj, 60, 470, 620, 700);
     if (yim) tgConte(ctx, yim, 600, 640, 420, 420);
     tgText(ctx, y.nom, 810, 1140, 84, { max: 440 });
-    tgText(ctx, y.sense ? "Mi primer yunque" : `Temple ${n0(d.poder)}`, 810, 1215, 48, { pes: 700, font: "Noto Serif", color: "#f6e3b8", max: 440 });
+    tgText(ctx, y.sense ? "Mi primer yunque" : `Fuerza ${n0(d.poder)}`, 810, 1215, 48, { pes: 700, font: "Noto Serif", color: "#f6e3b8", max: 440 });
     const W2 = (TG_W - 120 - 30) / 2, H2 = 240, y0 = 1290;
     [[`${xp.nivel}`, "nivel"], [n0(Stats.diasTotal(S)), Stats.diasTotal(S) === 1 ? "día de gym" : "días de gym"]]
       .forEach(([val, et], i) => tgRajola(ctx, 60 + i * (W2 + 30), y0, W2, H2, val, et));
@@ -5129,7 +5129,8 @@ function cosAj(k) {
     // LES LLIGUES (29-09, METODE §3.9): tancades per defecte; a dins, anònim o (un adult) amb el nick, i les disciplines
     const yo = so.yo || {}, dins = !!yo.lligues, disc = yo.disciplines || ["gym"];
     const lligues = so.participa ? `<div class="aj-fila"><span>Las ligas<small>${dins ? "Estás dentro: sales en los rankings de tu gimnasio, de tu ciudad y más allá." : "No estás: no sales en ningún ranking, ni como «Anónimo»."}</small></span>${interruptor("lligues-on", dins, "Entrar en las ligas")}</div>
-    ${dins ? `<div class="aj-fila"><span>Qué entrenas<small>Tus ligas. La de gym es la de todos.</small></span></div><div class="fila envolta" style="margin:2px 0 8px">${[["gym", "Gym"], ["powerlifting", "Powerlifting"], ["calistenia", "Calistenia"]].map(([k, t]) => `<button class="chip" data-accion="lligues-disc" data-d="${k}" aria-pressed="${disc.includes(k)}">${t}</button>`).join("")}</div>` : ""}` : "";
+    ${dins && typeof Nit === "object" && Nit.activa() ? `<div class="aj-fila"><span>Tu liga<small>${esc({ gym: "Gym", powerlifting: "Powerlifting", calistenia: "Calistenia" }[disc[0]] || "Gym")} · ${yo.categoria === "m" ? "Mujeres" : yo.categoria === "h" ? "Hombres" : "sin categoría"}</small></span><button class="btn marc" data-accion="nle-obre">Cambiar</button></div>`
+      : dins ? `<div class="aj-fila"><span>Qué entrenas<small>Tus ligas. La de gym es la de todos.</small></span></div><div class="fila envolta" style="margin:2px 0 8px">${[["gym", "Gym"], ["powerlifting", "Powerlifting"], ["calistenia", "Calistenia"]].map(([k, t]) => `<button class="chip" data-accion="lligues-disc" data-d="${k}" aria-pressed="${disc.includes(k)}">${t}</button>`).join("")}</div>` : ""}` : "";
     return `<div class="aj-fila"><span>Social<small>${so.participa ? "Participas: tu squad, tus amigos y la guerra de tu gimnasio." : "No participas. Para entrar, ve a Social."}</small></span>${so.participa ? `<button class="btn marc" data-accion="social-surt">Salir</button>` : `<button class="btn marc" data-accion="vista" data-v="social">Ir a Social</button>`}</div>
     ${lligues}
     ${so.participa && dins ? `<div class="aj-fila"><span>Cómo sales en las ligas<small>${menor ? "Como «Anónimo», siempre: tienes menos de 18." : so.visible === "publico" ? "Con tu nickname, tu personaje, tu rango y tus días." : "Como «Anónimo», para todos."}</small></span></div>
@@ -5648,8 +5649,19 @@ const nomZona = k => (ZONAS.find(z => z[0] === k) || [0, ""])[1];
 const soc = () => { const so = { visible: "anonimo", participa: false, menor: null, rank: {}, metrica: "elo", ambit: "gimnasio", grupo: "general", ...(S.social || {}) };
   if (so.ambit === "amigos") so.ambit = "gimnasio";          // el rànquing dels amics ja no existeix (29-09, METODE §3.9)
   if (!["gimnasio", "ciudad", "mundo"].includes(so.ambit)) so.ambit = "gimnasio";   // i les geografies del mig, tampoc (30-09)
+  // (30-09 tarda, l'Albert: «que allà surtin no els del gym el primer perquè ara potser no hi ha ningú, sinó els altres»): per
+  // defecte, el món; qui en tria un altre, el conserva (ambitV marca que ja és el triat amb la regla d'avui)
+  if (so.ambitV !== 2) { so.ambit = "mundo"; so.ambitV = 2; }
   if (so.metrica === "rango") so.metrica = "elo";            // la lliga de força és l'ELO de Gym (29-09), no el Temple
+  // (30-09 tarda, l'Albert: «les lligues no t'han de sortir totes, només la que estàs») només les mesures de la teva modalitat
+  const md = metriques(so); if (!md.some(x => x[0] === so.metrica)) so.metrica = md[0][0];
   return so; };
+// LES MESURES DE CADA MODALITAT (30-09 tarda): Gym, l'ELO; Powerlifting, el GL i l'ELO; Calistènia, el seu índex; i els dies, tots
+const METR_DISC = { gym: [["elo", "ELO"]], powerlifting: [["pl", "Powerlifting"], ["elo", "ELO"]], calistenia: [["cali", "Calistenia"]] };
+const metriques = so => [...(METR_DISC[(((so && so.yo) || {}).disciplines || ["gym"])[0]] || METR_DISC.gym), ["dias", "Días"]];
+// LA CATEGORIA (30-09 tarda; «hi ha d'haver ranking de tios i ties, i total»): la triada aquí, o la teva, o la de tots
+const CATS_RK = [["h", "Hombres"], ["m", "Mujeres"], ["tot", "Todos"]];
+const catRank = so => ["h", "m", "tot"].includes(so.cat) ? so.cat : (((so.yo || {}).categoria === "h" || (so.yo || {}).categoria === "m") ? so.yo.categoria : "tot");
 
 async function api(met, ruta, cos) {
   const c = clauApi();
@@ -5750,20 +5762,20 @@ const imgYunque = (p, cls = "") => { const y = yunqueDe(p); if (!y) return ""; i
 function fullYunques() {
   const so = soc(), p = so.yo && so.yo.poder, meu = yunqueDe(p);
   const seg = p == null ? null : YUNQUES.find(t => t[0] > p);
-  return `<p style="margin-top:0">Tu yunque sale de tu <b>temple</b>: en cada ejercicio comparamos lo que levantas <b>para tu peso</b> (la fuerza relativa) con lo de todos los que lo hacen en KLONK, y el temple es la media de esos puestos, de 0 a 1000. Por eso alguien ligero que levanta mucho para lo que pesa puede estar muy arriba.</p>
-    ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de temple para ${seg[2]}.</b></p>` : ""}
-    <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de temple: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
+  return `<p style="margin-top:0">Tu yunque sale de tu <b>fuerza</b>: en cada ejercicio comparamos lo que levantas <b>para tu peso</b> (la fuerza relativa) con lo de todos los que lo hacen en KLONK, y tu fuerza es la media de esos puestos, de 0 a 1000. Por eso alguien ligero que levanta mucho para lo que pesa puede estar muy arriba.</p>
+    ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de fuerza para ${seg[2]}.</b></p>` : ""}
+    <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de fuerza: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
 }
 // (30-09 nit, LA LLISTA N6; SOCIAL-RECERCA §5: «fora les set geografies»; el tester: set xips per a una llista de dues persones)
 const AMBITS2 = [["gimnasio", "Mi gimnasio"], ["ciudad", "Ciudad"], ["mundo", "Mundo"]];
 const GRUPS_R = ["general", "Pecho", "Espalda", "Pierna", "Hombro", "Brazo"];
 const intent = {};
-const claveRank = so => `${so.metrica}|${so.ambit}|${so.metrica === "rango" ? so.grupo : "-"}`;
+const claveRank = so => `${so.metrica}|${so.ambit}|${so.metrica === "rango" ? so.grupo : "-"}|${catRank(so)}`;
 async function carregaRanking() {
   const so = soc(), k = claveRank(so);
   try {
     await sincro; await cuenta();
-    const r = await api("GET", `/ranking?metrica=${so.metrica}&ambit=${so.ambit}&grupo=${encodeURIComponent(so.metrica === "rango" ? so.grupo : "general")}`);
+    const r = await api("GET", `/ranking?metrica=${so.metrica}&ambit=${so.ambit}&grupo=${encodeURIComponent(so.metrica === "rango" ? so.grupo : "general")}&cat=${catRank(so)}`);
     S.social = { ...soc(), rank: { ...soc().rank, [k]: { ...r, at: Date.now() } } }; guardar();
     if (S.ui.vista === "social" && tabSoc() === "rank") render();
   } catch (e) { S.ui.errSocial = e.message; if (S.ui.vista === "social" && tabSoc() === "rank") render(); }
@@ -5781,7 +5793,7 @@ function filaRanking(f, so) {
   const v = f.valor;
   const emb = f.emblema && typeof Nit === "object" && Nit.emb ? Nit.emb(f.emblema, "emb-mini") : "";
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span><span class="ns-av-w">${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "", caraMeva()) : avatar(f.personatge, f.nivell, "", caraNit(f.personatge))}${emb}</span>
-    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${esc(f.nom)}${f.bot ? `<i class="rk-bot" title="Bot: no es una persona">bot</i>` : ""}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -5795,10 +5807,10 @@ function capSocial(so) {
   let rang = "";
   if (so.participa && gim) {
     const y = yunqueDe(yo.poder), dif = yo.poder != null && yo.poder_abans != null ? yo.poder - yo.poder_abans : null;
-    rang = `<div class="perfil-rang">${!y.sense ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Temple ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small><button class="btn marc tg-boto" data-accion="tg-rang" style="margin-top:6px">${I_TG}<span>Compartir mi yunque</span></button></span>`
+    rang = `<div class="perfil-rang">${!y.sense ? `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: ${y.nom}. Ver todos">${imgYunque(yo.poder, "gran")}</button><span><b class="or">${y.nom}</b><small class="num">Fuerza ${n0(yo.poder)}${dif ? ` <span class="${dif > 0 ? "puja" : "baixa"}">${dif > 0 ? "+" : ""}${n0(dif)}</span>` : ""}</small><small>Por tu fuerza para tu peso. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small><button class="btn marc tg-boto" data-accion="tg-rang" style="margin-top:6px">${I_TG}<span>Compartir mi yunque</span></button></span>`
       : `<button class="yunque-boto" data-accion="soc-yunques" aria-label="Tu yunque: Madera. Ver todos">${imgYunque(null, "gran")}</button><span><b class="or">Madera</b>${sessio && sessio.salut
-        ? `<small>Tu primer yunque. Termina un entreno para tener temple y forjar el siguiente. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
-        : `<small>Tu primer yunque. Sin permiso para guardar tu peso no hay temple. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</span>`}</div>`;
+        ? `<small>Tu primer yunque. Termina un entreno para medir tu fuerza y forjar el siguiente. <button class="enllac" data-accion="soc-yunques">Ver los yunques</button></small>`
+        : `<small>Tu primer yunque. Sin permiso para guardar tu peso no podemos medir tu fuerza. <button class="enllac" data-accion="vista" data-v="ajustes">Dar permiso en Ajustes</button></small>`}</span>`}</div>`;
   }
   return `<div class="panel pad perfil-cap">${avatar((S.personaje || {}).tipo, Stats.experienciaPj(S).nivel, "gran")}
     <div class="perfil-dades"><b class="perfil-nick">${esc(nomHeroi())}</b>${gim ? `<small class="perfil-gim">${esc(gim.nom)}</small>` : ""}
@@ -5842,10 +5854,11 @@ function vistaRankings(so) {
   const r = so.rank[claveRank(so)], sol = false, dins = !!(so.yo && so.yo.lligues);
   // LES LLIGUES (29-09): qui no hi és no surt enlloc, i ho ha de saber aquí mateix
   return `${dins ? "" : `<div class="lg-fora panel pad"><b>No estás en las ligas</b><p>Nadie te ve en estos rankings, ni como «Anónimo». Entra y sales como «Anónimo»; tu nickname, solo si lo eliges en Ajustes.</p><button class="btn clar marc" data-accion="lligues-on" data-v="1">Entrar en las ligas</button></div>`}
-    <div class="seg seg-m" role="group" aria-label="Qué ranking">${[["elo", "ELO"], ["pl", "Powerlifting"], ["cali", "Calistenia"], ["dias", "Días"]].map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
+    <div class="seg seg-m n${metriques(so).length}" role="group" aria-label="Qué ranking">${metriques(so).map(([m, n]) => `<button data-accion="social-metrica" data-m="${m}" aria-pressed="${so.metrica === m}">${n}</button>`).join("")}</div>
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
+    <div class="xips-scroll rk-cats" role="group" aria-label="Categoría">${CATS_RK.map(([c, n]) => `<button class="chip" data-accion="social-cat" data-c="${c}" aria-pressed="${catRank(so) === c}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
-    <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.total} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
+    <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.bots ? `${n0(r.total - r.bots)} ${r.total - r.bots === 1 ? "persona" : "personas"} y ${n0(r.bots)} bots` : `${r.total} ${r.total === 1 ? "persona" : "personas"}`}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
       + (sol ? `<p class="suau petit" style="margin:10px 0 0">Aún no tienes amigos en KLONK. <button class="enllac" data-accion="soc-tab" data-t="clan">Añade a alguien por su nickname</button></p>` : "") : `<p class="suau petit">Cargando…</p>`}</div>
     ${S.ui.errSocial ? `<p class="falta">${esc(S.ui.errSocial)}</p>` : ""}`;
 }
@@ -5916,7 +5929,7 @@ function mostraPujada() {
   if (p.t === "yunque") {
     setTimeout(() => { if (!Efectos.suena("cofre")) Efectos.suena("fanfarria"); Efectos.lluvia(1.3); Efectos.vibra("yunque"); }, 250);
     celebra(`<div class="gran or entra-gran">¡NUEVO YUNQUE!</div><div class="pujada-yunque"><i class="pujada-llum"></i><img src="${ACTIUS}yunques/${p.y.id}.webp" alt="${p.y.nom}"></div>
-      <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Temple ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
+      <div class="gran or" style="font-size:32px">${p.y.nom}</div><div class="sub">Fuerza ${n0(p.poder)}: tu fuerza para tu peso ha subido de nivel.</div>`, "A LA FRAGUA");
   } else {
     setTimeout(() => { Efectos.suena("triar"); Efectos.lluvia(0.8); Efectos.vibra("fet"); }, 250);
     celebra(`<div class="gran or entra-gran">¡SUBES EN TU CLAN!</div><div class="pujada-pos"><span class="num de">${p.de}.º</span><svg class="fletxa" viewBox="0 0 40 24" width="40" height="24" aria-hidden="true"><path d="M2 12h32M24 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num or a">${p.a}.º</span></div>
@@ -6066,6 +6079,10 @@ async function accioSocial(acc, b) {
     case "lligues-on": case "lligues-disc": {       // les lligues (29-09): entrar-hi, sortir-ne i les disciplines
       if (S.demo) { avis("En el modo demostración no se envía nada.", true); return true; }
       const yo = so.yo || {}, dins = !!yo.lligues, disc = yo.disciplines || ["gym"];
+      // (30-09 tarda, l'Albert: «ho esculls en fer clic a entrar a les lligues: sobre quina modalitat entrenes»; «i la
+      // categoria, si has marcat otros») a la Noche, entrar obre el full per triar-les; sortir, com sempre
+      const vol = acc === "lligues-on" ? (b.dataset.v ? b.dataset.v === "1" : !dins) : true;
+      if (vol && (acc === "lligues-disc" || !dins) && typeof Nit === "object" && Nit.activa() && Nit.obreEntradaLligues) { Nit.obreEntradaLligues(acc === "lligues-disc" ? b.dataset.d : null); return true; }
       const cos = acc === "lligues-on" ? { lligues: b.dataset.v ? b.dataset.v === "1" : !dins, publico: so.visible === "publico" }
         : { lligues: true, disciplines: disc.includes(b.dataset.d) ? disc.filter(x => x !== b.dataset.d) : [...disc, b.dataset.d] };
       try {
@@ -6077,7 +6094,8 @@ async function accioSocial(acc, b) {
       } catch (e) { avis(e.message, true); }
       render(); return true;
     }
-    case "social-ambit": S.social = { ...so, ambit: b.dataset.a }; guardar(); render(); return true;
+    case "social-ambit": S.social = { ...so, ambit: b.dataset.a, ambitV: 2 }; guardar(); render(); return true;
+    case "social-cat": S.social = { ...so, cat: b.dataset.c }; guardar(); render(); return true;
     case "social-grup": S.social = { ...so, grupo: b.dataset.g }; guardar(); render(); return true;
     case "soc-tab":     // entrar al clan el torna a demanar: una sol·licitud nova s'ha de veure en entrar-hi
       S.ui.socTab = b.dataset.t; S.ui.clanTreu = null; guardar(); render();
@@ -6329,7 +6347,7 @@ async function accioGimnasos(acc, b) {
 }
 
 // Els gestos d'aquí són asíncrons: el despatxador diu que són seus a l'acte i els deixa córrer.
-const ACC_SOCIAL = new Set(["lligues-on", "lligues-disc", "social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
+const ACC_SOCIAL = new Set(["lligues-on", "lligues-disc", "social-cat", "social-alta", "so-vis", "social-metrica", "social-ambit", "social-grup", "social-perfil", "social-surt", "social-vis",
   "soc-tab", "soc-tria", "soc-tria-no", "soc-gim-clan", "soc-gims", "amic-tanca", "rg-ambit", "clan-accepta", "clan-rebutja", "clan-cancela", "clan-treu", "clan-treu-no", "clan-treu-si", "clan-comparteix",
   "clan-confirma", "clan-envia-conf", "clan-conf-no", "soc-yunques"]);
 const ACC_GIM = new Set(["gim-busca", "gim-fitxa", "gim-jo", "gim-mio", "gim-nou", "gim-adreca"]);
@@ -6377,14 +6395,14 @@ function vistaAmic() {
   if (p.xp != null) xifres.push([n0(p.xp), "XP en total"]);
   xifres.push([n0(p.dies || 0), `${p.dies === 1 ? "día" : "días"} de gym`]);
   if (p.clan && p.clan.pos) xifres.push([`${p.clan.pos}.º de ${p.clan.total}`, "en tu clan"]);
-  else if (p.poder != null) xifres.push([n0(p.poder), "Temple"]);
+  else if (p.poder != null) xifres.push([n0(p.poder), "Fuerza"]);
   const grups = Object.entries(p.poder_grups || {}), desde = desdeTxt(p.desde);
   const gim = p.gimnas ? [p.gimnas.nom, p.gimnas.ciutat].filter(Boolean).join(", ") : "";
   return `${tanca}
   <article class="amic" aria-label="Perfil de ${esc(nom)}">
     <div class="amic-heroi">
       <div class="personatge amic-pj${(p.nivell || 1) >= 12 ? " aura" : ""}" id="personatge" data-tipo="${tipo}" data-nivell="${Math.max(1, Math.min(20, p.nivell || 1))}"><div class="brillo"></div><img src="${imgPersonaje(tipo)}" alt="${esc(PERSONAJES[tipo].nombre)}"></div>
-      <button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}${y.sense ? ", aún sin temple" : `, temple ${n0(p.poder)}`}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">${y.sense ? "Aún sin temple" : `Temple ${n0(p.poder)}`}</span></button>
+      <button class="amic-rang" data-accion="soc-yunques" aria-label="Rango ${y.nom}${y.sense ? ", fuerza sin medir" : `, fuerza ${n0(p.poder)}`}. Ver los yunques">${imgYunque(p.poder, "amic-y")}<b class="or">${y.nom}</b><span class="num">${y.sense ? "Fuerza sin medir" : `Fuerza ${n0(p.poder)}`}</span></button>
     </div>
     <div class="amic-placa">
       <div class="placa marc"><h1 class="placa-nom${mida}"><span class="or">${esc(nom)}</span></h1></div>
@@ -6637,11 +6655,11 @@ function robaOberta(k) {
   if (req[0] === "temple") return (tp || 0) >= req[1] || (tp == null && nv >= TEMPLE_ALT);
   return false;
 }
-const reqRoba = k => { const q = ROBA_REQ[liniaRoba(k)]; return !q ? "" : q[0] === "nivel" ? `Nivel ${q[1]}` : q[0] === "temple" ? `Temple ${q[1]}` : `${q[1]} de oro`; };
+const reqRoba = k => { const q = ROBA_REQ[liniaRoba(k)]; return !q ? "" : q[0] === "nivel" ? `Nivel ${q[1]}` : q[0] === "temple" ? `Fuerza ${q[1]}` : `${q[1]} de oro`; };
 function fullRobaTancada(k) {
   const q = ROBA_REQ[liniaRoba(k)], nv = Stats.experiencia(S).nivel, tp = (soc().yo || {}).poder, saldo = oroTotal();
   if (q[0] === "nivel") return `<p class="roba-tancada">${I_CANDAU}<span>Se desbloquea en el <b>nivel ${q[1]}</b>. Vas por el ${nv}: entrena y es tuya.</span></p>`;
-  if (q[0] === "temple") return `<p class="roba-tancada">${I_CANDAU}<span>Se desbloquea con <b>Temple ${q[1]}</b>${tp != null ? ` (tienes ${tp})` : `, o en el <b>nivel ${TEMPLE_ALT}</b> si no compartes tu peso (vas por el ${nv})`}. Es la ropa de los fuertes.</span></p>`;
+  if (q[0] === "temple") return `<p class="roba-tancada">${I_CANDAU}<span>Se desbloquea con <b>Fuerza ${q[1]}</b>${tp != null ? ` (tienes ${tp})` : `, o en el <b>nivel ${TEMPLE_ALT}</b> si no compartes tu peso (vas por el ${nv})`}. Es la ropa de los fuertes.</span></p>`;
   return `<p class="roba-tancada">${I_CANDAU}<span>La línea anime se desbloquea con <b>${q[1]} de oro</b>, una sola vez. Tienes ${saldo}.</span></p>
     ${saldo >= q[1] ? botoForja(`data-accion="mat-desbloq" data-k="${k}"`, `DESBLOQUEAR POR ${q[1]} DE ORO`, "Toda la línea, para siempre") : `<p class="suau petit" style="margin:0;text-align:center">Te faltan ${q[1] - saldo} de oro: entrenando los tienes.</p>`}`;
 }
@@ -8882,7 +8900,20 @@ const Nit = (() => {
     // L'ELO DE DALT (29-09, l'Albert: «no em mostra l'elo quan sí que en tinc»): tocar-lo diu d'on surt. Sense cap dels tres
     // aixecaments amb barra no n'hi ha (elo.js); el número dels rànquings és el Temple, que compta tots els exercicis.
     const xe = ev.target.closest('[data-accion="nt-elo"]');
-    if (xe) { ev.preventDefault(); ev.stopPropagation(); if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo()); return; }
+    // (30-09 tarda, l'Albert: «quan fas clic a l'ELO hauries d'anar a la pàgina de rankings, al d'ELO, on surts tu i tot de
+    // desconeguts de la lliga») porta al rànquing de la teva modalitat, del món; d'on surt el número, amb el botó d'allà
+    if (xe) {
+      ev.preventDefault(); ev.stopPropagation();
+      const so = soc();
+      if (!S.demo && so.participa && so.yo && so.yo.gimnas) anaAlRanking();         // sense Social no hi ha rànquing: el full, com abans
+      else if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo());
+      return;
+    }
+    const xi = ev.target.closest('[data-accion="nt-elo-info"]');
+    if (xi) { ev.preventDefault(); ev.stopPropagation(); if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo()); return; }
+    // ENTRAR A LES LLIGUES (30-09 tarda): el full de la modalitat i la categoria
+    const nle = ev.target.closest('[data-accion^="nle-"]');
+    if (nle) { ev.preventDefault(); ev.stopPropagation(); accioEntrada(nle); return; }
     const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-arx"], [data-accion="nc3-recupera"], [data-accion="nc3-rebuda"]');
     if (nc) {
       ev.preventDefault(); ev.stopPropagation();
@@ -9017,8 +9048,6 @@ const Nit = (() => {
       return;
     }
     // GIMNASIOS (30-09 nit, N5): el mapa, només quan es demana
-    const gx = ev.target.closest('[data-accion="ngx-mapa"]');
-    if (gx) { ev.preventDefault(); ev.stopPropagation(); fx(E => E.suena("tap")); gimMapa = true; if (typeof render === "function") render(); return; }
     const nd = ev.target.closest('[data-accion="ns-dins"]');
     const nlg = ev.target.closest('[data-accion="nlg-disc"], [data-accion="nlg-recarrega"]');
     if (nlg) {
@@ -9179,7 +9208,7 @@ const Nit = (() => {
           <div class="nt-tu-fitxa" data-in="tu"><button class="nt-tu-av-b" data-accion="nt-editapj" aria-label="Cambiar de personaje"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><i class="nt-tu-av-ed">${I_LLAPIS}</i></button><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b></div>
             <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
-          <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
+          <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><small class="nt-tu-rang-l">Rango (ELO)</small><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
           <div class="nt-tu-xifres" data-in="tu">
             <div><b>${ratxa()}</b><i>${I_TU.cal}</i><small>días de gym este año</small></div>
             <div><b>${fets}</b><i>${I_TU.man}</i><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
@@ -9775,13 +9804,18 @@ const Nit = (() => {
   function vistaSocial() {
     const so = soc(), yo = so.yo, gim = yo && yo.gimnas;
     if (S.demo || !yo || !gim || !so.participa) return window.vistaSocial ? window.vistaSocial() : "";
+    if (S.ui.socDins === "squads") S.ui.socDins = null;           // la squad ÉS el resum (30-09 tarda, M9)
     const dins = S.ui.socDins;
-    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads" || dins === "guerra" || dins === "liga") {
+    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "guerra" || dins === "liga") {
       if (dins !== "squads" && dins !== "guerra" && dins !== "liga") S.ui.socTab = dins;
-      const nom = { clan: "Amigos", rank: "Ranking", gimnasios: "Gimnasios", squads: "Tu squad", guerra: "Gimnasios", liga: "Liga" }[dins];
-      const cos = dins === "squads" ? vistaSquads() : dins === "liga" ? vistaLiga() : dins === "clan" ? vistaClan(so) + activitatSquad(null, 10) : dins === "gimnasios" || dins === "guerra" ? vistaGimnasios(so) : vistaRankings(so);
+      const nom = { clan: "Amigos", rank: "Rankings", gimnasios: "Gimnasios", guerra: "Gimnasios", liga: "Rankings" }[dins];
+      // a Rankings, dues pestanyes: la força (els rànquings de sempre) i la lliga de la setmana (30-09 tarda, M9)
+      const tabsRk = dins === "rank" || dins === "liga" ? `<div class="nlg-tabs nrk-tabs" role="tablist" aria-label="Qué ranking">${[["rank", "Fuerza"], ["liga", "Liga semanal"]].map(([t, n]) =>
+        `<button class="nlg-tab${t === dins ? " on" : ""}" data-accion="ns-dins" data-t="${t}" role="tab" aria-selected="${t === dins}">${n}</button>`).join("")}</div>` : "";
+      const cos = dins === "liga" ? vistaLiga() : dins === "clan" ? vistaClan(so) + activitatSquad(null, 10) : dins === "gimnasios" || dins === "guerra" ? vistaGimnasios(so)
+        : vistaRankings(so) + `<button class="nrk-info" data-accion="nt-elo-info">${I_INFO}<span>Cómo se calcula el ELO</span></button>`;
       refrescaSocial(so, dins);
-      return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag${dins === "squads" || dins === "liga" ? " nsx-h1" : ""}">${nom}</h1></div>${cos}`;
+      return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag">${nom}</h1></div>${tabsRk}${cos}`;
     }
     // el rànquing del mig és el de la squad, si l'admin l'ha encès (29-09, METODE §3.9: el dels amics ja no existeix)
     const so2 = soc(); refrescaSocial(so2, "social");
@@ -9822,7 +9856,7 @@ const Nit = (() => {
   const ligaDisc = () => DISC_NOM[S.ui.ligaDisc] ? S.ui.ligaDisc : (((soc().yo || {}).disciplines || [])[0] || "gym");
   async function carregaLiga(disc, forca) {
     if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
-    const yo = soc().yo || {}, sig = JSON.stringify([!!yo.lligues, yo.disciplines || ["gym"]]);
+    const yo = soc().yo || {}, sig = JSON.stringify([!!yo.lligues, yo.disciplines || ["gym"], yo.categoria || null]);
     const L = S.ui.liga = S.ui.liga || {}, x = L[disc];
     if (!forca && x && x.sig === sig && Date.now() - x.at < 60000) return;
     if (!forca && L["err-" + disc] && Date.now() - L["err-" + disc] < 20000) return;
@@ -9839,7 +9873,7 @@ const Nit = (() => {
     else if (x.yo && k > 0) falta = `+${n0(ll[k - 1].punts - me.punts + 1)} para pasar`;
     const d = k - i;
     return `<span class="nlg-f${x.yo ? " yo" : ""}${L.mou && k < puja ? " zp" : ""}${L.mou && k >= ll.length - L.regla.baixen ? " zb" : ""}" style="--up:${Math.max(0, -d)};--down:${Math.max(0, d)}">
-      <b class="nlg-pos">${x.pos}</b><img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false"><span class="nlg-nom">${esc(x.nom)}</span>
+      <b class="nlg-pos">${x.pos}</b><img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false"><span class="nlg-nom">${esc(x.nom)}${x.bot ? `<i class="rk-bot" title="Bot: no es una persona">bot</i>` : ""}</span>
       <span class="nlg-pts"><b>${n0(x.punts)}</b>${falta ? `<small class="nlg-falta">${falta}</small>` : ""}</span></span>`;
   }
   const liniaLiga = (L, k) => L.mou && k === L.regla.pugen ? `<i class="nlg-linia puja" aria-hidden="true"></i>` : L.mou && k === L.llista.length - L.regla.baixen ? `<i class="nlg-linia baixa" aria-hidden="true"></i>` : "";
@@ -9854,43 +9888,95 @@ const Nit = (() => {
     carregaLiga(disc);
     if (!L) return (S.ui.liga || {})["err-" + disc] ? `<div class="nlg-buit"><p>No se ha podido cargar la liga.</p><button class="nsx-crea-b" data-accion="nlg-recarrega">Reintentar</button></div>` : `<div class="nlg-buit"><p>Cargando la liga…</p></div>`;
     if (L.fora) return `<div class="nlg-buit"><b>Compite cada semana</b><p>Hasta ${L.regla.max} personas de tu nivel: quien más entrena, sube de disco.</p><button class="nsx-crea-b" data-accion="lligues-on" data-v="1">Entrar en las ligas</button><small>Sales como «Anónimo». Lo cambias en Ajustes.</small></div>`;
+    if (!L.categoria) return `<div class="nlg-buit"><b>Elige tu liga</b><p>Qué entrenas y en qué categoría compites: así te toca gente como tú.</p><button class="nsx-crea-b" data-accion="nle-obre">Elegir</button></div>`;
     if (L.sense_disc) return `<div class="nlg-buit"><b>No entrenas ${esc(DISC_NOM[disc].toLowerCase())}</b><p>Cuentan ${DISC_QUE[disc]}.</p><button class="nsx-crea-b" data-accion="lligues-disc" data-d="${disc}">Añadir ${esc(DISC_NOM[disc])}</button></div>`;
     if (!L.total) return `<div class="nlg-buit">${discSvg(L.nivell, "nlg-d-gran")}<b>Tu liga de ${nomDisc(L.nivell)}</b><p>Entrena esta semana y entras: cada serie suma un punto, y cada día, diez.</p></div>`;
     return `<button class="nlg-escala" data-accion="ns-dins" data-t="liga" aria-label="Liga de ${nomDisc(L.nivell)}: vas ${(L.llista.find(x => x.yo) || {}).pos || "-"}.º de ${L.total}. Ver la liga entera">${escalaLiga(L)}</button>`;
   }
-  // la porta de Squad: les cares de la colla (enceses les que ja han entrenat avui) i la crida, si n'hi ha
-  function portaSquad(q, d) {
-    if (!q) return `<button class="nsx-porta" data-accion="ns-dins" data-t="squads">${I_SOC.amics}<span><b>Squad</b><small>${d && d.invitacions.length ? "Te han invitado" : "Crea la tuya"}</small></span>${I_TU.fle}</button>`;
-    const ms = [...q.membres].sort((a, b) => (b.yo ? 1 : 0) - (a.yo ? 1 : 0)).slice(0, 4), fets = q.membres.filter(m => m.avui).length;
-    const c = q.crides.find(x => !x.yo) || q.crides.find(x => x.yo);
-    const sub = c ? (c.yo ? `Vas a las ${horaDe(c.quan)}` : `${esc(c.de)} · ${horaDe(c.quan)}`) : `${fets} de ${q.membres.length} hoy`;      // a mitja porta no hi cap «SOOEK va a las 14:23»
-    return `<button class="nsx-porta nlg-sq" data-accion="ns-dins" data-t="squads">${badgeEmb(q.emblema, "nsx-porta-ic")}<span><b>Squad</b>
-      <span class="nlg-cares">${ms.map(m => `<img class="${m.avui ? "calent" : ""}" src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false">`).join("")}</span><small>${sub}</small></span>${I_TU.fle}</button>`;
+  /* SOCIAL ÉS LA SQUAD (30-09 tarda, LA LLISTA M9). L'Albert, al seu iPhone, veient la lliga amb dos: «el que no mola és
+     això del social tan buit»; de la colla a les peanes: «és innecessari. Mola més tot el que hi ha a partir del nom de la
+     squad»; «és ideal el veure si han anat o no; de fet mola més que el ranking general»; «tenir un botó de rankings només,
+     com abans». A dalt, dues portes (Rankings i Gimnasios, amb com va la batalla) i els amics; a sota, la squad a partir
+     del nom: l'emblema, qui ha anat cada dia, la crida, el repte i el que ha fet la colla. La lliga, a dins de Rankings. */
+  function portaRankings() {
+    const e = eloDe();
+    return `<button class="nsx-porta" data-accion="ns-dins" data-t="rank">${sigma(e, "nsx-porta-ic")}<span><b>Rankings</b><small>${e.elo != null ? `${esc(nomRang(e.divisio.id, e.divisio.nom))} · ${n0(e.elo)}` : "Sin clasificar"}</small></span></button>`;
   }
   function hubSocial(so) {
     carregaSquads();
-    const d = S.ui.squads, sol = ((so.clan || {}).rebudes || []).length, disc = ligaDisc();
-    const q = d && d.squads.length ? (d.squads.find(x => x.id === S.ui.sqSel) || d.squads[0]) : null;
-    const L = S.ui.liga && S.ui.liga[disc];
+    const sol = ((so.clan || {}).rebudes || []).length;
     const amics = `<button class="nsx-amics" data-accion="ns-dins" data-t="clan" aria-label="Amigos${sol ? `, ${sol} ${sol === 1 ? "solicitud" : "solicitudes"}` : ""}">${I_SOC.amics}${sol ? `<i class="ns-xapa">${sol}</i>` : ""}</button>`;
-    const nv = L && L.nivell != null ? L.nivell : null;
-    const cap = `<span class="nsx-cap-b nlg-cap-b">${nv != null ? discSvg(nv, "nlg-d-cap") : ""}<span class="nsx-cap-t"><b class="nlg-t">${nv != null ? `Liga ${nomDisc(nv)}` : "Liga"}</b><small>${L && L.tanca ? `Cierra en ${tancaEn(L.tanca)}` : "Semanal"}</small></span></span>`;
-    const tabs = `<div class="nlg-tabs" role="tablist" aria-label="Disciplina">${Object.keys(DISC_NOM).map(k => `<button class="nlg-tab${k === disc ? " on" : ""}" data-accion="nlg-disc" data-d="${k}" role="tab" aria-selected="${k === disc}">${DISC_NOM[k]}</button>`).join("")}</div>`;
-    return `<h1 class="nsx-h1">Social</h1><section class="nsx nlg-hub">
-      <div class="nsx-cap" data-in="ns">${cap}${amics}</div>
-      ${tabs}
-      <div class="nlg-cos" data-in="ns">${blocLiga(disc)}</div>
-      <div class="nsx-portes" data-in="ns">${portaSquad(q, d)}${portaGims()}</div>
+    return `<h1 class="nsx-h1">Social</h1><section class="nsx2">
+      <div class="nsx2-portes" data-in="ns">${portaRankings()}${portaGims()}${amics}</div>
+      ${vistaSquads()}
     </section>`;
+  }
+  /* ENTRAR A LES LLIGUES (30-09 tarda). L'Albert: «ho esculls en fer clic a entrar a les lligues: sobre quina modalitat
+     entrenes; i es pot canviar a Ajustes»; «com sap l'app si ets tio o tia? si has marcat otros? ho has de seleccionar
+     també». Un full: què entrenes (una) i en quina categoria competeixes (la del perfil, marcada si n'hi ha). */
+  const I_INFO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  const DISC_DESC = { gym: "Cualquier ejercicio del gimnasio", powerlifting: "Sentadilla, banca y peso muerto", calistenia: "Dominadas, fondos y demás, con tu peso" };
+  function htmlEntrada() {
+    const t = S.ui.nle || {};
+    return `<div class="nle"><p class="nle-p">Compites cada semana contra gente de tu nivel, en lo que entrenas.</p>
+      <h3>¿Qué entrenas?</h3><div class="nle-ops" role="radiogroup" aria-label="Qué entrenas">${Object.keys(DISC_NOM).map(k =>
+        `<button class="nle-op${t.d === k ? " on" : ""}" data-accion="nle-d" data-d="${k}" role="radio" aria-checked="${t.d === k}"><b>${DISC_NOM[k]}</b><small>${DISC_DESC[k]}</small></button>`).join("")}</div>
+      <h3>¿En qué categoría compites?</h3><div class="nle-ops dos" role="radiogroup" aria-label="Categoría">${[["h", "Hombres"], ["m", "Mujeres"]].map(([c, n]) =>
+        `<button class="nle-op${t.c === c ? " on" : ""}" data-accion="nle-c" data-c="${c}" role="radio" aria-checked="${t.c === c}"><b>${n}</b></button>`).join("")}</div>
+      <p class="nle-nota">Las ligas y los rankings van por categoría. En los rankings también está el de todos.</p>
+      <button class="nsx-crea-b nle-si" data-accion="nle-entra"${t.d && t.c ? "" : " disabled"}>${(soc().yo || {}).lligues ? "Guardar" : "Entrar en las ligas"}</button></div>`;
+  }
+  function obreEntradaLligues(d) {
+    const yo = soc().yo || {}, sexe = (S.perfil || {}).sexo;
+    S.ui.nle = { d: DISC_NOM[d] ? d : ((yo.disciplines || [])[0] || "gym"), c: yo.categoria === "h" || yo.categoria === "m" ? yo.categoria : sexe === "h" || sexe === "m" ? sexe : null };
+    document.querySelectorAll('.nsq-full[aria-label="Tu liga"]').forEach(x => x.remove());
+    fullN("Tu liga", htmlEntrada());
+  }
+  async function accioEntrada(b) {
+    const a = b.dataset.accion, full = b.closest(".nsq-full");
+    if (a === "nle-obre") { obreEntradaLligues(); return; }
+    if (a === "nle-d" || a === "nle-c") {
+      S.ui.nle = { ...(S.ui.nle || {}), [a === "nle-d" ? "d" : "c"]: a === "nle-d" ? b.dataset.d : b.dataset.c };
+      const p = full && full.querySelector(".nle"); if (p) p.outerHTML = htmlEntrada();
+      fx(E => E.suena("tap")); return;
+    }
+    if (a !== "nle-entra") return;
+    const t = S.ui.nle || {};
+    if (!t.d || !t.c || b.disabled) return;
+    if (S.demo) { avis("En el modo demostración no se envía nada.", true); return; }
+    b.disabled = true;
+    try {
+      const so = soc(), r = await api("POST", "/lligues", { lligues: true, disciplines: [t.d], categoria: t.c, publico: so.visible === "publico" });
+      S.social = { ...soc(), yo: { ...(soc().yo || {}), lligues: r.lligues, disciplines: r.disciplines, categoria: r.categoria }, rank: {}, cat: undefined };
+      S.ui.liga = null; S.ui.ligaDisc = t.d; guardar();
+      if (full) full.remove();
+      fx(E => E.suena("triar"));
+      avis(`Estás en la liga de ${DISC_NOM[t.d]}, ${t.c === "m" ? "mujeres" : "hombres"}.`);
+    } catch (e) { b.disabled = false; avis(e.message, true); return; }
+    if (typeof render === "function") render();
+  }
+  // AL RÀNQUING (30-09 tarda): el de la teva modalitat, del món, i baixa fins a la teva fila quan arriba
+  function anaAlRanking() {
+    const so = soc();
+    S.social = { ...so, metrica: metriques(so)[0][0], ambit: "mundo", ambitV: 2 };
+    S.ui.socDins = "rank"; S.ui.socTab = "rank"; guardar();
+    if (typeof veure === "function") veure("social");
+    let n = 0;
+    const mira = () => { const f = document.querySelector("#vista .rk-fila.yo"); if (f) { f.scrollIntoView({ block: "center", behavior: quiet() ? "auto" : "smooth" }); return; } if (++n < 30) setTimeout(mira, 150); };
+    setTimeout(mira, 200);
   }
   // LA PÀGINA DE LA LLIGA: el grup sencer amb les ratlles, com es guanyen els punts, els cinc discos i els rànquings de força
   function vistaLiga() {
     const disc = ligaDisc(), L = S.ui.liga && S.ui.liga[disc];
     carregaLiga(disc);
-    if (!L || L.fora || L.sense_disc || !L.total) return `<section class="nlg-pag">${blocLiga(disc)}</section>`;
+    // només les teves modalitats (l'Albert, 30-09: «les lligues no t'han de sortir totes, només la que estàs»); amb una, cap pestanya
+    const meves = ((L && L.disciplines) || (soc().yo || {}).disciplines || ["gym"]).filter(k => DISC_NOM[k]);
+    const tabs = meves.length > 1 ? `<div class="nlg-tabs" role="tablist" aria-label="Modalidad">${meves.map(k => `<button class="nlg-tab${k === disc ? " on" : ""}" data-accion="nlg-disc" data-d="${k}" role="tab" aria-selected="${k === disc}">${DISC_NOM[k]}</button>`).join("")}</div>` : "";
+    if (!L || L.fora || !L.categoria || L.sense_disc || !L.total) return `<section class="nlg-pag">${tabs}${blocLiga(disc)}</section>`;
     const i = Math.max(0, L.llista.findIndex(x => x.yo)), r = L.regla;
-    return `<section class="nlg-pag">
-      <div class="nlg-pag-cap" data-in="ns">${discSvg(L.nivell, "nlg-d-gran")}<span><b>Liga ${nomDisc(L.nivell)}</b><small>${esc(DISC_NOM[disc])} · cierra en ${tancaEn(L.tanca)}</small></span></div>
+    return `<section class="nlg-pag">${tabs}
+      <div class="nlg-pag-cap" data-in="ns">${discSvg(L.nivell, "nlg-d-gran")}<span><b>Liga ${nomDisc(L.nivell)}</b><small>${esc(DISC_NOM[disc])} · ${L.categoria === "m" ? "Mujeres" : "Hombres"} · cierra en ${tancaEn(L.tanca)}</small></span><button class="nlg-canvia" data-accion="nle-obre">Cambiar</button></div>
+      ${L.dins === false ? `<p class="nlg-nota" data-in="ns">Aún no has sumado esta semana: entrena y entras en este grupo.</p>` : ""}
       ${L.mou ? `<div class="nlg-zones" data-in="ns"><span class="puja">Suben ${r.pugen}</span><span>Se quedan</span><span class="baixa">Bajan ${r.baixen}</span></div>`
         : `<p class="nlg-nota" data-in="ns">Con menos de ${r.minim} en el grupo, esta semana no sube ni baja nadie.</p>`}
       <div class="nlg-llista" data-in="ns">${L.llista.map((x, k) => liniaLiga(L, k) + filaLiga(L, x, k, i)).join("")}</div>
@@ -9898,49 +9984,19 @@ const Nit = (() => {
         <p>Cada serie de ${DISC_QUE[disc]} suma 1 punto, hasta ${r.cap} al día, y cada día que entrenas, ${r.dia} más. Lo cuenta KLONK con tus entrenos.</p>
         <p>El domingo por la noche, los ${r.pugen} primeros suben al disco siguiente y los ${r.baixen} últimos bajan.</p></div>
       <div class="nlg-discos" data-in="ns">${DISCOS.map((x, k) => `<span class="${k === L.nivell ? "on" : ""}">${discSvg(k)}<small>${x.kg} kg</small></span>`).join("")}</div>
-      <button class="nt-boto2 nlg-rank" data-accion="ns-dins" data-t="rank" data-in="ns">Rankings de fuerza</button>
     </section>`;
   }
-  // l'escenari: fins a cinc de la colla drets a la seva peana (tu, el primer); encès qui ha entrenat avui; i l'anella del dia
-  function escenaSquad(q, d) {
-    if (!q) {
-      const inv = d && d.invitacions && d.invitacions[0];
-      // tu al mig i dos llocs buits a cada banda (peanes, no botons: un sol «Crea tu squad», com va demanar l'Albert el 29-09)
-      const buit = k => `<span class="nsx-pj buit" style="--k:${k}" aria-hidden="true"><i class="nsx-peana"></i></span>`;
-      return `<div class="nsx-escena buida" data-in="ns">
-        <div class="nsx-colla">${buit(0)}${buit(1)}<span class="nsx-pj jo" style="--k:2"><img src="${cosDe(aspecte())}" alt="" draggable="false"><i class="nsx-peana"></i><small>Tú</small></span>${buit(3)}${buit(4)}</div>
-        <div class="nsx-crea">${inv ? `<p><b>${esc(inv.de)}</b> te invita a <b>${esc(inv.nom)}</b></p><span><button class="nsx-crea-b" data-accion="nsq-accepta" data-id="${inv.id}">Unirme</button><button class="nsx-no" data-accion="nsq-rebutja" data-id="${inv.id}">Rechazar</button></span>`
-          : `<button class="nsx-crea-b" data-accion="${d ? "nsq-nova" : "nsq-recarrega"}">${d ? "Crea tu squad" : S.ui.sqErr ? "Reintentar" : "Cargando…"}</button><small>Cada semana que todos entrenáis dos días, el emblema sube.</small>`}</div>
-      </div>`;
-    }
-    const ms = [...q.membres].sort((a, b) => (b.yo ? 1 : 0) - (a.yo ? 1 : 0)), vis = ms.slice(0, 5), fets = q.membres.filter(m => m.avui).length, n = q.membres.length;
-    const C = 2 * Math.PI * 46, pc = n ? fets / n : 0;
-    return `<div class="nsx-escena" data-in="ns">
-      <button class="nsx-anell" data-accion="ns-dins" data-t="squads" aria-label="${fets} de ${n} han entrenado hoy. Ver la squad">
-        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" class="nsx-a-f"/><circle cx="50" cy="50" r="46" class="nsx-a-p" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(C * (1 - pc)).toFixed(1)}"/></svg>
-        <span class="nsx-anell-t"><b>${fets} de ${n}</b><small>hoy</small></span></button>
-      <div class="nsx-colla n${vis.length}">${vis.map((m, k) => {
-        const nom = m.yo ? "Tú" : m.nom, dins = `<img src="${m.yo ? cosDe(aspecte()) : cosDe(m.personatge)}" alt="" draggable="false"><i class="nsx-peana"></i><small>${esc(nom)}</small>`;
-        return m.yo || !m.pid ? `<span class="nsx-pj${m.avui ? " calent" : ""}" style="--k:${k}">${dins}</span>`
-          : `<button class="nsx-pj${m.avui ? " calent" : ""}" style="--k:${k}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="${esc(nom)}${m.avui ? ", ha entrenado hoy" : ""}">${dins}</button>`; }).join("")}
-        ${n > 5 ? `<button class="nsx-mes" data-accion="ns-dins" data-t="squads">+${n - 5}</button>` : ""}</div>
-    </div>`;
-  }
-  // la crida, en una fila: si algú hi va, t'hi apuntes; si hi vas tu, qui s'hi apunta; si no, «Hoy voy a las»
-  function cridaHub(q) {
-    const altra = q.crides.find(c => !c.yo), meva = q.crides.find(c => c.yo);
-    // la cara, la de qui hi va (la crida només en porta el nom: es busca a la colla; «qui» són els que s'hi han apuntat)
-    const qui = altra && q.membres.find(m => !m.yo && m.nom === altra.de);
-    if (altra) return `<div class="nsx-crida" data-in="ns"><span class="nsx-crida-t"><img src="${caraDe(qui && qui.personatge)}" alt="" draggable="false"><span><b>${esc(altra.de)}</b> va a las ${horaDe(altra.quan)}</span></span>
-      ${altra.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button class="nsx-crida-b" data-accion="nsq-apunta" data-c="${altra.id}">Me apunto</button>`}</div>`;
-    const altres = meva ? Math.max(0, (meva.apuntats || 0) - 1) : 0;       // el servidor t'hi compta a tu (squads.py)
-    if (meva) return `<div class="nsx-crida" data-in="ns"><span class="nsx-crida-t"><span><b>Vas</b> a las ${horaDe(meva.quan)}</span></span><small class="nsx-crida-n">${altres ? `${altres} ${altres === 1 ? "se apunta" : "se apuntan"}` : "Avisados"}</small></div>`;
-    return `<div class="nsx-crida" data-in="ns"><span class="nsx-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsx-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`;
-  }
+  // (30-09 tarda: el resum nou no la demanava, i la porta es quedava a «Cargando…» fins que no entraves a Gimnasios). Es
+  // demana cada cop que no n'hi ha (una a la vegada): amb un senyal «ja provat» per sempre, en buidar-la ja no tornava
+  let guerraCarregant = false, guerraSense = false;
   function portaGims() {
     const g = S.ui.guerra, dd = g && g.d, meu = dd && dd.meu, riv = dd && dd.rival;
-    const sub = !g ? "Cargando…" : !meu ? "Elige tu gimnasio" : !riv ? "Sin rival esta semana" : `${n1(meu.punts)} vs ${n1(riv.punts)} días`;
-    return `<button class="nsx-porta or" data-accion="ns-dins" data-t="gimnasios">${ic("cresta", "nsx-porta-ic")}<span><b>Gimnasios</b><small>${sub}</small></span>${I_TU.fle}</button>`;
+    if (!g && !guerraCarregant) {
+      guerraCarregant = true;
+      carregaGuerraD().then(x => { guerraCarregant = false; guerraSense = !x; if (x && S.ui.vista === "social" && !S.ui.socDins && typeof render === "function") render(); });
+    }
+    const sub = !g ? (guerraSense ? "La batalla de la semana" : "Cargando…") : !meu ? "Elige tu gimnasio" : !riv ? "Sin rival esta semana" : `${n1(meu.punts)} vs ${n1(riv.punts)} días`;
+    return `<button class="nsx-porta or" data-accion="ns-dins" data-t="gimnasios">${ic("cresta", "nsx-porta-ic")}<span><b>Gimnasios</b><small>${sub}</small></span></button>`;
   }
 
   /* LA PÀGINA DE LA SQUAD (30-09 nit, N5; l'Albert: «la squad, lletgíssima»; el render yq17-social-b-fragua/ref-2): l'emblema i
@@ -9953,8 +10009,14 @@ const Nit = (() => {
     if (!d) return S.ui.sqErr ? `<div class="nsq-err"><p class="ns-buit">No se han podido cargar tus squads.</p><button class="nt-boto2" data-accion="nsq-recarrega">Reintentar</button></div>`
       : `<p class="ns-buit">Cargando tus squads…</p>`;
     const inv = d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("");
-    // sense squad, la B buida: tu al mig, un sol «Crea tu squad» (i, si t'han convidat, «Unirme»; les altres invitacions, a sota)
-    if (!d.squads.length) return `<section class="nsp"><div class="nsx nsx-dins">${escenaSquad(null, d)}</div>${d.invitacions.slice(1).map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}</section>`;
+    // sense squad: una targeta, un sol «Crea tu squad» (i, si t'han convidat, «Unirme» i «Rechazar»; les altres, a sota)
+    if (!d.squads.length) {
+      const i0 = d.invitacions[0];
+      return `<section class="nsp"><div class="nsx-sense" data-in="ns"><b>Tu squad</b><p>Cada semana que todos entrenáis dos días, el emblema sube.</p>
+        ${i0 ? `<p class="nsx-sense-inv"><b>${esc(i0.de)}</b> te invita a <b>${esc(i0.nom)}</b></p><span class="nsx-crea"><button class="nsx-crea-b" data-accion="nsq-accepta" data-id="${i0.id}">Unirme</button><button class="nsx-no" data-accion="nsq-rebutja" data-id="${i0.id}">Rechazar</button></span>`
+          : `<span class="nsx-crea"><button class="nsx-crea-b" data-accion="nsq-nova">Crea tu squad</button></span>`}</div>
+        ${d.invitacions.slice(1).map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}</section>`;
+    }
     const q = d.squads.find(x => x.id === S.ui.sqSel) || d.squads[0], gestor = q.jo_lider || q.jo_admin, avui = avuiIdx();
     const e = q.emblema || { f: "escut", c: q.color || "menta", n: 1, ratxa: 0, seguent: 2 }, r = +e.ratxa || 0, seg = +e.seguent || 0;
     const tria = d.squads.length > 1 ? `<div class="nsq-tria" role="tablist" aria-label="Tus squads">${d.squads.map(x => `<button class="nsq-tria-b${x.id === q.id ? " on" : ""}" data-accion="nsq-sel" data-id="${x.id}" role="tab" aria-selected="${x.id === q.id}">${badgeEmb(x.emblema)}<small>${esEtq(x.nom) ? "[" + esc(x.nom) + "]" : esc(x.nom)}</small></button>`).join("")}</div>` : "";
@@ -9968,7 +10030,6 @@ const Nit = (() => {
     };
     const pcR = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<section class="nsp">${inv}${tria}
-      <div class="nsx nsx-dins">${escenaSquad(q, d)}</div>
       <div class="nsp-emb" data-in="ns">${badgeEmb(e, "emb-xl")}<span class="nsp-emb-t"><span class="nsp-emb-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : `<b>${esc(q.nom)}</b>`}${q.jo_lider ? `<i class="nsp-jo">Líder</i>` : q.jo_admin ? `<i class="nsp-jo">Admin</i>` : ""}</span>
         <span class="nsp-emb-n">${esc(NOM_FORMA[e.f] || "Emblema")} · nivel ${e.n}${typeof infoBoto === "function" ? infoBoto("emblema") : ""}</span>
         ${seg ? `<span class="nsp-barra" role="img" aria-label="${r} de ${seg} semanas para el nivel ${+e.n + 1}"><i style="--p:${Math.min(100, r / seg * 100)}%"></i></span><small>${r} de ${seg} semanas para el nivel ${+e.n + 1}</small>` : `<small>Nivel máximo</small>`}</span>
@@ -10000,16 +10061,13 @@ const Nit = (() => {
   /* GIMNASIOS (30-09 nit, N5; l'Albert: «els gimnasos, amb un mapa millor que carregui ràpid»): primer una imatge fixa del
      barri, que carrega a l'instant, amb el teu gimnàs i el rival i com va la guerra; després la guerra en xifres i el rànquing
      de gimnasos; i el mapa (Leaflet i les teselles, el que pesa) NOMÉS si el demanes. La guerra i els gimnasos, una sola porta. */
+  /* GIMNASIOS (30-09 tarda, LA LLISTA M10; l'Albert: «m'agradava més abans, sense aquesta il·lustració, i quan fas clic a
+     dins veus no només com va la batalla amb més detalls sinó el mapa de gyms amb la comunitat en cada un o els rangs de
+     cadascun»): la batalla sencera, el rànquing dels gimnasos i el mapa (amb la gent i el rang de cada gimnàs), directament. */
   function vistaGimnasios(so) {
     const g = S.ui.guerra;
     carregaGuerraD().then(x => { if (x && x !== g && S.ui.vista === "social" && ["gimnasios", "guerra"].includes(S.ui.socDins) && typeof render === "function") render(); });
-    const dd = g && g.d, meu = dd && dd.meu, riv = dd && dd.rival, pc = meu && riv ? pcGuerra(meu, riv) : null;
-    const barri = `<div class="ngx-barri" data-in="ns"><img src="${R()}barri.webp" alt="" draggable="false" onerror="this.remove()">
-      ${meu ? `<span class="ngx-g meu">${ic("cresta")}<b>${esc(meu.nom)}</b></span>${riv ? `<span class="ngx-g riv">${ic("cresta-riv")}<b>${esc(riv.nom)}</b></span>` : ""}
-        ${pc != null ? `<span class="ngx-corda"><i style="--p:${pc}%"></i><b>${n1(meu.punts)} vs ${n1(riv.punts)} días</b></span>` : `<span class="ngx-corda sense"><b>${riv ? "" : "Sin rival esta semana"}</b></span>`}`
-        : `<span class="ngx-corda sense"><b>${g ? "Elige tu gimnasio para entrar en la guerra" : "Cargando…"}</b></span>`}</div>`;
-    return `<section class="ngx">${barri}${vistaGuerra({ dins: true })}${rangGimnasos(so)}
-      ${gimMapa ? cosGimnasos() : `<button class="nt-boto2 ngx-mapa" data-accion="ngx-mapa" data-in="ns">Ver el mapa y buscar gimnasios</button>`}</section>`;
+    return `<section class="ngx">${vistaGuerra({ dins: true })}${rangGimnasos(so)}${cosGimnasos()}</section>`;
   }
 
   // després de pintar Social: la guerra i el feed de debò, quan arriben
@@ -10865,8 +10923,14 @@ const Nit = (() => {
     manuella: "M2 10.2h1.8V7.1h3.1v9.8H3.8v-3.1H2zM22 10.2h-1.8V7.1h-3.1v9.8h3.1v-3.1H22zM7.8 11h8.4v2H7.8z",
   };
   const NOM_FORMA = { escut: "Escudo", llamp: "Rayo", flama: "Llama", corona: "Corona", estrella: "Estrella", enclusa: "Yunque", muntanya: "Montaña", manuella: "Mancuerna" };
-  const svgEmb = f => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${FORMES_EMB[f] || FORMES_EMB.escut}"/></svg>`;
-  const badgeEmb = (e, cls = "") => e && e.f ? `<i class="emb n${Math.min(5, Math.max(1, +e.n || 1))}${cls ? " " + cls : ""}" style="--ec:${COL_SQ[e.c] || COL_SQ.menta}" aria-label="${esc(NOM_FORMA[e.f] || "Emblema")}, nivel ${+e.n || 1}">${svgEmb(e.f)}</i>` : "";
+  // EN 3D (30-09 tarda, LA LLISTA M11; l'Albert: «has de fer emblemes més guais; yunkes no mola; faria sigma també, o yunkes
+  // però 3D»): les vuit formes fetes objecte, a l'estil de les sigmes de l'ELO, i el nivell el diu el material (1 fusta, 2 plata,
+  // 3 or, 4 cristall, 5 estel·lar; BETA-1.0/actius/emblemes3d.py). Sense disc ni anella: l'objecte sol.
+  const badgeEmb = (e, cls = "") => {
+    if (!e || !e.f) return "";
+    const n = Math.min(5, Math.max(1, +e.n || 1)), f = FORMES_EMB[e.f] ? e.f : "escut";
+    return `<i class="emb e3 n${n}${cls ? " " + cls : ""}" role="img" aria-label="${esc(NOM_FORMA[f] || "Emblema")}, nivel ${n}"><img src="${R()}emb3d/${f}-${n}.webp" alt="" draggable="false" decoding="async"></i>`;
+  };
   function htmlEtq(menors) {
     return `<div class="nsq-etq"><p class="nsq-prev" id="nsq-prev"></p>
       ${jove() ? `<div class="nsq-tts">${(menors.length ? menors : ETQ_MENORS).map(t => `<button data-accion="nsq-tt" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>`
@@ -12149,7 +12213,11 @@ body.v-nit #barra-nova .nt-barra{position:relative;display:flex;align-items:cent
   box-shadow:0 -1px 0 var(--nt-vora),0 -18px 30px -24px rgb(0 0 0 / .9);border-radius:26px 26px 0 0;font-family:'Nunito',system-ui,sans-serif}
 /* la portada fa servir la mateixa barra que la resta (l'Albert, 28-09, al mòbil: «el menú surt alçat aquí i a les altres
    pestanyes bé»): la que portava a dins quedava alçada a l'iPhone */
-body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+/* (30-09 tarda, LA LLISTA M12; l'Albert: «com és que es pot fer scroll aquí? si més o menys encaixa?»): a sota hi havia 138
+   punts de #vista i 60 de .app (la closca vella), i la barra en fa 78. Ara, la barra (60 i la zona de baix), el que en sobresurt
+   l'anella del botó del mig (21) i 10 de marge; .app, res */
+body.v-nit.te-barra:not(.bb-entrada) #vista{padding-bottom:calc(91px + max(6px,calc(env(safe-area-inset-bottom) - 16px)))}
+body.v-nit.te-barra:not(.bb-entrada) .app{padding-bottom:0}
 /* la portada, desbloquejada i llarga com les altres pestanyes (29-09 vespre: amb l'html i el body bloquejats, l'iPhone deixava
    la pàgina curta i el menú de baix pujat); la capa .nt, fixa i sense gestos, és la que no es mou */
 html:has(body.v-nit.fb-actiu),body.v-nit.fb-actiu{overflow:visible}
@@ -12157,6 +12225,8 @@ body.v-nit.fb-actiu #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh +
 /* I TOTES LES PÀGINES, no només la portada (29-09 nit, vist a l'iPhone simulat de l'iMac amb l'app instal·lada): una pàgina
    curta com Amigos no fa llarg i l'iPhone la deixa amb el menú de baix 62 punts alçat (87 punts buits a sota, contra 24) */
 body.v-nit #vista{min-height:calc(100vh + 2px);min-height:calc(100lvh + 2px)}
+/* (30-09 tarda, M12) #vista comença sota la zona segura de dalt: amb 100lvh sencers, sempre sobrava aquella zona per baixar */
+body.v-nit #vista,body.v-nit.fb-actiu #vista{min-height:calc(100vh + 2px - env(safe-area-inset-top));min-height:calc(100lvh + 2px - env(safe-area-inset-top))}
 /* LA FRANJA DE L'HORA, amb l'app instal·lada (29-09 nit, vist a l'iPhone simulat de l'iMac): la pàgina passava per sota de
    l'hora i la bateria en baixar, i no es llegien. Una franja del color de la pàgina, fixa, que s'esvaeix cap avall; per
    sobre del contingut (la barra de Progreso és a 39) i per sota de tot el que s'obre al damunt (els efectes, 50; els fulls,
@@ -12232,9 +12302,9 @@ body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#
 .nt-rt-op span b{display:block;font-size:15px;font-weight:900;line-height:1.15}
 .nt-rt-op span small{display:block;font-size:12px;font-weight:700;color:#8b98a4;line-height:1.25}
 /* TÚ (referencies/nx-tu) */
-.nt-tu{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nt-tu{display:grid;gap:10px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 /* sense el personatge gran (l'Albert, 28-09: «el personatge no s'ha de veure, m'agrada molt més així»): la cara petita al costat del nom */
-.nt-tu-dalt{display:grid;gap:10px}
+.nt-tu-dalt{display:grid;gap:8px}
 .nt-tu-pj{position:relative;min-height:340px;border-radius:24px;overflow:hidden;background:radial-gradient(80% 60% at 50% 40%,#2a2350 0%,#171a33 55%,#10131f 100%);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--l-rgb) / .25)}
 .nt-tu-raigs{position:absolute;inset:0;background:conic-gradient(from 200deg at 50% 45%,transparent 0 8%,rgb(var(--l-rgb) / .12) 10%,transparent 14% 30%,rgb(var(--l-rgb) / .1) 33%,transparent 37% 60%,rgb(var(--m-rgb) / .08) 63%,transparent 67%);animation:nt-tu-gira 28s linear infinite}
 @keyframes nt-tu-gira{to{transform:rotate(360deg)}}
@@ -12256,9 +12326,9 @@ body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#
 .nt-tu-barra{grid-column:2;height:7px;border-radius:99px;background:#10171e;overflow:hidden}
 .nt-tu-barra i{display:block;height:100%;width:var(--p);border-radius:99px;background:linear-gradient(90deg,var(--nt-lila),var(--nt-menta));box-shadow:0 0 10px -2px var(--nt-menta-glow)}
 .nt-tu-xp{grid-column:2 / -1;font-size:11px;font-weight:800;color:var(--nt-suau)}
-.nt-tu-rang{display:grid;gap:4px;width:100%;padding:10px 12px;border:0;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .12s}
+.nt-tu-rang{display:grid;gap:4px;width:100%;padding:8px 12px 8px 8px;border:0;border-radius:20px;background:var(--fb-sup);box-shadow:var(--fb-o1);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .12s}
 .nt-tu-rang:active{transform:scale(.97)}
-.nt-tu-rang > small{font-size:11.5px;font-weight:800;color:var(--nt-suau)}
+.nt-tu-rang .nt-sigma.gran{width:48px;height:48px}.nt-tu-rang-c .nt-tu-rang-l{font-size:11.5px}
 .nt-tu-rang-c{display:flex;align-items:center;gap:10px}
 .nt-tu-rang-c > span{flex:1;display:grid}.nt-tu-rang-c b{font-size:19px;font-weight:900;color:var(--nt-or)}.nt-tu-rang-c small{font-size:11px;font-weight:800;color:var(--nt-suau)}
 .nt-tu-rang-c i{display:grid;width:18px;height:18px;color:var(--nt-suau)}.nt-tu-rang-c i svg{width:18px;height:18px}
@@ -12267,7 +12337,7 @@ body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#
 @keyframes nt-sigma{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-3px) rotate(3deg)}}
 .nt-sigma.apagada{filter:grayscale(.8) brightness(.7)}
 .nt-tu-xifres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.nt-tu-xifres div{display:grid;justify-items:center;align-content:start;gap:3px;padding:10px 4px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
+.nt-tu-xifres div{display:grid;justify-items:center;align-content:start;gap:2px;padding:8px 4px 7px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
 .nt-tu-xifres b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;text-shadow:var(--nt-text-o)}
 .nt-tu-xifres i{display:grid;width:20px;height:20px;color:var(--nt-lila)}.nt-tu-xifres i svg{width:20px;height:20px}
 .nt-tu-xifres small{font-size:10.5px;font-weight:800;color:var(--nt-suau);line-height:1.15}
@@ -12286,9 +12356,9 @@ body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#
 .nt-tu-av-b .nt-tu-av{display:block}
 .nt-tu-av-ed{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:#1b2530;color:var(--nt-menta);box-shadow:0 0 0 2px #0d1217}
 .nt-tu-av-ed svg{width:13px;height:13px}
-.nt-tu-prog{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;width:100%;padding:14px 16px;border:0;border-radius:22px;cursor:pointer;text-align:left;color:var(--nt-tinta);
+.nt-tu-prog{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;width:100%;padding:11px 14px;border:0;border-radius:22px;cursor:pointer;text-align:left;color:var(--nt-tinta);
   font:inherit;background:radial-gradient(90% 140% at 100% 0%,rgb(var(--m-rgb) / .14),transparent 60%),var(--fb-sup);box-shadow:var(--fb-o1),0 0 0 1px rgb(var(--m-rgb) / .18)}
-.nt-tu-prog-t{display:grid;gap:3px}.nt-tu-prog-t small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}.nt-tu-prog-t b{font-size:16px;font-weight:900}
+.nt-tu-prog-t{display:grid;gap:2px}.nt-tu-prog-t small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}.nt-tu-prog-t b{font-size:16px;font-weight:900}
 .nt-tu-prog-t span{font-size:13.5px;font-weight:700;color:var(--nt-suau);font-variant-numeric:tabular-nums}
 .nt-tu-prog-t em{display:inline-flex;align-items:center;gap:4px;font-style:normal;font-size:13px;font-weight:900;color:var(--nt-menta)}.nt-tu-prog-t em svg{width:14px;height:14px}
 .nt-tu-prog-g{display:flex;align-items:flex-end;gap:5px;height:54px}
@@ -12313,8 +12383,8 @@ body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]::after{co
 /* TÚ, 29-09: el mazo amunt i, on hi havia «Tus mejores marcas», el PRO i l'escàner */
 .nt-tu-mazo{display:grid;gap:4px}
 .nt-tu-mazo-c{display:flex;align-items:center;justify-content:space-between}
-.nt-tu-mazo-c .nt-tu-t{margin-bottom:4px}
-.nt-tu-mazo-c button{border:0;background:none;color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer;padding:8px 2px}
+.nt-tu-mazo-c .nt-tu-t{margin-bottom:2px}
+.nt-tu-mazo-c button{border:0;background:none;color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer;padding:12px 2px;margin:-12px 0}
 .nt-tu-mazo-b{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;padding:10px 16px 10px 8px;border:0;border-radius:22px;cursor:pointer;color:var(--nt-tinta);font:inherit;text-align:left;
   background:radial-gradient(80% 120% at 0% 50%,rgb(var(--l-rgb) / .16),transparent 60%),linear-gradient(180deg,#1f2733,#181f28);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--l-rgb) / .22);transition:transform .12s}
 .nt-tu-mazo-b:active{transform:scale(.98)}
@@ -12323,16 +12393,18 @@ body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]::after{co
 .nt-tu-mini i:nth-child(1){transform:rotate(-14deg) translateX(-12px)}
 .nt-tu-mini i:nth-child(3){transform:rotate(14deg) translateX(12px)}
 .nt-tu-mazo-b > span:not(.nt-tu-mini){display:grid;gap:3px;min-width:0}
+.nt-tu-mazo-b{padding-top:6px;padding-bottom:6px}.nt-tu-mazo-b .nt-tu-mini{width:72px;height:66px}
+.nt-tu-mazo-b .nt-tu-mini i{left:19px;top:5px;width:34px;height:55px}
 .nt-tu-mazo-b b{font-size:17px;font-weight:900;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nt-tu-mazo-b small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
 .nt-tu-mazo-b > svg{width:16px;height:16px;color:var(--nt-suau)}
 .nt-tu-venta{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.nt-tu-venta button{position:relative;display:grid;align-content:end;gap:3px;min-height:128px;padding:14px;border:0;border-radius:22px;cursor:pointer;text-align:left;font:inherit;color:var(--nt-tinta);overflow:hidden;transition:transform .12s}
+.nt-tu-venta button{position:relative;display:grid;align-content:end;gap:3px;min-height:108px;padding:12px 13px;border:0;border-radius:22px;cursor:pointer;text-align:left;font:inherit;color:var(--nt-tinta);overflow:hidden;transition:transform .12s}
 .nt-tu-venta button:active{transform:scale(.97)}
 .nt-tu-pro{background:radial-gradient(90% 90% at 100% 0%,rgb(226 194 122 / .28),transparent 60%),linear-gradient(160deg,#2a2618,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(226 194 122 / .35)}
 .nt-tu-scan{background:radial-gradient(90% 90% at 100% 0%,rgb(var(--m-rgb) / .22),transparent 60%),linear-gradient(160deg,#16262a,#171e27);box-shadow:var(--fb-o2),0 0 0 1px rgb(var(--m-rgb) / .3)}
-.nt-tu-v-ic{position:absolute;top:12px;right:12px;width:46px;height:46px;display:grid;place-items:center}
-.nt-tu-v-ic img,.nt-tu-v-ic svg,.nt-tu-v-ic .nt-ic{width:42px;height:42px}
+.nt-tu-v-ic{position:absolute;top:10px;right:10px;width:40px;height:40px;display:grid;place-items:center}
+.nt-tu-v-ic img,.nt-tu-v-ic svg,.nt-tu-v-ic .nt-ic{width:36px;height:36px}
 .nt-tu-scan .nt-tu-v-ic svg{color:var(--nt-menta)}
 .nt-tu-venta b{font-size:16px;font-weight:900;line-height:1.15}
 .nt-tu-pro b{color:var(--nt-or)}
@@ -12830,8 +12902,34 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nlg-discos{display:flex;justify-content:space-between;gap:6px}
 .nlg-discos span{display:grid;justify-items:center;gap:4px;opacity:.55}.nlg-discos span.on{opacity:1}
 .nlg-discos small{font:800 12px/1 'Nunito',system-ui,sans-serif;color:var(--nt-suau)}.nlg-discos span.on small{color:var(--nt-tinta)}
-/* la B dins de Squad: l'escenari de la colla, amb alçada pròpia (al resum la hi dona el mòbil) */
-.nsx.nsx-dins{height:min(46vh,380px);margin-bottom:6px}
+/* el resum de Social (30-09 tarda, M9): dues portes i els amics a dalt; la squad a sota */
+/* (30-09 tarda, al simulador: amb «1fr 1fr auto» les portes no baixaven del que fa el seu text i la columna sencera sortia de
+   la pantalla. minmax(0, …) deixa que s'encongeixin; les portes, de dalt a baix, hi caben fins a 375 punts) */
+.nsx2{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nsx2-portes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 50px;gap:10px;align-items:stretch}
+.nsx2-portes .nsx-amics{width:auto;height:auto;border-radius:20px;background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(255 255 255 / .08)}
+.nsx2-portes .nsx-porta{flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;min-height:0;padding:12px 12px 11px}
+.nsx2-portes .nsx-porta span{align-self:stretch}
+.nsx2-portes .nsx-porta-ic{width:34px!important;height:34px!important}
+.nsx-sense{display:grid;justify-items:center;gap:8px;padding:22px 16px;border-radius:22px;text-align:center;background:rgb(255 255 255 / .045);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .06)}
+.nsx-sense b{font:900 20px/1.2 'Nunito',system-ui,sans-serif}.nsx-sense p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14.5px}
+.nsx-sense .nsx-crea{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.nrk-tabs{margin-bottom:12px}
+/* ENTRAR A LES LLIGUES (30-09 tarda): la modalitat i la categoria */
+.nle{display:grid;gap:10px;margin-top:6px;text-align:left}.nle h3{margin:6px 0 0;font:900 15px/1.2 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nle-p,.nle-nota{margin:0;font-size:13.5px;font-weight:700;color:var(--nt-suau);line-height:1.35}
+.nle-ops{display:grid;gap:8px}.nle-ops.dos{grid-template-columns:1fr 1fr}
+.nle-op{display:grid;gap:2px;padding:12px 14px;border:0;border-radius:16px;text-align:left;cursor:pointer;color:var(--nt-tinta);font:inherit;background:rgb(255 255 255 / .05);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
+.nle-op b{font-size:15.5px;font-weight:900}.nle-op small{font-size:12.5px;font-weight:700;color:var(--nt-suau)}
+.nle-op.on{background:rgb(var(--m-rgb) / .14);box-shadow:inset 0 0 0 2px rgb(var(--m-rgb) / .8)}
+.nle-si{margin-top:4px;width:100%}.nle-si:disabled{opacity:.45}
+.nlg-pag-cap .nlg-canvia{margin-left:auto;border:0;background:none;color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif;padding:10px 2px;cursor:pointer}
+/* ELS BOTS (30-09 tarda): una etiqueta petita al costat del nom; no són gent */
+.rk-bot{display:inline-block;margin-left:6px;padding:1px 6px 2px;border-radius:99px;font:900 10px/1.3 'Nunito',system-ui,sans-serif;font-style:normal;letter-spacing:.02em;vertical-align:2px;color:#9fb0c0;background:rgb(255 255 255 / .08);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
+.rk-cats{margin-top:-2px}
+.seg.seg-m.n2{grid-template-columns:1fr 1fr}.seg.seg-m.n3{grid-template-columns:1.2fr 1fr 1fr}
+.nrk-info{display:flex;align-items:center;gap:8px;margin:12px auto 0;border:0;background:none;color:var(--nt-suau);font:800 13.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer;padding:10px 4px}
+.nrk-info svg{width:18px;height:18px}
 .nsx-porta{display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 10px 10px 12px;border:0;border-radius:20px;text-align:left;color:var(--nt-tinta);font:inherit;cursor:pointer;
   background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(var(--l-rgb) / .22)}
 .nsx-porta.or{box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(226 194 122 / .3)}
@@ -12844,7 +12942,7 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 @media (prefers-reduced-motion:no-preference){#vista.nt-entra .nsx-pj{animation:nsx-puja .6s cubic-bezier(.2,.9,.25,1.1) both;animation-delay:calc(.08s + var(--k,0) * .07s)}}
 @keyframes nsx-puja{from{opacity:0;transform:translateY(24px)}}
 /* la pàgina de la squad */
-.nsp{display:grid;gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nsp{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nsp-emb{position:relative;display:flex;align-items:center;gap:14px;padding:14px;border-radius:24px;background:linear-gradient(180deg,#1f2733,#171e27);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(var(--l-rgb) / .2)}
 .nsp-emb-t{flex:1;min-width:0;display:grid;gap:4px}
 .nsp-emb-t .nsq-tag{font-size:30px}
@@ -13363,6 +13461,12 @@ body.v-nit .emb,body.v-nit .emb.n4,body.v-nit .emb.n5,body.v-nit .emb.emb-cap,bo
 .emb.emb-mini{position:absolute;right:-5px;bottom:-5px;width:20px;height:20px;min-height:0;box-shadow:0 0 0 1.5px var(--er),0 0 0 3px #0d1217}
 .emb.emb-gran{position:absolute;left:-6px;bottom:0;width:40px;height:40px;min-height:0;box-shadow:0 0 0 2.5px var(--er),0 0 0 5px #0d1217}
 .emb.emb-xl{width:64px;height:64px;min-height:0;box-shadow:0 0 0 3px var(--er),0 0 18px -4px var(--er)}
+/* EN 3D (30-09 tarda): l'objecte sol, una mica més gran que la seva caixa (que la forma no quedi petita dins d'un quadrat), amb
+   la seva ombra; el cristall i l'estel·lar, amb la seva llum */
+.emb.e3,body.v-nit .emb.e3{background:none;border-radius:0;box-shadow:none}.emb.e3::after{content:none}
+.emb.e3 img{width:122%;height:122%;max-width:none;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 3px rgb(0 0 0 / .55))}
+.emb.e3.n4 img{filter:drop-shadow(0 0 6px rgb(94 234 212 / .4)) drop-shadow(0 2px 3px rgb(0 0 0 / .5))}
+.emb.e3.n5 img{filter:drop-shadow(0 0 7px rgb(150 130 255 / .5)) drop-shadow(0 2px 3px rgb(0 0 0 / .5))}
 .nsq-emb-cap{display:flex;align-items:center;gap:6px}.nsq-emb-cap small{font-size:12px;font-weight:900;color:var(--nt-suau)}
 .nsq-emb-barra{display:block;height:6px;margin:3px 0 1px;border-radius:99px;background:rgb(255 255 255 / .08);overflow:hidden}
 .nsq-emb-barra i{display:block;width:var(--p);height:100%;border-radius:inherit;background:var(--nt-menta)}
@@ -13762,7 +13866,7 @@ img[src*="#cb="]{visibility:hidden}
     carregaGuerra(sec); carregaAmic(sec); precarrega();
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, fotoGran, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, fotoGran, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta, obreEntradaLligues };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -15540,7 +15644,7 @@ function blocTemple() {
   if (h.length < 2) return "";
   const pas = Math.ceil(h.length / 45), mostra = h.filter((x, i) => i % pas === 0 || i === h.length - 1), v = mostra.map(x => x.temple);
   const canvi = v[v.length - 1] - v[0];
-  return bloc("Tu Temple", `${grafLinia(v, 300, 110)}<p class="llegenda">Tu fuerza para tu peso, comparada con la gente de KLONK, día a día desde el ${fechaCorta(mostra[0].dia)}: de ${n0(v[0])} a ${n0(v[v.length - 1])} (${canvi >= 0 ? "+" : "−"}${n0(Math.abs(canvi))}). Sube cuando levantas más, y se mueve un poco cuando entra gente nueva.</p>`, "graf");
+  return bloc("Resumen de tu fuerza", `${grafLinia(v, 300, 110)}<p class="llegenda">Tu fuerza para tu peso, comparada con la gente de KLONK, día a día desde el ${fechaCorta(mostra[0].dia)}: de ${n0(v[0])} a ${n0(v[v.length - 1])} (${canvi >= 0 ? "+" : "−"}${n0(Math.abs(canvi))}). Sube cuando levantas más, y se mueve un poco cuando entra gente nueva.</p>`, "graf");
 }
 function vistaEstadisticas() {
   const tab = S.ui.statsTab || "fuerza", pag = { cuerpo: vistaCuerpo, ejercicios: vistaEjercicios, racha: vistaRachaStats }[tab];
