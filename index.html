@@ -5590,7 +5590,7 @@ function fullEjercicio(n) {
   const c = Stats.curvaEjercicio(S, n), vals = c.map(p => p.valor).slice(-16);
   const hist = S.ses.filter(s => s.fin && s.ej.some(e => e.n === n && e.sets.some(z => z.ok))).slice(-8).reverse();
   const lastre = x.x === "lastre";
-  return `${fotoEj(n) ? `<img class="ej-gran" src="${fotoEj(n)}" alt="${esc(n)}, cómo se hace" width="480" height="480">` : ""}
+  return `${fotoEj(n) ? `<img class="ej-gran" src="${fotoGranEj(n)}" alt="${esc(n)}, cómo se hace" width="480" height="480">` : ""}
     ${vals.length >= 2 ? `<div class="r-graf panel" style="margin-top:10px">${grafTendencia(vals, 300, 130)}<small>Tu máximo estimado en cada entreno. La línea de puntos es la tendencia.</small></div>` : ""}
     <div class="r-tiles tres-t">${[[x.sesiones, "entrenos"], [x.series, "series"], lastre ? ["+" + kgTxt(x.lastre), "kg de lastre, lo máximo"] : [x.millor ? n0(x.millor.v) : "0", "kg máximo estimado"]].map(([v, t]) => `<div class="r-tile marc"><b class="or num">${v}</b><span>${t}</span></div>`).join("")}</div>
     ${(() => { const pc = typeof soc === "function" && soc().yo && soc().yo.percentils ? soc().yo.percentils[n] : null;
@@ -8332,6 +8332,9 @@ const Nit = (() => {
   };
   const tintMeu = () => tint(llegeixAsp(aspecte()));
   const fotoAnime = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej/${av}/${sl}.webp${tintMeu()}` : EJ_ANIME.has(sl) ? `${R()}ej/${sl}.webp` : null; };
+  // el dibuix gran (per ampliar-lo: «Cómo se hace» i la fitxa de l'exercici). La miniatura és de 128 px i ampliada a tot
+  // l'ample es veia borrosa (30-09 tarda, l'Eric: «les imatges quan s'amplien queden amb mala qualitat»)
+  const fotoGran = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej-gran/${av}/${sl}.webp${tintMeu()}` : EJ_ANIME.has(sl) ? `${R()}ej-gran/${sl}.webp` : null; };
   // ELS AVATARS (29-09): el roster, sense noms (són avatars: el nom és el nickname de cadascú). Cada un porta el seu tema.
   // 30-09 nit (LA LLISTA N1 i N2): primer els de l'estil de l'Àlex («m'agrada la de l'Àlex, nem cap allà»), de franc com
   // l'urbà; els anime, amb or i un sol cop (servidor: sincro.AVATARS_ANIME, amb «av-» davant), «excepte un», l'urbà. El
@@ -8340,7 +8343,14 @@ const Nit = (() => {
   const AV_FRANC = new Set(["cua", "tirants", "urba"]), PREU_AV = 400;
   const avMeu = a => AV_FRANC.has(a) || (S.desbloq || []).includes("av-" + a) || a === (S.personaje && S.personaje.avatar);
   const I_CAND = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.6" fill="currentColor"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
-  const avatarId = () => { const a = S.personaje && S.personaje.avatar; return AVATARS.includes(a) ? a : "urba"; };
+  /* NOMÉS ELS DOS, PER A TOTHOM (30-09 tarda). L'Albert: «deixa només els dos»; l'Eric, l'endemà: «no sé per què em segueix
+     sortint el Broly» (el «berserker» que li vam regalar: el builder deixava conservar el que portaves). Qui porta un anime
+     passa al seu equivalent de l'Àlex (els nois, al dels tirants; les noies, a la de la cua), i els altres el veuen així
+     (llegeixAsp); qui no en porta cap, el de la cua si és dona i el dels tirants si no. */
+  const ANTIC = { urba: "tirants", mascara: "tirants", fibrado: "tirants", chad: "tirants", berserker: "tirants", neteja: "tirants",
+    powerlifter: "cua", acrobata: "cua", lluitadora: "cua", rebel: "cua", reina: "cua" };
+  const avatarId = () => { const a = S.personaje && S.personaje.avatar;
+    return a === "cua" || a === "tirants" ? a : ANTIC[a] || ((S.perfil || {}).sexo === "m" ? "cua" : "tirants"); };
   /* L'ASPECTE (30-09 matí). L'Albert: «deixa només els dos», «el color de cabell marqui el tema però subtil»; l'Eric:
      «mínimo color de pelo y uno pelo afro». L'avatar, el pentinat i el color de cabells van en una sola cadena, la que el
      servidor desa com a personatge i torna als altres: «cua», «cua.blau», «tirants-afro.rosa». El color NO són imatges
@@ -8353,13 +8363,13 @@ const Nit = (() => {
   const AMB_CB = ["cua", "tirants"];                      // els de l'Àlex: els únics que es trien i es pentinen
   const AFRO = new Set(/*AFRO*/["cua", "tirants"]/*/AFRO*/);              // els que ja tenen l'afro dibuixat, el retrat i els exercicis
   const llegeixAsp = p => {
-    const [b, c] = String(p || "").split("."), av = b.replace(/-afro$/, ""), meu = AMB_CB.includes(av);
-    return { av, afro: meu && b !== av && AFRO.has(av), cb: meu && PALETA.hasOwnProperty(c) ? c : "" };
+    const [b, c] = String(p || "").split("."), b0 = b.replace(/-afro$/, ""), av = ANTIC[b0] || b0, meu = AMB_CB.includes(av);
+    return { av, afro: meu && b !== b0 && AFRO.has(av), cb: meu && PALETA.hasOwnProperty(c) ? c : "" };
   };
   const aspecteDe = (av, pe, cb) => AMB_CB.includes(av) ? av + (pe === "afro" && AFRO.has(av) ? "-afro" : "") + (PALETA.hasOwnProperty(cb) ? "." + cb : "") : av;
   const aspecte = () => { const p = S.personaje || {}; return aspecteDe(avatarId(), p.pentinat, p.cabell); };
   const tint = a => a.cb ? "#cb=" + a.cb : "";
-  const pjDe = (p, cara) => { const a = llegeixAsp(p); return R() + "pj/" + (cara ? "cara-" : "") + (AVATARS.includes(a.av) ? a.av + (a.afro ? "-afro" : "") : "urba") + ".webp" + tint(a); };
+  const pjDe = (p, cara) => { const a = llegeixAsp(p); return R() + "pj/" + (cara ? "cara-" : "") + (AMB_CB.includes(a.av) ? a.av + (a.afro ? "-afro" : "") : "tirants") + ".webp" + tint(a); };
   const CARA = () => pjDe(aspecte(), true);
   // LA PORTADA DE CADA CARTA (29-09): els músculs que treballa (per defecte) o un dels seus exercicis dibuixat, triada a la
   // carta a la mà. Es guarda per carta (rutina:dia) a S.cartesIl.
@@ -8399,24 +8409,27 @@ const Nit = (() => {
   const banda = (h, a, b, rp) => h >= a || h <= b ? 1 : cl01(1 - Math.min(h - b, a - h) / rp);
   // els cabells, com mascara() de cabells.py: la zona (el taronja ben saturat, sense les línies primes, eixamplat) i, dins
   // d'ella, el to del vermell al taronja amb vores suaus
+  // el to (0-1), la saturació i la llum d'un píxel (com rgb2hsv de cabells.py)
+  const hsvDe = (d, i, o) => {
+    const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), dd = mx - Math.min(r, g, b);
+    let hh = 0;
+    if (dd > 1e-6) { hh = (mx === r ? ((g - b) / dd) % 6 : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4) / 6; if (hh < 0) hh += 1; }
+    o[0] = hh; o[1] = mx > 1e-6 ? dd / mx : 0; o[2] = mx; return o;
+  };
   function tenyeixPixels(d, w, h, col) {
     const P = PALETA.hasOwnProperty(col) ? PALETA[col] : null; if (!P) return 0;
-    const N = w * h, H = new Float64Array(N), Sa = new Float64Array(N), V = new Float64Array(N), ll = new Uint8Array(N);
-    for (let k = 0, i = 0; k < N; k++, i += 4) {
-      const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), dd = mx - Math.min(r, g, b);
-      let hh = 0;
-      if (dd > 1e-6) { hh = (mx === r ? ((g - b) / dd) % 6 : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4) / 6; if (hh < 0) hh += 1; }
-      H[k] = hh; Sa[k] = mx > 1e-6 ? dd / mx : 0; V[k] = mx;
-      ll[k] = (hh >= .93 || hh <= .10) && Sa[k] > .5 && mx > .25 ? 1 : 0;
-    }
+    // sense guardar el color de cada píxel (amb els retrats al doble, eren 33 MB): dues passades, i a la segona només la zona
+    const N = w * h, ll = new Uint8Array(N), x = [0, 0, 0];
+    for (let k = 0, i = 0; k < N; k++, i += 4) { hsvDe(d, i, x); ll[k] = (x[0] >= .93 || x[0] <= .10) && x[1] > .5 && x[2] > .25 ? 1 : 0; }
     const n = Math.max(w, h), e = Math.max(1, Math.floor(.004 * n + .5)), rz = Math.max(2, Math.floor(.022 * n + .5));
     const inv = dilataCaixa(ll.map(v => 1 - v), w, h, e), zona = dilataCaixa(inv.map(v => 1 - v), w, h, e + rz);
     let fets = 0;
     for (let k = 0, i = 0; k < N; k++, i += 4) {
       if (!zona[k]) continue;
-      const m = banda(H[k], .86, .11, .03) * cl01((Sa[k] - .33) / .1) * cl01((V[k] - .1) / .08);
+      hsvDe(d, i, x);
+      const m = banda(x[0], .86, .11, .03) * cl01((x[1] - .33) / .1) * cl01((x[2] - .1) / .08);
       if (m <= 0) continue;
-      const c = hsvRgb(P[0], cl01(Sa[k] * P[1]), cl01(V[k] * P[2]));
+      const c = hsvRgb(P[0], cl01(x[1] * P[1]), cl01(x[2] * P[2]));
       d[i] = Math.round((d[i] / 255 * (1 - m) + c[0] * m) * 255); d[i + 1] = Math.round((d[i + 1] / 255 * (1 - m) + c[1] * m) * 255); d[i + 2] = Math.round((d[i + 2] / 255 * (1 - m) + c[2] * m) * 255);
       fets++;
     }
@@ -8567,7 +8580,7 @@ const Nit = (() => {
       try { if (!S.ui.feed || Date.now() - (S.ui.feed.at || 0) > 60000) { const r = await api("GET", "/clan/feed"); S.ui.feed = { items: r.items, seguent: r.seguent, comparteixo: r.comparteixo, at: Date.now() }; } } catch (e) {}
       try { await carregaGuerraD(); } catch (e) {}
       try { if (typeof carregaClan === "function") await carregaClan(false); } catch (e) {}
-      const imatges = [...AVATARS.map(a => R() + "pj/cara-" + a + ".webp"), ...Elo.DIVISIONS.map(d => R() + "sigma-" + d[1] + ".webp"),
+      const imatges = [...[...AMB_CB, ...[...AFRO].map(a => a + "-afro")].map(a => R() + "pj/cara-" + a + ".webp"), ...Elo.DIVISIONS.map(d => R() + "sigma-" + d[1] + ".webp"),
         ...["empuje", "tiron", "pierna", "brazos", "cuerpo"].map(t => R() + "musculs-" + t + ".webp")];
       for (const u of imatges) { try { await fetch(u, { priority: "low" }); } catch (e) {} }
     });
@@ -9218,7 +9231,7 @@ const Nit = (() => {
      l'Eric: «cambiar el menú de selección de personajes (...) mínimo color de pelo y uno pelo afro». Els dos de l'Àlex (i
      el que ja portessis, si és un altre: el que és teu no se't treu), el color de cabells i, quan hi és, el pentinat.
      Tocar-ne un el prova al moment, amb el tema; «Elegir» el desa amb el klonk, i tancar sense triar ho deixa com era. */
-  const avVisibles = () => { const ara = S.personaje && S.personaje.avatar; return [...AMB_CB, ...AVATARS.filter(a => !AMB_CB.includes(a) && (a === ara || (S.desbloq || []).includes("av-" + a)))]; };
+  const avVisibles = () => [...AMB_CB];
   const htmlCbs = (av, cb, attr) => AMB_CB.includes(av) ? `<div class="nb3-cbs" role="group" aria-label="Color de pelo">${CABELLS.map(c =>
     `<button type="button" class="nb3-cb${c === cb ? " on" : ""}" ${attr} data-cb="${c}" style="--c:${MOSTRA_CB[c]}" aria-label="${NOM_CB[c]}" aria-pressed="${c === cb}"></button>`).join("")}</div>` : "";
   const htmlPes = (av, pe, attr) => AFRO.has(av) ? `<div class="nb3-pes" role="group" aria-label="Peinado">${[["", "Clásico"], ["afro", "Afro"]].map(([p, t]) =>
@@ -9301,6 +9314,8 @@ const Nit = (() => {
     }, Math.max(0, 1400 - performance.now()));
   }
   function despresPagina(vista, entrada) {
+    const pa = S.personaje && S.personaje.avatar;
+    if (pa && !AMB_CB.includes(pa)) { S.personaje.avatar = avatarId(); S.personaje.cabell = ""; S.personaje.pentinat = ""; if (typeof guardar === "function") guardar(); }
     aplicaTema();
     estil();
     amagaCarga();
@@ -13747,7 +13762,7 @@ img[src*="#cb="]{visibility:hidden}
     carregaGuerra(sec); carregaAmic(sec); precarrega();
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, fotoGran, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -15168,6 +15183,8 @@ const fotoEj = n => {
   if (b && typeof IL_BIB !== "undefined" && IL_BIB.has(b[0])) return `${ACTIUS}ejercicios/b-${b[0]}.webp`;
   return SLUG_GRUP[Stats.GRUPO[n]] ? `${ACTIUS}grups/${SLUG_GRUP[Stats.GRUPO[n]]}.webp` : null;
 };
+// per ampliar-la («Cómo se hace», la fitxa): a la Noche, el dibuix gran de l'exercici, no la miniatura (30-09 tarda)
+const fotoGranEj = n => (typeof Nit === "object" && Nit.activa() && Nit.fotoGran && Nit.fotoGran(n)) || fotoEj(n);
 // Com es fa un exercici de la biblioteca: els passos, que es baixen un cop quan cal.
 let PASOS = null;
 async function pasosDe(n) {
@@ -16053,8 +16070,8 @@ document.addEventListener("click", ev => {
     case "cos-treu": S.medidas = (S.medidas || []).filter(m => m.f !== b.dataset.f); guardar(); render(); avis("Borrado."); break;
     case "ej-foto": {
       const e = activa()?.ej[+b.dataset.i]; if (!e) break;
-      if (EJERCICIOS[e.n]) { obreFull(`<img class="ej-gran" src="${fotoEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480"><p class="ej-com">${esc(EJERCICIOS[e.n][1])}</p>`, e.n); break; }
-      obreFull(`${fotoEj(e.n) ? `<img class="ej-gran" src="${fotoEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480">` : ""}<ol class="pasos" id="pasos"><li>Cargando…</li></ol>`, e.n);
+      if (EJERCICIOS[e.n]) { obreFull(`<img class="ej-gran" src="${fotoGranEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480"><p class="ej-com">${esc(EJERCICIOS[e.n][1])}</p>`, e.n); break; }
+      obreFull(`${fotoEj(e.n) ? `<img class="ej-gran" src="${fotoGranEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480">` : ""}<ol class="pasos" id="pasos"><li>Cargando…</li></ol>`, e.n);
       pasosDe(e.n).then(p => { const o = $("#pasos"); if (o) o.innerHTML = p ? p.map(x => `<li>${esc(x)}</li>`).join("") : "<li>Sin instrucciones.</li>"; });
       break;
     }
