@@ -4435,7 +4435,7 @@ async function dibuixaTargetaNit(d) {
   const ctx = cv.getContext("2d");
   await Promise.all(['900 80px "Nunito"', '800 40px "Nunito"'].map(f => document.fonts.load(f).catch(() => null)));
   const rang = d.tipus !== "entreno", y = rang ? yunqueDe(d.poder) : null, cx = TG_W / 2;
-  const [logo, cos, sig] = await Promise.all([carregaImg(`${ACTIUS}beta/klonk-logo-clar.webp`).catch(() => null), carregaImg(Nit.cosAvatar()).catch(() => null),
+  const [logo, cos, sig] = await Promise.all([carregaImg(`${ACTIUS}beta/klonk-logo-clar.webp`).catch(() => null), (Nit.tenyit ? Nit.tenyit(Nit.cosAvatar()) : Promise.resolve(Nit.cosAvatar())).then(carregaImg).catch(() => null),
     rang ? carregaImg(Nit.sigmaMat(y.id)).catch(() => null) : Promise.resolve(null)]);
   const f = ctx.createLinearGradient(0, 0, 0, TG_H); f.addColorStop(0, "#131b22"); f.addColorStop(1, "#0a0f14");
   ctx.fillStyle = f; ctx.fillRect(0, 0, TG_W, TG_H);
@@ -5692,7 +5692,7 @@ function sincronitza() {
   sincro = (async () => {
     await cuenta();
     const yo = await api("POST", "/marcas", { nick: sessio.nick || null, publico: so.visible === "publico", menor: sessio.franja !== "major", franja: sessio.franja || null, sexe: ambPes ? S.perfil.sexo || null : null,
-      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (typeof Nit === "object" && Nit.activa() && Nit.avatarId ? Nit.avatarId() : (S.personaje || {}).tipo) || null, nivell: Stats.experienciaPj(S).nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
+      pes: ambPes ? S.perfil.peso : null, consent_pes: ambPes, personatge: (typeof Nit === "object" && Nit.activa() && Nit.aspecte ? Nit.aspecte() : (S.personaje || {}).tipo) || null, nivell: Stats.experienciaPj(S).nivel, dies: dg.dies, primer_dia: dg.primer, racha: Stats.diasAno(S),
       xp: xp.xp, gim_clan: so.gimClan !== false, ejercicios: marquesLocals() });
     S.social = { ...soc(), yo, yoAt: Date.now() }; S.ui.errSocial = null; guardar();
     return yo;
@@ -8324,8 +8324,14 @@ const Nit = (() => {
   // EL PAQUET DE CADA AVATAR (29-09): els exercicis que ja té dibuixats (ej_avatar.py escriu aquesta llista); si l'avatar
   // triat en té el dibuix, surt ell; si no, el de l'Urbà.
   const EJ_AV = /*EJ_AV*/{"acrobata":["aduccion-de-cadera-en-maquina","crunch-en-polea-alta","curl-femoral-sentado","curl-femoral-tumbado","curl-martillo-en-banco-scott","curl-zottman","elevaciones-laterales-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","pajaros-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-inclinado-en-smith","press-militar-en-maquina","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","rueda-abdominal"],"berserker":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"chad":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"cua":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"fibrado":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"lluitadora":["crunch-en-polea-alta","elevaciones-laterales-en-polea","extension-de-triceps","extension-de-triceps-tras-nuca-en-polea","lat-pull-around-en-polea","peck-deck","peso-muerto-rumano","press-inclinado-en-smith","remo-isolateral-en-maquina-de-palanca"],"mascara":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"neteja":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"],"powerlifter":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar-en-maquina","press-plano-en-maquina","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","rueda-abdominal","zancada-en-multipower"],"rebel":["crunch-en-polea-alta","elevaciones-laterales-en-polea","extension-de-triceps","extension-de-triceps-tras-nuca-en-polea","lat-pull-around-en-polea","peck-deck","peso-muerto-rumano","press-inclinado-en-smith","remo-isolateral-en-maquina-de-palanca"],"reina":["crunch-en-polea-alta","elevaciones-laterales-en-polea","extension-de-triceps","extension-de-triceps-tras-nuca-en-polea","lat-pull-around-en-polea","peck-deck","peso-muerto-rumano","press-inclinado-en-smith","remo-isolateral-en-maquina-de-palanca"],"tirants":["abduccion-de-cadera-en-maquina","aduccion-de-cadera-en-maquina","aperturas-inclinadas-con-mancuernas","crunch-en-polea-alta","curl-a-una-mano-de-pie-en-polea","curl-de-biceps-en-banco","curl-de-biceps-en-banco-con-soporte","curl-de-biceps-unilateral-en-banco","curl-en-banco-scott-con-barra","curl-en-polea-por-encima-de-la-cabeza","curl-femoral-sentado","curl-femoral-tumbado","curl-inclinado-con-mancuernas","curl-martillo","curl-martillo-en-banco-scott","curl-zottman","dominadas","dominadas-lastradas","elevacion-de-gemelos","elevacion-de-gemelos-en-multipower","elevacion-de-piernas-en-paralelas","elevacion-en-y-en-polea","elevaciones-laterales-en-polea","elevaciones-laterales-en-polea-baja","elevaciones-posteriores-en-polea","encogimientos-en-polea","extension-de-cuadriceps","extension-de-triceps","extension-de-triceps-en-polea-con-cuerda","extension-de-triceps-tipo-katana-en-polea","extension-de-triceps-tras-nuca-en-polea","extension-lumbar","face-pull","fondos","hack-squat","jalon-al-pecho","jalon-con-brazos-rectos-en-polea","lat-pull-around-en-polea","nordico-inverso","pajaros-en-polea","patada-de-triceps-en-polea","peck-deck","peso-muerto-rumano","prensa-de-piernas","press-de-gemelos-en-prensa","press-de-hombros-en-multipower","press-de-pecho-en-maquina","press-frances-con-mancuernas","press-frances-en-polea","press-inclinado","press-inclinado-en-smith","press-militar","press-militar-en-maquina","press-plano-en-maquina","remo-en-t","remo-gironda","remo-isolateral-en-maquina-de-palanca","remo-sentado-en-polea-baja","remo-unilateral","rueda-abdominal","zancada-en-multipower"]}/*/EJ_AV*/;
-  const teDibuix = sl => { const av = S.personaje && S.personaje.avatar; return av && EJ_AV[av] && EJ_AV[av].includes(sl) ? av : null; };
-  const fotoAnime = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej/${av}/${sl}.webp` : EJ_ANIME.has(sl) ? `${R()}ej/${sl}.webp` : null; };
+  // la carpeta dels dibuixos de l'avatar que portes: la de l'afro si en porta i hi és, i si no, la seva (30-09 matí)
+  const teDibuix = sl => {
+    const a = llegeixAsp(aspecte());
+    if (!(EJ_AV[a.av] || []).includes(sl)) return null;
+    return a.afro && (EJ_AV[a.av + "-afro"] || []).includes(sl) ? a.av + "-afro" : a.av;
+  };
+  const tintMeu = () => tint(llegeixAsp(aspecte()));
+  const fotoAnime = nom => { const sl = slug(nom), av = teDibuix(sl); return av ? `${R()}ej/${av}/${sl}.webp${tintMeu()}` : EJ_ANIME.has(sl) ? `${R()}ej/${sl}.webp` : null; };
   // ELS AVATARS (29-09): el roster, sense noms (són avatars: el nom és el nickname de cadascú). Cada un porta el seu tema.
   // 30-09 nit (LA LLISTA N1 i N2): primer els de l'estil de l'Àlex («m'agrada la de l'Àlex, nem cap allà»), de franc com
   // l'urbà; els anime, amb or i un sol cop (servidor: sincro.AVATARS_ANIME, amb «av-» davant), «excepte un», l'urbà. El
@@ -8335,16 +8341,116 @@ const Nit = (() => {
   const avMeu = a => AV_FRANC.has(a) || (S.desbloq || []).includes("av-" + a) || a === (S.personaje && S.personaje.avatar);
   const I_CAND = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.6" fill="currentColor"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
   const avatarId = () => { const a = S.personaje && S.personaje.avatar; return AVATARS.includes(a) ? a : "urba"; };
-  const CARA = () => R() + "pj/cara-" + avatarId() + ".webp";
+  /* L'ASPECTE (30-09 matí). L'Albert: «deixa només els dos», «el color de cabell marqui el tema però subtil»; l'Eric:
+     «mínimo color de pelo y uno pelo afro». L'avatar, el pentinat i el color de cabells van en una sola cadena, la que el
+     servidor desa com a personatge i torna als altres: «cua», «cua.blau», «tirants-afro.rosa». El color NO són imatges
+     noves: el taronja dels cabells és l'únic taronja saturat dels dibuixos de l'Àlex, i es tenyeix aquí mateix (tenyeix,
+     més avall; la referència és BETA-1.0/actius/cabells.py). Un pentinat sí que és dibuix: l'afro, quan hi és (AFRO). */
+  const PALETA = { negre: [.62, .25, .30], castany: [.07, .55, .55], ros: [.12, .60, 1.30], plati: [.10, .08, 1.45], blau: [.60, 1, 1], rosa: [.92, .85, 1.15], lila: [.76, .85, 1.05] };
+  const CABELLS = ["", "negre", "castany", "ros", "plati", "blau", "rosa", "lila"];     // "" és el seu, el taronja
+  const MOSTRA_CB = { "": "#e0643a", negre: "#2b2626", castany: "#6e4a30", ros: "#e6c267", plati: "#e9e7ee", blau: "#3f7be0", rosa: "#e25a9c", lila: "#9a6fe0" };
+  const NOM_CB = { "": "Pelirrojo", negre: "Negro", castany: "Castaño", ros: "Rubio", plati: "Platino", blau: "Azul", rosa: "Rosa", lila: "Lila" };
+  const AMB_CB = ["cua", "tirants"];                      // els de l'Àlex: els únics que es trien i es pentinen
+  const AFRO = new Set(/*AFRO*/[]/*/AFRO*/);              // els que ja tenen l'afro dibuixat, el retrat i els exercicis
+  const llegeixAsp = p => {
+    const [b, c] = String(p || "").split("."), av = b.replace(/-afro$/, ""), meu = AMB_CB.includes(av);
+    return { av, afro: meu && b !== av && AFRO.has(av), cb: meu && PALETA.hasOwnProperty(c) ? c : "" };
+  };
+  const aspecteDe = (av, pe, cb) => AMB_CB.includes(av) ? av + (pe === "afro" && AFRO.has(av) ? "-afro" : "") + (PALETA.hasOwnProperty(cb) ? "." + cb : "") : av;
+  const aspecte = () => { const p = S.personaje || {}; return aspecteDe(avatarId(), p.pentinat, p.cabell); };
+  const tint = a => a.cb ? "#cb=" + a.cb : "";
+  const pjDe = (p, cara) => { const a = llegeixAsp(p); return R() + "pj/" + (cara ? "cara-" : "") + (AVATARS.includes(a.av) ? a.av + (a.afro ? "-afro" : "") : "urba") + ".webp" + tint(a); };
+  const CARA = () => pjDe(aspecte(), true);
   // LA PORTADA DE CADA CARTA (29-09): els músculs que treballa (per defecte) o un dels seus exercicis dibuixat, triada a la
   // carta a la mà. Es guarda per carta (rutina:dia) a S.cartesIl.
   const clauCarta = (r, n) => { const d = r.dias[n - 1]; return d && d.id ? d.id : r.id + ":" + n; };
   function ilCarta(r, n) {
     const d = r.dias[n - 1], tria = (S.cartesIl || {})[clauCarta(r, n)];
-    if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) { const av = teDibuix(tria); return { src: av ? `${R()}ej-gran/${av}/${tria}.webp` : `${R()}ej-gran/${tria}.webp`, ej: true, tria }; }
+    if (tria && tria !== "musculs" && EJ_ANIME.has(tria)) { const av = teDibuix(tria); return { src: av ? `${R()}ej-gran/${av}/${tria}.webp${tintMeu()}` : `${R()}ej-gran/${tria}.webp`, ej: true, tria }; }
     return { src: `${R()}musculs-${tipusDia(d)}.webp`, ej: false, tria: "musculs" };
   }
-  const aplicaTema = id => { const v = id || (S.ui.vista === "eleccion" && S.ui.avTria) || avatarId(); if (document.body.dataset.av !== v) document.body.dataset.av = v; };
+  const aplicaTema = (id, cb) => {
+    const tria = S.ui.vista === "eleccion" && S.ui.avTria, v = id || tria || avatarId();
+    const c = AMB_CB.includes(v) ? (id ? cb || "" : tria ? S.ui.cbTria || "" : llegeixAsp(aspecte()).cb) : "", d = document.body.dataset;
+    if (d.av !== v) d.av = v;
+    if ((d.cb || "") !== c) { if (c) d.cb = c; else delete d.cb; }
+  };
+  /* EL TINT (30-09 matí). Una <img> amb «#cb=<color>» a l'adreça no es veu (el CSS l'amaga) fins que és tenyida: es baixa
+     l'original (la de sempre, que ja és a la memòria cau), es pinta en un canvas, es tenyeix i es posa com a blob. Un
+     MutationObserver ho fa sol per a tota imatge que surti, i `tenyit(url)` ho dona a qui pinta en un canvas (la targeta). */
+  const TINTS = new Map();
+  const cl01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+  const hsvRgb = (h, s, v) => { const i = Math.floor(h * 6) % 6, f = h * 6 - Math.floor(h * 6), p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+    return [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][i]; };
+  // la caixa quadrada de costat 2r+1 sobre una màscara 0/1: surt 1 on n'hi ha algun 1 a dins (fora de la imatge, 0)
+  function dilataCaixa(m, w, h, r) {
+    if (r <= 0) return m;
+    const t = new Uint8Array(w * h), o = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const b = y * w; let n = 0;
+      for (let x = -r; x < w; x++) { if (x + r < w) n += m[b + x + r]; if (x - r - 1 >= 0) n -= m[b + x - r - 1]; if (x >= 0) t[b + x] = n > 0 ? 1 : 0; }
+    }
+    for (let x = 0; x < w; x++) {
+      let n = 0;
+      for (let y = -r; y < h; y++) { if (y + r < h) n += t[(y + r) * w + x]; if (y - r - 1 >= 0) n -= t[(y - r - 1) * w + x]; if (y >= 0) o[y * w + x] = n > 0 ? 1 : 0; }
+    }
+    return o;
+  }
+  const banda = (h, a, b, rp) => h >= a || h <= b ? 1 : cl01(1 - Math.min(h - b, a - h) / rp);
+  // els cabells, com mascara() de cabells.py: la zona (el taronja ben saturat, sense les línies primes, eixamplat) i, dins
+  // d'ella, el to del vermell al taronja amb vores suaus
+  function tenyeixPixels(d, w, h, col) {
+    const P = PALETA.hasOwnProperty(col) ? PALETA[col] : null; if (!P) return 0;
+    const N = w * h, H = new Float64Array(N), Sa = new Float64Array(N), V = new Float64Array(N), ll = new Uint8Array(N);
+    for (let k = 0, i = 0; k < N; k++, i += 4) {
+      const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), dd = mx - Math.min(r, g, b);
+      let hh = 0;
+      if (dd > 1e-6) { hh = (mx === r ? ((g - b) / dd) % 6 : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4) / 6; if (hh < 0) hh += 1; }
+      H[k] = hh; Sa[k] = mx > 1e-6 ? dd / mx : 0; V[k] = mx;
+      ll[k] = (hh >= .93 || hh <= .10) && Sa[k] > .5 && mx > .25 ? 1 : 0;
+    }
+    const n = Math.max(w, h), e = Math.max(1, Math.floor(.004 * n + .5)), rz = Math.max(2, Math.floor(.022 * n + .5));
+    const inv = dilataCaixa(ll.map(v => 1 - v), w, h, e), zona = dilataCaixa(inv.map(v => 1 - v), w, h, e + rz);
+    let fets = 0;
+    for (let k = 0, i = 0; k < N; k++, i += 4) {
+      if (!zona[k]) continue;
+      const m = banda(H[k], .86, .11, .03) * cl01((Sa[k] - .33) / .1) * cl01((V[k] - .1) / .08);
+      if (m <= 0) continue;
+      const c = hsvRgb(P[0], cl01(Sa[k] * P[1]), cl01(V[k] * P[2]));
+      d[i] = Math.round((d[i] / 255 * (1 - m) + c[0] * m) * 255); d[i + 1] = Math.round((d[i + 1] / 255 * (1 - m) + c[1] * m) * 255); d[i + 2] = Math.round((d[i + 2] / 255 * (1 - m) + c[2] * m) * 255);
+      fets++;
+    }
+    return fets;
+  }
+  function tenyit(url) {
+    const k = String(url || ""), ix = k.indexOf("#cb="); if (ix < 0) return Promise.resolve(k);
+    if (TINTS.has(k)) return TINTS.get(k);
+    const base = k.slice(0, ix), col = k.slice(ix + 4);
+    const p = new Promise(ok => {
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const cv = document.createElement("canvas"); cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+          const cx = cv.getContext("2d", { willReadFrequently: true }); cx.drawImage(im, 0, 0);
+          const id = cx.getImageData(0, 0, cv.width, cv.height); tenyeixPixels(id.data, cv.width, cv.height, col); cx.putImageData(id, 0, 0);
+          cv.toBlob(b => ok(b ? URL.createObjectURL(b) : base), "image/png");
+        } catch (e) { ok(base); }
+      };
+      im.onerror = () => ok(base);
+      im.src = base;
+    });
+    TINTS.set(k, p);
+    return p;
+  }
+  function tenyeixImg(img) {
+    const s = img.getAttribute("src") || "";
+    if (s.indexOf("#cb=") < 0) { if (s.slice(0, 5) !== "blob:") delete img.dataset.cbsrc; return; }
+    img.dataset.cbsrc = s;
+    tenyit(s).then(u => { if (img.dataset.cbsrc === s) img.src = u; });
+  }
+  const tenyeixDins = n => { if (n.nodeType !== 1) return; if (n.tagName === "IMG") tenyeixImg(n); else n.querySelectorAll('img[src*="#cb="]').forEach(tenyeixImg); };
+  if (typeof MutationObserver === "function") new MutationObserver(ms => { for (const m of ms) { if (m.type === "attributes") tenyeixImg(m.target); else m.addedNodes.forEach(tenyeixDins); } })
+    .observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ["src"] });
 
   // LES DADES DE DEBÒ
   const eloDe = () => { try { return typeof Elo === "object" ? Elo.calcula() : { elo: null }; } catch (e) { return { elo: null }; } };
@@ -8778,11 +8884,16 @@ const Nit = (() => {
     const nwa = ev.target.closest('[data-accion="nw-av"]');
     if (nwa) {
       ev.preventDefault(); ev.stopPropagation();
-      S.ui.avTria = nwa.dataset.id; aplicaTema(nwa.dataset.id);
-      document.querySelectorAll('[data-accion="nw-av"]').forEach(b => { const on = b === nwa; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
-      const img = document.querySelector(".nw-cos");
-      if (img) { img.src = `${R()}pj/${nwa.dataset.id}.webp`; if (!quiet()) img.animate([{ opacity: 0, transform: "translateY(16px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.1)" }); }
+      S.ui.avTria = nwa.dataset.id; pintaEleccio(true);
       fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: 1.05, volum: .3 }); E.vibra("gira"); });
+      return;
+    }
+    const nwo = ev.target.closest('[data-accion="nw-cb"],[data-accion="nw-pe"]');
+    if (nwo) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (nwo.dataset.accion === "nw-cb") S.ui.cbTria = nwo.dataset.cb; else S.ui.peTria = nwo.dataset.pe;
+      pintaEleccio(nwo.dataset.accion === "nw-pe");
+      fx(E => { E.suena("tap"); E.vibra("tap"); });
       return;
     }
     const pv = ev.target.closest('[data-accion="npro-avisa"]');
@@ -9095,20 +9206,28 @@ const Nit = (() => {
     if (!quiet()) document.querySelectorAll(".nt-rang").forEach((r, i) => { try { r.animate([{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }], { duration: 320, delay: 40 + i * 35, easing: "cubic-bezier(.2,.9,.25,1)", fill: "backwards" }); } catch (er) {} });
     fx(E => E.suena("tap"));
   }
-  // EL PERSONATGE: l'editor (cabells, roba, colors, com el Duolingo) encara no hi és; de moment, l'Urbà i el que vindrà
-  /* EL BUILDER (l'Albert, 29-09: «has de deixar fet el builder»): «Elige tu personaje». El personatge gran a dalt, damunt
-     de la llesca del seu color, i a sota les cares del roster. Tocar-ne una la prova: el cos entra i tota l'app es vesteix
-     amb els seus colors al moment; «Elegir» la desa amb el klonk, i tancar sense triar ho deixa com era. */
+  /* EL BUILDER (29-09; 30-09 matí). L'Albert: «deixa només els dos», «que es puguin fer aquest tipus de personalitzacions»;
+     l'Eric: «cambiar el menú de selección de personajes (...) mínimo color de pelo y uno pelo afro». Els dos de l'Àlex (i
+     el que ja portessis, si és un altre: el que és teu no se't treu), el color de cabells i, quan hi és, el pentinat.
+     Tocar-ne un el prova al moment, amb el tema; «Elegir» el desa amb el klonk, i tancar sense triar ho deixa com era. */
+  const avVisibles = () => { const ara = S.personaje && S.personaje.avatar; return [...AMB_CB, ...AVATARS.filter(a => !AMB_CB.includes(a) && (a === ara || (S.desbloq || []).includes("av-" + a)))]; };
+  const htmlCbs = (av, cb, attr) => AMB_CB.includes(av) ? `<div class="nb3-cbs" role="group" aria-label="Color de pelo">${CABELLS.map(c =>
+    `<button type="button" class="nb3-cb${c === cb ? " on" : ""}" ${attr} data-cb="${c}" style="--c:${MOSTRA_CB[c]}" aria-label="${NOM_CB[c]}" aria-pressed="${c === cb}"></button>`).join("")}</div>` : "";
+  const htmlPes = (av, pe, attr) => AFRO.has(av) ? `<div class="nb3-pes" role="group" aria-label="Peinado">${[["", "Clásico"], ["afro", "Afro"]].map(([p, t]) =>
+    `<button type="button" class="nb3-pe${p === pe ? " on" : ""}" ${attr} data-pe="${p}" aria-pressed="${p === pe}">${t}</button>`).join("")}</div>` : "";
   function obreEditaPj() {
     if (document.querySelector(".nb3")) return;
-    const ara = avatarId(); let tria = ara, tancat = false;
+    const p0 = S.personaje || {}, ara = avatarId();
+    let tria = ara, cb = AMB_CB.includes(ara) && PALETA.hasOwnProperty(p0.cabell) ? p0.cabell : "", pe = p0.pentinat === "afro" ? "afro" : "", tancat = false;
+    const asp = av => aspecteDe(av, pe, cb);
     const el = document.createElement("div");
     el.className = "nb3"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Elige tu personaje");
     el.innerHTML = `<i class="nb3-llesca" aria-hidden="true"></i>
       <button class="nb3-x" data-b3="tanca" aria-label="Cerrar">${I_X}</button>
       <div class="nb3-cap"><span class="np3-tag">Personaje</span><b class="nb3-t">Elige tu personaje</b></div>
-      <div class="nb3-escena"><img class="nb3-cos" src="${R()}pj/${ara}.webp" alt="" draggable="false"></div>
-      <div class="nb3-graella">${AVATARS.map((a, k) => `<button class="nb3-av${a === ara ? " on" : ""}${avMeu(a) ? "" : " tancat"}" data-b3="av" data-id="${a}" aria-label="Personaje ${k + 1}${avMeu(a) ? "" : `, se desbloquea con ${PREU_AV} de oro`}" aria-pressed="${a === ara}"><img src="${R()}pj/cara-${a}.webp" alt="" draggable="false">${avMeu(a) ? "" : `<i class="nb3-cand">${I_CAND}</i>`}</button>`).join("")}</div>
+      <div class="nb3-escena"><img class="nb3-cos" src="${pjDe(asp(tria), false)}" alt="" draggable="false"></div>
+      <div class="nb3-graella">${avVisibles().map((a, k) => `<button class="nb3-av${a === ara ? " on" : ""}" data-b3="av" data-id="${a}" aria-label="Personaje ${k + 1}" aria-pressed="${a === ara}"><img src="${pjDe(asp(a), true)}" alt="" draggable="false"></button>`).join("")}</div>
+      <div class="nb3-opc">${htmlCbs(tria, cb, 'data-b3="cb"')}${htmlPes(tria, pe, 'data-b3="pe"')}</div>
       <button class="nb3-ok" data-b3="ok"><span>Elegir</span></button>`;
     document.body.appendChild(el);
     fontFirma();
@@ -9118,31 +9237,22 @@ const Nit = (() => {
       el.querySelector(".nb3-cos").animate([{ transform: "translateX(40%)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 560, easing: "cubic-bezier(.2,.9,.25,1.1)" });
       el.querySelectorAll(".nb3-av").forEach((b, k) => b.animate([{ transform: "scale(.4)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, delay: 120 + k * 35, easing: "cubic-bezier(.2,.9,.3,1.2)", fill: "backwards" }));
     }
-    const ok = el.querySelector(".nb3-ok");
-    let comprant = false;
-    const pintaOk = () => {
-      const meu = avMeu(tria), falta = PREU_AV - (typeof oroTotal === "function" ? oroTotal() : 0);
-      ok.classList.toggle("compra", !meu); ok.disabled = !meu && falta > 0;
-      ok.innerHTML = meu ? "<span>Elegir</span>" : falta > 0 ? `<span>Te faltan ${n0(falta)} de oro</span>` : `<span>Desbloquear · ${n0(PREU_AV)}</span>${ic("moneda", "nb3-mon")}`;
-    };
-    const compra = async () => {
-      if (comprant || avMeu(tria)) return; comprant = true;
-      const id = tria, ref = "av-" + id;
-      try {
-        if (!(typeof teCompte === "function" && teCompte())) { if (typeof avis === "function") avis("Para desbloquear un avatar hace falta tu cuenta.", true); comprant = false; return; }
-        const r = await apiCompte("POST", "/or/desbloqueja", { personatge: ref }); aplicaOr(r.or, r.desbloq);
-        if (typeof guardarYa === "function") guardarYa();
-        const b = el.querySelector(`.nb3-av[data-id="${id}"]`); if (b) { b.classList.remove("tancat"); b.querySelector(".nb3-cand")?.remove(); }
-        fx(E => { E.suena("fanfarria"); E.lluvia(1.2); E.vibra("desbloqueig"); });
-        if (tria === id) tanca(true); else pintaOk();
-      } catch (e) { if (typeof avis === "function") avis(e.status === 0 ? "Sin conexión: para desbloquear hace falta red." : e.message, true); }
-      comprant = false;
+    // el que es veu, amb el que hi ha triat: el cos, les cares (amb el color triat), les opcions i el tema
+    const pinta = dir => {
+      aplicaTema(tria, cb);
+      el.querySelectorAll(".nb3-av").forEach(b => { const on = b.dataset.id === tria; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); const im = b.querySelector("img"), u = pjDe(asp(b.dataset.id), true); if (im && im.dataset.cbsrc !== u && im.getAttribute("src") !== u) im.src = u; });
+      el.querySelector(".nb3-opc").innerHTML = htmlCbs(tria, cb, 'data-b3="cb"') + htmlPes(tria, pe, 'data-b3="pe"');
+      const img = el.querySelector(".nb3-cos"), nou = pjDe(asp(tria), false);
+      if (quiet() || !img.animate || !dir) { img.src = nou; return; }
+      img.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 30}%)`, opacity: 0 }], { duration: 160, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = () => {
+        img.src = nou;
+        img.animate([{ transform: `translateX(${dir * 30}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.1)", fill: "forwards" });
+      };
     };
     const tanca = desa => {
       if (tancat) return; tancat = true;
-      if (desa && !avMeu(tria)) tria = ara;
-      if (desa) { S.personaje = { ...(S.personaje || {}), avatar: tria }; if (typeof guardar === "function") guardar(); }
-      aplicaTema(desa ? tria : ara);
+      if (desa) { S.personaje = { ...(S.personaje || {}), avatar: tria, cabell: AMB_CB.includes(tria) ? cb : "", pentinat: AFRO.has(tria) ? pe : "" }; if (typeof guardar === "function") guardar(); }
+      aplicaTema();
       const fi = () => { el.remove(); if (desa && typeof render === "function") render(); };
       if (quiet()) { fi(); return; }
       el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" }).onfinish = fi;
@@ -9151,28 +9261,20 @@ const Nit = (() => {
       const t = ev.target.closest("[data-b3]"); if (!t) return;
       ev.preventDefault(); ev.stopPropagation();
       if (t.dataset.b3 === "tanca") { fx(E => E.suena("tap")); tanca(false); return; }
-      if (t.dataset.b3 === "ok") {
-        if (avMeu(tria)) { so(); tanca(true); return; }
-        if (!ok.disabled) confirma({ titol: `¿Gastar ${n0(PREU_AV)} de oro?`, text: "Este avatar será tuyo para siempre.", si: "Desbloquear", no: "Ahora no", ic: ic("moneda"), fes: compra, compra: true });
+      if (t.dataset.b3 === "ok") { so(); tanca(true); return; }
+      if (t.dataset.b3 === "av" && t.dataset.id !== tria) {
+        const l = avVisibles(), dir = l.indexOf(t.dataset.id) > l.indexOf(tria) ? 1 : -1;
+        tria = t.dataset.id; pinta(dir);
+        fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: dir > 0 ? 1.1 : .9, costat: dir * .3, volum: .32 }); E.vibra("gira"); });
         return;
       }
-      if (t.dataset.b3 === "av" && t.dataset.id !== tria) {
-        const dir = AVATARS.indexOf(t.dataset.id) > AVATARS.indexOf(tria) ? 1 : -1;
-        tria = t.dataset.id; aplicaTema(tria); pintaOk();
-        el.querySelectorAll(".nb3-av").forEach(b => { const on = b.dataset.id === tria; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
-        const img = el.querySelector(".nb3-cos"), nou = `${R()}pj/${tria}.webp`;
-        fx(E => { if (E.mostra) E.mostra(SO_GIRA(), { to: dir > 0 ? 1.1 : .9, costat: dir * .3, volum: .32 }); E.vibra("gira"); });
-        if (quiet() || !img.animate) { img.src = nou; return; }
-        img.animate([{ transform: "none", opacity: 1 }, { transform: `translateX(${-dir * 30}%)`, opacity: 0 }], { duration: 160, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }).onfinish = () => {
-          img.src = nou;
-          img.animate([{ transform: `translateX(${dir * 30}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.1)", fill: "forwards" });
-        };
-      }
+      if (t.dataset.b3 === "cb" && t.dataset.cb !== cb) { cb = t.dataset.cb; pinta(0); fx(E => { E.suena("tap"); E.vibra("tap"); }); return; }
+      if (t.dataset.b3 === "pe" && t.dataset.pe !== pe) { pe = t.dataset.pe; pinta(0); fx(E => { E.suena("tap"); E.vibra("tap"); }); }
     });
   }
 
   // l'Urbà en lloc del personatge 3D d'abans (app.js, heroi): a la capçalera de l'entreno i de Nutrición no hi surt
-  const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${R()}pj/${avatarId()}.webp" alt="" draggable="false"></div>`;
+  const heroi = (estil = "") => `<div class="nt-heroi"${estil ? ` style="${estil}"` : ""}><img src="${cosAvatar()}" alt="" draggable="false"></div>`;
 
   // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
   const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", espejo: "tu", cartas: "tu", pro: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
@@ -9198,7 +9300,7 @@ const Nit = (() => {
     const nav = document.getElementById("barra-nova");
     if (nav && !nav.querySelector(".nt-barra")) nav.innerHTML = `<div class="nt-barra nt-barra-g">${botonsBarra()}</div>`;
     // la cara de la barra és la de l'avatar triat (la barra es pinta un cop: si canvies d'avatar, s'hi canvia la cara)
-    const av = nav && nav.querySelector(".nt-av"); if (av && av.getAttribute("src") !== CARA()) av.setAttribute("src", CARA());
+    const av = nav && nav.querySelector(".nt-av"), cara = CARA(); if (av && av.getAttribute("src") !== cara && av.dataset.cbsrc !== cara) av.setAttribute("src", cara);
     const lloc = LLOC[vista] || "";
     document.querySelectorAll(".nt-barra [data-lloc]").forEach(b => {
       const on = b.dataset.lloc === lloc;
@@ -9667,7 +9769,7 @@ const Nit = (() => {
      concepte B, «la fragua de la squad»: la teva colla dreta a les seves peanes, encesa qui ha entrenat avui, amb l'anella del
      dia al darrere; la crida, discreta; i dues portes, el Ranking i els Gimnasios. Tot cap sense scroll: el detall és a dins.
      (La lliga setmanal de la recerca no hi és: com funciona és una decisió seva, SOCIAL-RECERCA.md §8.) */
-  const cosDe = p => R() + "pj/" + (AVATARS.includes(p) ? p : "urba") + ".webp";
+  const cosDe = p => pjDe(p, false);
   // el mapa de Gimnasios, obert només en aquesta visita (no a S.ui, que es desa: la revisió de la nit)
   let gimMapa = false;
   // sense scroll: el resum fa exactament l'alçada que queda entre on comença i el menú de baix (a cada mòbil, la seva)
@@ -9703,7 +9805,7 @@ const Nit = (() => {
       // tu al mig i dos llocs buits a cada banda (peanes, no botons: un sol «Crea tu squad», com va demanar l'Albert el 29-09)
       const buit = k => `<span class="nsx-pj buit" style="--k:${k}" aria-hidden="true"><i class="nsx-peana"></i></span>`;
       return `<div class="nsx-escena buida" data-in="ns">
-        <div class="nsx-colla">${buit(0)}${buit(1)}<span class="nsx-pj jo" style="--k:2"><img src="${cosDe(avatarId())}" alt="" draggable="false"><i class="nsx-peana"></i><small>Tú</small></span>${buit(3)}${buit(4)}</div>
+        <div class="nsx-colla">${buit(0)}${buit(1)}<span class="nsx-pj jo" style="--k:2"><img src="${cosDe(aspecte())}" alt="" draggable="false"><i class="nsx-peana"></i><small>Tú</small></span>${buit(3)}${buit(4)}</div>
         <div class="nsx-crea">${inv ? `<p><b>${esc(inv.de)}</b> te invita a <b>${esc(inv.nom)}</b></p><span><button class="nsx-crea-b" data-accion="nsq-accepta" data-id="${inv.id}">Unirme</button><button class="nsx-no" data-accion="nsq-rebutja" data-id="${inv.id}">Rechazar</button></span>`
           : `<button class="nsx-crea-b" data-accion="${d ? "nsq-nova" : "nsq-recarrega"}">${d ? "Crea tu squad" : S.ui.sqErr ? "Reintentar" : "Cargando…"}</button><small>Cada semana que todos entrenáis dos días, el emblema sube.</small>`}</div>
       </div>`;
@@ -9715,7 +9817,7 @@ const Nit = (() => {
         <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" class="nsx-a-f"/><circle cx="50" cy="50" r="46" class="nsx-a-p" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(C * (1 - pc)).toFixed(1)}"/></svg>
         <span class="nsx-anell-t"><b>${fets} de ${n}</b><small>hoy</small></span></button>
       <div class="nsx-colla n${vis.length}">${vis.map((m, k) => {
-        const nom = m.yo ? "Tú" : m.nom, dins = `<img src="${m.yo ? cosDe(avatarId()) : cosDe(m.personatge)}" alt="" draggable="false"><i class="nsx-peana"></i><small>${esc(nom)}</small>`;
+        const nom = m.yo ? "Tú" : m.nom, dins = `<img src="${m.yo ? cosDe(aspecte()) : cosDe(m.personatge)}" alt="" draggable="false"><i class="nsx-peana"></i><small>${esc(nom)}</small>`;
         return m.yo || !m.pid ? `<span class="nsx-pj${m.avui ? " calent" : ""}" style="--k:${k}">${dins}</span>`
           : `<button class="nsx-pj${m.avui ? " calent" : ""}" style="--k:${k}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="${esc(nom)}${m.avui ? ", ha entrenado hoy" : ""}">${dins}</button>`; }).join("")}
         ${n > 5 ? `<button class="nsx-mes" data-accion="ns-dins" data-t="squads">+${n - 5}</button>` : ""}</div>
@@ -10114,7 +10216,7 @@ const Nit = (() => {
       <div class="nm-acc">${acc}</div>
       <div class="nm-comp nm-portp" data-nm="noport" hidden><div class="nm-comp-p" data-nm="res" role="group" aria-label="Portada">
         <b class="nm-comp-t">Portada</b>
-        <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : (teDibuix(p) ? `${R()}ej-gran/${teDibuix(p)}/${p}.webp` : `${R()}ej-gran/${p}.webp`)}" alt="" draggable="false"></button>`).join("")}</div>
+        <div class="nm-ports">${portades.map(p => `<button class="nm-pb${p === ilCarta(r, n).tria ? " on" : ""}" data-nm="il" data-il="${p}" aria-label="${p === "musculs" ? "Músculos" : "Ejercicio"}"><img src="${p === "musculs" ? `${R()}musculs-${tipusDia(d)}.webp` : (teDibuix(p) ? `${R()}ej-gran/${teDibuix(p)}/${p}.webp${tintMeu()}` : `${R()}ej-gran/${p}.webp`)}" alt="" draggable="false"></button>`).join("")}</div>
         <button class="nm-comp-no" data-nm="noport">Listo</button></div></div>
       ${panellComparteix(r, n, d)}`;
     document.body.appendChild(ov);
@@ -10280,7 +10382,7 @@ const Nit = (() => {
   const TITOL_NIT = [[1, "Aprendiz"], [3, "Oficial"], [5, "Veterano"], [8, "Maestro"], [12, "Élite"], [20, "Leyenda"]];
   const titolNit = n => TITOL_NIT.filter(([k]) => n >= k).pop()[1];
   // el cos sencer de l'avatar, retallat (pj/<avatar>.webp)
-  const cosAvatar = () => R() + "pj/" + avatarId() + ".webp";
+  const cosAvatar = () => pjDe(aspecte(), false);
   function filaN(i, et, v) { return `<div class="np3-fila" style="--i:${i}"><span class="np3-fila-c"></span><span class="np3-fila-l">${et}</span><b class="np3-n num" data-compta="${v}" data-quan="${560 + i * 160}">0</b></div>`; }
   function linia(vals, w = 110, h = 34) {
     if (vals.length < 2) return "";
@@ -10641,7 +10743,7 @@ const Nit = (() => {
      Servidor: squads.py (les regles de menors: sense text lliure, amics de tothom, l'invitat accepta). A dalt de Social, la
      teva squad; a «Squads», totes, les invitacions i el que pot fer el líder. Les dades de la setmana: els dies, per a
      tothom; les sèries, els quilos i els rècords, amb el PRO (el cadenat porta a la Tienda). */
-  const caraDe = p => R() + "pj/cara-" + (AVATARS.includes(p) ? p : "urba") + ".webp";
+  const caraDe = p => pjDe(p, true);
   // L'ETIQUETA DE LA SQUAD (29-09, l'Albert: «com quan la gent es posava [FDK]Arteclos», «poques lletres»): de 2 a 4 lletres
   // o xifres, del color que tria la squad, al costat del nom (servidor: squads.py, etiqueta; app.py, etiquetes)
   const COL_SQ = { menta: "#86d9c6", lila: "#b8a4ff", or: "#e2c27a", coral: "#ff8f80", cel: "#7cc6ff", llima: "#b5e36a" };
@@ -11100,23 +11202,35 @@ const Nit = (() => {
     if (c.mode === "restableix") return `<section class="nw nw-form">${LOGO_NW()}<h1 class="nw-t">Nueva contraseña</h1>
         <form class="nw-f" data-form="compte-restableix"><label class="nw-camp"><span>Contraseña nueva</span><input id="c-pass" type="password" autocomplete="new-password" minlength="8" required placeholder="8 caracteres o más"></label>
           ${botoN('type="submit"', "Guardar y entrar", "nw-si")}</form>${LEGAL_NW}</section>`;
-    const colla = ["fibrado", "reina", "mascara", "powerlifter", "berserker"];
+    const colla = ["cua.negre", "tirants.ros", "cua", "tirants.negre", "cua.rosa"];     // els dos, amb cabells diferents
     return `<section class="nw nw-inici"><i class="nw-llesca" aria-hidden="true"></i>${LOGO_NW()}
-      <div class="nw-colla" aria-hidden="true">${colla.map((a, k) => `<img class="nw-pj" style="--k:${k}" src="${R()}pj/${a}.webp" alt="" draggable="false">`).join("")}</div>
+      <div class="nw-colla" aria-hidden="true">${colla.map((a, k) => `<img class="nw-pj" style="--k:${k}" src="${pjDe(a, false)}" alt="" draggable="false">`).join("")}</div>
       <div class="nw-botons">${botoN('type="button" data-accion="compte-mode" data-m="nou"', "Crear cuenta", "nw-si")}${g}
         <button class="nw-b2" data-accion="compte-mode" data-m="entra">Ya tengo cuenta</button></div>
       <p class="nw-edat-t">KLONK es a partir de 14 años.</p>${LEGAL_NW}</section>`;
   }
+  // «Elige tu personaje» de l'entrada, repintat sense tornar a pintar la pàgina (el nickname que escrius no es perd)
+  function pintaEleccio(anima) {
+    const tria = S.ui.avTria || avatarId(), cb = AMB_CB.includes(tria) ? S.ui.cbTria || "" : "", pe = AFRO.has(tria) ? S.ui.peTria || "" : "";
+    aplicaTema(tria, cb);
+    document.querySelectorAll('[data-accion="nw-av"]').forEach(b => { const on = b.dataset.id === tria; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); const im = b.querySelector("img"); if (im) im.src = pjDe(aspecteDe(b.dataset.id, pe, cb), true); });
+    const o = document.querySelector(".nw-opc"); if (o) o.innerHTML = htmlCbs(tria, cb, 'data-accion="nw-cb"') + htmlPes(tria, pe, 'data-accion="nw-pe"');
+    const img = document.querySelector(".nw-cos");
+    if (img) { img.src = pjDe(aspecteDe(tria, pe, cb), false); if (anima && !quiet()) img.animate([{ opacity: 0, transform: "translateY(16px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: 380, easing: "cubic-bezier(.2,.9,.25,1.1)" }); }
+  }
   function vistaEleccion() {
     const nou = !S.personaje;
-    if (nou && !S.ui.avTria) S.ui.avTria = AVATARS[0];      // el que surt triat és el que es desa (forjaPersonatge llegeix avTria)
+    if (nou && !S.ui.avTria) S.ui.avTria = AMB_CB[0];      // el que surt triat és el que es desa (forjaPersonatge llegeix avTria)
     const tria = S.ui.avTria || avatarId();
-    // a l'entrada, només els que ja pots portar: els de franc i els teus (els de compra, al builder de Tú, amb el cadenat)
-    const avs = AVATARS.filter(avMeu);
+    if (S.ui.cbTria == null) { const p = S.personaje || {}; S.ui.cbTria = PALETA.hasOwnProperty(p.cabell) ? p.cabell : ""; S.ui.peTria = p.pentinat === "afro" ? "afro" : ""; }
+    const cb = AMB_CB.includes(tria) ? S.ui.cbTria || "" : "", pe = AFRO.has(tria) ? S.ui.peTria || "" : "";
+    // la primera configuració (l'Albert, 30-09: «que la primera config sigui això»): els dos, el color de cabells i el pentinat
+    const avs = avVisibles();
     const nom = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "";
     return `<section class="nw nw-tria">${nou ? LOGO_NW() : ""}<h1 class="nw-t">Elige tu personaje</h1>
-      <div class="nw-esc"><img class="nw-cos" src="${R()}pj/${tria}.webp" alt="" draggable="false"></div>
-      <div class="nb3-graella nw-graella">${avs.map((a, k) => `<button type="button" class="nb3-av${a === tria ? " on" : ""}" data-accion="nw-av" data-id="${a}" aria-label="Personaje ${k + 1}" aria-pressed="${a === tria}"><img src="${R()}pj/cara-${a}.webp" alt="" draggable="false"></button>`).join("")}</div>
+      <div class="nw-esc"><img class="nw-cos" src="${pjDe(aspecteDe(tria, pe, cb), false)}" alt="" draggable="false"></div>
+      <div class="nb3-graella nw-graella">${avs.map((a, k) => `<button type="button" class="nb3-av${a === tria ? " on" : ""}" data-accion="nw-av" data-id="${a}" aria-label="Personaje ${k + 1}" aria-pressed="${a === tria}"><img src="${pjDe(aspecteDe(a, pe, cb), true)}" alt="" draggable="false"></button>`).join("")}</div>
+      <div class="nw-opc nb3-opc">${htmlCbs(tria, cb, 'data-accion="nw-cb"')}${htmlPes(tria, pe, 'data-accion="nw-pe"')}</div>
       <form class="nw-f" data-form="personaje">
         <label class="nw-camp"><span>Tu nickname</span><input id="f-nom" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(nom)}" placeholder="Así te verán en KLONK"></label>
         <p class="nw-nota">Único: nadie más puede tenerlo. De 3 a 20 letras o números, sin espacios.</p>
@@ -11234,9 +11348,9 @@ const Nit = (() => {
   const ENFOCS = { hipertrofia: "Hipertrofia", fuerza: "Fuerza", gluteo: "Glúteo y pierna", torso: "Torso", brazos: "Brazos", inicio: "Para empezar", avanzado: "Avanzado", definicion: "Definición" };
   const PREUS_M = [200, 400, 800, 1500];
   let mercatPendent = null;
-  function portadaEj(nom, av) {
-    const sl = slug(nom || "");
-    if (sl && av && EJ_AV[av] && EJ_AV[av].includes(sl)) return `${R()}ej-gran/${av}/${sl}.webp`;
+  function portadaEj(nom, p) {
+    const sl = slug(nom || ""), a = llegeixAsp(p), av = a.av;
+    if (sl && av && EJ_AV[av] && EJ_AV[av].includes(sl)) return `${R()}ej-gran/${a.afro && (EJ_AV[av + "-afro"] || []).includes(sl) ? av + "-afro" : av}/${sl}.webp${tint(a)}`;
     if (sl && EJ_ANIME.has(sl)) return `${R()}ej-gran/${sl}.webp`;
     return `${R()}musculs-cuerpo.webp`;
   }
@@ -11263,7 +11377,7 @@ const Nit = (() => {
     const p = noms.find(n => dib(n) && !usats.has(slug(n))) || noms[0];
     if (p) usats.add(slug(p));
     return `<button class="nm3-o nm3-k" data-accion="rut-ver" data-id="${r.id}" data-in="nb">
-      <span class="nm3-pila"><i></i><i></i><img src="${portadaEj(p, av)}" alt="" draggable="false"></span>
+      <span class="nm3-pila"><i></i><i></i><img src="${portadaEj(p, aspecte())}" alt="" draggable="false"></span>
       <b class="nm3-t">${esc(r.nombre)}</b><small class="nm3-de">de KLONK · ${nDies(r.dias.length)}</small><small class="nm3-de">${noms.length} ejercicios</small>
       <span class="nm3-peu"><em class="nm3-gratis">Gratis</em></span></button>`;
   };
@@ -12842,7 +12956,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 @media (prefers-reduced-motion:reduce){.np3-fila,.np3-rec{opacity:1}.viva .np3-fila,.viva .np3-rec,.np3-llesca,.np3-pj{animation:none}}
 
 /* ======================= EL BUILDER (Elige tu personaje) ======================= */
-.nb3{position:fixed;inset:0;z-index:86;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:14px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+.nb3{position:fixed;inset:0;z-index:86;display:grid;grid-template-rows:auto minmax(0,1fr);grid-auto-rows:auto;gap:14px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
   background:radial-gradient(90% 60% at 60% 45%,rgb(var(--l3-rgb) / .6),transparent 70%),#070b11;color:#e7edf2;font-family:'Nunito',system-ui,sans-serif;overflow:hidden;touch-action:manipulation}
 .nb3-llesca{position:absolute;left:-30%;width:160%;top:30%;height:28%;transform:rotate(-14deg);background:linear-gradient(90deg,rgb(var(--l3-rgb)),rgb(var(--l2-rgb)) 50%,rgb(var(--m-rgb) / .85));opacity:.8;pointer-events:none;transition:background .4s}
 .nb3-x{position:absolute;top:calc(10px + env(safe-area-inset-top));right:14px;z-index:3;width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:50%;background:rgb(255 255 255 / .08);color:#e7edf2;cursor:pointer}
@@ -12853,7 +12967,18 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nb3-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain}
 /* l'ombra del terra, sense filtre (a l'iPhone, el drop-shadow sobre els avatars de l'Àlex pintava un vel a tota la caixa) */
 .nb3-escena::before,.nw-esc::before{content:"";position:absolute;left:50%;bottom:0;width:52%;height:7%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgb(0 0 0 / .6),transparent)}
-.nb3-graella{position:relative;z-index:2;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.nb3-graella{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+.nb3-graella .nb3-av{width:64px;flex:none}
+.nb3-opc{position:relative;z-index:2;display:grid;gap:12px;justify-items:center}
+.nb3-opc:empty{display:none}
+.nb3-cbs{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.nb3-cb{width:34px;height:34px;border:0;padding:0;border-radius:50%;background:var(--c);box-shadow:inset 0 -3px 0 rgb(0 0 0 / .22),inset 0 0 0 1.5px rgb(255 255 255 / .18);cursor:pointer;transition:transform .15s,box-shadow .2s}
+.nb3-cb.on{box-shadow:0 0 0 3px #0d1217,0 0 0 5.5px rgb(var(--m-rgb)),inset 0 -3px 0 rgb(0 0 0 / .22)}
+.nb3-cb:active{transform:scale(.9)}
+.nb3-pes{display:flex;gap:8px}
+.nb3-pe{height:40px;padding:0 20px;border:0;border-radius:20px;background:rgb(255 255 255 / .07);color:#e7edf2;font:800 15px/1 'Nunito',system-ui,sans-serif;cursor:pointer}
+.nb3-pe.on{background:rgb(var(--m-rgb) / .16);color:rgb(var(--m2-rgb));box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .6)}
+.nb3-cb:focus-visible,.nb3-pe:focus-visible{outline:2px solid #e7edf2;outline-offset:3px}
 .nb3-av{aspect-ratio:1;border:0;padding:0;border-radius:50%;overflow:hidden;background:#111923;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08);cursor:pointer;transition:transform .15s,box-shadow .2s}
 .nb3-av img{width:100%;height:100%;object-fit:cover;display:block}
 .nb3-av.on{box-shadow:0 0 0 3px rgb(var(--m-rgb)),0 0 20px -2px rgb(var(--m-rgb) / .8)}
@@ -13185,7 +13310,7 @@ button.ns-guerra:active{transform:scale(.985)}
 @keyframes nw-logo{from{opacity:0;transform:translateY(-10px) scale(.96);filter:blur(6px) drop-shadow(0 10px 24px rgb(0 0 0 / 0))}
   to{filter:blur(0) drop-shadow(0 10px 24px rgb(0 0 0 / .6))}}
 .nw-colla{position:relative;z-index:1;width:100%;max-width:420px;height:min(46vh,420px);margin-top:4px}
-.nw-pj{position:absolute;bottom:0;height:78%;left:50%;width:auto;max-width:none;filter:drop-shadow(0 18px 24px rgb(0 0 0 / .6));animation:nw-pj .9s calc(var(--k) * 90ms + .2s) cubic-bezier(.2,.9,.25,1.1) both,nw-sura 4.2s calc(var(--k) * .6s + 1.2s) ease-in-out infinite}
+.nw-pj{position:absolute;bottom:0;height:78%;left:50%;width:auto;max-width:none;animation:nw-pj .9s calc(var(--k) * 90ms + .2s) cubic-bezier(.2,.9,.25,1.1) both,nw-sura 4.2s calc(var(--k) * .6s + 1.2s) ease-in-out infinite}
 .nw-pj:nth-child(1){transform:translateX(-128%);height:70%;z-index:1;opacity:.92}
 .nw-pj:nth-child(2){transform:translateX(-86%);height:78%;z-index:2}
 .nw-pj:nth-child(3){transform:translateX(-50%);height:96%;z-index:4}
@@ -13377,6 +13502,7 @@ body.v-nit .avis-correu .tanca-x{border:0;background:rgb(255 255 255 / .07);colo
 .nw-tria .nw-esc{position:relative;z-index:1;width:100%;height:min(40vh,380px)}
 .nw-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain}
 .nw-graella{width:min(100%,420px)}
+.nw-opc{position:relative;z-index:1;width:min(100%,420px);margin-top:4px}
 @media (prefers-reduced-motion:reduce){.nw-pj,.nw-logo,.nw-llesca{animation:none}}
 /* la farga no surt enlloc de la Noche: ni el fons del calabós ni l'escena ambient, tampoc a l'entrada */
 body.v-nit .fons{background:#0b1016}
@@ -13461,7 +13587,7 @@ body.v-nit .serie{position:relative}
 
 /* ======================= EL TEMA DE CADA AVATAR (els seus colors, «sense forçar-ho») ======================= */
 body.v-nit[data-av="cua"]{--m-rgb:240 118 74;--m2-rgb:245 159 128;--m3-rgb:211 104 65;--m4-rgb:163 80 50;--mt-rgb:44 14 4;--l-rgb:236 230 226;--l2-rgb:165 161 158;--l3-rgb:90 87 86}
-body.v-nit[data-av="tirants"]{--m-rgb:162 112 238;--m2-rgb:190 155 243;--m3-rgb:143 99 209;--m4-rgb:110 76 162;--mt-rgb:26 12 48;--l-rgb:240 128 80;--l2-rgb:168 90 56;--l3-rgb:91 49 30}
+/* el dels tirants no en porta cap: el de l'urbà, el de sempre (l'Albert, 30-09: «posa-li al noi el tema lila que teníem amb el normal d'anime») */
 body.v-nit[data-av="mascara"]{--m-rgb:226 190 110;--m2-rgb:235 210 154;--m3-rgb:199 167 97;--m4-rgb:154 129 75;--mt-rgb:40 28 6;--l-rgb:150 158 170;--l2-rgb:105 111 119;--l3-rgb:57 60 65}
 body.v-nit[data-av="fibrado"]{--m-rgb:79 209 197;--m2-rgb:132 223 214;--m3-rgb:70 184 173;--m4-rgb:54 142 134;--mt-rgb:6 38 36;--l-rgb:214 222 230;--l2-rgb:150 155 161;--l3-rgb:81 84 87}
 body.v-nit[data-av="chad"]{--m-rgb:226 232 238;--m2-rgb:235 239 243;--m3-rgb:199 204 209;--m4-rgb:154 158 162;--mt-rgb:18 22 28;--l-rgb:150 158 170;--l2-rgb:105 111 119;--l3-rgb:57 60 65}
@@ -13472,6 +13598,16 @@ body.v-nit[data-av="acrobata"]{--m-rgb:96 156 242;--m2-rgb:144 186 246;--m3-rgb:
 body.v-nit[data-av="lluitadora"]{--m-rgb:218 78 78;--m2-rgb:229 131 131;--m3-rgb:192 69 69;--m4-rgb:148 53 53;--mt-rgb:42 6 6;--l-rgb:236 204 204;--l2-rgb:165 143 143;--l3-rgb:90 78 78}
 body.v-nit[data-av="rebel"]{--m-rgb:234 86 166;--m2-rgb:240 137 193;--m3-rgb:206 76 146;--m4-rgb:159 58 113;--mt-rgb:44 6 26;--l-rgb:160 116 226;--l2-rgb:112 81 158;--l3-rgb:61 44 86}
 body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:201 172 109;--m4-rgb:155 133 84;--mt-rgb:42 30 8;--l-rgb:240 232 212;--l2-rgb:168 162 148;--l3-rgb:91 88 81}
+/* el color de cabells tenyeix la llum (l'Albert, 30-09: «que el color de cabell marqui el tema però subtil»): només el segon color, el dels raigs, les llesques i els halos; els botons són de l'avatar */
+body.v-nit[data-cb="negre"]{--l-rgb:150 160 178;--l2-rgb:105 112 125;--l3-rgb:57 61 68}
+body.v-nit[data-cb="castany"]{--l-rgb:198 148 106;--l2-rgb:139 104 74;--l3-rgb:75 56 40}
+body.v-nit[data-cb="ros"]{--l-rgb:232 202 122;--l2-rgb:162 141 85;--l3-rgb:88 77 46}
+body.v-nit[data-cb="plati"]{--l-rgb:216 224 238;--l2-rgb:151 157 167;--l3-rgb:82 85 90}
+body.v-nit[data-cb="blau"]{--l-rgb:110 158 242;--l2-rgb:77 111 169;--l3-rgb:42 60 92}
+body.v-nit[data-cb="rosa"]{--l-rgb:236 126 184;--l2-rgb:165 88 129;--l3-rgb:90 48 70}
+body.v-nit[data-cb="lila"]{--l-rgb:168 155 224;--l2-rgb:111 99 201;--l3-rgb:59 47 134}
+/* una imatge que s'ha de tenyir no es veu fins que ho és (el taronja no ha de sortir ni un instant) */
+img[src*="#cb="]{visibility:hidden}
 
 `;
   function estil() { if (document.getElementById("estil-nit")) return; const s = document.createElement("style"); s.id = "estil-nit"; s.textContent = CSS; document.head.appendChild(s); }
@@ -13484,7 +13620,7 @@ body.v-nit[data-av="reina"]{--m-rgb:228 196 124;--m2-rgb:236 214 163;--m3-rgb:20
     carregaGuerra(sec); carregaAmic(sec); precarrega();
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -15640,8 +15776,9 @@ async function forjaPersonatge() {
     try { const r = await apiCompte("POST", "/nick", { nick: nom }); desaSessio({ ...sessio, nick: r.nick }); }
     catch (e) { avis(e.status === 0 ? "Sin conexión: para elegir tu nickname hace falta red." : e.message, true); $("#f-nom").focus(); return; }
   }
-  S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom, ...(S.ui.avTria ? { avatar: S.ui.avTria } : {}) };      // l'avatar triat a la Noche
-  S.ui.avTria = null;
+  // l'avatar triat a la Noche, amb el color de cabells i el pentinat (30-09: la primera configuració)
+  S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom, ...(S.ui.avTria ? { avatar: S.ui.avTria, cabell: S.ui.cbTria || "", pentinat: S.ui.peTria || "" } : {}) };
+  S.ui.avTria = null; S.ui.cbTria = null; S.ui.peTria = null;
   const tornar = S.ui.nickPendent; S.ui.nickPendent = false;
   S.ui.vista = !S.perfil.peso ? "datos" : tornar ? (S.ui.vistaAbansNick || "inicio") : "inicio"; S.ui.triaIniciada = false; guardar();
   Efectos.lluvia(1.2); if (!Efectos.suena("triar")) Efectos.suena("fanfarria"); Efectos.vibra("forja"); render(); window.scrollTo({ top: 0 });
