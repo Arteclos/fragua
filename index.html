@@ -9342,10 +9342,21 @@ const Nit = (() => {
       setTimeout(() => { c.classList.add("fora"); setTimeout(() => c.remove(), 700); }, quiet() ? 0 : 340);
     }, Math.max(0, 1400 - performance.now()));
   }
+  // LA ICONA DE L'APP (30-09 vespre, LA LLISTA P; l'Albert: «posa la de tio o tia en funció de si se selecciona tio o tia»):
+  // la de l'avatar que portes (el noi o la noia, amb l'afro o sense), a l'apple-touch-icon i al manifest. L'iPhone la pren en
+  // afegir l'app a la pantalla d'inici, i després ja no la canvia. Sense avatar triat, la de sempre (l'enclusa d'or, que no és
+  // ni de noi ni de noia). Els fitxers, de BETA-1.0/actius/icona_app.py (fes_fragua.py els copia).
+  function iconaApp() {
+    const p = S.personaje || {}, av = p.avatar && AMB_CB.includes(avatarId()) ? avatarId() + (AFRO.has(avatarId()) && p.pentinat === "afro" ? "-afro" : "") : "";
+    const ic = av ? `icono-${av}-180.png` : "icono-180.png", mf = av ? `manifest-${av}.webmanifest` : "manifest.webmanifest";
+    const l = document.querySelector('link[rel="apple-touch-icon"]'); if (l && l.getAttribute("href") !== ic) l.setAttribute("href", ic);
+    const m = document.querySelector('link[rel="manifest"]'); if (m && m.getAttribute("href") !== mf) m.setAttribute("href", mf);
+  }
   function despresPagina(vista, entrada) {
     const pa = S.personaje && S.personaje.avatar;
     if (pa && !AMB_CB.includes(pa)) { S.personaje.avatar = avatarId(); S.personaje.cabell = ""; S.personaje.pentinat = ""; if (typeof guardar === "function") guardar(); }
     aplicaTema();
+    iconaApp();
     estil();
     amagaCarga();
     tancaTipus(true);
@@ -10100,8 +10111,8 @@ const Nit = (() => {
       <div class="nsp-set" data-in="ns"><h2>Esta semana</h2>${q.membres.map(fila).join("")}
         ${(q.convidats || []).map(c => `<div class="nsp-f convidat"><img src="${caraDe(c.personatge)}" alt="" draggable="false"><b>${esc(c.nom)}<i class="nsp-rol">Invitado</i></b><small>Aún no ha dicho que sí</small></div>`).join("")}</div>
       ${q.repte ? `<div class="nsq-repte${q.repte.fet ? " fet" : ""}" data-in="ns"><div class="nsq-repte-t"><span>${NOM_REPTE[q.repte.tipus](q.repte.meta)}</span><b class="num">${n0(q.repte.progres)} / ${n0(q.repte.objectiu)}</b></div><div class="np3-barra"><i style="width:${pcR.toFixed(1)}%"></i></div></div>` : ""}
-      <div class="nsp-crides" data-in="ns">${q.crides.map(filaCrida).join("")}
-        ${q.crides.some(c => c.yo) ? "" : `<div class="nsq-crida"><span class="nsq-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsq-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`}</div>
+      <div class="nsp-crides" data-in="ns">${cridesVives(q).map(filaCrida).join("")}
+        ${cridesVives(q).some(c => c.yo && !cridaPassada(c)) ? "" : `<div class="nsq-crida"><span class="nsq-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsq-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`}</div>
       ${q.ranking && q.ranking.on ? htmlRkSquad(q) : ""}
       ${activitatSquad([q], 2)}
     </section>`;
@@ -10426,7 +10437,9 @@ const Nit = (() => {
       ? `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-ic" data-nm="treu" aria-label="Sacar de tu rutina">${I_TREU}</button><button class="nm-b nm-emp" data-nm="edita">Editar</button>`
       : lloc === "sol"
       ? `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comp-sol" aria-label="Compartir">${I_COMP}</button>${I.autor ? "" : `<button class="nm-b nm-ic" data-nm="arxiva" aria-label="Archivar">${I_ARX}</button>`}${ctx.x && ctx.x.font === "sol" && !I.autor && !(ctx.x.d && ctx.x.d.pr) ? `<button class="nm-b nm-ic" data-nm="edita-sol" aria-label="Editar">${I_LLAPIS}</button>` : ""}<button class="nm-b nm-emp" data-nm="posa">Añadir a tu rutina</button>`
-      : `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button><button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button>`;
+      // (30-09 vespre, l'Albert: «a la de l'entrada, més que canviar la il·lustració, que hi hagi un botó que et porti a editar-la»):
+      // la carta de la teva rutina porta el llapis; la portada es tria des del mazo
+      : `${enUs ? `<button class="nm-b nm-ic" data-nm="edita" aria-label="Editar esta carta">${I_LLAPIS}</button>` : `<button class="nm-b nm-ic" data-nm="port" aria-label="Portada">${I_PORT}</button>`}<button class="nm-b nm-ic" data-nm="comparteix" aria-label="Compartir">${I_COMP}</button><button class="nm-b nm-emp" data-nm="${enUs ? "empieza" : "usa"}">${enUs ? (segueix ? "Seguir" : "Empezar") : "Usar mazo"}</button>`;
     const portades = ["musculs", ...[...new Set(d.ej.map(e => slug(e[0])))].filter(x => EJ_ANIME.has(x)).slice(0, 8)];
     const ov = document.createElement("div");
     ov.className = "nm"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Carta: " + d.t);
@@ -11026,11 +11039,17 @@ const Nit = (() => {
   const horaGym = () => { if (/^[0-2][0-9]:[0-5][0-9]$/.test(S.horaGym || "")) return S.horaGym;
     const d = new Date(Date.now() + 45 * 60000), m = d.getMinutes() < 30 ? 30 : 0; if (!m) d.setHours(d.getHours() + 1); return `${String(d.getHours()).padStart(2, "0")}:${m ? "30" : "00"}`; };
   const horaDe = ts => { const h = new Date(ts * 1000); return `${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")}`; };
+  // LA CRIDA QUE JA HA PASSAT (30-09 vespre; l'Albert, a les 20:07 amb «HarrySpotter va a las 19:58» i «Me apunto»: «en cas
+  // que hagi passat ja l'hora, què???»). Deu minuts després de l'hora ja no s'hi apunta ningú: es diu en passat, sense el botó
+  // (i amb «Te apuntaste» si hi anaves); si és la teva, torna «Hoy voy a las» per si en vols fer una altra; i dues hores
+  // després, ja no hi és (el servidor les torna fins a tres hores després: squads.CRIDA_VIVA).
+  const cridaPassada = c => Date.now() / 1000 > c.quan + 600;
+  const cridesVives = q => (q.crides || []).filter(c => Date.now() / 1000 < c.quan + 7200);
   function filaCrida(c) {
-    const cares = (c.qui || []).slice(0, 5).map(x => `<img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false">`).join("");
-    return `<div class="nsq-cr${c.yo ? " meva" : ""}${S.ui.crNou === c.id ? " nou" : ""}"><span class="nsq-cr-t"><b>${c.yo ? "Vas" : esc(c.de) + " va"}</b> a las ${horaDe(c.quan)}</span>
+    const cares = (c.qui || []).slice(0, 5).map(x => `<img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false">`).join(""), ja = cridaPassada(c);
+    return `<div class="nsq-cr${c.yo ? " meva" : ""}${ja ? " passada" : ""}${S.ui.crNou === c.id ? " nou" : ""}"><span class="nsq-cr-t"><b>${c.yo ? (ja ? "Ibas" : "Vas") : esc(c.de) + (ja ? " iba" : " va")}</b> a las ${horaDe(c.quan)}</span>
       <span class="nsq-cr-qui">${cares}${c.apuntats > 5 ? `<i>+${c.apuntats - 5}</i>` : ""}</span>
-      ${c.yo ? "" : c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button data-accion="nsq-apunta" data-c="${c.id}">Me apunto</button>`}</div>`;
+      ${c.yo ? "" : ja ? (c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Te apuntaste</i>` : "") : c.jo_apuntat ? `<i class="nsq-ok">${I_CHECK}Voy</i>` : `<button data-accion="nsq-apunta" data-c="${c.id}">Me apunto</button>`}</div>`;
   }
   function quanTxt(ts) {
     const d = ts * 1000 - Date.now();
@@ -11166,8 +11185,8 @@ const Nit = (() => {
           : `<button class="${cl}" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(m.nom)}">${dins}</button>`; }).join("")}${(q.convidats || []).map(c => `<span class="nsq-cara convidat"><span class="nsq-cara-i"><img src="${caraDe(c.personatge)}" alt="" draggable="false"><i class="nsq-rol">Invitado</i></span><small>${esc(c.nom)}</small></span>`).join("")}</div>
       ${q.repte ? `<div class="nsq-repte${q.repte.fet ? " fet" : ""}"><div class="nsq-repte-t"><span>${NOM_REPTE[q.repte.tipus](q.repte.meta)}</span><b class="num">${n0(q.repte.progres)} / ${n0(q.repte.objectiu)}</b></div><div class="np3-barra"><i style="width:${pc.toFixed(1)}%"></i></div>${q.repte.fet ? `<small>¡Reto conseguido!</small>` : ""}</div>`
         : gestor ? `<button class="nsq-b2" data-accion="nsq-repte" data-id="${q.id}">Poner el reto de la semana</button>` : `<p class="nsq-nota">Esta semana aún no hay reto.</p>`}
-      ${q.crides.map(filaCrida).join("")}
-      ${q.crides.some(c => c.yo) ? "" : `<div class="nsq-crida"><span class="nsq-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsq-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`}
+      ${cridesVives(q).map(filaCrida).join("")}
+      ${cridesVives(q).some(c => c.yo && !cridaPassada(c)) ? "" : `<div class="nsq-crida"><span class="nsq-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsq-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`}
       ${tot ? htmlDades(q) + htmlRkSquad(q) + `<div class="nsq-accions">${gestor ? `<button data-accion="nsq-invita" data-id="${q.id}">${I_MENU.inv}<span>Invitar</span></button><button data-accion="nsq-repte" data-id="${q.id}">${I_TU.est}<span>Reto</span></button>` : ""}<button data-accion="nsq-rutina" data-id="${q.id}">${I_MENU.rut}<span>Enviar mi rutina</span></button><button class="fora" data-accion="nsq-surt" data-id="${q.id}">${I_X}<span>Salir</span></button></div>` : ""}
     </div>`;
   }
@@ -13407,6 +13426,7 @@ body.v-nit .lg-fora{display:grid;gap:8px;margin:0 0 12px;padding:16px;border-rad
 body.v-nit .lg-fora b{font-size:16px;font-weight:900}
 body.v-nit .lg-fora p{margin:0;font-size:13.5px;font-weight:800;line-height:1.4;color:var(--nt-suau)}
 .nsq-crida{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:18px;background:#141c25}
+.nsq-cr.passada{opacity:.62}.nsq-cr.passada .nsq-cr-qui img{filter:grayscale(.6)}
 .nsq-crida-t{flex:1;min-width:0;font-size:14px;font-weight:900}
 .nsq-crida-h{flex:none;width:118px;height:40px;border:0;border-radius:12px;padding:0 8px;background:#10171e;color:var(--nt-tinta);font:900 17px/1 'Nunito',system-ui,sans-serif;text-align:center;color-scheme:dark}
 .nsq-crida-b{flex:none;height:40px;padding:0 16px;border:0;border-radius:999px;cursor:pointer;background:rgb(var(--m-rgb));color:rgb(var(--mt-rgb));font:900 14px/1 'Nunito',system-ui,sans-serif}
