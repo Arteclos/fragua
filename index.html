@@ -11991,25 +11991,30 @@ const Nit = (() => {
       if (a.pid && typeof window.carregaAmic === "function") window.carregaAmic(a.pid); else setTimeout(() => veure("social"), 0);
       return `<section class="na">${tanca}<p class="na-carrega">Cargando…</p></section>`;
     }
-    const nom = p.nick || "Tu amigo", y = typeof yunqueDe === "function" ? yunqueDe(p.poder) : { id: "madera", nom: "Madera", sense: true };
-    const xif = [];
+    // EL PERFIL, REPENSAT (01-10, LA LLISTA L16; l'Albert: «s'ha de poder veure més info del que han fet, així com la ratxa
+    // de dies»; «lo d'empezar una racha ja no té sentit aquí»; «cal eliminar info que ja no és rellevant i afegir coses
+    // d'ara»). Fora: «Empezad una racha», el rang de la força d'abans i la fila de metalls per grup. Ara: el seu ELO (el de
+    // la lliga i els rànquings), el foc (els dies de gym d'aquest any, com el teu xip), la seva setmana i els últims entrenos.
+    const nom = p.nick || "Tu amigo";
+    const dv = p.elo != null && typeof Elo === "object" ? Elo.divisioDe(p.elo) : null;
+    const xif = [[`${ic("flama-on", "na-foc")}${n0(p.racha || 0)}`, (p.racha || 0) === 1 ? "día de gym este año" : "días de gym este año"]];
+    xif.push([n0(p.dies || 0), (p.dies || 0) === 1 ? "día en KLONK" : "días en KLONK"]);
     if (p.xp != null) xif.push([n0(p.xp), "XP"]);
-    xif.push([n0(p.dies || 0), p.dies === 1 ? "día de gym" : "días de gym"]);
-    if (p.clan && p.clan.pos) xif.push([`${p.clan.pos}.º`, `de ${p.clan.total} entre tus amigos`]);
-    const grups = Object.entries(p.poder_grups || {});
     const gim = p.gimnas ? [p.gimnas.nom, p.gimnas.ciutat].filter(Boolean).join(", ") : "";
     const desde = typeof desdeTxt === "function" ? desdeTxt(p.desde) : "";
-    const r = p.ratxa;
-    const ratxa = r ? `<div class="na-rx${r.setmanes ? " viva" : ""}"><b>${r.setmanes ? `${r.setmanes} ${r.setmanes === 1 ? "semana seguida" : "semanas seguidas"} juntos` : "Empezad una racha"}</b>
-        <small>${r.feta ? "Esta semana ya habéis llegado los dos." : `Esta semana: tú, ${r.jo} de ${r.meta_jo}; ${esc(nom)}, ${r.ell} de ${r.meta_ell}.`}</small></div>` : "";
+    const dies = ["L", "M", "X", "J", "V", "S", "D"], avuiK = (new Date().getDay() + 6) % 7, fets = new Set(p.setmana || []);
+    const setmana = Array.isArray(p.setmana) ? `<div class="na-set"><h2>Esta semana</h2><span class="nsp-punts na-punts" role="img" aria-label="${fets.size} ${fets.size === 1 ? "día" : "días"} esta semana">${dies.map((l, k) => `<i class="${fets.has(k) ? "on" : ""}${k === avuiK ? " avui" : ""}"><small>${l}</small></i>`).join("")}</span></div>` : "";
+    const quan = d => { const t = new Date(d + "T12:00:00"), a = new Date(); a.setHours(12, 0, 0, 0); const n = Math.round((a - t) / 864e5);
+      return n <= 0 ? "Hoy" : n === 1 ? "Ayer" : t.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }); };
+    const ultims = (p.ultims || []).length ? `<div class="na-ult"><h2>Últimos entrenos</h2>${p.ultims.map(x => `<div class="na-e"><span class="na-e-d">${esc(quan(x.dia))}</span>
+        <span class="na-e-t"><b>${esc((x.exercicis || []).join(" · ") || "Entreno")}</b><small>${n0(x.series || 0)} ${x.series === 1 ? "serie" : "series"}${x.minuts ? ` · ${n0(x.minuts)} min` : ""}</small></span>${x.records ? `<span class="na-e-r">${x.records === 1 ? "1 récord" : `${x.records} récords`}</span>` : ""}</div>`).join("")}</div>` : "";
     return `<section class="na">${tanca}
       <div class="na-cap"><span class="na-cara"><img src="${caraDe(p.personatge)}" alt="" draggable="false"><b class="na-nv">${p.nivell || 1}</b>${badgeEmb(p.emblema, "emb-gran")}</span>
         <h1 class="na-nom">${esc(nom)}</h1>
-        <span class="na-rang"><img src="${sigmaMat(y.id)}" alt="" draggable="false"><span><b>${esc(nomRang(y.id, y.nom))}</b><small>${p.poder != null ? `${n0(p.poder)} de fuerza para su peso` : "Aún sin rango"}</small></span></span></div>
+        <span class="na-rang">${dv ? `<img src="${sigmaMat(dv[1])}" alt="" draggable="false"><span><b>${esc(nomRang(dv[1], dv[2]))}</b><small>${n0(p.elo)} de ELO</small></span>` : `<span><b>Sin ELO todavía</b><small>Sale cuando apunta los grandes</small></span>`}</span></div>
       <div class="na-xif">${xif.map(([n, t]) => `<div><b>${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
-      ${ratxa}
+      ${setmana}${ultims}
       ${(p.squads || []).length ? `<div class="na-sq"><small>${p.squads.length === 1 ? "En 1 squad" : `En ${p.squads.length} squads`}</small><span>${p.squads.map(q => `<span class="na-sq-c">${esEtq(q.t) ? tagSq({ t: q.t, c: q.c }) : `<b>${esc(q.t)}</b>`}<small>${q.n === 1 ? "1 persona" : `${n0(q.n)} personas`}</small></span>`).join("")}</span></div>` : ""}
-      ${grups.length ? `<div class="na-grups">${grups.map(([g, v]) => { const yg = yunqueDe(v); return `<div><img src="${sigmaMat(yg.id)}" alt="" draggable="false"><small>${esc(g)}</small></div>`; }).join("")}</div>` : ""}
       ${gim || desde ? `<p class="na-peu">${gim ? `<span>${esc(gim)}</span>` : ""}${desde ? `<span>${esc(desde)}</span>` : ""}</p>` : ""}
     </section>`;
   }
@@ -13993,12 +13998,21 @@ body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .na-rx{display:grid;gap:2px;padding:14px 16px;border-radius:18px;background:rgb(var(--l2-rgb) / .22);box-shadow:inset 0 0 0 1px rgb(var(--l-rgb) / .3)}
 .na-rx.viva{background:rgb(var(--m-rgb) / .12);box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35)}
 .na-rx b{font-size:16px;font-weight:900}.na-rx small{font-size:13px;font-weight:700;color:#c9d2da;line-height:1.4}
-.na-grups{display:flex;justify-content:center;gap:18px}
 .na-sq{display:grid;justify-items:center;gap:8px}.na-sq>small{font-size:12.5px;font-weight:800;color:#8b98a4}
 .na-sq>span{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .na-sq-c{display:inline-flex;align-items:baseline;gap:6px;padding:8px 14px;border-radius:999px;background:#171e27;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .07);font-size:15px}
 .na-sq-c .nsq-tag{margin:0}.na-sq-c b{font-weight:900}.na-sq-c small{font-size:12.5px;font-weight:800;color:#aab4be}
-.na-grups div{display:grid;justify-items:center;gap:4px}.na-grups img{width:52px;height:52px;object-fit:contain}.na-grups small{font-size:12.5px;font-weight:800;color:#aab4be}
+/* el perfil d'un amic, repensat (01-10, LA LLISTA L16): el foc, la seva setmana i els últims entrenos */
+.na-foc{width:20px;height:20px;vertical-align:-3px;margin-right:2px}
+.na-set,.na-ult{display:grid;gap:10px;padding:14px 16px;border-radius:20px;background:linear-gradient(180deg,var(--nt-sup-2),var(--nt-sup));box-shadow:var(--nt-o1),0 0 0 1px var(--nt-vora)}
+.na-set h2,.na-ult h2{margin:0;font:900 16px/1.2 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.na-set .na-punts{justify-content:space-between;gap:0}.na-set .na-punts i{width:34px}.na-set .na-punts i::after{width:22px;height:22px}
+.na-set .na-punts i small{font-size:11.5px}
+.na-e{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--nt-vora)}.na-ult h2 + .na-e{border-top:0}
+.na-e-d{flex:none;width:74px;font:900 13px/1.2 'Nunito',system-ui,sans-serif;color:var(--nt-suau);text-transform:capitalize}
+.na-e-t{flex:1;min-width:0;display:grid;gap:2px}.na-e-t b{font:900 14.5px/1.25 'Nunito',system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.na-e-t small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.na-e-r{flex:none;padding:4px 9px;border-radius:99px;background:rgb(226 194 122 / .16);color:var(--nt-or);font:900 11.5px/1 'Nunito',system-ui,sans-serif}
 .na-peu{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:0;font-size:13px;font-weight:800;color:#8b98a4}
 .npro{display:grid;gap:16px;padding:6px 2px 20px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .npro-cap{display:grid;justify-items:center;gap:6px;text-align:center}
