@@ -8913,6 +8913,8 @@ const Nit = (() => {
     const xi = ev.target.closest('[data-accion="nt-elo-info"]');
     if (xi) { ev.preventDefault(); ev.stopPropagation(); if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo()); return; }
     // ENTRAR A LES LLIGUES (30-09 tarda): el full de la modalitat i la categoria
+    const toc = ev.target.closest('[data-accion="nsq-toc"]');
+    if (toc) { ev.preventDefault(); ev.stopPropagation(); tocSquad(toc); return; }
     const nor = ev.target.closest('[data-accion="nor-tria"], [data-accion="nor-salta"]');
     if (nor) { ev.preventDefault(); ev.stopPropagation(); triaOrigen(nor); return; }
     const nle = ev.target.closest('[data-accion^="nle-"]');
@@ -9413,6 +9415,9 @@ const Nit = (() => {
     const m = document.querySelector('link[rel="manifest"]'); if (m && m.getAttribute("href") !== mf) m.setAttribute("href", mf);
   }
   function despresPagina(vista, entrada) {
+    // (30-09 vespre, LA LLISTA M29; l'Albert: «la música d'entreno la fotria treta d'entrada als entrenos; que si volem, la posin»):
+    // apagada per a tothom un cop; qui l'encengui després, la té encesa
+    if (S.musicaV !== 2) { S.musica = false; S.musicaV = 2; try { Efectos.Musica.para(); } catch (e) {} if (typeof guardar === "function") guardar(); }
     const pa = S.personaje && S.personaje.avatar;
     if (pa && !AMB_CB.includes(pa)) { S.personaje.avatar = avatarId(); S.personaje.cabell = ""; S.personaje.pentinat = ""; if (typeof guardar === "function") guardar(); }
     aplicaTema();
@@ -9857,7 +9862,7 @@ const Nit = (() => {
     an.onfinish = () => { im.remove(); fet(); };
     an.oncancel = () => im.remove();
   }
-  function filaClan(it) {
+  function filaClan(it, ambKlonk = true) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
     const n = ((it.reaccions || {})[KLONK_REACCIO]) || 0, meva = it.meva === KLONK_REACCIO;
     const qui = `<span class="ns-av-w"><img class="ns-av" src="${it.yo ? CARA() : caraDe(it.personatge)}" alt="" draggable="false">${badgeEmb(it.emblema, "emb-mini")}</span>
@@ -9865,7 +9870,7 @@ const Nit = (() => {
     // tocar-lo (la cara o el text) n'obre el perfil (29-09 vespre, l'Albert: «hauria de poder fer clic a cada amigo»)
     return `<div class="ns-f" data-in="ns">${!it.yo && it.pid ? `<button class="ns-f-qui" data-accion="social-perfil" data-p="${esc(it.pid)}" aria-label="Perfil de ${esc(it.nom)}">${qui}</button>` : qui}
       <img class="ns-f-m" src="${R()}musculs-${t}.webp" alt="" draggable="false">
-      ${it.yo ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
+      ${it.yo || !ambKlonk ? "" : `<button class="ns-klonk${meva ? " fet" : ""}" data-accion="fd-reacciona" data-id="${esc(it.id)}" data-k="${KLONK_REACCIO}" aria-pressed="${meva}">KLσNK!${n ? `<b>${n}</b>` : ""}</button>`}</div>`;
   }
   function filaRank(f, so) {
     const nom = f.yo ? ((S.personaje && S.personaje.nombre) || "Tú") : f.nom;
@@ -10164,8 +10169,12 @@ const Nit = (() => {
       const dins = `<img src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false"><b>${esc(nom)}${rol ? `<i class="nsp-rol">${rol}</i>` : ""}</b>
         <span class="nsp-punts" role="img" aria-label="${m.dies || 0} ${(m.dies || 0) === 1 ? "día" : "días"} esta semana">${DIES_L.map((l, k) => `<i class="${ds.has(k) ? "on" : ""}${k === avui ? " avui" : ""}${k > avui ? " ve" : ""}"><small>${l}</small></i>`).join("")}</span>`;
       if (m.yo || !m.pid) return `<div class="nsp-f yo">${dins}</div>`;
-      return gestor ? `<button class="nsp-f" data-accion="nsq-membre" data-id="${q.id}" data-p="${esc(m.pid)}" aria-label="${esc(nom)}: qué hacer">${dins}</button>`
+      const fila0 = gestor ? `<button class="nsp-f" data-accion="nsq-membre" data-id="${q.id}" data-p="${esc(m.pid)}" aria-label="${esc(nom)}: qué hacer">${dins}</button>`
         : `<button class="nsp-f" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(nom)}">${dins}</button>`;
+      // L'EMPENTA (30-09 vespre, LA LLISTA M23 D2; el «Nudge» del Duolingo): a qui avui encara no ha entrenat, un cop al dia
+      if (m.avui) return fila0;
+      const fet = (S.ui.tocs || {})[m.pid] === diaAvui();
+      return `<div class="nsp-fw">${fila0}<button class="nsp-toc${fet ? " fet" : ""}" data-accion="nsq-toc" data-id="${q.id}" data-p="${esc(m.pid)}"${fet ? " disabled" : ""} aria-label="${fet ? `Ya le has dado un toque a ${esc(nom)}` : `Dar un toque a ${esc(nom)}`}">${fet ? I_CHECK : I_TOC}</button></div>`;
     };
     const pcR = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<section class="nsp">${inv}${tria}
@@ -11108,6 +11117,21 @@ const Nit = (() => {
   // que hagi passat ja l'hora, què???»). Deu minuts després de l'hora ja no s'hi apunta ningú: es diu en passat, sense el botó
   // (i amb «Te apuntaste» si hi anaves); si és la teva, torna «Hoy voy a las» per si en vols fer una altra; i dues hores
   // després, ja no hi és (el servidor les torna fins a tres hores després: squads.CRIDA_VIVA).
+  const diaAvui = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  const I_TOC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11V5.8a1.5 1.5 0 0 1 3 0V10m0-.2V4.6a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v7.5c0 4-2.6 6.5-6.2 6.5-2.7 0-4.2-1.3-5.6-3.4L3.6 13a1.4 1.4 0 0 1 2.3-1.6L8.5 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  async function tocSquad(b) {
+    if (b.disabled) return;
+    b.disabled = true;
+    const pid = b.dataset.p, marca = () => { S.ui.tocs = { ...(S.ui.tocs || {}), [pid]: diaAvui() }; b.classList.add("fet"); b.innerHTML = I_CHECK; b.setAttribute("aria-label", "Toque enviado"); };
+    try {
+      await api("POST", `/squads/${encodeURIComponent(b.dataset.id)}/toc/${encodeURIComponent(pid)}`);
+      marca(); fx(E => { E.suena("tap"); E.vibra("tria"); });
+      if (typeof avis === "function") avis("Toque enviado. Le llega como un aviso de tu squad.");
+    } catch (e) {
+      if (/ya le has dado|ya ha entrenado/i.test(e.message || "")) { marca(); if (typeof avis === "function") avis(e.message); }
+      else { b.disabled = false; if (typeof avis === "function") avis(e.message, true); }
+    }
+  }
   const cridaPassada = c => Date.now() / 1000 > c.quan + 600;
   const cridesVives = q => (q.crides || []).filter(c => Date.now() / 1000 < c.quan + 7200);
   function filaCrida(c) {
@@ -11278,7 +11302,9 @@ const Nit = (() => {
         .catch(() => { S.ui.feedCarregant = false; });
     }
     const its = ((f && f.items) || []).filter(it => !pids || it.yo || pids.has(it.pid)).slice(0, max), quins = pids ? "tu squad" : "tus amigos";
-    return `<div class="ns-bloc" data-in="ns"><h2>Actividad de ${quins}</h2>${its.length ? its.map(filaClan).join("") : `<p class="ns-buit">${f ? `Cuando ${pids ? "los de tu squad" : "tus amigos"} entrenen, saldrán aquí para que les hagas KLσNK!` : "Cargando…"}</p>`}</div>`;
+    // (30-09 vespre, LA LLISTA M28; l'Albert: «a l'activitat de la squad, a baix, jo no posaria lo d'enviar KLONK; només quan et
+    // surti la notificació»): a la de la squad, sense el botó; a la dels amics, com sempre
+    return `<div class="ns-bloc" data-in="ns"><h2>Actividad de ${quins}</h2>${its.length ? its.map(it => filaClan(it, !pids)).join("") : `<p class="ns-buit">${f ? (pids ? "Cuando los de tu squad entrenen, saldrán aquí." : "Cuando tus amigos entrenen, saldrán aquí para que les hagas KLσNK!") : "Cargando…"}</p>`}</div>`;
   }
   function vistaSquadsVella() {
     const d = S.ui.squads;
@@ -13511,6 +13537,11 @@ body.v-nit .lg-fora{display:grid;gap:8px;margin:0 0 12px;padding:16px;border-rad
 body.v-nit .lg-fora b{font-size:16px;font-weight:900}
 body.v-nit .lg-fora p{margin:0;font-size:13.5px;font-weight:800;line-height:1.4;color:var(--nt-suau)}
 .nsq-crida{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:18px;background:#141c25}
+/* L'EMPENTA A UN DE LA SQUAD (30-09 vespre, M23 D2) */
+.nsp-fw{display:flex;align-items:center;gap:6px}.nsp-fw > .nsp-f{flex:1;min-width:0}
+.nsp-toc{flex:none;display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:rgb(var(--m-rgb) / .14);color:rgb(var(--m-rgb));cursor:pointer;box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35)}
+.nsp-toc svg{width:22px;height:22px}.nsp-toc:active{transform:scale(.92)}
+.nsp-toc.fet{background:none;color:var(--nt-suau);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
 .nsq-cr.passada{opacity:.62}.nsq-cr.passada .nsq-cr-qui img{filter:grayscale(.6)}
 .nsq-crida-t{flex:1;min-width:0;font-size:14px;font-weight:900}
 .nsq-crida-h{flex:none;width:118px;height:40px;border:0;border-radius:12px;padding:0 8px;background:#10171e;color:var(--nt-tinta);font:900 17px/1 'Nunito',system-ui,sans-serif;text-align:center;color-scheme:dark}
