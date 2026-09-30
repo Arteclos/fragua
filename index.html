@@ -7751,6 +7751,7 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       if (v === "tienda") return () => Nit.vistaTienda();
       if (v === "cartas") return () => Nit.vistaCartas();
       if (v === "edcarta") return () => Nit.vistaEdCarta();
+      if (v === "calendario") return () => Nit.vistaCalendari();       // (30-09 vespre, HEVY-LLICONS H1)
       if (v === "compte") return () => Nit.vistaCompte();
       if (v === "eleccion") return () => Nit.vistaEleccion();
       if (v === "datos") return () => Nit.vistaDatos();
@@ -8912,6 +8913,8 @@ const Nit = (() => {
     const xi = ev.target.closest('[data-accion="nt-elo-info"]');
     if (xi) { ev.preventDefault(); ev.stopPropagation(); if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo()); return; }
     // ENTRAR A LES LLIGUES (30-09 tarda): el full de la modalitat i la categoria
+    const nor = ev.target.closest('[data-accion="nor-tria"], [data-accion="nor-salta"]');
+    if (nor) { ev.preventDefault(); ev.stopPropagation(); triaOrigen(nor); return; }
     const nle = ev.target.closest('[data-accion^="nle-"]');
     if (nle) { ev.preventDefault(); ev.stopPropagation(); accioEntrada(nle); return; }
     const nc = ev.target.closest('[data-accion="nc3-mira"], [data-accion="nc3-arx"], [data-accion="nc3-recupera"], [data-accion="nc3-rebuda"]');
@@ -9210,7 +9213,7 @@ const Nit = (() => {
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
           <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><small class="nt-tu-rang-l">Rango (ELO)</small><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
           <div class="nt-tu-xifres" data-in="tu">
-            <div><b>${ratxa()}</b><i>${I_TU.cal}</i><small>días de gym este año</small></div>
+            <button class="nt-tu-xb" data-accion="nt-ves" data-v="calendario" aria-label="${ratxa()} días de gym este año. Ver el calendario"><b>${ratxa()}</b><i>${I_TU.cal}</i><small>días de gym este año</small></button>
             <div><b>${fets}</b><i>${I_TU.man}</i><small>${fets === 1 ? "entreno" : "entrenos"}</small></div>
             <div><b>${rec}</b><i>${I_TU.est}</i><small>récords este mes</small></div>
           </div>
@@ -9328,7 +9331,7 @@ const Nit = (() => {
 
   // DESPRÉS DE PINTAR UNA PÀGINA: la barra de baix, el lloc on ets, els xips de dalt i l'entrada
   const LLOC = { inicio: "centre", entreno: "centre", personaje: "tu", espejo: "tu", cartas: "tu", pro: "tu", social: "social", amic: "social", gimnasios: "social", comer: "nutri", registro: "nutri",
-    ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu" };
+    ajustes: "menu", tienda: "menu", rutinas: "menu", rutina: "menu", editor: "menu", estadisticas: "menu", progreso: "menu", calendario: "tu" };
   const ORDRE = ["tu", "social", "centre", "nutri", "menu"];
   let llocAbans = "";
   // la pantalla de càrrega (fragua.html) se'n va quan la primera pantalla ja és pintada (mai abans d'1,4 s): la línia s'acaba d'omplir i es fon
@@ -9341,6 +9344,63 @@ const Nit = (() => {
       try { if (l && l.animate && !quiet()) l.animate([{ transform: getComputedStyle(l).transform }, { transform: "scaleX(1)" }], { duration: 320, easing: "cubic-bezier(.3,.7,.3,1)", fill: "forwards" }); } catch (e) {}
       setTimeout(() => { c.classList.add("fora"); setTimeout(() => c.remove(), 700); }, quiet() ? 0 : 340);
     }, Math.max(0, 1400 - performance.now()));
+  }
+  /* EL CALENDARI (30-09 vespre, HEVY-LLICONS H1; l'Albert, amb les captures de Hevy: «la vista calendari està bé»). Els mesos, un
+     sota l'altre, des del d'ara fins al del primer entreno (com a molt dos anys), amb els dies entrenats encesos; a dalt, la ratxa
+     (la de Stats.racha, la mateixa del foc), els dies de l'any i quants dies fa que no entrenes. Tocar un dia obre l'entreno. */
+  const MESOS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const clauDia = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  function vistaCalendari() {
+    const per = {};
+    (S.ses || []).filter(s => s.fin && s.fecha).sort((a, b) => (a.inicio || 0) - (b.inicio || 0)).forEach(s => { (per[s.fecha] = per[s.fecha] || []).push(s.id); });
+    const avui = new Date(), kAvui = clauDia(avui), fets = Object.keys(per).sort();
+    const utc = k => { const [y, m, d] = k.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+    const fa = fets.length ? Math.round((utc(kAvui) - utc(fets[fets.length - 1])) / 864e5) : null;
+    let racha = 0; try { racha = Stats.racha(S) || 0; } catch (e) {}
+    const [y0, m0] = fets.length ? fets[0].split("-").map(Number) : [avui.getFullYear(), avui.getMonth() + 1];
+    const mesos = Math.max(1, Math.min(24, (avui.getFullYear() - y0) * 12 + (avui.getMonth() + 1 - m0) + 1));
+    const mes = i => {
+      const d0 = new Date(avui.getFullYear(), avui.getMonth() - i, 1), y = d0.getFullYear(), m = d0.getMonth();
+      const n = new Date(y, m + 1, 0).getDate(), buits = (d0.getDay() + 6) % 7;
+      let cel = "", quants = 0;
+      for (let k = 0; k < buits; k++) cel += `<i class="ncal-b"></i>`;
+      for (let dia = 1; dia <= n; dia++) {
+        const kk = clauDia(new Date(y, m, dia)), ids = per[kk], cls = (kk === kAvui ? " avui" : "") + (kk > kAvui ? " fut" : "");
+        if (ids) quants++;
+        cel += ids ? `<button class="ncal-d fet${cls}" data-accion="ses-obre" data-id="${esc(ids[0])}" aria-label="${dia} de ${MESOS[m].toLowerCase()}: ${ids.length === 1 ? "entrenaste" : `${ids.length} entrenos`}">${dia}</button>`
+          : `<span class="ncal-d${cls}">${dia}</span>`;
+      }
+      return `<section class="ncal-mes" data-in="ncal"><h2>${MESOS[m]} ${y}<small>${quants} ${quants === 1 ? "día" : "días"}</small></h2>
+        <div class="ncal-g" aria-hidden="true">${["L", "M", "X", "J", "V", "S", "D"].map(x => `<b>${x}</b>`).join("")}</div><div class="ncal-g">${cel}</div></section>`;
+    };
+    return `<div class="ns-torna"><button class="ns-torna-b" data-accion="nt-ves" data-v="personaje">${I_TU.fle}<span>Tú</span></button><h1 class="titol-pag">Calendario</h1></div>
+      <div class="ncal-cap" data-in="ncal">
+        <span>${ic("flama-on", "ncal-ic")}<b>${racha}</b><small>${racha === 1 ? "día de racha" : "días de racha"}</small></span>
+        <span><b>${ratxa()}</b><small>días este año</small></span>
+        <span><b>${fa == null ? "–" : fa === 0 ? "Hoy" : fa}</b><small>${fa == null ? "aún sin entrenos" : fa === 0 ? "has entrenado" : fa === 1 ? "día sin entrenar" : "días sin entrenar"}</small></span>
+      </div>
+      ${Array.from({ length: mesos }, (_, i) => mes(i)).join("")}`;
+  }
+  /* COM ENS HAS CONEGUT (30-09 vespre, HEVY-LLICONS H2; la pregunta que Hevy fa a l'entrada, amb «ChatGPT or AI Search»). Una
+     sola vegada, a la portada, a qui ja té compte, i es pot saltar: diu quin canal porta gent, abans de gastar-hi res. */
+  const ORIGENS = [["tiktok", "TikTok"], ["instagram", "Instagram"], ["youtube", "YouTube"], ["amic", "Un amigo"], ["gimnas", "En mi gimnasio"],
+    ["creador", "Un creador de contenido"], ["ia", "ChatGPT u otra IA"], ["google", "Google"], ["botiga", "App Store o Google Play"], ["altre", "Otro"]];
+  // (a qui acaba de forjar el personatge, S.origenPendent; a qui ja feia servir l'app, no se li pregunta)
+  function demanaOrigen() {
+    if (!S.origenPendent || S.origenDemanat || S.demo || typeof teCompte !== "function" || !teCompte() || activa()) return;
+    setTimeout(() => {
+      if (S.origenDemanat || S.ui.vista !== "inicio" || document.querySelector(".nq, .nm, .npj, #capa .dins:not(:empty)")) return;
+      S.origenDemanat = true; if (typeof guardar === "function") guardar();          // un sol cop, encara que es tanqui sense triar
+      fullN("¿Cómo nos conociste?", `<div class="nor">${ORIGENS.map(([k, t]) => `<button class="nor-o" data-accion="nor-tria" data-o="${k}">${t}</button>`).join("")}
+        <button class="nor-salta" data-accion="nor-salta">Prefiero no decirlo</button></div>`);
+    }, 1400);
+  }
+  async function triaOrigen(b) {
+    S.origenDemanat = true; if (typeof guardar === "function") guardar();
+    const full = b.closest(".nsq-full"); if (full) full.remove();
+    if (b.dataset.accion !== "nor-tria") return;
+    fx(E => E.suena("tap"));
+    try { await api("POST", "/origen", { origen: b.dataset.o }); if (typeof avis === "function") avis("¡Gracias!"); } catch (e) {}
   }
   // LA ICONA DE L'APP (30-09 vespre, LA LLISTA P; l'Albert: «posa la de tio o tia en funció de si se selecciona tio o tia»):
   // la de l'avatar que portes (el noi o la noia, amb l'afro o sense), a l'apple-touch-icon i al manifest. L'iPhone la pren en
@@ -9357,6 +9417,7 @@ const Nit = (() => {
     if (pa && !AMB_CB.includes(pa)) { S.personaje.avatar = avatarId(); S.personaje.cabell = ""; S.personaje.pentinat = ""; if (typeof guardar === "function") guardar(); }
     aplicaTema();
     iconaApp();
+    if (vista === "inicio") demanaOrigen();           // (a dalt: per a la portada, despresPagina surt abans d'arribar al final)
     estil();
     amagaCarga();
     tancaTipus(true);
@@ -13001,6 +13062,27 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-sense b{font:900 20px/1.2 'Nunito',system-ui,sans-serif}.nsx-sense p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14.5px}
 .nsx-sense .nsx-crea{display:flex;gap:8px;justify-content:center;margin-top:6px}
 .nrk-tabs{margin-bottom:12px}
+/* COM ENS HAS CONEGUT (30-09 vespre, HEVY-LLICONS H2) */
+.nor{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.nor-o{padding:12px 10px;border:0;border-radius:14px;background:rgb(255 255 255 / .06);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08);color:var(--nt-tinta);font:800 14px/1.2 'Nunito',system-ui,sans-serif;cursor:pointer;text-align:center}
+.nor-o:active{transform:scale(.97)}
+.nor-salta{grid-column:1 / -1;margin-top:2px;border:0;background:none;color:var(--nt-suau);font:800 13.5px/1 'Nunito',system-ui,sans-serif;padding:10px;cursor:pointer}
+/* EL CALENDARI (30-09 vespre, HEVY-LLICONS H1) */
+.nt-tu-xb{display:grid;justify-items:center;align-content:start;gap:2px;padding:8px 4px 7px;border:0;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center;color:inherit;font:inherit;cursor:pointer}
+.nt-tu-xb:active{transform:scale(.97)}
+.ncal-cap{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 14px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.ncal-cap span{display:grid;justify-items:center;gap:2px;padding:10px 4px;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center}
+.ncal-cap b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}.ncal-cap small{font-size:11px;font-weight:800;color:var(--nt-suau);line-height:1.2}
+.ncal-cap .ncal-ic{width:18px;height:18px}
+.ncal-mes{margin:0 0 18px;font-family:'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.ncal-mes h2{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 8px;font-size:17px;font-weight:900}
+.ncal-mes h2 small{font-size:12.5px;font-weight:800;color:var(--nt-suau)}
+.ncal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.ncal-g > b{text-align:center;font-size:11px;font-weight:900;color:var(--nt-suau)}
+.ncal-d{display:grid;place-items:center;aspect-ratio:1;border:0;border-radius:50%;background:none;color:var(--nt-tinta);font:800 14px/1 'Nunito',system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.ncal-d.fet{background:rgb(var(--m-rgb));color:rgb(var(--mt-rgb));font-weight:900;cursor:pointer;box-shadow:0 0 12px -4px rgb(var(--m-rgb) / .8)}
+.ncal-d.avui{box-shadow:inset 0 0 0 2px rgb(var(--l-rgb))}.ncal-d.fet.avui{box-shadow:inset 0 0 0 2px #fff,0 0 12px -4px rgb(var(--m-rgb) / .8)}
+.ncal-d.fut{color:var(--nt-apagat)}
 /* LA GUERRA EN VIU (30-09 tarda, M19): les cares que entren al comptador */
 .ngw-cara{position:fixed;z-index:70;width:42px;height:42px;border-radius:50%;object-fit:cover;pointer-events:none;background:#1b2530;
   box-shadow:0 0 0 2.5px rgb(var(--m-rgb) / .9),0 0 16px rgb(var(--m-rgb) / .45),0 8px 14px -6px rgb(0 0 0 / .8)}
@@ -13956,7 +14038,7 @@ img[src*="#cb="]{visibility:hidden}
     carregaGuerra(sec); carregaAmic(sec); precarrega();
   }
   estil();
-  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, fotoGran, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta, obreEntradaLligues };
+  return { vista, vistaTu, despresPintar, despresPagina, tipusDia, fotoAnime, heroi, activa: esNit, cara: CARA, serieFeta, vistaEntreno, htmlCarga, vistaSocial, vistaComer, vistaAjustes, vistaRutinas, vistaTienda, vistaCartas, vistaCompte, vistaEleccion, vistaDatos, vistaEscaner, htmlRebuda, vistaAmic, vistaPro, celebraPujada, cosAvatar, sigmaMat, nomRang, tagSq, avatarId, confirma, obreEditaPj, aspecte, tenyit, fotoGran, pagsResum, marcResum, wipeResum, sigmaSrc: id => R() + "sigma-" + id + ".webp", emb: badgeEmb, caraDe, vistaEdCarta, posaACarta, obreEntradaLligues, vistaCalendari };
 })();
 
 /* L'ANATOMISTA · LA GRAELLA DEL COS (28-09-2026). El MATEIX codi mesura a la skill (scripts/mesura.py, amb Playwright) i a
@@ -16115,6 +16197,7 @@ async function forjaPersonatge() {
     catch (e) { avis(e.status === 0 ? "Sin conexión: para elegir tu nickname hace falta red." : e.message, true); $("#f-nom").focus(); return; }
   }
   // l'avatar triat a la Noche, amb el color de cabells i el pentinat (30-09: la primera configuració)
+  if (!(S.personaje && S.personaje.nombre)) S.origenPendent = true;      // (30-09 vespre, HEVY-LLICONS H2) el primer cop: «¿Cómo nos conociste?»
   S.personaje = { ...(S.personaje || {}), tipo: TIPOS[triaIdx], nombre: nom, ...(S.ui.avTria ? { avatar: S.ui.avTria, cabell: S.ui.cbTria || "", pentinat: S.ui.peTria || "" } : {}) };
   S.ui.avTria = null; S.ui.cbTria = null; S.ui.peTria = null;
   const tornar = S.ui.nickPendent; S.ui.nickPendent = false;
