@@ -2429,20 +2429,38 @@ const Efectos = (() => {
   const MOSTRES = {}, TORN = {};
   const VOLUM = { tap: 0.45, tic: 0.6, xp: 0.6, interruptor: 0.5, tancar: 0.5, pantalla: 0.55, crit: 0.95, fanfarria: 0.9, nivell: 0.95 };
   let baixades = false;
+  // Baixar no demana context d'àudio i es fa abans (porta); descodificar sí que en demana, i el context només es pot
+  // crear sense queixa del navegador dins d'un gest (baixa, des del primer toc).
+  const CRU = {};
+  function porta() {
+    if (typeof SONS === "undefined" || Object.keys(CRU).length) return;
+    const base = typeof ACTIUS === "string" ? ACTIUS : "assets/";
+    Object.entries(SONS).forEach(([nom, urls]) => { CRU[nom] = urls.map(u => fetch(base + u).then(r => r.ok ? r.arrayBuffer() : null).catch(() => null)); });
+  }
   function baixa() {
     if (baixades || typeof SONS === "undefined" || !audio) return;
-    baixades = true;
-    const base = typeof ACTIUS === "string" ? ACTIUS : "assets/";
-    Object.entries(SONS).forEach(([nom, urls]) => urls.forEach(async (u, i) => {
-      try {
-        const r = await fetch(base + u);
-        if (!r.ok) return;
-        const b = await audio.decodeAudioData(await r.arrayBuffer());
-        (MOSTRES[nom] || (MOSTRES[nom] = []))[i] = b;
-      } catch (e) {}
+    baixades = true; porta();
+    Object.entries(CRU).forEach(([nom, llista]) => llista.forEach(async (p, i) => {
+      try { const buf = await p; if (buf) (MOSTRES[nom] || (MOSTRES[nom] = []))[i] = await audio.decodeAudioData(buf); } catch (e) {}
     }));
   }
   const teSo = nom => (typeof SONS !== "undefined" && !!SONS[nom]) || !!SONIDOS[nom];
+  // ELS SONS, A PUNT ABANS DEL PRIMER TOC (30-09-2026 nit, l'Albert: «els sons no sonen al moment i em posa nerviós»).
+  // Abans es baixaven quan sonava el primer (i mentrestant sonava el sintetitzat, un altre so), i a l'iPhone el context
+  // d'àudio no es desperta fins a un gest que compti: el primer so de la roda arriba en arrossegar, que no en és cap, i
+  // quedava mut o tard. Ara: quan la pàgina queda lliure, totes les mostres baixades (sense context, que fora d'un gest el
+  // navegador el queixa); i al primer toc, alçar el dit, clic o tecla, es crea el context, es desperta amb un so buit
+  // d'una mostra (el truc de l'iPhone) fins que corri de debò, i les mostres ja baixades es descodifiquen.
+  function preparaSons() { if (activo()) porta(); }
+  try { (window.requestIdleCallback || (f => setTimeout(f, 1200)))(preparaSons, { timeout: 2500 }); } catch (e) {}
+  const desperta = () => {
+    if (!ac()) return;
+    try { const b = audio.createBuffer(1, 1, 22050), s = audio.createBufferSource(); s.buffer = b; s.connect(audio.destination); s.start(0); } catch (e) {}
+    try { audio.resume(); } catch (e) {}
+    if (audio.state === "running") ["touchstart", "touchend", "pointerdown", "pointerup", "click", "keydown"].forEach(t => removeEventListener(t, desperta, true));
+    baixa();
+  };
+  ["touchstart", "touchend", "pointerdown", "pointerup", "click", "keydown"].forEach(t => addEventListener(t, desperta, { capture: true, passive: true }));
   function suena(nombre) {
     if (!activo() || !ac()) return false;
     baixa();
@@ -7666,6 +7684,8 @@ body.v-anime{--fb-ped-1:#0a0a0a;--fb-ped-2:#0a0a0a;--fb-ped-3:#ff2d2d;--fb-ped-v
       actual = opc.dataset.versio;
       try { localStorage.setItem(CLAU, actual); } catch (e) {}
       aplica(); if (typeof tancaFull === "function") tancaFull(); if (typeof render === "function") render();
+      // el personatge en 3D només es carrega fora de la Noche (fragua.html, 30-09 nit): si canvies a la farga, ara
+      if (actual !== "nit" && typeof carregaEscena3d === "function") carregaEscena3d();
       return;
     }
     // tocar la pestanya on ja ets: tornar a dalt, sense tornar a pintar (l'Adrià: pujar amb el dit «és un pal»)
@@ -15802,7 +15822,10 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 
 </script>
 <script type="importmap">{"imports":{"three":"./assets/lib/three/three.module.js","three/addons/":"./assets/lib/three/addons/"}}</script>
-<script type="module">
+<!-- EL PERSONATGE EN 3D, NOMÉS SI ES FA SERVIR (30-09-2026 nit): el mòdul importa three.js sencer (1,4 MB) i la Noche, que és
+     la de tothom, no el pinta mai; abans es baixava i es compilava a cada obertura. Ara és un text que s'executa només fora de
+     la Noche (la farga), o quan algú hi canvia a Ajustes (versions.js). -->
+<script type="text/x-klonk-modul" id="mod-escena3d">
 /* FRAGUA · el personatge en 3D (26/09/2026).
    El nan és el model de Tripo amb l'esquelet de Mixamo i els pesos refets a Blender
    (3d/munta_personatge.py). Respira quiet («repos») i reacciona quan passa alguna cosa: una sèrie feta,
@@ -16176,5 +16199,13 @@ window.Escena3D = { reacciona, foto, prova, diag, fuerza, clip: nom => (actiu &&
 document.addEventListener("fragua:heroe", ev => { posa(ev.detail); });
 posa(window.FRAGUA_HEROE || null);
 
+</script>
+<script>
+window.carregaEscena3d = function () {
+  if (window.__escena3d) return; window.__escena3d = true;
+  var t = document.getElementById("mod-escena3d"); if (!t) return;
+  var s = document.createElement("script"); s.type = "module"; s.textContent = t.textContent; document.head.appendChild(s);
+};
+if (!document.body.classList.contains("v-nit")) window.carregaEscena3d();
 </script>
 </body></html>
