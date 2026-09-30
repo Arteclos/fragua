@@ -5812,7 +5812,7 @@ function vistaSocial() {
   if (!gim) {
     if (S.ui.socTria) return h + `<h2 class="sub-t or">Elige tu gimnasio</h2><p class="suau petit intro-gim">Búscalo por su nombre o en el mapa. Si entrenas en casa, elige el que tengas más cerca. ${sessio && sessio.franja === "major" ? "Tu clan verá en tu perfil a qué gimnasio vas; lo puedes ocultar en Ajustes, Social." : "Tu gimnasio no sale en tu perfil: solo sirve para los rankings de tu zona."}</p>
       ${cosGimnasos()}<p style="text-align:center"><button class="enllac" data-accion="soc-tria-no">Volver</button></p>`;
-    return h + `<div class="porta-social"><p>Social va por gimnasios: los rankings son de tu gimnasio, tu ciudad, tu provincia y más allá. Si entrenas en casa, elige el que tengas más cerca.</p>
+    return h + `<div class="porta-social"><p>Social va por gimnasios: los rankings son de tu gimnasio, tu ciudad y el mundo. Si entrenas en casa, elige el que tengas más cerca.</p>
       ${botoForja('data-accion="soc-tria"', "ELIGE TU GIMNASIO", "Por su nombre o en el mapa")}</div>`;
   }
   if (!so.participa) return h + formAlta(so);
@@ -8415,7 +8415,7 @@ const Nit = (() => {
       <div class="nt-fons" aria-hidden="true"><i class="nt-bloom"></i></div>
       ${cap()}
       <div class="nt-set" aria-label="Los últimos 7 días">${set.map(d => `<span class="nt-dia-s${d.fet ? " fet" : ""}${d.avui ? " avui" : ""}" data-in="set"><small>${d.l}</small><i></i><b>${d.n}</b></span>`).join("")}</div>
-      <div class="nt-guerra" hidden role="button" tabindex="0" data-accion="nt-ves" data-v="gimnasios" aria-label="La guerra de gyms"></div>
+      <button type="button" class="nt-guerra" hidden data-accion="nt-ves" data-v="gimnasios"></button>
       <div class="nt-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}
         <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
       <div class="nt-amic" hidden></div>
@@ -8924,7 +8924,7 @@ const Nit = (() => {
     if (cal) { tancaMenu(() => ves(v, b)); return; }
     if (typeof tancaFull === "function") { try { tancaFull(); } catch (e) {} }
     if (v === "social") { S.ui.socDins = b && b.dataset.soc ? b.dataset.soc : null; if (b && b.dataset.soc) S.ui.socTab = b.dataset.soc; }
-    if (v === "gimnasios") { S.ui.socDins = "gimnasios"; S.ui.socTab = "gimnasios"; v = "social"; }
+    if (v === "gimnasios") { S.ui.socDins = "gimnasios"; S.ui.socTab = "gimnasios"; v = "social"; gimMapa = false; }
     if (b && b.dataset.t && v === "tienda") S.ui.tiendaTab = b.dataset.t;
     if (b && b.dataset.tab && v === "estadisticas") S.ui.statsTab = b.dataset.tab;
     // a la botiga de la Noche no hi ha els personatges d'abans (els nans): s'hi entra per l'or
@@ -9044,7 +9044,7 @@ const Nit = (() => {
     return `<section class="nt-tu">
       <div class="nt-tu-dalt">
         <div class="nt-tu-dreta">
-          <div class="nt-tu-fitxa" data-in="tu"><button class="nt-tu-av-b" data-accion="nt-editapj" aria-label="Cambiar de personaje"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><i class="nt-tu-av-ed">${I_LLAPIS}</i></button><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b><span class="nt-tu-nv">Nivel ${xp.nivel}</span></div>
+          <div class="nt-tu-fitxa" data-in="tu"><button class="nt-tu-av-b" data-accion="nt-editapj" aria-label="Cambiar de personaje"><img class="nt-tu-av" src="${CARA()}" alt="" draggable="false"><i class="nt-tu-av-ed">${I_LLAPIS}</i></button><div class="nt-tu-nom-l"><b class="nt-tu-nom">${esc(nom)}</b></div>
             <div class="nt-tu-anell" role="img" aria-label="Nivel ${xp.nivel}"><svg viewBox="0 0 70 70" aria-hidden="true"><defs><linearGradient id="nt-tu-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a89be0"/><stop offset="1" stop-color="#86d9c6"/></linearGradient></defs><circle cx="35" cy="35" r="30" class="nt-tu-a-f"/><circle cx="35" cy="35" r="30" class="nt-tu-a-p" style="stroke-dashoffset:${(ANELL_TU * (1 - pc)).toFixed(1)}"/></svg><span><small>NIVEL</small><b>${xp.nivel}</b></span></div>
             <div class="nt-tu-barra"><i style="--p:${(pc * 100).toFixed(1)}%"></i></div><small class="nt-tu-xp">${n0(xp.enNivel)} de ${n0(xp.paraSubir)} XP para el nivel ${xp.nivel + 1}</small></div>
           <button class="nt-tu-rang" data-accion="nt-rangs" data-in="tu"><small>Rango (ELO)</small><span class="nt-tu-rang-c">${sigma(e, "gran")}<span><b>${e.elo != null ? esc(nomRang(e.divisio.id, e.divisio.nom)) : "Sin clasificar"}</b>${e.elo != null ? `<small>${n0(e.elo)} de ELO</small>` : ""}</span><i>${I_TU.fle}</i></span></button>
@@ -9688,7 +9688,7 @@ const Nit = (() => {
     const ninv = d ? d.invitacions.length : 0;
     const cap = q ? `<button class="nsx-cap-b" data-accion="ns-dins" data-t="squads"${ninv ? ` aria-label="Tu squad; ${ninv} ${ninv === 1 ? "invitación" : "invitaciones"}"` : ""}>${badgeEmb(e, "emb-cap")}${ninv ? `<i class="ns-xapa nsx-inv">${ninv}</i>` : ""}<span class="nsx-cap-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : `<b>${esc(q.nom)}</b>`}
         <small>${e ? `Nivel ${e.n}${seg ? ` · ${+e.ratxa || 0} de ${seg} semanas` : ""}` : ""}</small></span></button>`
-      : `<span class="nsx-cap-b"><span class="nsx-cap-t"><b class="nsx-sense">Tu squad</b><small>Entrenad juntos y subid el emblema</small></span></span>`;
+      : `<span class="nsx-cap-b"><span class="nsx-cap-t"><b class="nsx-sense">Tu squad</b></span></span>`;
     return `<h1 class="nsx-h1">Social</h1><section class="nsx">
       <div class="nsx-cap" data-in="ns">${cap}${amics}</div>
       ${escenaSquad(q, d)}
@@ -9700,11 +9700,12 @@ const Nit = (() => {
   function escenaSquad(q, d) {
     if (!q) {
       const inv = d && d.invitacions && d.invitacions[0];
+      // tu al mig i dos llocs buits a cada banda (peanes, no botons: un sol «Crea tu squad», com va demanar l'Albert el 29-09)
+      const buit = k => `<span class="nsx-pj buit" style="--k:${k}" aria-hidden="true"><i class="nsx-peana"></i></span>`;
       return `<div class="nsx-escena buida" data-in="ns">
-        <div class="nsx-colla"><span class="nsx-pj jo"><img src="${cosDe(avatarId())}" alt="" draggable="false"><i class="nsx-peana"></i><small>Tú</small></span>
-          ${[0, 1, 2, 3].map(k => `<span class="nsx-pj buit" style="--k:${k}"><i class="nsx-peana"></i></span>`).join("")}</div>
-        <div class="nsx-crea">${inv ? `<p><b>${esc(inv.de)}</b> te invita a <b>${esc(inv.nom)}</b></p><span><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${inv.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${inv.id}">No</button></span>`
-          : `<button class="nsx-crea-b" data-accion="${d ? "nsq-nova" : "nsq-recarrega"}">${d ? "Crea tu squad" : S.ui.sqErr ? "Reintentar" : "Cargando…"}</button><small>Invita a tus amigos: cada semana que todos entrenáis dos días, el emblema sube.</small>`}</div>
+        <div class="nsx-colla">${buit(0)}${buit(1)}<span class="nsx-pj jo" style="--k:2"><img src="${cosDe(avatarId())}" alt="" draggable="false"><i class="nsx-peana"></i><small>Tú</small></span>${buit(3)}${buit(4)}</div>
+        <div class="nsx-crea">${inv ? `<p><b>${esc(inv.de)}</b> te invita a <b>${esc(inv.nom)}</b></p><span><button class="nsx-crea-b" data-accion="nsq-accepta" data-id="${inv.id}">Unirme</button><button class="nsx-no" data-accion="nsq-rebutja" data-id="${inv.id}">Rechazar</button></span>`
+          : `<button class="nsx-crea-b" data-accion="${d ? "nsq-nova" : "nsq-recarrega"}">${d ? "Crea tu squad" : S.ui.sqErr ? "Reintentar" : "Cargando…"}</button><small>Cada semana que todos entrenáis dos días, el emblema sube.</small>`}</div>
       </div>`;
     }
     const ms = [...q.membres].sort((a, b) => (b.yo ? 1 : 0) - (a.yo ? 1 : 0)), vis = ms.slice(0, 5), fets = q.membres.filter(m => m.avui).length, n = q.membres.length;
@@ -11788,6 +11789,8 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgb(255 255 255 / .16) 45%,transparent 60%);transform:translateX(-120%);animation:nt-sheen 7s ease-in-out 2s infinite}
 @keyframes nt-sheen{0%,86%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 .nt-ratxa.on .nt-flama{animation:nt-flama 1.6s ease-in-out infinite;transform-origin:50% 90%}
+body.v-nit .nc-obert{scroll-margin:90px 0 150px}     /* l'àpat obert, per sobre del menú de baix quan hi baixa (30-09 nit, N6) */
+body.v-nit .tanca[disabled]{visibility:hidden}     /* el dia de després d'avui (Registro): sense el cercle buit (30-09 nit, N6) */
 body.v-nit .r-flama b{color:#fff;text-shadow:0 2px 6px rgb(0 0 0 / .75),0 0 2px rgb(0 0 0 / .9)}
 @keyframes nt-flama{0%,100%{transform:scale(1) rotate(0)}30%{transform:scale(1.07,.95) rotate(-3deg)}65%{transform:scale(.96,1.06) rotate(2deg)}}
 .nt-ratxa:not(.on) b{color:var(--nt-suau)}
@@ -11806,7 +11809,7 @@ body.v-nit .r-flama b{color:#fff;text-shadow:0 2px 6px rgb(0 0 0 / .75),0 0 2px 
 .nt-dia-s.avui i::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid var(--nt-lila);animation:nt-anella 2.8s ease-in-out infinite}
 @keyframes nt-anella{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
 /* LA GUERRA, en una línia */
-.nt-guerra{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:12px;padding:8px 12px;border-radius:16px;flex:none;
+.nt-guerra{width:100%;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;margin-top:12px;padding:8px 12px;border-radius:16px;flex:none;
   background:linear-gradient(180deg,rgb(255 255 255 / .035),rgb(255 255 255 / .015));box-shadow:0 0 0 1px var(--nt-vora)}
 .nt-guerra[hidden]{display:none}
 .nt-g{display:flex;align-items:center;gap:7px}.nt-g .nt-ic{width:26px;height:26px}
@@ -12029,7 +12032,6 @@ body.v-nit .serie .i.tipus-p,.nt-rt-l.p{background:rgb(255 210 74 / .16);color:#
 .nt-tu-av{grid-row:span 2;width:62px;height:62px;border-radius:50%;object-fit:cover;background:#10171e;box-shadow:0 0 0 2px rgb(var(--l-rgb) / .6),0 0 0 5px rgb(var(--l-rgb) / .1)}
 .nt-tu-nom-l{display:grid;min-width:0}
 .nt-tu-nom{font-size:23px;font-weight:900;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:var(--nt-text-o)}
-.nt-tu-nv{font-size:12.5px;font-weight:900;color:var(--nt-lila)}
 .nt-tu-anell{position:relative;display:grid;place-items:center;width:62px;height:62px;grid-row:span 2}
 .nt-tu-anell svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .nt-tu-a-f{fill:none;stroke:#10171e;stroke-width:6}
@@ -12556,10 +12558,11 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-pj.calent .nsx-peana{background:radial-gradient(ellipse at 50% 40%,#ffcf7a,#e68a2e 55%,#7a3a0e);box-shadow:0 0 18px 2px rgb(255 160 60 / .55),0 3px 0 #5a2a08}
 .nsx-pj small{margin-top:6px;font-size:13px;font-weight:900;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .nsx-pj.buit .nsx-peana{background:none;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .16)}
-.nsx-pj.buit{height:18%;cursor:default}
+.nsx-pj.buit{height:auto;align-self:flex-end;justify-content:flex-end;cursor:default;margin-bottom:26px}
+.nsx-no{height:50px;padding:0 18px;border:0;background:none;color:var(--nt-suau);font:800 15px/1 'Nunito',sans-serif;cursor:pointer}
 .nsx-mes{position:absolute;z-index:2;right:0;bottom:22px;width:40px;height:40px;border:0;border-radius:50%;background:rgb(255 255 255 / .1);color:var(--nt-tinta);font:900 14px/1 'Nunito',sans-serif}
 .nsx-escena.buida{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:12px}
-.nsx-escena.buida .nsx-colla{height:58%}
+.nsx-escena.buida .nsx-colla{height:72%}
 .nsx-crea{display:grid;justify-items:center;gap:8px;text-align:center}
 .nsx-crea p{margin:0;font-weight:800}
 .nsx-crea span{display:flex;gap:8px}
@@ -12764,7 +12767,7 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .np3-llesca.dos{top:56%;height:7%;background:linear-gradient(90deg,transparent,#2f6f64 40%,rgb(var(--m-rgb)));opacity:.5;animation-delay:.12s}
 @keyframes np3-llesca{from{transform:rotate(-14deg) translateX(-100%)}}
 .np3-marca{position:absolute;right:-8%;bottom:14%;font:400 170px/.8 'Anton','Nunito',sans-serif;color:transparent;-webkit-text-stroke:1.5px rgb(255 255 255 / .08);transform:rotate(-14deg);letter-spacing:.02em}
-.np3-pj{position:absolute;right:-16%;bottom:76px;height:58%;width:auto;max-width:none;z-index:0;pointer-events:none;transform:rotate(-5deg);filter:drop-shadow(0 22px 30px rgb(0 0 0 / .65));animation:np3-pj .8s .15s cubic-bezier(.2,.9,.25,1.12) both}
+.np3-pj{position:absolute;right:-16%;bottom:76px;height:58%;width:auto;max-width:none;z-index:0;pointer-events:none;transform:rotate(-5deg);animation:np3-pj .8s .15s cubic-bezier(.2,.9,.25,1.12) both}
 @keyframes np3-pj{from{transform:translateX(70%) rotate(-5deg);opacity:0}}
 .np3 .resum-pistes{position:relative;z-index:1}
 .np3 .resum-dins{text-align:left;justify-content:flex-start;gap:12px;padding:calc(20px + env(safe-area-inset-top,0px)) 18px 24px;display:flex;flex-direction:column}
@@ -13321,7 +13324,7 @@ body.v-nit .btn-google .g-cercle{width:28px;height:28px}
 .nx-heroi{position:relative;height:300px;border-radius:24px;overflow:hidden;background-color:#0b1016;box-shadow:var(--nt-o2);
   background-image:linear-gradient(rgb(255 255 255 / .045) 1px,transparent 1px),linear-gradient(90deg,rgb(255 255 255 / .045) 1px,transparent 1px),linear-gradient(rgb(var(--m-rgb) / .13) 1px,transparent 1px),linear-gradient(90deg,rgb(var(--m-rgb) / .13) 1px,transparent 1px);
   background-size:8px 8px,8px 8px,40px 40px,40px 40px;background-position:center}
-.nx-cos{position:absolute;left:50%;bottom:-2%;height:98%;transform:translateX(-50%);filter:grayscale(.85) brightness(.78) contrast(1.05) drop-shadow(0 0 1.2px rgb(var(--m-rgb) / .9))}
+.nx-cos{position:absolute;left:50%;bottom:-2%;height:98%;transform:translateX(-50%);filter:grayscale(.85) brightness(.78) contrast(1.05)}
 .nx-mida{position:absolute;height:0;border-top:1px solid rgb(var(--m-rgb) / .85)}
 .nx-mida::before,.nx-mida::after{content:"";position:absolute;top:-5px;width:1px;height:9px;background:rgb(var(--m-rgb))}
 .nx-mida::before{left:0}.nx-mida::after{right:0}
@@ -15353,7 +15356,7 @@ function cosRegistre() {
   <div class="panel pad" style="margin-top:12px"><div class="linia-macros"><span><i class="dot p"></i>${n0(t.p)}${obj ? " / " + obj.lo : ""} g proteína</span><span><i class="dot c"></i>${n0(t.c)} g hidratos</span><span><i class="dot g"></i>${n0(t.g)} g grasas</span></div></div>
   ${k === hoy() ? "" : filaAigua(k)}
   <div class="fila entre" style="margin-top:16px"><h2 style="font-size:19px">Lo que has comido</h2><button class="btn clar marc" data-accion="afegeix">Añadir</button></div>`;
-  if (!llista.length) h += `<p class="buit">Aún no hay nada. Desde Comer, «APUNTAR» lo guarda con las cantidades.</p>`;
+  if (!llista.length) h += `<p class="buit">Aún no hay nada: con «Añadir» lo apuntas, con sus cantidades.</p>`;
   COMIDAS.forEach(([slot, nom]) => {
     const del = llista.filter(r => r.comida === slot);
     if (!del.length) return;
