@@ -9007,6 +9007,14 @@ const Nit = (() => {
     const gx = ev.target.closest('[data-accion="ngx-mapa"]');
     if (gx) { ev.preventDefault(); ev.stopPropagation(); fx(E => E.suena("tap")); gimMapa = true; if (typeof render === "function") render(); return; }
     const nd = ev.target.closest('[data-accion="ns-dins"]');
+    const nlg = ev.target.closest('[data-accion="nlg-disc"], [data-accion="nlg-recarrega"]');
+    if (nlg) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (nlg.dataset.accion === "nlg-disc") { S.ui.ligaDisc = nlg.dataset.d; if (typeof guardar === "function") guardar(); fx(E => E.suena("tap")); }
+      if (typeof render === "function") render();
+      carregaLiga(ligaDisc(), nlg.dataset.accion === "nlg-recarrega");
+      return;
+    }
     if (nd) { ev.preventDefault(); ev.stopPropagation(); gimMapa = false; S.ui.socDins = nd.dataset.t || null; if (nd.dataset.t) S.ui.socTab = nd.dataset.t; fx(E => E.suena("tap")); if (typeof render === "function") render(); window.scrollTo({ top: 0 }); return; }
     const kl = ev.target.closest(".ns-klonk");
     if (kl && !kl.classList.contains("fet")) { so(); klonkPendent = kl.dataset.id; }
@@ -9753,12 +9761,12 @@ const Nit = (() => {
     const so = soc(), yo = so.yo, gim = yo && yo.gimnas;
     if (S.demo || !yo || !gim || !so.participa) return window.vistaSocial ? window.vistaSocial() : "";
     const dins = S.ui.socDins;
-    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads" || dins === "guerra") {
-      if (dins !== "squads" && dins !== "guerra") S.ui.socTab = dins;
-      const nom = { clan: "Amigos", rank: "Ranking", gimnasios: "Gimnasios", squads: "Tu squad", guerra: "Gimnasios" }[dins];
-      const cos = dins === "squads" ? vistaSquads() : dins === "clan" ? vistaClan(so) + activitatSquad(null, 10) : dins === "gimnasios" || dins === "guerra" ? vistaGimnasios(so) : vistaRankings(so);
+    if (dins === "clan" || dins === "rank" || dins === "gimnasios" || dins === "squads" || dins === "guerra" || dins === "liga") {
+      if (dins !== "squads" && dins !== "guerra" && dins !== "liga") S.ui.socTab = dins;
+      const nom = { clan: "Amigos", rank: "Ranking", gimnasios: "Gimnasios", squads: "Tu squad", guerra: "Gimnasios", liga: "Liga" }[dins];
+      const cos = dins === "squads" ? vistaSquads() : dins === "liga" ? vistaLiga() : dins === "clan" ? vistaClan(so) + activitatSquad(null, 10) : dins === "gimnasios" || dins === "guerra" ? vistaGimnasios(so) : vistaRankings(so);
       refrescaSocial(so, dins);
-      return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag${dins === "squads" ? " nsx-h1" : ""}">${nom}</h1></div>${cos}`;
+      return `<div class="ns-torna"><button class="ns-torna-b" data-accion="ns-dins" data-t="">${I_TU.fle}<span>Social</span></button><h1 class="titol-pag${dins === "squads" || dins === "liga" ? " nsx-h1" : ""}">${nom}</h1></div>${cos}`;
     }
     // el rànquing del mig és el de la squad, si l'admin l'ha encès (29-09, METODE §3.9: el dels amics ja no existeix)
     const so2 = soc(); refrescaSocial(so2, "social");
@@ -9781,21 +9789,101 @@ const Nit = (() => {
   addEventListener("resize", () => { if (document.querySelector(".nsx")) ajustaHub(); });
   const DIES_L = ["L", "M", "X", "J", "V", "S", "D"];
   const avuiIdx = () => (new Date().getDay() + 6) % 7;
+  /* LA LLIGA A DALT (30-09 migdia, LA LLISTA M3). L'Albert, veient els renders A i B: «potser ranking de lliga petita
+     Duolingo, i que allà es pugui canviar entre lligues» (les disciplines: Gym, Powerlifting i Calistènia) «i a sota botó
+     squad, i si entres a squad ho presentes amb l'opció B i tota l'info squad». El servidor és servidor/lliga.py (els punts
+     de la setmana, els grups de fins a 20 del mateix disc, qui puja i qui baixa). Aquí: el disc i quan tanca; les tres
+     disciplines; l'escala (tu i els tres de sobre i de sota, com una escala que baixa); i dues portes, Squad i Gimnasios.
+     La colla a les peanes (la B) és a dins de Squad. */
+  const DISC_NOM = { gym: "Gym", powerlifting: "Powerlifting", calistenia: "Calistenia" };
+  const DISC_QUE = { gym: "cualquier ejercicio", powerlifting: "sentadilla, banca o peso muerto (y sus variantes)", calistenia: "dominadas, fondos, flexiones y demás con tu peso" };
+  // els discos de competició: 5 blanc, 10 verd, 15 groc, 20 blau, 25 vermell (els noms de metall són de l'ELO: aquí no)
+  const DISCOS = [{ kg: 5, c: "#e9ecef", t: "#1b2127" }, { kg: 10, c: "#3fae6a", t: "#fff" }, { kg: 15, c: "#e8c34a", t: "#2a200a" }, { kg: 20, c: "#3b7fe0", t: "#fff" }, { kg: 25, c: "#e0503f", t: "#fff" }];
+  const nomDisc = n => `${(DISCOS[n] || DISCOS[0]).kg} kg`;
+  const discSvg = (n, cls = "") => { const d = DISCOS[n] || DISCOS[0];
+    return `<svg class="nlg-disc ${cls}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="${d.c}"/><circle cx="20" cy="20" r="13.5" fill="none" stroke="rgb(0 0 0 / .2)" stroke-width="1.6"/><circle cx="20" cy="20" r="4.4" fill="#0d1217"/><text x="20" y="12.6" text-anchor="middle" font-size="7.2" font-weight="900" font-family="Nunito,system-ui,sans-serif" fill="${d.t}">${d.kg}</text></svg>`; };
+  const tancaEn = t => { const s = Math.max(0, (t || 0) - Date.now() / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600);
+    return d ? `${d} d ${h} h` : h ? `${h} h` : `${Math.max(1, Math.floor(s / 60))} min`; };
+  const ligaDisc = () => DISC_NOM[S.ui.ligaDisc] ? S.ui.ligaDisc : (((soc().yo || {}).disciplines || [])[0] || "gym");
+  async function carregaLiga(disc, forca) {
+    if (typeof api !== "function" || typeof teCompte !== "function" || !teCompte() || S.demo) return;
+    const yo = soc().yo || {}, sig = JSON.stringify([!!yo.lligues, yo.disciplines || ["gym"]]);
+    const L = S.ui.liga = S.ui.liga || {}, x = L[disc];
+    if (!forca && x && x.sig === sig && Date.now() - x.at < 60000) return;
+    if (!forca && L["err-" + disc] && Date.now() - L["err-" + disc] < 20000) return;
+    try { const r = await api("GET", "/liga?disc=" + encodeURIComponent(disc)); L[disc] = { ...r, at: Date.now(), sig }; delete L["err-" + disc]; }
+    catch (e) { L["err-" + disc] = Date.now(); if (x) return; }
+    if (S.ui.vista === "social" && typeof render === "function") render();
+  }
+  // una fila de la lliga: la posició, la cara, el nom i els punts (la teva, més ampla, amb el que et falta per pujar)
+  function filaLiga(L, x, k, i) {
+    const ll = L.llista, me = ll[i], puja = L.regla.pugen;
+    let falta = "";
+    if (x.yo && L.mou && k >= puja) falta = `+${n0(ll[puja - 1].punts - me.punts + 1)} para subir`;
+    else if (x.yo && L.mou) falta = "Subes";
+    else if (x.yo && k > 0) falta = `+${n0(ll[k - 1].punts - me.punts + 1)} para pasar`;
+    const d = k - i;
+    return `<span class="nlg-f${x.yo ? " yo" : ""}${L.mou && k < puja ? " zp" : ""}${L.mou && k >= ll.length - L.regla.baixen ? " zb" : ""}" style="--up:${Math.max(0, -d)};--down:${Math.max(0, d)}">
+      <b class="nlg-pos">${x.pos}</b><img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false"><span class="nlg-nom">${esc(x.nom)}</span>
+      <span class="nlg-pts"><b>${n0(x.punts)}</b>${falta ? `<small class="nlg-falta">${falta}</small>` : ""}</span></span>`;
+  }
+  const liniaLiga = (L, k) => L.mou && k === L.regla.pugen ? `<i class="nlg-linia puja" aria-hidden="true"></i>` : L.mou && k === L.llista.length - L.regla.baixen ? `<i class="nlg-linia baixa" aria-hidden="true"></i>` : "";
+  // l'escala del resum: tu i fins a tres de sobre i de sota (set files), com una escala que baixa cap a l'esquerra
+  function escalaLiga(L) {
+    const ll = L.llista, i = Math.max(0, ll.findIndex(x => x.yo));
+    let a = Math.max(0, i - 3); const b = Math.min(ll.length, a + 7); a = Math.max(0, b - 7);
+    return ll.slice(a, b).map((x, n) => liniaLiga(L, a + n) + filaLiga(L, x, a + n, i)).join("");
+  }
+  function blocLiga(disc) {
+    const L = S.ui.liga && S.ui.liga[disc];
+    carregaLiga(disc);
+    if (!L) return (S.ui.liga || {})["err-" + disc] ? `<div class="nlg-buit"><p>No se ha podido cargar la liga.</p><button class="nsx-crea-b" data-accion="nlg-recarrega">Reintentar</button></div>` : `<div class="nlg-buit"><p>Cargando la liga…</p></div>`;
+    if (L.fora) return `<div class="nlg-buit"><b>Compite cada semana</b><p>Hasta ${L.regla.max} personas de tu nivel: quien más entrena, sube de disco.</p><button class="nsx-crea-b" data-accion="lligues-on" data-v="1">Entrar en las ligas</button><small>Sales como «Anónimo». Lo cambias en Ajustes.</small></div>`;
+    if (L.sense_disc) return `<div class="nlg-buit"><b>No entrenas ${esc(DISC_NOM[disc].toLowerCase())}</b><p>Cuentan ${DISC_QUE[disc]}.</p><button class="nsx-crea-b" data-accion="lligues-disc" data-d="${disc}">Añadir ${esc(DISC_NOM[disc])}</button></div>`;
+    if (!L.total) return `<div class="nlg-buit">${discSvg(L.nivell, "nlg-d-gran")}<b>Tu liga de ${nomDisc(L.nivell)}</b><p>Entrena esta semana y entras: cada serie suma un punto, y cada día, diez.</p></div>`;
+    return `<button class="nlg-escala" data-accion="ns-dins" data-t="liga" aria-label="Liga de ${nomDisc(L.nivell)}: vas ${(L.llista.find(x => x.yo) || {}).pos || "-"}.º de ${L.total}. Ver la liga entera">${escalaLiga(L)}</button>`;
+  }
+  // la porta de Squad: les cares de la colla (enceses les que ja han entrenat avui) i la crida, si n'hi ha
+  function portaSquad(q, d) {
+    if (!q) return `<button class="nsx-porta" data-accion="ns-dins" data-t="squads">${I_SOC.amics}<span><b>Squad</b><small>${d && d.invitacions.length ? "Te han invitado" : "Crea la tuya"}</small></span>${I_TU.fle}</button>`;
+    const ms = [...q.membres].sort((a, b) => (b.yo ? 1 : 0) - (a.yo ? 1 : 0)).slice(0, 4), fets = q.membres.filter(m => m.avui).length;
+    const c = q.crides.find(x => !x.yo) || q.crides.find(x => x.yo);
+    const sub = c ? (c.yo ? `Vas a las ${horaDe(c.quan)}` : `${esc(c.de)} · ${horaDe(c.quan)}`) : `${fets} de ${q.membres.length} hoy`;      // a mitja porta no hi cap «SOOEK va a las 14:23»
+    return `<button class="nsx-porta nlg-sq" data-accion="ns-dins" data-t="squads">${badgeEmb(q.emblema, "nsx-porta-ic")}<span><b>Squad</b>
+      <span class="nlg-cares">${ms.map(m => `<img class="${m.avui ? "calent" : ""}" src="${m.yo ? CARA() : caraDe(m.personatge)}" alt="" draggable="false">`).join("")}</span><small>${sub}</small></span>${I_TU.fle}</button>`;
+  }
   function hubSocial(so) {
     carregaSquads();
-    const d = S.ui.squads, sol = ((so.clan || {}).rebudes || []).length;
+    const d = S.ui.squads, sol = ((so.clan || {}).rebudes || []).length, disc = ligaDisc();
     const q = d && d.squads.length ? (d.squads.find(x => x.id === S.ui.sqSel) || d.squads[0]) : null;
+    const L = S.ui.liga && S.ui.liga[disc];
     const amics = `<button class="nsx-amics" data-accion="ns-dins" data-t="clan" aria-label="Amigos${sol ? `, ${sol} ${sol === 1 ? "solicitud" : "solicitudes"}` : ""}">${I_SOC.amics}${sol ? `<i class="ns-xapa">${sol}</i>` : ""}</button>`;
-    const e = q && q.emblema, seg = e ? +e.seguent || 0 : 0;
-    const ninv = d ? d.invitacions.length : 0;
-    const cap = q ? `<button class="nsx-cap-b" data-accion="ns-dins" data-t="squads"${ninv ? ` aria-label="Tu squad; ${ninv} ${ninv === 1 ? "invitación" : "invitaciones"}"` : ""}>${badgeEmb(e, "emb-cap")}${ninv ? `<i class="ns-xapa nsx-inv">${ninv}</i>` : ""}<span class="nsx-cap-t">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : `<b>${esc(q.nom)}</b>`}
-        <small>${e ? `Nivel ${e.n}${seg ? ` · ${+e.ratxa || 0} de ${seg} semanas` : ""}` : ""}</small></span></button>`
-      : `<span class="nsx-cap-b"><span class="nsx-cap-t"><b class="nsx-sense">Tu squad</b></span></span>`;
-    return `<h1 class="nsx-h1">Social</h1><section class="nsx">
+    const nv = L && L.nivell != null ? L.nivell : null;
+    const cap = `<span class="nsx-cap-b nlg-cap-b">${nv != null ? discSvg(nv, "nlg-d-cap") : ""}<span class="nsx-cap-t"><b class="nlg-t">${nv != null ? `Liga ${nomDisc(nv)}` : "Liga"}</b><small>${L && L.tanca ? `Cierra en ${tancaEn(L.tanca)}` : "Semanal"}</small></span></span>`;
+    const tabs = `<div class="nlg-tabs" role="tablist" aria-label="Disciplina">${Object.keys(DISC_NOM).map(k => `<button class="nlg-tab${k === disc ? " on" : ""}" data-accion="nlg-disc" data-d="${k}" role="tab" aria-selected="${k === disc}">${DISC_NOM[k]}</button>`).join("")}</div>`;
+    return `<h1 class="nsx-h1">Social</h1><section class="nsx nlg-hub">
       <div class="nsx-cap" data-in="ns">${cap}${amics}</div>
-      ${escenaSquad(q, d)}
-      ${q ? cridaHub(q) : ""}
-      <div class="nsx-portes" data-in="ns">${portaRank()}${portaGims()}</div>
+      ${tabs}
+      <div class="nlg-cos" data-in="ns">${blocLiga(disc)}</div>
+      <div class="nsx-portes" data-in="ns">${portaSquad(q, d)}${portaGims()}</div>
+    </section>`;
+  }
+  // LA PÀGINA DE LA LLIGA: el grup sencer amb les ratlles, com es guanyen els punts, els cinc discos i els rànquings de força
+  function vistaLiga() {
+    const disc = ligaDisc(), L = S.ui.liga && S.ui.liga[disc];
+    carregaLiga(disc);
+    if (!L || L.fora || L.sense_disc || !L.total) return `<section class="nlg-pag">${blocLiga(disc)}</section>`;
+    const i = Math.max(0, L.llista.findIndex(x => x.yo)), r = L.regla;
+    return `<section class="nlg-pag">
+      <div class="nlg-pag-cap" data-in="ns">${discSvg(L.nivell, "nlg-d-gran")}<span><b>Liga ${nomDisc(L.nivell)}</b><small>${esc(DISC_NOM[disc])} · cierra en ${tancaEn(L.tanca)}</small></span></div>
+      ${L.mou ? `<div class="nlg-zones" data-in="ns"><span class="puja">Suben ${r.pugen}</span><span>Se quedan</span><span class="baixa">Bajan ${r.baixen}</span></div>`
+        : `<p class="nlg-nota" data-in="ns">Con menos de ${r.minim} en el grupo, esta semana no sube ni baja nadie.</p>`}
+      <div class="nlg-llista" data-in="ns">${L.llista.map((x, k) => liniaLiga(L, k) + filaLiga(L, x, k, i)).join("")}</div>
+      <div class="nlg-com" data-in="ns"><h2>Cómo se ganan puntos</h2>
+        <p>Cada serie de ${DISC_QUE[disc]} suma 1 punto, hasta ${r.cap} al día, y cada día que entrenas, ${r.dia} más. Lo cuenta KLONK con tus entrenos.</p>
+        <p>El domingo por la noche, los ${r.pugen} primeros suben al disco siguiente y los ${r.baixen} últimos bajan.</p></div>
+      <div class="nlg-discos" data-in="ns">${DISCOS.map((x, k) => `<span class="${k === L.nivell ? "on" : ""}">${discSvg(k)}<small>${x.kg} kg</small></span>`).join("")}</div>
+      <button class="nt-boto2 nlg-rank" data-accion="ns-dins" data-t="rank" data-in="ns">Rankings de fuerza</button>
     </section>`;
   }
   // l'escenari: fins a cinc de la colla drets a la seva peana (tu, el primer); encès qui ha entrenat avui; i l'anella del dia
@@ -9834,10 +9922,6 @@ const Nit = (() => {
     if (meva) return `<div class="nsx-crida" data-in="ns"><span class="nsx-crida-t"><span><b>Vas</b> a las ${horaDe(meva.quan)}</span></span><small class="nsx-crida-n">${altres ? `${altres} ${altres === 1 ? "se apunta" : "se apuntan"}` : "Avisados"}</small></div>`;
     return `<div class="nsx-crida" data-in="ns"><span class="nsx-crida-t">Hoy voy a las</span><input type="time" class="nsq-crida-h" value="${horaGym()}" aria-label="Hora a la que vas al gym"><button class="nsx-crida-b" data-accion="nsq-crida-hora" data-id="${q.id}">Avisar</button></div>`;
   }
-  function portaRank() {
-    const e = eloDe();
-    return `<button class="nsx-porta" data-accion="ns-dins" data-t="rank">${sigma(e, "nsx-porta-ic")}<span><b>Ranking</b><small>${e.elo != null ? `${esc(nomRang(e.divisio.id, e.divisio.nom))} · ${n0(e.elo)}` : "Sin clasificar"}</small></span>${I_TU.fle}</button>`;
-  }
   function portaGims() {
     const g = S.ui.guerra, dd = g && g.d, meu = dd && dd.meu, riv = dd && dd.rival;
     const sub = !g ? "Cargando…" : !meu ? "Elige tu gimnasio" : !riv ? "Sin rival esta semana" : `${n1(meu.punts)} vs ${n1(riv.punts)} días`;
@@ -9854,7 +9938,8 @@ const Nit = (() => {
     if (!d) return S.ui.sqErr ? `<div class="nsq-err"><p class="ns-buit">No se han podido cargar tus squads.</p><button class="nt-boto2" data-accion="nsq-recarrega">Reintentar</button></div>`
       : `<p class="ns-buit">Cargando tus squads…</p>`;
     const inv = d.invitacions.map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("");
-    if (!d.squads.length) return `<section class="nsp">${inv}<button class="nt-boto nsq-nova" data-accion="nsq-nova" data-in="ns">${I_NC.mes}Crear una squad</button></section>`;
+    // sense squad, la B buida: tu al mig, un sol «Crea tu squad» (i, si t'han convidat, «Unirme»; les altres invitacions, a sota)
+    if (!d.squads.length) return `<section class="nsp"><div class="nsx nsx-dins">${escenaSquad(null, d)}</div>${d.invitacions.slice(1).map(i => `<div class="nsq-inv" data-in="ns"><span><b>${esc(i.de)}</b> te invita a <b>${esc(i.nom)}</b></span><span class="nsq-inv-b"><button class="nt-boto2 accio" data-accion="nsq-accepta" data-id="${i.id}">Unirme</button><button class="nt-boto2" data-accion="nsq-rebutja" data-id="${i.id}">No</button></span></div>`).join("")}</section>`;
     const q = d.squads.find(x => x.id === S.ui.sqSel) || d.squads[0], gestor = q.jo_lider || q.jo_admin, avui = avuiIdx();
     const e = q.emblema || { f: "escut", c: q.color || "menta", n: 1, ratxa: 0, seguent: 2 }, r = +e.ratxa || 0, seg = +e.seguent || 0;
     const tria = d.squads.length > 1 ? `<div class="nsq-tria" role="tablist" aria-label="Tus squads">${d.squads.map(x => `<button class="nsq-tria-b${x.id === q.id ? " on" : ""}" data-accion="nsq-sel" data-id="${x.id}" role="tab" aria-selected="${x.id === q.id}">${badgeEmb(x.emblema)}<small>${esEtq(x.nom) ? "[" + esc(x.nom) + "]" : esc(x.nom)}</small></button>`).join("")}</div>` : "";
@@ -9868,6 +9953,7 @@ const Nit = (() => {
     };
     const pcR = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<section class="nsp">${inv}${tria}
+      <div class="nsx nsx-dins">${escenaSquad(q, d)}</div>
       <div class="nsp-emb" data-in="ns">${badgeEmb(e, "emb-xl")}<span class="nsp-emb-t"><span class="nsp-emb-nom">${esEtq(q.nom) ? tagSq({ t: q.nom, c: q.color }) : `<b>${esc(q.nom)}</b>`}${q.jo_lider ? `<i class="nsp-jo">Líder</i>` : q.jo_admin ? `<i class="nsp-jo">Admin</i>` : ""}</span>
         <span class="nsp-emb-n">${esc(NOM_FORMA[e.f] || "Emblema")} · nivel ${e.n}${typeof infoBoto === "function" ? infoBoto("emblema") : ""}</span>
         ${seg ? `<span class="nsp-barra" role="img" aria-label="${r} de ${seg} semanas para el nivel ${+e.n + 1}"><i style="--p:${Math.min(100, r / seg * 100)}%"></i></span><small>${r} de ${seg} semanas para el nivel ${+e.n + 1}</small>` : `<small>Nivel máximo</small>`}</span>
@@ -12690,6 +12776,47 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-crida-b{height:42px;padding:0 16px;border:0;border-radius:14px;background:rgb(var(--m-rgb) / .16);color:rgb(var(--m2-rgb));font:900 15px/1 'Nunito',sans-serif;cursor:pointer}
 .nsx-crida-n{font-size:13px;font-weight:800;color:var(--nt-suau);padding-right:10px}
 .nsx-portes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* LA LLIGA (30-09, M3): el disc i quan tanca, les disciplines, l'escala i la pàgina sencera */
+.nlg-disc{display:block;width:40px;height:40px;flex:none;filter:none}
+.nlg-disc.nlg-d-cap{width:50px;height:50px}.nlg-disc.nlg-d-gran{width:64px;height:64px}
+.nlg-cap-b{cursor:default}.nlg-t{font:900 24px/1.05 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nlg-tabs{display:flex;gap:6px;padding:4px;border-radius:16px;background:rgb(255 255 255 / .045)}
+.nlg-tab{flex:1;height:36px;border:0;border-radius:12px;background:none;color:var(--nt-suau);font:800 14px/1 'Nunito',system-ui,sans-serif;cursor:pointer}
+.nlg-tab.on{background:rgb(var(--m-rgb) / .16);color:var(--nt-tinta);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .5)}
+.nlg-cos{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.nlg-escala{display:flex;flex-direction:column;gap:6px;width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.nlg-f{display:flex;align-items:center;gap:10px;min-height:44px;padding:4px 12px 4px 10px;border-radius:16px;background:rgb(255 255 255 / .05);
+  box-shadow:inset 0 0 0 1px rgb(255 255 255 / .06);margin-left:calc(var(--up) * 16px);margin-right:calc(var(--down) * 16px)}
+.nlg-f img{width:34px;height:34px;flex:none;border-radius:50%;object-fit:cover;background:#111923}
+.nlg-pos{width:22px;flex:none;text-align:center;font:900 16px/1 'Nunito',system-ui,sans-serif;color:var(--nt-suau)}
+.nlg-nom{flex:1;min-width:0;font:800 15px/1.1 'Nunito',system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nlg-pts{display:grid;justify-items:end;gap:3px;flex:none}.nlg-pts b{font:900 16px/1 'Nunito',system-ui,sans-serif}
+.nlg-f.yo{min-height:56px;background:rgb(var(--l-rgb) / .14);box-shadow:inset 0 0 0 2px rgb(var(--l-rgb) / .75),0 0 24px -8px rgb(var(--l-rgb) / .8)}
+.nlg-f.yo .nlg-pos{color:rgb(var(--l-rgb));font-size:22px}.nlg-f.yo img{width:42px;height:42px}
+.nlg-falta{padding:3px 8px;border-radius:99px;background:rgb(var(--m-rgb) / .9);color:rgb(var(--mt-rgb));font:900 11.5px/1 'Nunito',system-ui,sans-serif;white-space:nowrap}
+.nlg-f.zp .nlg-pos{color:#5fd08f}.nlg-f.zb .nlg-pos{color:#ec6b62}
+.nlg-linia{display:block;height:2px;margin:1px 8px;border-radius:2px}
+.nlg-linia.puja{background:#5fd08f}.nlg-linia.baixa{background:#ec6b62}
+.nlg-buit{display:grid;justify-items:center;gap:8px;padding:18px 16px;text-align:center;border-radius:20px;background:rgb(255 255 255 / .04)}
+.nlg-buit b{font:900 18px/1.2 'Nunito',system-ui,sans-serif}.nlg-buit p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14px}
+.nlg-buit small{color:var(--nt-suau);font-weight:700}
+.nlg-sq .nlg-cares{display:flex}.nlg-cares img{width:24px;height:24px;border-radius:50%;margin-right:-6px;box-shadow:0 0 0 2px #151c24;object-fit:cover;background:#111923}
+.nlg-cares img.calent{box-shadow:0 0 0 2px #e2c27a}
+.nlg-pag{display:grid;gap:14px}
+.nlg-pag-cap{display:flex;align-items:center;gap:14px}.nlg-pag-cap span{display:grid;gap:3px}
+.nlg-pag-cap b{font:900 26px/1.05 'Nunito',system-ui,sans-serif}.nlg-pag-cap small{color:var(--nt-suau);font-weight:800;font-size:13.5px}
+.nlg-zones{display:flex;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgb(255 255 255 / .04);font:800 13.5px/1 'Nunito',system-ui,sans-serif;color:var(--nt-suau)}
+.nlg-zones span::before{content:"";display:inline-block;width:9px;height:9px;margin-right:7px;border-radius:50%;background:#8b96a3}
+.nlg-zones .puja::before{background:#5fd08f}.nlg-zones .baixa::before{background:#ec6b62}
+.nlg-nota{margin:0;color:var(--nt-suau);font-weight:700;font-size:13.5px}
+.nlg-llista{display:grid;gap:6px}.nlg-llista .nlg-f{margin:0}
+.nlg-com{display:grid;gap:6px;padding:14px 16px;border-radius:18px;background:rgb(255 255 255 / .04)}
+.nlg-com h2{margin:0;font:900 16px/1.2 'Nunito',system-ui,sans-serif}.nlg-com p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14px;line-height:1.4}
+.nlg-discos{display:flex;justify-content:space-between;gap:6px}
+.nlg-discos span{display:grid;justify-items:center;gap:4px;opacity:.55}.nlg-discos span.on{opacity:1}
+.nlg-discos small{font:800 12px/1 'Nunito',system-ui,sans-serif;color:var(--nt-suau)}.nlg-discos span.on small{color:var(--nt-tinta)}
+/* la B dins de Squad: l'escenari de la colla, amb alçada pròpia (al resum la hi dona el mòbil) */
+.nsx.nsx-dins{height:min(46vh,380px);margin-bottom:6px}
 .nsx-porta{display:flex;align-items:center;gap:10px;min-height:72px;padding:10px 10px 10px 12px;border:0;border-radius:20px;text-align:left;color:var(--nt-tinta);font:inherit;cursor:pointer;
   background:linear-gradient(180deg,#1f2733,#181f28);box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(var(--l-rgb) / .22)}
 .nsx-porta.or{box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 0 0 1px rgb(226 194 122 / .3)}
