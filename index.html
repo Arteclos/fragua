@@ -5647,6 +5647,7 @@ const ZONAS = [["01", "Álava"], ["02", "Albacete"], ["03", "Alicante"], ["04", 
 const nomZona = k => (ZONAS.find(z => z[0] === k) || [0, ""])[1];
 const soc = () => { const so = { visible: "anonimo", participa: false, menor: null, rank: {}, metrica: "elo", ambit: "gimnasio", grupo: "general", ...(S.social || {}) };
   if (so.ambit === "amigos") so.ambit = "gimnasio";          // el rànquing dels amics ja no existeix (29-09, METODE §3.9)
+  if (!["gimnasio", "ciudad", "mundo"].includes(so.ambit)) so.ambit = "gimnasio";   // i les geografies del mig, tampoc (30-09)
   if (so.metrica === "rango") so.metrica = "elo";            // la lliga de força és l'ELO de Gym (29-09), no el Temple
   return so; };
 
@@ -5753,7 +5754,8 @@ function fullYunques() {
     ${p != null && seg ? `<p class="or" style="margin:0 0 10px"><b>Te faltan ${n0(seg[0] - p)} de temple para ${seg[2]}.</b></p>` : ""}
     <div class="yunques-llista">${YUNQUES.map(([des, id, nom], k) => `<div class="yunque-fila${meu && meu.id === id ? " yunque-meu" : ""}"><img src="${ACTIUS}yunques/${id}.webp" alt=""><span><b>${nom}</b><small>${des ? `Desde ${des} de temple: más fuerte que ${Math.round(des / 10)} de cada 100 de KLONK, para su peso` : "Al empezar"}</small></span>${meu && meu.id === id ? '<small class="or">El tuyo</small>' : ""}</div>`).join("")}</div>`;
 }
-const AMBITS2 = [["gimnasio", "Mi gimnasio"], ["ciudad", "Ciudad"], ["provincia", "Provincia"], ["ccaa", "Comunidad"], ["pais", "País"], ["continente", "Continente"], ["mundo", "Mundo"]];
+// (30-09 nit, LA LLISTA N6; SOCIAL-RECERCA §5: «fora les set geografies»; el tester: set xips per a una llista de dues persones)
+const AMBITS2 = [["gimnasio", "Mi gimnasio"], ["ciudad", "Ciudad"], ["mundo", "Mundo"]];
 const GRUPS_R = ["general", "Pecho", "Espalda", "Pierna", "Hombro", "Brazo"];
 const intent = {};
 const claveRank = so => `${so.metrica}|${so.ambit}|${so.metrica === "rango" ? so.grupo : "-"}`;
@@ -8413,7 +8415,7 @@ const Nit = (() => {
       <div class="nt-fons" aria-hidden="true"><i class="nt-bloom"></i></div>
       ${cap()}
       <div class="nt-set" aria-label="Los últimos 7 días">${set.map(d => `<span class="nt-dia-s${d.fet ? " fet" : ""}${d.avui ? " avui" : ""}" data-in="set"><small>${d.l}</small><i></i><b>${d.n}</b></span>`).join("")}</div>
-      <div class="nt-guerra" hidden></div>
+      <div class="nt-guerra" hidden role="button" tabindex="0" data-accion="nt-ves" data-v="gimnasios" aria-label="La guerra de gyms"></div>
       <div class="nt-roda" data-idx="${idx}" aria-roledescription="carrusel" aria-label="Tu rutina">${llista.map(c => carta(c, act)).join("")}
         <div class="nt-punts" aria-hidden="true">${llista.map(c => `<i class="${c.tipus === "pro" ? "pro" : ""}"></i>`).join("")}</div></div>
       <div class="nt-amic" hidden></div>
@@ -8947,19 +8949,17 @@ const Nit = (() => {
   function obreMenu() {
     if (cal) return;
     const id = (typeof sessio !== "undefined" && sessio && sessio.id) ? String(sessio.id).slice(0, 10) : "";
-    const nom = (S.personaje && S.personaje.nombre) || (typeof sessio !== "undefined" && sessio && sessio.nick) || "Tú";
     const fila = (v, n, i, extra = "") => `<button class="nt-cal-f" data-accion="nt-ves" data-v="${v}"${extra}>${i}<span>${n}</span></button>`;
     const el = document.createElement("div");
     el.className = "nt-cal"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Menú");
     el.innerHTML = `<div class="nt-cal-vel" data-cal="tanca"></div>
       <nav class="nt-cal-p">
         ${id ? `<div class="nt-cal-id" data-cal-in><small>ID de soporte</small><button class="nt-cal-idb" data-cal="copia" aria-label="Copiar el ID de soporte"><b>${esc(id)}</b>${I_MENU.copia}</button></div>` : ""}
-        <button class="nt-cal-perfil" data-accion="nt-ves" data-v="personaje" data-cal-in><img src="${CARA()}" alt="" draggable="false"><b>${esc(nom)}</b>${I_MENU.fle}</button>
         ${jove() ? "" : `<button class="nt-cal-pro" data-accion="nt-ves" data-v="pro" data-cal-in>${ic("medalla")}<span>KLONK PRO</span></button>`}
         <i class="nt-cal-sep" data-cal-in></i>
         <div class="nt-cal-grup gran">${fila("tienda", "Tienda", I_MENU.bossa, ' data-t="oro" data-cal-in')}${fila("cartas", "Tu rutina", I_MENU.rut, " data-cal-in")}${fila("rutinas", "Mis rutinas", I_MENU.rut, " data-cal-in")}</div>
         <i class="nt-cal-sep" data-cal-in></i>
-        <div class="nt-cal-grup">${fila("estadisticas", "Progreso", I_MENU.prog, " data-cal-in")}${fila("gimnasios", "Gimnasios", I_MENU.gim, " data-cal-in")}${fila("social", "Invitar amigos", I_MENU.inv, ' data-soc="clan" data-cal-in')}${fila("ajustes", "Ajustes", I_MENU.ajust, " data-cal-in")}</div>
+        <div class="nt-cal-grup">${fila("estadisticas", "Progreso", I_MENU.prog, " data-cal-in")}${fila("ajustes", "Ajustes", I_MENU.ajust, " data-cal-in")}</div>
       </nav>`;
     document.body.appendChild(el);
     cal = el;
@@ -9549,10 +9549,10 @@ const Nit = (() => {
     if (!d) return o.dins ? "" : `<div class="ngw"><p class="ngw-estat">Elige tu gimnasio para entrar en la guerra de gyms.</p><button class="nt-boto2 ngw-gims" data-accion="ns-dins" data-t="gimnasios">Elegir gimnasio</button></div>`;
     const meu = d.meu, riv = d.rival, pc = riv ? pcGuerra(meu, riv) : 100, km = riv ? kmEntre(meu, riv) : null, jo = meu.meus || 0;
     const estat = !riv ? "Esta semana tu gimnasio aún no tiene rival. En cuanto haya otro gimnasio libre en tu zona, empieza."
-      : meu.punts > riv.punts ? `Vais ganando por ${n1(meu.punts - riv.punts)} ${meu.punts - riv.punts === 1 ? "entreno" : "entrenos"} por persona.`
-      : meu.punts < riv.punts ? `Vais perdiendo por ${n1(riv.punts - meu.punts)} ${riv.punts - meu.punts === 1 ? "entreno" : "entrenos"} por persona.` : "Vais empatados.";
+      : meu.punts > riv.punts ? `Vais ganando por ${n1(meu.punts - riv.punts)} ${meu.punts - riv.punts === 1 ? "día" : "días"} por persona.`
+      : meu.punts < riv.punts ? `Vais perdiendo por ${n1(riv.punts - meu.punts)} ${riv.punts - meu.punts === 1 ? "día" : "días"} por persona.` : "Vais empatados.";
     const fitxa = (x, cls, icona) => `<div class="ngw-g ${cls}">${ic(icona)}<b class="ngw-nom">${esc(x.nom)}</b><small class="ngw-lloc">${esc(x.adreca || x.ciutat || "")}</small>
-      <span class="ngw-xifra"><b>${n1(x.punts)}</b><small>entrenos por persona</small></span>
+      <span class="ngw-xifra"><b>${n1(x.punts)}</b><small>días por persona</small></span>
       <span class="ngw-dada"><b>${x.klonk}</b> ${x.klonk === 1 ? "persona" : "personas"} de KLONK</span>
       <span class="ngw-dada"><b>${x.entrenos}</b> ${x.entrenos === 1 ? "entreno" : "entrenos"} esta semana</span></div>`;
     const ant = d.anterior;
@@ -9990,7 +9990,7 @@ const Nit = (() => {
       ["Comida apuntada, hasta 3 al día", ORO.comida, I_NC.gota], ["Subir de nivel", ORO.nivel, I_TU.pj]].filter(x => x[1] > 0);
     return `<h1 class="titol-pag">Tienda</h1>
       <section class="nb2">
-        <div class="nb2-or" data-in="nb"><span><small>Tu oro</small><b class="nb2-n">${n0(oro)}</b></span><img src="${R()}or-pila.webp" alt="" draggable="false" onerror="this.style.visibility='hidden'"></div>
+
         ${jove() ? "" : `<button class="nb2-pro" data-in="nb" data-accion="nt-ves" data-v="pro"><span class="nb2-pro-ic">${ic("medalla")}</span><span class="nb2-pro-t"><b>KLONK PRO</b><small>Tu plan hecho para ti, y más. Aún no está a la venta: te avisamos.</small></span><span class="nb2-pro-f">${I_TU.fle}</span></button>`}
         <div class="tabs-t"><button class="chip" data-accion="tienda-tab" data-t="oro" aria-pressed="${tab === "oro"}">Oro</button><button class="chip" data-accion="tienda-tab" data-t="rutinas" aria-pressed="${tab === "rutinas"}">Rutinas</button><button class="chip" data-accion="tienda-tab" data-t="material" aria-pressed="${tab === "material"}">Ropa</button></div>
         ${tab === "rutinas" ? vistaMercat() : tab === "material" ? vistaMaterial() : esMenor() ? `<p class="nb2-av">Las compras son para mayores de edad. El oro se gana entrenando.</p>` : `
@@ -11788,6 +11788,7 @@ body.v-nit.fb-actiu .fons,body.v-nit.fb-actiu .ambient{display:none}
 .nt-sheen{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgb(255 255 255 / .16) 45%,transparent 60%);transform:translateX(-120%);animation:nt-sheen 7s ease-in-out 2s infinite}
 @keyframes nt-sheen{0%,86%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 .nt-ratxa.on .nt-flama{animation:nt-flama 1.6s ease-in-out infinite;transform-origin:50% 90%}
+body.v-nit .r-flama b{color:#fff;text-shadow:0 2px 6px rgb(0 0 0 / .75),0 0 2px rgb(0 0 0 / .9)}
 @keyframes nt-flama{0%,100%{transform:scale(1) rotate(0)}30%{transform:scale(1.07,.95) rotate(-3deg)}65%{transform:scale(.96,1.06) rotate(2deg)}}
 .nt-ratxa:not(.on) b{color:var(--nt-suau)}
 .nt-mesor{display:grid;place-items:center;width:22px;height:22px;margin-left:2px;margin-right:-6px}
@@ -12140,7 +12141,7 @@ body.v-nit.te-barra:not(.bb-entrada) #vista[data-vista="estadisticas"]::after{co
 .ne-cap{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px;background:var(--fb-sup);box-shadow:var(--fb-o1)}
 .ne-dia{flex:1;display:grid;min-width:0}
 .ne-dia small{font-size:13px;font-weight:900;color:var(--nt-lila)}
-.ne-dia b{font-size:24px;font-weight:900;line-height:1.1;text-shadow:var(--nt-text-o);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ne-dia b{font-size:22px;font-weight:900;line-height:1.1;text-shadow:var(--nt-text-o);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ne-anell{position:relative;display:grid;place-items:center;width:62px;height:62px;flex:none}
 .ne-anell svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .ne-a-f{fill:none;stroke:#10171e;stroke-width:5}
@@ -12549,7 +12550,7 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-colla{position:relative;z-index:1;width:100%;height:74%;display:flex;align-items:flex-end;justify-content:center;gap:0}
 .nsx-pj{position:relative;flex:1 1 0;max-width:34%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0;border:0;background:none;color:var(--nt-tinta);font:inherit;cursor:pointer}
 .nsx-colla.n1 .nsx-pj{max-width:40%}
-.nsx-pj img{position:relative;z-index:1;flex:1 1 0;min-height:0;height:0;width:auto;max-width:150%;object-fit:contain;object-position:bottom;margin-bottom:-7px;filter:drop-shadow(0 10px 12px rgb(0 0 0 / .55))}
+.nsx-pj img{position:relative;z-index:1;flex:1 1 0;min-height:0;height:0;width:auto;max-width:150%;object-fit:contain;object-position:bottom;margin-bottom:-7px}
 .nsx-pj:nth-child(even){transform:translateY(-4%)}
 .nsx-peana{display:block;width:78%;height:14px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#2a3240,#12181f 70%);box-shadow:0 3px 0 #0b1015,inset 0 1px 0 rgb(255 255 255 / .1)}
 .nsx-pj.calent .nsx-peana{background:radial-gradient(ellipse at 50% 40%,#ffcf7a,#e68a2e 55%,#7a3a0e);box-shadow:0 0 18px 2px rgb(255 160 60 / .55),0 3px 0 #5a2a08}
@@ -12846,7 +12847,9 @@ body.v-nit .leaflet-control-attribution a{color:rgb(var(--m-rgb))}
 .nb3-cap{position:relative;z-index:2;display:grid;justify-items:start;gap:6px}
 .nb3-t{font:400 44px/.95 'Anton','Nunito',sans-serif;font-style:italic;text-transform:uppercase;transform:skewX(-6deg);transform-origin:left;text-shadow:4px 4px 0 rgb(var(--l3-rgb))}
 .nb3-escena{position:relative;z-index:1;min-height:0}
-.nb3-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain;filter:drop-shadow(0 24px 30px rgb(0 0 0 / .6))}
+.nb3-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain}
+/* l'ombra del terra, sense filtre (a l'iPhone, el drop-shadow sobre els avatars de l'Àlex pintava un vel a tota la caixa) */
+.nb3-escena::before,.nw-esc::before{content:"";position:absolute;left:50%;bottom:0;width:52%;height:7%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgb(0 0 0 / .6),transparent)}
 .nb3-graella{position:relative;z-index:2;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .nb3-av{aspect-ratio:1;border:0;padding:0;border-radius:50%;overflow:hidden;background:#111923;box-shadow:inset 0 0 0 2px rgb(255 255 255 / .08);cursor:pointer;transition:transform .15s,box-shadow .2s}
 .nb3-av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -13369,7 +13372,7 @@ body.v-nit .avis-correu .tanca-x{border:0;background:rgb(255 255 255 / .07);colo
 .nw-o::before,.nw-o::after{content:"";flex:1;height:1px;background:rgb(255 255 255 / .1)}
 .nw-enllacos{display:grid;gap:8px;width:min(100%,400px)}
 .nw-tria .nw-esc{position:relative;z-index:1;width:100%;height:min(40vh,380px)}
-.nw-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain;filter:drop-shadow(0 24px 30px rgb(0 0 0 / .6))}
+.nw-cos{position:absolute;inset:0;margin:auto;height:100%;width:auto;max-width:92%;object-fit:contain}
 .nw-graella{width:min(100%,420px)}
 @media (prefers-reduced-motion:reduce){.nw-pj,.nw-logo,.nw-llesca{animation:none}}
 /* la farga no surt enlloc de la Noche: ni el fons del calabós ni l'escena ambient, tampoc a l'entrada */
@@ -15269,18 +15272,12 @@ function vistaEstadisticas() {
   const volP = Stats.volumenSemanal(S, nS), hiHaVol = volP.some(x => x.kg > 0);
   const etq = n => Array.from({ length: n }, (_, i) => i === n - 1 ? "ahora" : (n - 1 - i) % Math.max(1, Math.round(n / 4)) === 0 ? `-${n - 1 - i}s` : "");
   const gV = hiHaVol ? grafBarres(volP.map(x => x.kg), 300, 110, etq(nS)) : null;
-  const sesiones = S.ses.filter(s => s.fin).length;
   const dps = Stats.diasPorSemana(S, nS), totD = dps.reduce((a, b) => a + b, 0);
   const tg = Stats.tendenciaGrupos(S, nS);
   const grups = Object.entries(tg).map(([g, v]) => { const p = v.filter(x => x != null); return { g, p, canvi: p.length >= 2 ? p[p.length - 1] / p[0] - 1 : null }; }).filter(x => x.p.length >= 2);
   return `${capcalera("Estadísticas")}${tabsStats4()}
   ${teCompte() && soc().participa ? `<div id="temple-hist">${blocTemple()}</div>` : ""}
   <div class="xips-scroll petits periode">${[["mes", "Mes"], ["trimestre", "Trimestre"], ["anual", "Año"], ["total", "Todo"]].map(([p, n]) => `<button class="chip" data-accion="periode" data-p="${p}" aria-pressed="${per === p}">${n}</button>`).join("")}</div>
-  <div class="tres">
-    <div class="mini marc"><h3>Días</h3><div class="gran or num">${Stats.diasAno(S)}</div><div class="dada">este año</div></div>
-    <div class="mini marc"><h3>Récords</h3><div class="gran or num">${rec}</div><div class="dada">este mes</div></div>
-    <div class="mini marc"><h3>Entrenos</h3><div class="gran or num">${sesiones}</div><div class="dada">NV ${Stats.experienciaPj(S).nivel}</div></div>
-  </div>
   ${bloc("Por grupo muscular", grups.length ? `<div class="grups-t">${grups.map(x => `<div class="r-graf"><div class="r-graf-cap"><b>${x.g === "General" ? "Todo el cuerpo" : x.g}</b><span class="${x.canvi >= 0 ? "puja" : "baixa"} num">${x.canvi >= 0 ? "+" : ""}${n0(x.canvi * 100)} %</span></div>${grafTendencia(x.p, 300, 74)}</div>`).join("")}</div>
     <p class="llegenda">Tu fuerza de cada grupo, semana a semana, contra el principio del periodo. La línea de puntos es la tendencia.</p>` : '<div class="buit">Con dos semanas de entrenos verás la tendencia de cada grupo.</div>', "graf")}
   ${bloc("Tu armadura", `${grafRadar(arm)}<p class="llegenda">Series de cada grupo en los últimos 7 días. Llena el escudo entrenando todo.</p>`, "graf")}
@@ -15805,7 +15802,12 @@ document.addEventListener("click", ev => {
       const ahir = clave(new Date(Date.now() - 864e5));
       const entrenatAhir = S.ses.some(x => x.fin && x.fecha === ahir), jaAvui = S.ses.some(x => x.fin && x.fecha === hoy());
       const series = s.ej.reduce((a, e) => a + e.sets.filter(z => z.ok && z.reps).length, 0);
-      if (!series) { avis("Aún no has hecho ninguna serie."); break; }
+      // sense cap sèrie (30-09 nit, N6): l'avís tapava just «Descartar este entreno», que és el que toca; ara ho pregunta
+      if (!series) {
+        if (typeof Nit === "object" && Nit.activa() && Nit.confirma) Nit.confirma({ titol: "Aún no has hecho ninguna serie", text: "Puedes descartar este entreno o seguir entrenando.", si: "Descartar", no: "Seguir entrenando", accio: "descartar-si" });
+        else avis("Aún no has hecho ninguna serie.");
+        break;
+      }
       const pujaAbans = { poder: (soc().yo || {}).poder, pos: ((soc().rank["rango|amigos|general"] || {}).yo || {}).pos };
       terminar(); S.ui.vista = "inicio"; musica();
       if (soc().participa) miraPujada(pujaAbans); else sincronitza();
