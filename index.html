@@ -9388,6 +9388,7 @@ const Nit = (() => {
       if (vista === "personaje") entra([...v.querySelectorAll('[data-in="tu"]')], 40);
     }
     if (lloc) llocAbans = lloc;
+    if (vista === "social" && S.ui.socDins === "gimnasios") animaGuerra(v);
     if (vista === "social") despresSocial();
     if (vista === "rutinas") despresRutinas();
     if (vista === "estadisticas") {
@@ -9705,10 +9706,12 @@ const Nit = (() => {
     const estat = !riv ? "Esta semana tu gimnasio aún no tiene rival. En cuanto haya otro gimnasio libre en tu zona, empieza."
       : meu.punts > riv.punts ? `Vais ganando por ${n1(meu.punts - riv.punts)} ${meu.punts - riv.punts === 1 ? "día" : "días"} por persona.`
       : meu.punts < riv.punts ? `Vais perdiendo por ${n1(riv.punts - meu.punts)} ${riv.punts - meu.punts === 1 ? "día" : "días"} por persona.` : "Vais empatados.";
-    const fitxa = (x, cls, icona) => `<div class="ngw-g ${cls}">${ic(icona)}<b class="ngw-nom">${esc(x.nom)}</b><small class="ngw-lloc">${esc(x.adreca || x.ciutat || "")}</small>
-      <span class="ngw-xifra"><b>${n1(x.punts)}</b><small>días por persona</small></span>
+    // (M19) mentre les cares hi entren, els números són els de l'animació (una pàgina que es repinta a mig vol no els fa saltar)
+    const fitxa = (x, cls, icona) => { const va = o.dins && guerraAnim && guerraAnim[cls], P = va ? va.p : x.punts, E = va ? va.e : x.entrenos;
+      return `<div class="ngw-g ${cls}">${ic(icona)}<b class="ngw-nom">${esc(x.nom)}</b><small class="ngw-lloc">${esc(x.adreca || x.ciutat || "")}</small>
+      <span class="ngw-xifra"><b>${n1(P)}</b><small>días por persona</small></span>
       <span class="ngw-dada"><b>${x.klonk}</b> ${x.klonk === 1 ? "persona" : "personas"} de KLONK</span>
-      <span class="ngw-dada"><b>${x.entrenos}</b> ${x.entrenos === 1 ? "entreno" : "entrenos"} esta semana</span></div>`;
+      <span class="ngw-dada"><b>${E}</b> ${E === 1 ? "entreno" : "entrenos"} esta semana</span></div>`; };
     const ant = d.anterior;
     return `<section class="ngw">
       <div class="ngw-cap" data-in="ns"><small>${queTxt(d.queden)}</small></div>
@@ -9721,6 +9724,66 @@ const Nit = (() => {
       ${ant ? `<p class="ngw-ant" data-in="ns">La semana pasada, ${ant.guanya === "meu" ? `ganasteis a ${esc(ant.rival)}` : ant.guanya === "rival" ? `ganó ${esc(ant.rival)}` : `empate con ${esc(ant.rival)}`}: ${n1(ant.punts)} contra ${n1(ant.punts_rival)}.</p>` : ""}
       ${o.dins ? "" : `<button class="nt-boto2 ngw-gims" data-accion="ns-dins" data-t="gimnasios" data-in="ns">Ver todos los gimnasios</button>`}
     </section>`;
+  }
+  /* LA GUERRA EN VIU (30-09 tarda, LA LLISTA M19). L'Albert: «molaria veure una animació de cares de persones entrant al
+     comptador i sumant quan ho obres i ha variat; però no cada vegada que obres: només la primera que obres i hi ha hagut
+     canvi». Es desa el que vas veure (S.guerraVista: la setmana, el rival, els entrenos i els dies per persona de cada
+     gimnàs). En obrir Gimnasios, si la setmana i el rival són els mateixos i ha canviat, hi entra una cara per entreno nou
+     (com a molt 8 per banda) i cada una fa pujar els números del que vas veure al d'ara. La primera vegada (sense res
+     desat), amb un altre rival o amb el moviment reduït, el d'ara i prou. Les cares no són de ningú: la guerra no diu qui. */
+  const CARES_G = ["tirants.castany", "cua.negre", "tirants.ros", "cua.castany", "tirants-afro.negre", "cua.ros", "tirants.negre", "cua-afro.castany"];
+  function animaGuerra(v) {
+    const d = S.ui.guerra && S.ui.guerra.d, sec = v && v.querySelector(".ngx .ngw");
+    if (!d || !d.meu || !sec || sec.dataset.viu) return;
+    sec.dataset.viu = "1";
+    const foto = x => x ? { e: x.entrenos || 0, p: x.punts || 0 } : null;
+    const ara = { s: d.setmana || "", r: d.rival ? d.rival.nom : null, m: foto(d.meu), x: foto(d.rival) }, abans = S.guerraVista;
+    if (abans && JSON.stringify(abans) === JSON.stringify(ara)) return;          // res de nou: ni es desa (desar puja l'estat)
+    S.guerraVista = ara;
+    if (typeof guardar === "function") guardar();
+    if (!abans || abans.s !== ara.s || abans.r !== ara.r || quiet()) return;
+    guerraAnim = {};
+    [["ngw-meu", abans.m, ara.m], ["ngw-riv", abans.x, ara.x]].forEach(([cls, a, b], k) => {
+      if (!a || !b || (a.e === b.e && a.p === b.p)) return;
+      const el = q => document.querySelector(`.ngx .ngw-g.${cls} ${q}`);
+      const posa = f => {
+        const e = Math.round(a.e + (b.e - a.e) * f), p = a.p + (b.p - a.p) * f;
+        if (f >= 1) { delete guerraAnim[cls]; if (!Object.keys(guerraAnim).length) guerraAnim = null; } else guerraAnim[cls] = { e, p };
+        const nP = el(".ngw-xifra b"), nE = document.querySelectorAll(`.ngx .ngw-g.${cls} .ngw-dada b`)[1];
+        if (nP) nP.textContent = n1(p);
+        if (nE) nE.textContent = String(e);
+      };
+      const pica = () => { const x = el(".ngw-xifra b"); if (x && x.animate) x.animate([{ transform: "scale(1)" }, { transform: "scale(1.25)", offset: .4 }, { transform: "scale(1)" }], { duration: 300, easing: "cubic-bezier(.2,.9,.3,1)" }); };
+      posa(0);
+      const n = Math.max(0, Math.min(8, b.e - a.e));
+      if (!n) {        // ha canviat el número sense cap entreno nou (algú més al gimnàs): puja sol
+        const t0 = performance.now(), pas = t => { const f = Math.min(1, (t - t0) / 700); posa(f < 1 ? 1 - Math.pow(1 - f, 3) : 1); if (f < 1) requestAnimationFrame(pas); else pica(); };
+        setTimeout(() => requestAnimationFrame(pas), 350);
+        return;
+      }
+      Promise.all(CARES_G.map(l => tenyit(caraDe(l)))).then(srcs => {
+        for (let i = 0; i < n; i++) setTimeout(() => volaCara(cls, srcs[(i * 3 + k) % srcs.length], () => { posa((i + 1) / n); pica(); fx(E => E.suena("tap")); }), 420 + k * 110 + i * 190);
+      });
+    });
+    if (guerraAnim && !Object.keys(guerraAnim).length) guerraAnim = null;
+  }
+  let guerraAnim = null;         // {ngw-meu: {e, p}, ngw-riv: {e, p}}: el que pinten els números mentre les cares hi entren
+  function volaCara(cls, src, fet) {
+    const card = document.querySelector(`.ngx .ngw-g.${cls}`), desti = card && card.querySelector(".ngw-xifra b");
+    if (!card) { fet(); return; }
+    const r0 = card.getBoundingClientRect(), r1 = (desti || card).getBoundingClientRect();
+    const im = document.createElement("img");
+    im.className = "ngw-cara"; im.src = src; im.alt = ""; im.draggable = false;
+    const x0 = r0.left + 8 + Math.random() * Math.max(10, r0.width - 60), y0 = Math.min(innerHeight - 50, r0.bottom + 40);
+    const x1 = r1.left + r1.width / 2 - 21, y1 = r1.top + r1.height / 2 - 21;
+    im.style.left = x0 + "px"; im.style.top = y0 + "px";
+    document.body.appendChild(im);
+    const dx = x1 - x0, dy = y1 - y0;
+    const an = im.animate([{ transform: "translate(0,0) scale(.5)", opacity: 0 }, { transform: `translate(${dx * .3}px, ${dy * .55 - 34}px) scale(1.15)`, opacity: 1, offset: .4 },
+      { transform: `translate(${dx * .92}px, ${dy * .96}px) scale(.8)`, opacity: 1, offset: .85 }, { transform: `translate(${dx}px, ${dy}px) scale(.35)`, opacity: 0 }],
+      { duration: 820, easing: "cubic-bezier(.3,.7,.25,1)" });
+    an.onfinish = () => { im.remove(); fet(); };
+    an.oncancel = () => im.remove();
   }
   function filaClan(it) {
     const t = tipusDeNoms((it.exercicis || []).map(e => e.nom)), que = QUE[t], quan = typeof diaFeed === "function" ? diaFeed(it.dia) : "";
@@ -12915,6 +12978,10 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-sense b{font:900 20px/1.2 'Nunito',system-ui,sans-serif}.nsx-sense p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14.5px}
 .nsx-sense .nsx-crea{display:flex;gap:8px;justify-content:center;margin-top:6px}
 .nrk-tabs{margin-bottom:12px}
+/* LA GUERRA EN VIU (30-09 tarda, M19): les cares que entren al comptador */
+.ngw-cara{position:fixed;z-index:70;width:42px;height:42px;border-radius:50%;object-fit:cover;pointer-events:none;background:#1b2530;
+  box-shadow:0 0 0 2.5px rgb(var(--m-rgb) / .9),0 0 16px rgb(var(--m-rgb) / .45),0 8px 14px -6px rgb(0 0 0 / .8)}
+.ngw-g .ngw-xifra b{display:inline-block}
 /* ENTRAR A LES LLIGUES (30-09 tarda): la modalitat i la categoria */
 .nle{display:grid;gap:10px;margin-top:6px;text-align:left}.nle h3{margin:6px 0 0;font:900 15px/1.2 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nle-p,.nle-nota{margin:0;font-size:13.5px;font-weight:700;color:var(--nt-suau);line-height:1.35}
