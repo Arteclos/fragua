@@ -5793,7 +5793,7 @@ function filaRanking(f, so) {
   const v = f.valor;
   const emb = f.emblema && typeof Nit === "object" && Nit.emb ? Nit.emb(f.emblema, "emb-mini") : "";
   return `<${f.pid ? `button class="rk-fila" data-accion="social-perfil" data-p="${f.pid}"` : `div class="rk-fila${f.yo ? " yo" : ""}"`}><span class="rk-pos num">${f.pos ?? "–"}</span><span class="ns-av-w">${f.yo ? avatar((S.personaje || {}).tipo, Stats.experiencia(S).nivel, "", caraMeva()) : avatar(f.personatge, f.nivell, "", caraNit(f.personatge))}${emb}</span>
-    <span class="rk-nom">${esc(f.nom)}${f.bot ? `<i class="rk-bot" title="Bot: no es una persona">bot</i>` : ""}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
+    <span class="rk-nom">${esc(f.nom)}</span><span class="rk-val">${so.metrica === "cali" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>índice</small>` : so.metrica === "pl" ? `<b class="or num">${v != null ? String((+v).toFixed(1)).replace(".", ",") : "·"}</b><small>GL</small>` : so.metrica === "elo" ? `${imgElo(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : so.metrica === "rango" ? `${imgYunque(v)}<b class="or num">${v != null ? n0(v) : "·"}</b>` : `<b class="or num">${n0(v)}</b><small>días</small>`}</span></${f.pid ? "button" : "div"}>`;
 }
 /* ---------------------------------------------------------------- Social (l'Albert, 26-09-2026 nit)
    Tot passa pel gimnàs: sense gimnàs, Social només ensenya el botó per triar-lo («jo ho faria requisit pel social
@@ -5858,7 +5858,7 @@ function vistaRankings(so) {
     <div class="xips-scroll">${AMBITS2.map(([a, n]) => `<button class="chip" data-accion="social-ambit" data-a="${a}" aria-pressed="${so.ambit === a}">${n}</button>`).join("")}</div>
     <div class="xips-scroll rk-cats" role="group" aria-label="Categoría">${CATS_RK.map(([c, n]) => `<button class="chip" data-accion="social-cat" data-c="${c}" aria-pressed="${catRank(so) === c}">${n}</button>`).join("")}</div>
     ${so.metrica === "rango" ? `<div class="xips-scroll petits">${GRUPS_R.map(g => `<button class="chip" data-accion="social-grup" data-g="${g}" aria-pressed="${so.grupo === g}">${g === "general" ? "General" : g}</button>`).join("")}</div>` : ""}
-    <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${r.bots ? `${n0(r.total - r.bots)} ${r.total - r.bots === 1 ? "persona" : "personas"} y ${n0(r.bots)} bots` : `${r.total} ${r.total === 1 ? "persona" : "personas"}`}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
+    <div class="panel pad rk">${r && r.llista ? (r.llista.length ? r.llista.map(f => filaRanking(f, so)).join("") + (r.yo && r.yo.pos > r.llista.length ? `<div class="rk-punts">…</div>${filaRanking(r.yo, so)}` : "") + `<p class="rk-total">${n0(r.total)} ${r.total === 1 ? "persona" : "personas"}</p>` : `<p class="suau petit">Aún no hay nadie aquí.</p>`)
       + (sol ? `<p class="suau petit" style="margin:10px 0 0">Aún no tienes amigos en KLONK. <button class="enllac" data-accion="soc-tab" data-t="clan">Añade a alguien por su nickname</button></p>` : "") : `<p class="suau petit">Cargando…</p>`}</div>
     ${S.ui.errSocial ? `<p class="falta">${esc(S.ui.errSocial)}</p>` : ""}`;
 }
@@ -9947,7 +9947,7 @@ const Nit = (() => {
     else if (x.yo && k > 0) falta = `+${n0(ll[k - 1].punts - me.punts + 1)} para pasar`;
     const d = k - i;
     return `<span class="nlg-f${x.yo ? " yo" : ""}${L.mou && k < puja ? " zp" : ""}${L.mou && k >= ll.length - L.regla.baixen ? " zb" : ""}" style="--up:${Math.max(0, -d)};--down:${Math.max(0, d)}">
-      <b class="nlg-pos">${x.pos}</b><img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false"><span class="nlg-nom">${esc(x.nom)}${x.bot ? `<i class="rk-bot" title="Bot: no es una persona">bot</i>` : ""}</span>
+      <b class="nlg-pos">${x.pos}</b><img src="${x.yo ? CARA() : caraDe(x.personatge)}" alt="" draggable="false"><span class="nlg-nom">${esc(x.nom)}</span>
       <span class="nlg-pts"><b>${n0(x.punts)}</b>${falta ? `<small class="nlg-falta">${falta}</small>` : ""}</span></span>`;
   }
   const liniaLiga = (L, k) => L.mou && k === L.regla.pugen ? `<i class="nlg-linia puja" aria-hidden="true"></i>` : L.mou && k === L.llista.length - L.regla.baixen ? `<i class="nlg-linia baixa" aria-hidden="true"></i>` : "";
@@ -9980,9 +9980,13 @@ const Nit = (() => {
     carregaSquads();
     const sol = ((so.clan || {}).rebudes || []).length;
     const amics = `<button class="nsx-amics" data-accion="ns-dins" data-t="clan" aria-label="Amigos${sol ? `, ${sol} ${sol === 1 ? "solicitud" : "solicitudes"}` : ""}">${I_SOC.amics}${sol ? `<i class="ns-xapa">${sol}</i>` : ""}</button>`;
+    // (30-09 vespre; l'Albert: «Social, tu què opines?», entre obrir per la squad o pels rànquings): la squad si en tens; si
+    // no, a sota de «Crea tu squad», la teva lliga de la setmana, que sempre és plena (els bots), i no un Social buit
+    const senseSquad = S.ui.squads && !(S.ui.squads.squads || []).length;
     return `<h1 class="nsx-h1">Social</h1><section class="nsx2">
       <div class="nsx2-portes" data-in="ns">${portaRankings()}${portaGims()}${amics}</div>
       ${vistaSquads()}
+      ${senseSquad ? `<section class="nsx-liga" data-in="ns"><h2 class="nt-tu-t">Tu liga esta semana</h2>${blocLiga(ligaDisc())}</section>` : ""}
     </section>`;
   }
   /* ENTRAR A LES LLIGUES (30-09 tarda). L'Albert: «ho esculls en fer clic a entrar a les lligues: sobre quina modalitat
@@ -13011,7 +13015,6 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nle-si{margin-top:4px;width:100%}.nle-si:disabled{opacity:.45}
 .nlg-pag-cap .nlg-canvia{margin-left:auto;border:0;background:none;color:var(--nt-menta);font:900 13.5px/1 'Nunito',system-ui,sans-serif;padding:10px 2px;cursor:pointer}
 /* ELS BOTS (30-09 tarda): una etiqueta petita al costat del nom; no són gent */
-.rk-bot{display:inline-block;margin-left:6px;padding:1px 6px 2px;border-radius:99px;font:900 10px/1.3 'Nunito',system-ui,sans-serif;font-style:normal;letter-spacing:.02em;vertical-align:2px;color:#9fb0c0;background:rgb(255 255 255 / .08);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
 .rk-cats{margin-top:-2px}
 .seg.seg-m.n2{grid-template-columns:1fr 1fr}.seg.seg-m.n3{grid-template-columns:1.2fr 1fr 1fr}
 .nrk-info{display:flex;align-items:center;gap:8px;margin:12px auto 0;border:0;background:none;color:var(--nt-suau);font:800 13.5px/1 'Nunito',system-ui,sans-serif;cursor:pointer;padding:10px 4px}
