@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>KLONK</title>
+<style>html,body{margin:0;height:100%;background:#0d1217;color:#e7edf2;font:800 16px/1.4 system-ui,sans-serif}main{display:grid;place-items:center;height:100%}a{color:#86d9c6}</style>
+<script>
+/* klonk.fit/c/CODI porta a klonk.fit/?c=CODI (01-10-2026, Hub 1006; EL LOBO: «en un vídeo es diu més bé en veu alta»).
+   GitHub Pages serveix aquesta pàgina per a qualsevol adreça que no existeix. El codi passa a l'app, que el guarda només a
+   la memòria de la pàgina fins a l'alta (compte.js); les etiquetes de campanya de l'enllaç hi van darrere. Qualsevol altra
+   adreça que no existeix porta a l'inici. */
+(function () {
+  var m = location.pathname.match(/^\/c\/([A-Za-z0-9._-]{1,32})\/?$/);
+  location.replace(m ? "/?c=" + encodeURIComponent(m[1]) + location.search.replace(/^\?/, "&") : "/");
+})();
+</script>
+</head>
+<body><main><a href="/">KLONK</a></main></body>
+</html>

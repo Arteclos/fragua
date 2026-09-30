@@ -2392,7 +2392,21 @@ const Efectos = (() => {
   /* ---- el so, sintetitzat: res a baixar i res amb drets ---- */
   let audio = null;
   const activo = () => (typeof S === "undefined" || S.sonido !== false);
-  function ac() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) { audio = null; } return audio; }
+  // EL CONTEXT, SEMPRE DESPERT (30-09 nit, LA LLISTA M25; l'Albert: «a vegades no sona l'efecte»). L'iPhone el deixa
+  // «interrupted» (no «suspended») quan surts de l'app, quan sona una trucada o un altre àudio, i abans només es
+  // reprenia si era «suspended» i només es despertava amb el primer toc de la sessió: després d'una interrupció, els sons
+  // es quedaven muts. Ara es reprèn sigui quin sigui l'estat, i quan deixa de córrer es torna a escoltar el gest següent.
+  function ac() {
+    try {
+      if (audio && audio.state === "closed") audio = null;
+      if (!audio) {
+        audio = new (window.AudioContext || window.webkitAudioContext)();
+        audio.onstatechange = () => { if (audio && audio.state !== "running") escolta(); };
+      }
+      if (audio.state !== "running") { const r = audio.resume(); if (r && r.catch) r.catch(() => {}); }
+    } catch (e) { audio = null; }
+    return audio;
+  }
   function tono(f, t0, dur, tipo = "sine", vol = 0.2, destino) {
     const o = audio.createOscillator(), g = audio.createGain();
     o.type = tipo; o.frequency.setValueAtTime(f, t0);
@@ -2453,14 +2467,17 @@ const Efectos = (() => {
   // d'una mostra (el truc de l'iPhone) fins que corri de debò, i les mostres ja baixades es descodifiquen.
   function preparaSons() { if (activo()) porta(); }
   try { (window.requestIdleCallback || (f => setTimeout(f, 1200)))(preparaSons, { timeout: 2500 }); } catch (e) {}
+  const GESTOS = ["touchstart", "touchend", "pointerdown", "pointerup", "click", "keydown"];
   const desperta = () => {
     if (!ac()) return;
     try { const b = audio.createBuffer(1, 1, 22050), s = audio.createBufferSource(); s.buffer = b; s.connect(audio.destination); s.start(0); } catch (e) {}
-    try { audio.resume(); } catch (e) {}
-    if (audio.state === "running") ["touchstart", "touchend", "pointerdown", "pointerup", "click", "keydown"].forEach(t => removeEventListener(t, desperta, true));
+    if (audio.state === "running") GESTOS.forEach(t => removeEventListener(t, desperta, true));
     baixa();
   };
-  ["touchstart", "touchend", "pointerdown", "pointerup", "click", "keydown"].forEach(t => addEventListener(t, desperta, { capture: true, passive: true }));
+  function escolta() { GESTOS.forEach(t => addEventListener(t, desperta, { capture: true, passive: true })); }
+  escolta();
+  // en tornar a l'app, el primer toc torna a despertar el so (M25)
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) escolta(); });
   function suena(nombre) {
     if (!activo() || !ac()) return false;
     baixa();
@@ -6768,6 +6785,48 @@ let versio = (() => { try { return Number(localStorage.getItem(VERSIO)) || 0; } 
 function desaSessio(x) { sessio = x; try { x ? localStorage.setItem(SESSIO, JSON.stringify(x)) : localStorage.removeItem(SESSIO); } catch (e) {} }
 function desaVersio(v) { versio = v; try { localStorage.setItem(VERSIO, String(v)); } catch (e) {} }
 const teCompte = () => !!(sessio && sessio.token);
+
+/* D'ON VE LA GENT (01-10-2026, Hub 1006; l'especificació d'EL LOBO, el board de venda). El codi del creador
+   (klonk.fit/?c=CODI, o klonk.fit/c/CODI, que el 404.html porta aquí), les etiquetes de campanya (utm_*), el domini de la web
+   que l'ha enviat i el navegador (el de dins de TikTok o d'Instagram, Safari, l'app instal·lada...). NOMÉS A LA MEMÒRIA
+   DE LA PÀGINA fins a l'alta: al mòbil no es desa res (la política diu «ni galetes»; l'LSSI, art. 22.2, i l'EDPB hi compten
+   el localStorage). Viatja amb l'alta i es queda al compte; qui ja té compte i arriba per un enllaç, n'apunta l'últim toc.
+   I com que a l'iPhone l'app instal·lada i el navegador de TikTok no veuen el que ha vist Safari, el codi també es pot
+   escriure a «¿Cómo nos conociste?» (nit.js), i allà mana. */
+const CLAUS_UTM = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+const ATRIB = (() => {
+  const a = {};
+  try {
+    const q = new URLSearchParams(location.search), c = (q.get("c") || "").trim();
+    if (/^[A-Za-z0-9._-]{1,32}$/.test(c)) a.c = c;
+    CLAUS_UTM.forEach(k => { const v = (q.get(k) || "").trim().slice(0, 80); if (v) a[k] = v; });
+    try { const u = new URL(document.referrer); if (u.host && u.host !== location.host && /^[A-Za-z0-9.-]{1,100}(:\d{1,5})?$/.test(u.host)) a.ref = u.host; } catch (e) {}
+    // l'adreça, neta: que ningú no comparteixi sense voler un enllaç amb el codi d'un altre
+    if (q.has("c") || CLAUS_UTM.some(k => q.has(k))) {
+      ["c", ...CLAUS_UTM].forEach(k => q.delete(k));
+      history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    }
+  } catch (e) {}
+  return a;
+})();
+function navegador() {
+  const ua = navigator.userAgent || "";
+  if (/BytedanceWebview|musical_ly|TikTok/i.test(ua)) return "tiktok";
+  if (/Instagram/i.test(ua)) return "instagram";
+  if (/FBAN|FBAV|FB_IAB|FBIOS/i.test(ua)) return "facebook";
+  try { if (matchMedia("(display-mode: standalone)").matches || navigator.standalone) return "app"; } catch (e) {}
+  if (/CriOS|Chrome\//.test(ua) && !/Edg\//.test(ua)) return "chrome";
+  if (/Safari\//.test(ua) && /Version\//.test(ua)) return "safari";
+  return "altre";
+}
+const atribPerEnviar = () => ({ ...ATRIB, nav: navegador() });
+const teToc = () => !!(ATRIB.c || CLAUS_UTM.some(k => ATRIB[k]));
+// qui ja té compte i arriba per un enllaç amb codi o campanya: el servidor n'apunta l'últim toc (el primer es queda)
+function enviaToc() {
+  if (!teToc() || !teCompte() || (typeof S === "object" && S && S.demo)) return;
+  apiCompte("POST", "/atribucio", atribPerEnviar()).catch(() => {});
+}
+setTimeout(enviaToc, 3000);
 // Menor d'edat pel que ha dit en crear el compte (14 a 17). Els avisos de compres només li surten a ell (l'Albert, 27-09-2026).
 const esMenor = () => !!(sessio && sessio.franja === "menor");
 // La clau per a l'API: la sessió del compte; si no n'hi ha, l'usuari anònim de Social d'abans (perquè en registrar-se
@@ -6868,7 +6927,7 @@ function preparaGoogle() {
 async function entraGoogle(tok, extra) {
   const c = cmp();
   try {
-    const r = await apiCompte("POST", "/compte/google", { ...tok, aparell: aparell(), ...(extra || {}) });
+    const r = await apiCompte("POST", "/compte/google", { ...tok, aparell: aparell(), atrib: atribPerEnviar(), ...(extra || {}) });
     await despresEntrar(r, r.nou);
   } catch (e) {
     if (e.status === 428) {    // és nou i falten l'edat i les condicions: les demanem i tornem a enviar el mateix token
@@ -6909,13 +6968,14 @@ async function formCompte(tipus) {
       if (tipus === "compte-falta") { await entraGoogle(c.gtok, { franja: c.edat, termes: TERMES }); return; }
       if (!pass || pass.length < 8) { avis("La contraseña: 8 caracteres o más.", true); return; }
       S.ui.compte = { ...c, mail };
-      const r = await apiCompte("POST", "/compte/registre", { email: mail, contrasenya: pass, franja: c.edat, termes: TERMES, aparell: aparell() });
+      const r = await apiCompte("POST", "/compte/registre", { email: mail, contrasenya: pass, franja: c.edat, termes: TERMES, aparell: aparell(), atrib: atribPerEnviar() });
       S.ui.avisCorreu = mail;
       await despresEntrar({ ...r, email: mail }, true);
     } else if (tipus === "compte-entra") {
       S.ui.compte = { ...c, mail };
       const r = await apiCompte("POST", "/compte/entra", { email: mail, contrasenya: pass, aparell: aparell() });
       await despresEntrar({ ...r, email: mail }, false);
+      enviaToc();
     } else if (tipus === "compte-oblit") {
       await apiCompte("POST", "/compte/oblit", { email: mail });
       S.ui.compte = { ...c, mode: "entra", mail }; render();
@@ -8810,8 +8870,16 @@ const Nit = (() => {
      ona de llum que s'escampa per la pantalla i encén cada peça quan hi arriba (primer la barra, després la carta, la
      setmana i la barra de dalt), el fons s'il·lumina per darrere i salten espurnes. Tot amb transform, opacity i filter;
      amb el moviment reduït, només el so i un flaix. */
+  // EL SO DEL KLONK, A L'INSTANT (30-09 nit, LA LLISTA M25; l'Albert: «el botó del mig triga molt, 1 s, a fer l'efecte de
+  // so»). Era un <audio> nou a cada cop, que a l'iPhone s'ha de carregar abans de sonar (d'aquí el segon) i que, com que és
+  // un so de «reproducció», aturava la música que l'usuari portés posada. Ara surt de l'àudio de la pàgina, ja descodificat
+  // (es baixa al primer toc), com la resta de sons; el d'abans només si encara no és a punt.
+  const KLONK_SO = () => A() + "sons/klonk.mp3";
+  try { addEventListener("pointerdown", () => fx(E => { if (E.carrega) E.carrega(KLONK_SO()); }), { once: true, capture: true, passive: true }); } catch (e) {}
   function so() {
-    try { const s = new Audio(A() + "sons/klonk.mp3"); s.volume = .9; s.play().catch(() => {}); } catch (e) {}
+    let fet = false;
+    try { if (typeof Efectos === "object" && Efectos.mostra) fet = Efectos.mostra(KLONK_SO(), { volum: 1 }); } catch (e) {}
+    if (!fet) { try { const s = new Audio(KLONK_SO()); s.volume = .9; s.play().catch(() => {}); } catch (e) {} }
     try { if (typeof Efectos === "object" && Efectos.vibra) Efectos.vibra("klonk"); } catch (e) {}
   }
   function klonk(boto, senseSo) {
@@ -8915,7 +8983,7 @@ const Nit = (() => {
     // ENTRAR A LES LLIGUES (30-09 tarda): el full de la modalitat i la categoria
     const toc = ev.target.closest('[data-accion="nsq-toc"]');
     if (toc) { ev.preventDefault(); ev.stopPropagation(); tocSquad(toc); return; }
-    const nor = ev.target.closest('[data-accion="nor-tria"], [data-accion="nor-salta"]');
+    const nor = ev.target.closest('[data-accion="nor-tria"], [data-accion="nor-salta"], [data-accion="nor-codi"], [data-accion="nor-sense"]');
     if (nor) { ev.preventDefault(); ev.stopPropagation(); triaOrigen(nor); return; }
     const nle = ev.target.closest('[data-accion^="nle-"]');
     if (nle) { ev.preventDefault(); ev.stopPropagation(); accioEntrada(nle); return; }
@@ -9145,6 +9213,10 @@ const Nit = (() => {
   function tancaMenu(despres) {
     if (!cal) { if (despres) despres(); return; }
     const el = cal; cal = null;
+    // (30-09 nit, M25; l'Albert: «quan faig clic a l'escut ni sona ni es mou») mentre s'esvaeix, el menú ja no es menja
+    // els tocs: el vel tapava la barra 260 ms més, i el toc a l'escut just després de tancar-lo es perdia sense so
+    el.style.pointerEvents = "none";
+    setTimeout(() => el.remove(), 700);
     const p = el.querySelector(".nt-cal-p"), vel = el.querySelector(".nt-cal-vel");
     if (quiet() || !p.animate) { el.remove(); if (despres) despres(); return; }
     const des = getComputedStyle(p).transform;
@@ -9397,12 +9469,41 @@ const Nit = (() => {
         <button class="nor-salta" data-accion="nor-salta">Prefiero no decirlo</button></div>`);
     }, 1400);
   }
+  // EL CODI (01-10-2026, Hub 1006; EL LOBO): a l'iPhone, l'enllaç del creador es perd pel camí (l'app instal·lada i el
+  // navegador de dins de TikTok o d'Instagram no veuen el que ha vist Safari). Per això, a qui diu que ve d'un creador,
+  // de TikTok, d'Instagram o de YouTube, un segon pas: «¿Te ha pasado alguien un código?». Opcional, i mana sobre el de
+  // l'enllaç.
+  const AMB_CODI = new Set(["tiktok", "instagram", "youtube", "creador"]);
+  const CODI_OK = /^[A-Za-z0-9._-]{1,32}$/;
+  async function enviaOrigen(origen, codi) {
+    try { await api("POST", "/origen", codi ? { origen, codi } : { origen }); if (typeof avis === "function") avis("¡Gracias!"); } catch (e) {}
+  }
   async function triaOrigen(b) {
     S.origenDemanat = true; if (typeof guardar === "function") guardar();
-    const full = b.closest(".nsq-full"); if (full) full.remove();
-    if (b.dataset.accion !== "nor-tria") return;
+    const full = b.closest(".nsq-full");
+    if (b.dataset.accion === "nor-codi" || b.dataset.accion === "nor-sense") {
+      const inp = full && full.querySelector(".nor-in"), codi = b.dataset.accion === "nor-codi" && inp ? inp.value.trim() : "";
+      if (codi && !CODI_OK.test(codi)) { if (typeof avis === "function") avis("El código: letras, números, punto, guion o guion bajo.", true); return; }
+      if (full) full.remove();
+      fx(E => E.suena("tap"));
+      enviaOrigen(b.dataset.o, codi || null);
+      return;
+    }
+    if (b.dataset.accion !== "nor-tria") { if (full) full.remove(); return; }
     fx(E => E.suena("tap"));
-    try { await api("POST", "/origen", { origen: b.dataset.o }); if (typeof avis === "function") avis("¡Gracias!"); } catch (e) {}
+    if (AMB_CODI.has(b.dataset.o) && full) {
+      const cos = full.querySelector(".nor");
+      if (cos) {
+        const o = esc(b.dataset.o), pre = typeof ATRIB === "object" && ATRIB.c ? esc(ATRIB.c) : "";
+        cos.outerHTML = `<div class="nor nor-pas2"><label class="nor-l" for="nor-in">¿Te ha pasado alguien un código?</label>
+          <input class="nor-in" id="nor-in" type="text" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="32" placeholder="Opcional" value="${pre}">
+          <button class="nor-o nor-si" data-accion="nor-codi" data-o="${o}">Listo</button>
+          <button class="nor-salta" data-accion="nor-sense" data-o="${o}">No tengo código</button></div>`;
+        return;
+      }
+    }
+    if (full) full.remove();
+    enviaOrigen(b.dataset.o, null);
   }
   // LA ICONA DE L'APP (30-09 vespre, LA LLISTA P; l'Albert: «posa la de tio o tia en funció de si se selecciona tio o tia»):
   // la de l'avatar que portes (el noi o la noia, amb l'afro o sense), a l'apple-touch-icon i al manifest. L'iPhone la pren en
@@ -10665,6 +10766,7 @@ const Nit = (() => {
   function tancaMira(rapid) {
     const M = MI; if (!M || M.tancant) return;
     M.tancant = true;
+    M.ov.style.pointerEvents = "none";                                        // M25: mentre torna al seu lloc, els tocs passen
     if (M.offGiro) M.offGiro();
     document.removeEventListener("keydown", M.tecla);
     let fet = false;
@@ -12028,6 +12130,7 @@ const Nit = (() => {
     const tecla = ev => { if (ev.key === "Escape") tanca(false); };
     function tanca(si) {
       if (fet) return; fet = true;
+      el.style.pointerEvents = "none";                                        // M25: mentre s'esvaeix, els tocs passen
       document.removeEventListener("keydown", tecla);
       const fi = () => {
         el.remove();
@@ -12058,6 +12161,7 @@ const Nit = (() => {
   function tancaTipus(ja) {
     if (!rt) return;
     const el = rt.el; rt = null;
+    el.style.pointerEvents = "none";                                          // M25: mentre s'enrotlla, els tocs passen
     if (ja || quiet() || !el.animate) { el.remove(); return; }
     const ops = [...el.querySelectorAll(".nt-rt-op")];
     ops.reverse().forEach((o, i) => { try { o.animate([{ transform: "none", opacity: 1 }, { transform: "rotateX(-80deg)", opacity: 0 }], { duration: 150, delay: i * 25, easing: "cubic-bezier(.4,0,.8,.4)", fill: "forwards" }); } catch (e) {} });
@@ -13092,6 +13196,12 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nor{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .nor-o{padding:12px 10px;border:0;border-radius:14px;background:rgb(255 255 255 / .06);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08);color:var(--nt-tinta);font:800 14px/1.2 'Nunito',system-ui,sans-serif;cursor:pointer;text-align:center}
 .nor-o:active{transform:scale(.97)}
+/* el codi del creador (01-10, Hub 1006) */
+.nor-pas2{grid-template-columns:1fr}
+.nor-l{font:900 17px/1.25 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
+.nor-in{width:100%;box-sizing:border-box;height:52px;padding:0 16px;border:0;border-radius:14px;background:rgb(255 255 255 / .07);color:var(--nt-tinta);box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .12);font:900 18px/1 'Nunito',system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.nor-in:focus{outline:none;box-shadow:inset 0 0 0 2px rgb(var(--m-rgb))}
+.nor-in::placeholder{text-transform:none;letter-spacing:0;color:var(--nt-suau);font-weight:800}
 .nor-salta{grid-column:1 / -1;margin-top:2px;border:0;background:none;color:var(--nt-suau);font:800 13.5px/1 'Nunito',system-ui,sans-serif;padding:10px;cursor:pointer}
 /* EL CALENDARI (30-09 vespre, HEVY-LLICONS H1) */
 .nt-tu-xb{display:grid;justify-items:center;align-content:start;gap:2px;padding:8px 4px 7px;border:0;border-radius:16px;background:var(--fb-sup);box-shadow:var(--fb-o1);text-align:center;color:inherit;font:inherit;cursor:pointer}
