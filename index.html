@@ -10106,10 +10106,12 @@ const Nit = (() => {
   const DISC_NOM = { gym: "Gym", powerlifting: "Powerlifting", calistenia: "Calistenia" };
   const DISC_QUE = { gym: "cualquier ejercicio", powerlifting: "sentadilla, banca o peso muerto (y sus variantes)", calistenia: "dominadas, fondos, flexiones y demás con tu peso" };
   // els discos de competició: 5 blanc, 10 verd, 15 groc, 20 blau, 25 vermell (els noms de metall són de l'ELO: aquí no)
-  const DISCOS = [{ kg: 5, c: "#e9ecef", t: "#1b2127" }, { kg: 10, c: "#3fae6a", t: "#fff" }, { kg: 15, c: "#e8c34a", t: "#2a200a" }, { kg: 20, c: "#3b7fe0", t: "#fff" }, { kg: 25, c: "#e0503f", t: "#fff" }];
-  const nomDisc = n => `${(DISCOS[n] || DISCOS[0]).kg} kg`;
-  const discSvg = (n, cls = "") => { const d = DISCOS[n] || DISCOS[0];
-    return `<svg class="nlg-disc ${cls}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="${d.c}"/><circle cx="20" cy="20" r="13.5" fill="none" stroke="rgb(0 0 0 / .2)" stroke-width="1.6"/><circle cx="20" cy="20" r="4.4" fill="#0d1217"/><text x="20" y="12.6" text-anchor="middle" font-size="7.2" font-weight="900" font-family="Nunito,system-ui,sans-serif" fill="${d.t}">${d.kg}</text></svg>`; };
+  // (01-10, LA LLISTA L20; l'Albert: «va per ELO [...] ha de ser la icona de l'ELO en el que estàs»): els nivells de la
+  // lliga són les divisions de l'ELO (de Madera a Estelar), amb el seu nom i la seva icona. Fins avui eren discos de 5 a 25 kg.
+  const DIVS = () => (typeof Elo === "object" && Elo.DIVISIONS) || [];
+  const divLliga = n => DIVS()[Math.max(0, Math.min(DIVS().length - 1, n || 0))] || [0, "madera", "Madera"];
+  const nomDisc = n => { const d = divLliga(n); return nomRang(d[1], d[2]); };
+  const discSvg = (n, cls = "") => `<img class="nlg-disc ${cls}" src="${R()}sigma-${divLliga(n)[1]}.webp" alt="" draggable="false">`;
   const tancaEn = t => { const s = Math.max(0, (t || 0) - Date.now() / 1000), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600);
     return d ? `${d} d ${h} h` : h ? `${h} h` : `${Math.max(1, Math.floor(s / 60))} min`; };
   const ligaDisc = () => DISC_NOM[S.ui.ligaDisc] ? S.ui.ligaDisc : (((soc().yo || {}).disciplines || [])[0] || "gym");
@@ -10238,15 +10240,17 @@ const Nit = (() => {
     if (!L || L.fora || !L.categoria || L.sense_disc || !L.total) return `<section class="nlg-pag">${tabs}${blocLiga(disc)}</section>`;
     const i = Math.max(0, L.llista.findIndex(x => x.yo)), r = L.regla;
     return `<section class="nlg-pag">${tabs}
+      <div class="nlg-escala-elo" data-in="ns" aria-hidden="true">${DIVS().map((d, k) => `<span class="${k === L.nivell ? "on" : k < L.nivell ? "fet" : ""}${L.banda && (k < L.banda[0] || k > L.banda[1]) ? " fora" : ""}"><img src="${R()}sigma-${d[1]}.webp" alt="" draggable="false"></span>`).join("")}</div>
       <div class="nlg-pag-cap" data-in="ns">${discSvg(L.nivell, "nlg-d-gran")}<span><b>Liga ${nomDisc(L.nivell)}</b><small>${esc(DISC_NOM[disc])} · ${L.categoria === "m" ? "Mujeres" : "Hombres"} · cierra en ${tancaEn(L.tanca)}</small></span><button class="nlg-canvia" data-accion="nle-obre">Cambiar</button></div>
+      ${L.elo != null ? `<p class="nlg-elo" data-in="ns">Tu ELO${L.elo_prov ? " (provisional)" : ""}: <b>${n0(L.elo)}</b>${L.elo_setmana ? ` <span class="${L.elo_setmana > 0 ? "puja" : "baixa"}">${L.elo_setmana > 0 ? "▲ +" : "▼ "}${n0(L.elo_setmana)} esta semana</span>` : ""}</p>` : ""}
       ${L.dins === false ? `<p class="nlg-nota" data-in="ns">Aún no has sumado esta semana: entrena y entras en este grupo.</p>` : ""}
+      ${L.banda && L.nivell >= L.banda[1] && L.ancora != null && L.nivell < DIVS().length - 1 ? `<p class="nlg-nota" data-in="ns">Es tu liga más alta con tu ELO: para subir a ${esc(nomDisc(L.nivell + 1))}, sube tu ELO.</p>` : ""}
       ${L.mou ? `<div class="nlg-zones" data-in="ns"><span class="puja">Suben ${r.pugen}</span><span>Se quedan</span><span class="baixa">Bajan ${r.baixen}</span></div>`
         : `<p class="nlg-nota" data-in="ns">Con menos de ${r.minim} en el grupo, esta semana no sube ni baja nadie.</p>`}
       <div class="nlg-llista" data-in="ns">${L.llista.map((x, k) => liniaLiga(L, k) + filaLiga(L, x, k, i)).join("")}</div>
       <div class="nlg-com" data-in="ns"><h2>Cómo se ganan puntos</h2>
         <p>Cada serie de ${DISC_QUE[disc]} suma 1 punto, hasta ${r.cap} al día, y cada día que entrenas, ${r.dia} más. Lo cuenta KLONK con tus entrenos.</p>
-        <p>El domingo por la noche, los ${r.pugen} primeros suben al disco siguiente y los ${r.baixen} últimos bajan.</p></div>
-      <div class="nlg-discos" data-in="ns">${DISCOS.map((x, k) => `<span class="${k === L.nivell ? "on" : ""}">${discSvg(k)}<small>${x.kg} kg</small></span>`).join("")}</div>
+        <p>El domingo por la noche, los ${r.pugen} primeros suben a la liga siguiente y los ${r.baixen} últimos bajan. Las ligas son las divisiones del ELO: te mueves hasta una por encima o por debajo de la de tu ELO, y para ir más arriba, hay que subir el ELO.</p></div>
     </section>`;
   }
   // (30-09 tarda: el resum nou no la demanava, i la porta es quedava a «Cargando…» fins que no entraves a Gimnasios). Es
@@ -13144,7 +13148,7 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nsx-crida-n{font-size:13px;font-weight:800;color:var(--nt-suau);padding-right:10px}
 .nsx-portes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* LA LLIGA (30-09, M3): el disc i quan tanca, les disciplines, l'escala i la pàgina sencera */
-.nlg-disc{display:block;width:40px;height:40px;flex:none;filter:none}
+.nlg-disc{display:block;width:40px;height:40px;flex:none;object-fit:contain;filter:none}
 .nlg-disc.nlg-d-cap{width:50px;height:50px}.nlg-disc.nlg-d-gran{width:64px;height:64px}
 .nlg-cap-b{cursor:default}.nlg-t{font:900 24px/1.05 'Nunito',system-ui,sans-serif;color:var(--nt-tinta)}
 .nlg-tabs{display:flex;gap:6px;padding:4px;border-radius:16px;background:rgb(255 255 255 / .045)}
@@ -13179,9 +13183,15 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nlg-llista{display:grid;gap:6px}.nlg-llista .nlg-f{margin:0}
 .nlg-com{display:grid;gap:6px;padding:14px 16px;border-radius:18px;background:rgb(255 255 255 / .04)}
 .nlg-com h2{margin:0;font:900 16px/1.2 'Nunito',system-ui,sans-serif}.nlg-com p{margin:0;color:var(--nt-suau);font-weight:700;font-size:14px;line-height:1.4}
-.nlg-discos{display:flex;justify-content:space-between;gap:6px}
-.nlg-discos span{display:grid;justify-items:center;gap:4px;opacity:.55}.nlg-discos span.on{opacity:1}
-.nlg-discos small{font:800 12px/1 'Nunito',system-ui,sans-serif;color:var(--nt-suau)}.nlg-discos span.on small{color:var(--nt-tinta)}
+/* l'escala de l'ELO, a dalt (01-10, L20): la teva lliga gran i encesa, les de sota fetes, i les que la franja no et deixa, apagades */
+.nlg-escala-elo{display:flex;justify-content:space-between;align-items:center;gap:2px;padding:4px 2px 2px}
+.nlg-escala-elo span{display:grid;place-items:center;width:30px;height:30px;opacity:.5;filter:grayscale(.3)}
+.nlg-escala-elo span img{width:100%;height:100%;object-fit:contain}
+.nlg-escala-elo span.fet{opacity:.85;filter:none}
+.nlg-escala-elo span.on{width:44px;height:44px;opacity:1;filter:drop-shadow(0 0 10px rgb(var(--m-rgb) / .55))}
+.nlg-escala-elo span.fora{opacity:.2;filter:grayscale(1)}
+.nlg-elo{margin:0;font-weight:800;font-size:14px;color:var(--nt-suau)}.nlg-elo b{color:var(--nt-tinta);font-weight:900}
+.nlg-elo .puja{color:#5fd08f;font-weight:900}.nlg-elo .baixa{color:#ec6b62;font-weight:900}
 /* el resum de Social (30-09 tarda, M9): dues portes i els amics a dalt; la squad a sota */
 /* (30-09 tarda, al simulador: amb «1fr 1fr auto» les portes no baixaven del que fa el seu text i la columna sencera sortia de
    la pantalla. minmax(0, …) deixa que s'encongeixin; les portes, de dalt a baix, hi caben fins a 375 punts) */
