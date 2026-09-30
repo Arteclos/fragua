@@ -8981,8 +8981,6 @@ const Nit = (() => {
     const xi = ev.target.closest('[data-accion="nt-elo-info"]');
     if (xi) { ev.preventDefault(); ev.stopPropagation(); if (!document.querySelector('.nsq-full[aria-label="Tu ELO"]')) fullN("Tu ELO", htmlElo()); return; }
     // ENTRAR A LES LLIGUES (30-09 tarda): el full de la modalitat i la categoria
-    const toc = ev.target.closest('[data-accion="nsq-toc"]');
-    if (toc) { ev.preventDefault(); ev.stopPropagation(); tocSquad(toc); return; }
     const nor = ev.target.closest('[data-accion="nor-tria"], [data-accion="nor-salta"], [data-accion="nor-codi"], [data-accion="nor-sense"]');
     if (nor) { ev.preventDefault(); ev.stopPropagation(); triaOrigen(nor); return; }
     const nle = ev.target.closest('[data-accion^="nle-"]');
@@ -9138,7 +9136,13 @@ const Nit = (() => {
     const b = ev.target.closest('[data-accion="nt-ves"], [data-accion="nt-menu"]');
     if (b) {
       ev.preventDefault(); ev.stopPropagation();
-      if (b.classList.contains("on") && b.dataset.accion === "nt-ves") { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+      // LA PESTANYA ON JA ETS (01-10, LA LLISTA L1; l'Albert: «des de qualsevol subpàgina d'una categoria, sigui al perfil,
+      // social o menjar, si fas clic dues vegades al menú hauries de tornar a veure la pàgina principal d'aquella icona»):
+      // des d'una subpàgina, a la principal; si ja hi ets, a dalt de tot
+      if (b.classList.contains("on") && b.dataset.accion === "nt-ves") {
+        if (!esArrel(b.dataset.lloc)) { tornaArrel(b); return; }
+        window.scrollTo({ top: 0, behavior: "smooth" }); return;
+      }
       if (b.dataset.accion === "nt-menu") obreMenu(); else ves(b.dataset.v, b);
       return;
     }
@@ -9154,6 +9158,20 @@ const Nit = (() => {
      Tú és nova (el perfil amb l'Urbà), i l'entreno és el de sempre amb la rodeta del tipus de sèrie. */
   const esNit = () => typeof Versions === "object" && Versions.actual() === "nit";
   const I_AJUST = '<svg viewBox="0 0 24 24" class="nt-ic" aria-hidden="true"><g fill="none" stroke="#b9c4ce" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></g></svg>';
+  // la pàgina principal de cada pestanya (L1): Tú, Social sense cap porta oberta, i Comer a «Hoy»
+  function esArrel(lloc) {
+    const v = S.ui.vista;
+    if (lloc === "tu") return v === "personaje";
+    if (lloc === "social") return v === "social" && !S.ui.socDins;
+    if (lloc === "nutri") return v === "comer" && (!S.ui.comerTab || S.ui.comerTab === "hoy") && !S.ui.ncObert;
+    return true;
+  }
+  function tornaArrel(b) {
+    if (b.dataset.lloc === "social") { S.ui.socDins = null; S.ui.socTab = null; S.ui.feed = null; gimMapa = false; }
+    if (b.dataset.lloc === "nutri") { S.ui.comerTab = "hoy"; S.ui.ncObert = null; }
+    ves(b.dataset.v, b);
+    window.scrollTo({ top: 0 });
+  }
   function ves(v, b) {
     if (cal) { tancaMenu(() => ves(v, b)); return; }
     if (typeof tancaFull === "function") { try { tancaFull(); } catch (e) {} }
@@ -10272,10 +10290,9 @@ const Nit = (() => {
       if (m.yo || !m.pid) return `<div class="nsp-f yo">${dins}</div>`;
       const fila0 = gestor ? `<button class="nsp-f" data-accion="nsq-membre" data-id="${q.id}" data-p="${esc(m.pid)}" aria-label="${esc(nom)}: qué hacer">${dins}</button>`
         : `<button class="nsp-f" data-accion="social-perfil" data-p="${esc(m.pid)}" aria-label="Perfil de ${esc(nom)}">${dins}</button>`;
-      // L'EMPENTA (30-09 vespre, LA LLISTA M23 D2; el «Nudge» del Duolingo): a qui avui encara no ha entrenat, un cop al dia
-      if (m.avui) return fila0;
-      const fet = (S.ui.tocs || {})[m.pid] === diaAvui();
-      return `<div class="nsp-fw">${fila0}<button class="nsp-toc${fet ? " fet" : ""}" data-accion="nsq-toc" data-id="${q.id}" data-p="${esc(m.pid)}"${fet ? " disabled" : ""} aria-label="${fet ? `Ya le has dado un toque a ${esc(nom)}` : `Dar un toque a ${esc(nom)}`}">${fet ? I_CHECK : I_TOC}</button></div>`;
+      // (01-10, LA LLISTA L15) sense el botó de l'empenta (D2): l'Albert, «no té cap sentit, el vull fora»; i així totes les
+      // setmanes de la colla comencen al mateix lloc, com la teva («m'agrada que estiguem amb la setmana coincidint»)
+      return fila0;
     };
     const pcR = q.repte ? Math.min(100, q.repte.progres / Math.max(1, q.repte.objectiu) * 100) : 0;
     return `<section class="nsp">${inv}${tria}
@@ -11219,21 +11236,6 @@ const Nit = (() => {
   // que hagi passat ja l'hora, què???»). Deu minuts després de l'hora ja no s'hi apunta ningú: es diu en passat, sense el botó
   // (i amb «Te apuntaste» si hi anaves); si és la teva, torna «Hoy voy a las» per si en vols fer una altra; i dues hores
   // després, ja no hi és (el servidor les torna fins a tres hores després: squads.CRIDA_VIVA).
-  const diaAvui = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
-  const I_TOC = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11V5.8a1.5 1.5 0 0 1 3 0V10m0-.2V4.6a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v7.5c0 4-2.6 6.5-6.2 6.5-2.7 0-4.2-1.3-5.6-3.4L3.6 13a1.4 1.4 0 0 1 2.3-1.6L8.5 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  async function tocSquad(b) {
-    if (b.disabled) return;
-    b.disabled = true;
-    const pid = b.dataset.p, marca = () => { S.ui.tocs = { ...(S.ui.tocs || {}), [pid]: diaAvui() }; b.classList.add("fet"); b.innerHTML = I_CHECK; b.setAttribute("aria-label", "Toque enviado"); };
-    try {
-      await api("POST", `/squads/${encodeURIComponent(b.dataset.id)}/toc/${encodeURIComponent(pid)}`);
-      marca(); fx(E => { E.suena("tap"); E.vibra("tria"); });
-      if (typeof avis === "function") avis("Toque enviado. Le llega como un aviso de tu squad.");
-    } catch (e) {
-      if (/ya le has dado|ya ha entrenado/i.test(e.message || "")) { marca(); if (typeof avis === "function") avis(e.message); }
-      else { b.disabled = false; if (typeof avis === "function") avis(e.message, true); }
-    }
-  }
   const cridaPassada = c => Date.now() / 1000 > c.quan + 600;
   const cridesVives = q => (q.crides || []).filter(c => Date.now() / 1000 < c.quan + 7200);
   function filaCrida(c) {
@@ -12028,14 +12030,15 @@ const Nit = (() => {
       ["Tu plan de comida", "Con tu peso, tu objetivo y lo que tienes en casa."],
       ["Las estadísticas de tu squad", "Las series, los kilos y los récords de cada uno, sin difuminar."],
       ["Rutinas y entrenos sin límite", "Una rutina tuya y diez entrenos son gratis; con PRO, todos los que quieras."]];
+    // el botó, a dalt, just sota el títol (01-10, LA LLISTA L17; l'Albert: «ha d'estar visible, no tan a baix»)
     const cta = !compte ? `<button class="nx-compra" data-accion="vista" data-v="compte">Crea tu cuenta y te avisamos</button>`
       : ja ? `<p class="npro-fet">${I_CHECK}Te avisaremos cuando salga.</p>`
       : `<button class="nx-compra" data-accion="npro-avisa">Avísame cuando salga</button>`;
     return `<section class="npro">
       <div class="npro-cap"><span class="npro-ic">${ic("medalla")}</span><h1 class="npro-t">KLONK PRO</h1><p class="npro-sub">Aún no está a la venta. Esto es lo que estamos preparando:</p></div>
+      ${cta}
       <ul class="npro-l">${PECES.map(([t, d]) => `<li><b>${t}</b><span>${d}</span></li>`).join("")}</ul>
       <p class="npro-nota">Lo que ya tienes no pasa a ser de pago: el rango, tus rutinas, las cartas, los amigos, las squads y los rankings siguen gratis.</p>
-      ${cta}
     </section>`;
   }
   async function avisaPro(b) {
@@ -13647,11 +13650,6 @@ body.v-nit .lg-fora{display:grid;gap:8px;margin:0 0 12px;padding:16px;border-rad
 body.v-nit .lg-fora b{font-size:16px;font-weight:900}
 body.v-nit .lg-fora p{margin:0;font-size:13.5px;font-weight:800;line-height:1.4;color:var(--nt-suau)}
 .nsq-crida{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 14px;border-radius:18px;background:#141c25}
-/* L'EMPENTA A UN DE LA SQUAD (30-09 vespre, M23 D2) */
-.nsp-fw{display:flex;align-items:center;gap:6px}.nsp-fw > .nsp-f{flex:1;min-width:0}
-.nsp-toc{flex:none;display:grid;place-items:center;width:42px;height:42px;border:0;border-radius:50%;background:rgb(var(--m-rgb) / .14);color:rgb(var(--m-rgb));cursor:pointer;box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .35)}
-.nsp-toc svg{width:22px;height:22px}.nsp-toc:active{transform:scale(.92)}
-.nsp-toc.fet{background:none;color:var(--nt-suau);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1)}
 .nsq-cr.passada{opacity:.62}.nsq-cr.passada .nsq-cr-qui img{filter:grayscale(.6)}
 .nsq-crida-t{flex:1;min-width:0;font-size:14px;font-weight:900}
 .nsq-crida-h{flex:none;width:118px;height:40px;border:0;border-radius:12px;padding:0 8px;background:#10171e;color:var(--nt-tinta);font:900 17px/1 'Nunito',system-ui,sans-serif;text-align:center;color-scheme:dark}
