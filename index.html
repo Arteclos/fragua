@@ -669,6 +669,27 @@ button.rk-fila .rk-nom{text-decoration:underline;text-decoration-color:rgba(255,
 /* ---- la biblioteca d'exercicis (26/09) ---- */
 .tria-q{width:100%;height:48px;border-radius:10px;border:1px solid var(--bronze-fil);background:#0f0d0c;color:var(--crema);padding:0 14px;font:inherit;font-size:16px;margin-bottom:8px}
 .ej-tria-t{display:grid;gap:1px}
+/* el buscador d'exercicis (01-10, L21): la foto (la fitxa), la fila (triar-lo, amb el número de l'ordre) i la ⓘ */
+.tria-f{display:grid;grid-template-columns:48px minmax(0,1fr) 36px;align-items:center;gap:10px;padding:6px;margin-bottom:6px;border-radius:10px;border:1px solid rgba(197,123,55,.25);background:rgba(0,0,0,.3);color:var(--crema)}
+.tria-f.sel{border-color:#e8a04a;background:rgba(232,160,74,.12)}
+.tria-foto{display:block;width:48px;height:48px;padding:0;border:0;border-radius:8px;background:none;overflow:hidden;cursor:pointer}
+.tria-foto img{display:block;width:48px;height:48px;object-fit:cover}
+.tria-foto .ej-sense{display:grid;place-items:center;width:48px;height:48px}.tria-foto .ej-sense svg{width:22px;height:22px;opacity:.55}
+.tria-b{display:flex;align-items:center;gap:10px;min-width:0;min-height:48px;padding:0;border:0;background:none;color:inherit;font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.tria-b .ej-tria-t{flex:1;min-width:0}
+.tria-k{display:none}
+.tria-f.sel .tria-k{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:50%;background:#e8a04a;color:#12100f;font-style:normal;font-weight:900;font-size:13px}
+.tria-i{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:none;color:var(--fum);cursor:pointer}.tria-i svg{width:21px;height:21px}
+/* el peu és sòlid i la llista s'hi fon per damunt (::before); per sota, el farciment del full el tapa l'ombra, encavalcada
+   amb el peu (un sticky no hi baixa, i una ombra no allarga el scroll) */
+.tria-peu{position:sticky;bottom:0;z-index:2;margin:0 -4px;padding:6px 4px;background:#12100f;box-shadow:0 60px 0 4px #12100f}
+.tria-peu::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:28px;background:linear-gradient(to bottom,rgba(18,16,15,0),#12100f);pointer-events:none}
+.tria-peu[hidden]{display:none}
+.tria-fitxa{display:grid;gap:10px}.tria-fitxa[hidden]{display:none}
+.tria-torna{justify-self:start;display:flex;align-items:center;gap:4px;height:36px;padding:0 14px 0 8px;border:0;border-radius:99px;background:rgba(255,255,255,.08);color:var(--crema);font:800 14px/1 inherit;cursor:pointer}
+.tria-torna svg{width:18px;height:18px}
+.tria-fitxa-n{margin:4px 0 0;font-size:22px;line-height:1.2}
+.tria-fitxa-g{margin:-6px 0 0;font-size:14px;color:var(--fum)}
 .ej-tria-t small{color:var(--fum);font-size:12px}
 .ej-sense{width:48px;height:48px;border-radius:8px;background:#1b1918;flex:none}
 .pasos{margin:12px 0 4px;padding-left:22px;display:grid;gap:8px;line-height:1.5;font-size:15px}
@@ -1257,6 +1278,7 @@ p.al-fora-t{font:inherit;color:var(--fum)}
 .rebost .fila{justify-content:space-between;border-bottom:1px solid rgba(197,123,55,.18);padding:8px 0}
 .avis-salut{border:1px solid var(--bronze-fil);border-radius:10px;padding:12px;font-size:14px;background:rgba(0,0,0,.35)}
 .text-llarg p{margin:0 0 10px}
+.aj-somos-foto{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;margin:0 0 14px;border-radius:14px;background:#10171e}
 
 /* ---- celebracions ---- */
 .celebra{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at 50% 40%,rgba(70,20,6,.94),rgba(0,0,0,.97) 70%)}
@@ -3049,23 +3071,62 @@ function candidatsTria() {
   return [...nostres, ...bib].filter(x => (!q || net(x.n).includes(q)) && (!g || x.g === g) && (!eq || x.eq === eq || (x.casa && !eq)))
     .sort((a, b) => pes(a) - pes(b) || a.n.localeCompare(b.n, "es"));
 }
+// TRIAR-NE DIVERSOS ALHORA (01-10, LA LLISTA L21; l'Albert: «per afegir exercicis a un entreno s'hauria de poder
+// seleccionar més d'un alhora, i si apreto la foto, que es vegi l'exercici + info, per saber quin és; potser posaria també
+// un botó (i) d'info a la dreta»). Tocar la fila la selecciona i el número diu en quin ordre entrarà; «Añadir N
+// ejercicios», a sota, els hi posa tots. La foto i la ⓘ obren la fitxa (el dibuix gran i com es fa) dins del mateix full,
+// sense perdre ni la selecció ni la cerca ni on eres de la llista.
+const I_TRIA_INFO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const I_TRIA_MAN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 10.2h1.8V7.1h3.1v9.8H3.8v-3.1H2zM22 10.2h-1.8V7.1h-3.1v9.8h3.1v-3.1H22zM7.8 11h8.4v2H7.8z" fill="currentColor"/></svg>';
+const I_TRIA_TORNA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const triaSel = () => S.ui.triaSel || (S.ui.triaSel = []);
+const botoPrim = () => typeof Nit === "object" && Nit.activa() ? "nt-boto" : "btn clar marc";
+const peuTria = i => { const n = triaSel().length; return `<button class="${botoPrim()} tria-posa" data-accion="tria-posa" data-i="${i}">${n === 1 ? "Añadir 1 ejercicio" : `Añadir ${n} ejercicios`}</button>`; };
 function llistaTria(i) {
-  const ll = candidatsTria(), mostra = ll.slice(0, 60);
-  return mostra.map(e => `<button class="ej-tria" data-accion="ed-posa" data-i="${i}" data-n="${esc(e.n)}">${fotoEj(e.n) ? `<img src="${fotoEj(e.n)}" alt="" loading="lazy" width="48" height="48">` : "<span class=\"ej-sense\"></span>"}<span class="ej-tria-t"><span>${esc(e.n)}</span><small>${esc([e.g, e.eq].filter(Boolean).join(", "))}${e.casa ? ", de la casa" : ""}</small></span></button>`).join("")
+  const ll = candidatsTria(), mostra = ll.slice(0, 60), sel = triaSel();
+  return mostra.map(e => { const k = sel.indexOf(e.n) + 1, f = fotoEj(e.n);
+    return `<div class="tria-f${k ? " sel" : ""}" data-n="${esc(e.n)}"><button class="tria-foto" data-accion="tria-info" data-n="${esc(e.n)}" aria-label="Ver cómo se hace: ${esc(e.n)}">${f ? `<img src="${f}" alt="" loading="lazy" width="48" height="48">` : `<span class="ej-sense">${I_TRIA_MAN}</span>`}</button>`
+      + `<button class="tria-b" data-accion="tria-sel" data-n="${esc(e.n)}" aria-pressed="${!!k}"><span class="ej-tria-t"><span>${esc(e.n)}</span><small>${esc([e.g, e.eq].filter(Boolean).join(", "))}${e.casa ? ", de la casa" : ""}</small></span><i class="tria-k" aria-hidden="true">${k || ""}</i></button>`
+      + `<button class="tria-i" data-accion="tria-info" data-n="${esc(e.n)}" aria-label="Información: ${esc(e.n)}">${I_TRIA_INFO}</button></div>`; }).join("")
     + (ll.length > mostra.length ? `<p class="suau petit" style="text-align:center">Y ${ll.length - mostra.length} más: afina la búsqueda.</p>` : "")
     + (!ll.length ? `<p class="suau petit" style="text-align:center">Nada con esa búsqueda. Puedes crear el tuyo aquí abajo${(S.ui.triaQ || "").trim().length >= 3 ? `, o <button class="enllac" data-accion="imp-pide" data-n="${esc(S.ui.triaQ.trim().slice(0, 60))}">pedirnos que añadamos «${esc(S.ui.triaQ.trim().slice(0, 60))}»</button>` : ""}.</p>` : "");
 }
 function fullTriaEj(i) {
-  S.ui.triaQ = ""; S.ui.triaG = ""; S.ui.triaE = "";
-  return `<input id="tria-q" class="tria-q" type="search" placeholder="Buscar entre ${BIBLIOTECA.length + CATALOGO.length} ejercicios" autocomplete="off" aria-label="Buscar ejercicio">
+  S.ui.triaQ = ""; S.ui.triaG = ""; S.ui.triaE = ""; S.ui.triaSel = [];
+  return `<div class="tria-w"><input id="tria-q" class="tria-q" type="search" placeholder="Buscar entre ${BIBLIOTECA.length + CATALOGO.length} ejercicios" autocomplete="off" aria-label="Buscar ejercicio">
     <div class="xips-scroll petits">${["", ...GRUPS_TRIA].map(g => `<button class="chip" data-accion="tria-g" data-v="${g}" aria-pressed="${!g}">${g || "Todos"}</button>`).join("")}</div>
     <div class="xips-scroll petits">${["", ...EQUIPS_TRIA].map(e => `<button class="chip" data-accion="tria-e" data-v="${e}" aria-pressed="${!e}">${e || "Cualquier material"}</button>`).join("")}</div>
     <div id="tria-llista" data-i="${i}">${llistaTria(i)}</div>
     <form class="form" data-form="ed-propi" data-i="${i}" style="margin-top:16px"><label>Otro ejercicio<input id="ed-propi-nom" maxlength="50" autocomplete="off" placeholder="Nombre del ejercicio"></label>
       <label>Tipo<select id="ed-propi-t"><option value="c">Grande, varias articulaciones (6 a 10 repeticiones)</option><option value="a">Aislado, un músculo (10 a 15 repeticiones)</option></select></label>
-      <button class="btn clar marc" type="submit">Añadir</button></form>`;
+      <button class="btn clar marc" type="submit">Añadir</button></form>
+    <div class="tria-peu" id="tria-peu" data-i="${i}" hidden></div></div>
+    <div class="tria-fitxa" id="tria-fitxa" hidden></div>`;
 }
 function refrescaTria() { const l = $("#tria-llista"); if (l) l.innerHTML = llistaTria(+l.dataset.i); }
+// la selecció, sense tornar a pintar la llista (no salta i no perd on eres)
+function pintaTria() {
+  const sel = triaSel();
+  document.querySelectorAll("#tria-llista .tria-f").forEach(r => {
+    const k = sel.indexOf(r.dataset.n) + 1, b = r.querySelector(".tria-b"), x = r.querySelector(".tria-k");
+    r.classList.toggle("sel", !!k); if (b) b.setAttribute("aria-pressed", String(!!k)); if (x) x.textContent = k || "";
+  });
+  const p = $("#tria-peu"); if (p) { p.hidden = !sel.length; p.innerHTML = sel.length ? peuTria(+p.dataset.i) : ""; }
+}
+function obreFitxaTria(n) {
+  const full = $("#capa .full"), w = $("#capa .tria-w"), f = $("#tria-fitxa"); if (!full || !w || !f) return;
+  const bb = bibDe(n), sel = triaSel().includes(n), sub = [Stats.GRUPO[n], bb && bb[4]].filter(Boolean).join(", ");
+  S.ui.triaScroll = full.scrollTop;
+  f.innerHTML = `<button class="tria-torna" data-accion="tria-torna">${I_TRIA_TORNA}<span>Volver a la lista</span></button>
+    <h3 class="tria-fitxa-n">${esc(n)}</h3>${sub ? `<p class="tria-fitxa-g">${esc(sub)}</p>` : ""}
+    ${fitxaEj(n)}
+    <div class="tria-peu"><button class="${botoPrim()}${sel ? " tria-treu" : ""}" data-accion="tria-sel" data-n="${esc(n)}" data-torna="1">${sel ? "Quitar de la selección" : "Seleccionar"}</button></div>`;
+  w.hidden = true; f.hidden = false; full.scrollTop = 0;
+}
+function tornaTria() {
+  const full = $("#capa .full"), w = $("#capa .tria-w"), f = $("#tria-fitxa"); if (!full || !w || !f) return;
+  f.hidden = true; f.innerHTML = ""; w.hidden = false; full.scrollTop = S.ui.triaScroll || 0;
+}
 
 /* ---------------------------------------------------------------- els gestos */
 const nouId = () => "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
@@ -3107,10 +3168,20 @@ function accioRutina(acc, b) {
     case "ed-dia": llegeixEditor(); S.ui.edit.dias.push({ t: "Día " + (S.ui.edit.dias.length + 1), ej: [] }); guardar(); render(); return true;
     case "ed-treu-dia": llegeixEditor(); if (S.ui.edit.dias.length > 1) S.ui.edit.dias.splice(+b.dataset.i, 1); guardar(); render(); return true;
     case "ed-afegeix": llegeixEditor(); obreFull(fullTriaEj(+b.dataset.i), "Añadir ejercicio"); return true;
-    case "ed-posa": {
-      const e = catalogo(b.dataset.n);
-      if (+b.dataset.i === -1 && typeof Nit === "object" && Nit.posaACarta) { Nit.posaACarta([...e]); return true; }      // l'editor d'una carta
-      S.ui.edit.dias[+b.dataset.i].ej.push([...e]); guardar(); tancaFull(); render(); Efectos.suena("yunque"); return true;
+    case "tria-sel": {
+      const n = b.dataset.n, sel = triaSel(), k = sel.indexOf(n);
+      if (k >= 0) sel.splice(k, 1); else sel.push(n);
+      if (b.dataset.torna) tornaTria();          // des de la fitxa: torna a la llista, on ja es veu triat
+      pintaTria(); Efectos.suena("tap"); Efectos.vibra("tria"); return true;
+    }
+    case "tria-info": obreFitxaTria(b.dataset.n); return true;
+    case "tria-torna": tornaTria(); return true;
+    case "tria-posa": {
+      const i = +b.dataset.i, ll = triaSel().map(n => catalogo(n)).filter(Boolean).map(e => [...e]);
+      if (!ll.length) return true;
+      S.ui.triaSel = [];
+      if (i === -1 && typeof Nit === "object" && Nit.posaACarta) { Nit.posaACarta(...ll); return true; }      // l'editor d'una carta
+      S.ui.edit.dias[i].ej.push(...ll); guardar(); tancaFull(); render(); Efectos.suena("yunque"); return true;
     }
     case "tria-g": case "tria-e": {
       S.ui[acc === "tria-g" ? "triaG" : "triaE"] = b.dataset.v;
@@ -5169,10 +5240,14 @@ function cosAj(k) {
     ${instalPrompt && !esInstalada() ? `<div class="aj-fila"><span>Instalar KLONK<small>Se abre como una app, a pantalla completa, y los avisos llegan mejor.</small></span><button class="btn clar marc" data-accion="avisos-instala">Instalar</button></div>` : ""}
     ${e === "actius" ? `<p style="margin:10px 0 0"><button class="enllac" data-accion="avisos-prova">Enviarme un aviso de prueba</button></p>` : ""}`;
   }
-  // «Quiénes somos», a Ajustes (l'Albert, 26-09-2026 nit: abans era a Social)
-  if (k === "somos") return `<div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
-      <p>Creemos que el que se lo curra tiene que notarse. Por eso los personajes buenos no se compran: se ganan entrenando, un día tras otro.</p>
-      <p>Que descansar también es entrenar. Que no hace falta obsesionarse con los números para mejorar. Y que una comunidad se cuida sin llenarla de anuncios.</p></div>
+  // «Quiénes somos», a Ajustes (l'Albert, 26-09-2026 nit: abans era a Social). Reescrit l'01-10 (LA LLISTA L2; l'Albert: «hem
+  // de posar algo que no soni IA slop com ara, algo natural i fins i tot brainrot», i la foto dels quatre creadors, sense
+  // cara, «que estigui amagadet allà a Ajustes»). La foto, feta amb el ChatGPT NOMÉS amb paraules (cap foto de ningú: l'Eric
+  // és menor); el text, passat per la skill ploma i per veu-klonk: res del cos de ningú, els fets de cadascú i un sol acudit
+  if (k === "somos") return `<img class="aj-somos-foto" src="${ACTIUS}creadors.webp" alt="Los cuatro de KLONK en el gimnasio: Adrià, Eric, Àlex y Albert, apoyado en la pared con gafas de sol" width="900" height="600" loading="lazy" draggable="false">
+    <div class="text-llarg"><p>Somos tres hermanos y un primo. Vivimos cerca, entrenamos juntos y no encontrábamos una app que nos gustara, así que nos hicimos la nuestra.</p>
+      <p>En la foto, Adrià es el más alto, aunque es el pequeño, y el que nos dice cuándo algo queda feo. Àlex es el más fuerte, con diferencia, y dibuja a los dos personajes de la app. Eric, el primo, la prueba antes que nadie y nos avisa de lo que da cringe. Albert es el de las gafas de sol, el que mira desde la pared. La app la monta él.</p>
+      <p>Tu ELO te compara con gente de competición de tu sexo y tu peso, y 1000 es el del medio. Si llegas, +1000 de aura.</p></div>
     ${esMenor() ? "" : `<div class="suport"><b class="or">¿Te gusta KLONK?</b><p class="suau petit">Apóyanos: con el oro que compras pagamos el servidor y seguimos mejorándola, sin anuncios.</p>
       <button class="btn clar marc" data-accion="suport-oro">APÓYANOS CON ORO</button></div>`}`;
   if (k === "perfil") return `<form class="form" data-form="ajustes"><div class="dos"><label>Peso, en kg<input id="a-peso" inputmode="decimal" autocomplete="off" value="${fmt(pr.peso)}"></label><label>Altura, en cm<input id="a-altura" inputmode="numeric" autocomplete="off" value="${fmt(pr.altura)}"></label></div>
@@ -9069,6 +9144,9 @@ const Nit = (() => {
       if (!d) return;
       if (a === "nce-afegeix") { obreFull(fullTriaEj(-1), "Añadir ejercicio"); return; }
       if (a === "nce-cfg" && d.ej[j]) { obrePla(j); return; }
+      // (01-10, LA LLISTA L14; l'Albert: «als muntadors hauries de poder ampliar la imatge de l'exercici fent clic al
+      // monigote») el ninot obre la fitxa: el dibuix gran i com es fa
+      if (a === "nce-foto" && d.ej[j]) { const n = d.ej[j][0]; obreFull(fitxaEj(n), n); fx(E => E.suena("tap")); return; }
       if (a === "nce-treu" && d.ej[j]) { d.ej.splice(j, 1); normalitzaGrups(d); guardar(); fx(E => E.suena("tap")); render(); return; }
       if (a === "nce-uneix" && d.ej[j + 1]) { uneixSeguent(d, j); guardar(); fx(E => { E.suena("tap"); E.vibra("tria"); }); render(); return; }
       return;
@@ -11288,7 +11366,7 @@ const Nit = (() => {
     return `<div class="nce-f${pg ? " en-grup" : ""}" data-j="${j}">
         <button class="nce-esq" data-accion="nce-cfg" data-j="${j}" aria-label="Series y tipo de serie de ${esc(n)}${(tp => tp && tp.extra ? `: ${esc(tp.extra)}` : esp ? `: ${esc(esp)}` : "")(plaDe(x) ? txtPla(plaDe(x)) : null)}">${(tp => tp ? `<b>${esc(tp.cap)}</b>${lletresTipus(plaDe(x).map(q => q.tipo).filter(Boolean))}`
           : `<b>${c.series}×${c.min === c.max ? c.min : c.min + "-" + c.max}</b>${lletresTipus(tipusCfg(S.cfg[n]))}`)(plaDe(x) ? txtPla(plaDe(x)) : null)}</button>
-        ${fotoAnime(n) ? `<img src="${fotoAnime(n)}" alt="" draggable="false">` : `<span class="nce-sf">${ic("manuella")}</span>`}
+        <button class="nce-foto" data-accion="nce-foto" data-j="${j}" aria-label="Ver cómo se hace: ${esc(n)}">${fotoAnime(n) ? `<img src="${fotoAnime(n)}" alt="" draggable="false">` : `<span class="nce-sf">${ic("manuella")}</span>`}</button>
         <span class="nce-n">${pg ? `<i class="grup-tag">${esc(g)}${pg.pos}</i>` : ""}<b>${esc(n)}</b><small>${esc(grupDe(n))}</small></span>
         <button class="nce-x" data-accion="nce-treu" data-j="${j}" aria-label="Quitar ${esc(n)}">${I_X}</button></div>`
       + (j < d.ej.length - 1 ? `<button class="nce-uneix${junt ? " on" : ""}" data-accion="nce-uneix" data-j="${j}" aria-pressed="${junt}">${I_CADENA}<span>${junt ? "Superserie: sin descanso entre los dos" : "Unir en superserie"}</span></button>` : "");
@@ -11307,9 +11385,12 @@ const Nit = (() => {
       </section>`;
   }
   // el buscador d'exercicis (rutinas.js), quan en tria un per a aquesta carta
-  function posaACarta(e) {
+  function posaACarta(...ll) {
     const d = cartaEd(); if (!d) return;
-    d.ej.push(e); guardar(); if (typeof tancaFull === "function") tancaFull();
+    // (01-10, L21) en poden venir diversos alhora; una carta en porta trenta com a molt, i si en sobren, es diu
+    const cap = Math.max(0, 30 - d.ej.length), fora = ll.length - cap;
+    d.ej.push(...ll.slice(0, cap)); guardar(); if (typeof tancaFull === "function") tancaFull();
+    if (fora > 0) avis(`Treinta ejercicios es el máximo de una carta: ${fora === 1 ? "uno no ha entrado" : `${fora} no han entrado`}.`, true);
     fx(E => { E.suena("tap"); E.vibra("fet"); }); if (typeof render === "function") render();
   }
   // mantenir premut un exercici (no els seus botons) i arrossegar-lo: els altres li fan lloc, i en deixar-lo es desa l'ordre
@@ -13743,7 +13824,24 @@ body.v-nit .interruptor[aria-checked="true"]::after{background:#fff}
 .nce-llista{display:grid;gap:6px}
 .nce-f{display:grid;grid-template-columns:auto 44px 1fr 32px;align-items:center;gap:10px;padding:8px;border-radius:18px;background:var(--fb-sup);box-shadow:var(--fb-o1);touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .nce-f.en-grup{box-shadow:var(--fb-o1),inset 3px 0 0 var(--nt-lila)}
-.nce-f img,.nce-sf{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#10171e;display:grid;place-items:center}.nce-sf .nt-ic{width:20px;height:20px;opacity:.5}
+.nce-f img,.nce-sf{width:44px;height:44px;border-radius:12px;object-fit:cover;background:#10171e;display:grid;place-items:center}
+.nce-foto{width:44px;height:44px;padding:0;border:0;border-radius:12px;background:none;cursor:pointer;transition:transform .12s}.nce-foto:active{transform:scale(.92)}
+/* EL BUSCADOR D'EXERCICIS, a la Noche (01-10, LA LLISTA L21, i fora la vora de la farga, L3): seleccionada, la fila porta
+   la vora menta i el número de l'ordre en què entrarà; la foto i la ⓘ obren la fitxa dins del mateix full */
+body.v-nit .tria-f{border:0;border-radius:16px;background:#1b242e;color:var(--nt-tinta);box-shadow:inset 0 1px 0 rgb(255 255 255 / .04),0 0 0 1px rgb(255 255 255 / .06);transition:box-shadow .15s,background-color .15s}
+body.v-nit .tria-f.sel{background:rgb(var(--m-rgb) / .1);box-shadow:inset 0 0 0 1.5px rgb(var(--m-rgb) / .75)}
+body.v-nit .tria-foto,body.v-nit .tria-foto .ej-sense{border-radius:12px;background:#10171e;color:var(--nt-suau)}
+body.v-nit .tria-b{font-weight:800}
+body.v-nit .tria-b .ej-tria-t small{color:var(--nt-suau);font-weight:700}
+body.v-nit .tria-f.sel .tria-k{background:var(--nt-menta);color:rgb(var(--mt-rgb));box-shadow:0 0 12px -2px var(--nt-menta-glow)}
+body.v-nit .tria-i{color:var(--nt-suau)}
+body.v-nit .tria-peu{background:#151c24;box-shadow:0 60px 0 4px #151c24}
+body.v-nit .tria-peu::before{background:linear-gradient(to bottom,rgb(21 28 36 / 0),#151c24)}
+body.v-nit .tria-peu .nt-boto{height:50px;font-size:16.5px}
+body.v-nit .tria-peu .nt-boto.tria-treu{background:#212b35;color:var(--nt-tinta);text-shadow:none;box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
+body.v-nit .tria-torna{background:#212b35;color:var(--nt-tinta);font-family:'Nunito',system-ui,sans-serif}
+body.v-nit .tria-fitxa-g{color:var(--nt-suau)}
+body.v-nit .ej-gran{border:0;border-radius:20px;background:#10171e}.nce-sf .nt-ic{width:20px;height:20px;opacity:.5}
 .nce-esq{display:grid;justify-items:center;gap:1px;min-width:64px;min-height:44px;padding:4px 8px;border:0;border-radius:12px;background:rgb(var(--m-rgb) / .1);color:var(--nt-menta);font:900 14px/1.1 'Nunito',system-ui,sans-serif;box-shadow:inset 0 0 0 1px rgb(var(--m-rgb) / .3)}
 .nce-esq small{max-width:84px;font-size:10.5px;font-weight:800;color:var(--nt-suau);text-align:center}
 .nce-ll{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:84px;margin-top:2px}
@@ -15631,6 +15729,16 @@ async function pasosDe(n) {
   if (!PASOS) { try { PASOS = await (await fetch(ACTIUS + "ejercicios/pasos.json")).json(); } catch (e) { return null; } }
   return PASOS[b[0]] || null;
 }
+// LA FITXA D'UN EXERCICI (01-10, LA LLISTA L14 i L21): el dibuix gran i com es fa. La fan servir l'entreno («Cómo se
+// hace»), l'editor d'una carta (tocant el ninot) i el buscador d'exercicis (la foto o la ⓘ). Els passos de la biblioteca
+// es baixen quan cal i entren a #pasos quan arriben: la promesa no es resol mai abans que el full s'hagi pintat, i si
+// mentrestant s'ha obert la fitxa d'un altre exercici, no s'hi escriuen.
+function fitxaEj(n) {
+  const g = fotoGranEj(n), img = g ? `<img class="ej-gran" src="${g}" alt="${esc(n)}, cómo se hace" width="480" height="480">` : "";
+  if (EJERCICIOS[n]) return `${img}<p class="ej-com">${esc(EJERCICIOS[n][1])}</p>`;
+  pasosDe(n).then(p => { const o = $("#pasos"); if (o && o.dataset.n === n) o.innerHTML = p ? p.map(x => `<li>${esc(x)}</li>`).join("") : "<li>Sin instrucciones.</li>"; });
+  return `${img}<ol class="pasos" id="pasos" data-n="${esc(n)}"><li>Cargando…</li></ol>`;
+}
 // a la Beta Noche, el personatge de tothom és l'anime (l'Albert: «adapta tot el que surt com a herrero a anime»)
 const imgPersonaje = t => (typeof Nit === "object" && Nit.activa()) ? Nit.cara() : `${ACTIUS}personatges/${t}.webp`;
 const esTeu = t => (S.desbloq || []).includes(t) || !PERSONAJES[t].precio;
@@ -16510,10 +16618,7 @@ document.addEventListener("click", ev => {
     case "cos-treu": S.medidas = (S.medidas || []).filter(m => m.f !== b.dataset.f); guardar(); render(); avis("Borrado."); break;
     case "ej-foto": {
       const e = activa()?.ej[+b.dataset.i]; if (!e) break;
-      if (EJERCICIOS[e.n]) { obreFull(`<img class="ej-gran" src="${fotoGranEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480"><p class="ej-com">${esc(EJERCICIOS[e.n][1])}</p>`, e.n); break; }
-      obreFull(`${fotoEj(e.n) ? `<img class="ej-gran" src="${fotoGranEj(e.n)}" alt="${esc(e.n)}, cómo se hace" width="480" height="480">` : ""}<ol class="pasos" id="pasos"><li>Cargando…</li></ol>`, e.n);
-      pasosDe(e.n).then(p => { const o = $("#pasos"); if (o) o.innerHTML = p ? p.map(x => `<li>${esc(x)}</li>`).join("") : "<li>Sin instrucciones.</li>"; });
-      break;
+      obreFull(fitxaEj(e.n), e.n); break;
     }
     case "terminar": {
       const s = activa(); if (!s) break;
