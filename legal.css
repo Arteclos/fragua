@@ -41,3 +41,6 @@ strong{color:#fff3d6}
 table{border-collapse:collapse;width:100%;max-width:22rem;margin:4px 0 12px;font-size:16px}
 th,td{text-align:left;padding:5px 10px 5px 0;border-bottom:1px solid rgba(197,123,55,.25)}
 th{color:#e3a562;font-weight:700}td:last-child,th:last-child{text-align:right}
+/* (02-10 nit) el model de formulari de desistiment, a /condiciones: un bloc que es pot copiar */
+.formulari{margin:8px 0 16px;padding:12px 16px;border-left:3px solid var(--bronze);background:var(--panell)}
+.formulari p{margin:0 0 8px}
