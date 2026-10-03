@@ -2569,5 +2569,11 @@ window.KLONK_DIC = {
 "Cada día de gym suma 3,5 METs durante lo que suelen durar tus entrenos, {min} min (Compendio de actividades físicas, 2024), repartido entre los siete días.": "Cada dia de gimnàs suma 3,5 METs durant el que solen durar els teus entrenaments, {min} min (Compendi d'activitats físiques, 2024), repartit entre els set dies.",
 "Definir: un 15 % menos, y nunca más de 500 kcal (Murphy y Koehler, 2022). Volumen: un 10 % más (Iraki y otros, 2019).": "Definir: un 15 % menys, i mai més de 500 kcal (Murphy i Koehler, 2022). Volum: un 10 % més (Iraki i altres, 2019).",
 "Proteína, 2 g por kilo (Iraki y otros, 2019); grasa, un 25 % de las kcal (Helms y otros, 2014); y el resto, hidratos.": "Proteïna, 2 g per quilo (Iraki i altres, 2019); greix, un 25 % de les kcal (Helms i altres, 2014); i la resta, hidrats.",
+"Editar {n}": "Edita {n}",
+"Series de {n}: {x}. Editar": "Sèries de {n}: {x}. Edita-les",
+"Variantes": "Variants",
+"Agarre": "Agafada",
+"Cómo lo haces": "Com ho fas",
+"Tus series": "Les teves sèries",
 "Versión": "Versió"
 };
