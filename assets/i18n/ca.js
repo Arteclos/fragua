@@ -2827,5 +2827,25 @@ window.KLONK_DIC = {
 },
 "Solicitar que añadan este alimento": "Demana que afegim aquest aliment",
 "Pedido. Le haremos su ilustración.": "Demanat. Li farem la il·lustració.",
-"Pedido.": "Demanat."
+"Pedido.": "Demanat.",
+"Te paso un plato de KLONK, «{n}»: {url}": "Et passo un plat de KLONK, «{n}»: {url}",
+"Es un plato con sus calorías, y Platos es para mayores de edad.": "És un plat amb les seves calories, i Plats és per a majors d'edat.",
+"Ese enlace de plato no se puede leer.": "Aquest enllaç de plat no es pot llegir.",
+"Te han pasado un plato:": "T'han passat un plat:",
+"Guardar en mis platos": "Desa'l als meus plats",
+"Un plato para ti": "Un plat per a tu",
+"Guardado en tus platos.": "Desat als teus plats.",
+"Compartir el plato": "Comparteix el plat",
+"Para {n} persona|Para {n} personas": {
+"one": "Per a {n} persona",
+"other": "Per a {n} persones"
+},
+"{n} ingrediente|{n} ingredientes": {
+"one": "{n} ingredient",
+"other": "{n} ingredients"
+},
+"{n} paso|{n} pasos": {
+"one": "{n} pas",
+"other": "{n} passos"
+}
 };
