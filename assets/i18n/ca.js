@@ -423,7 +423,7 @@ window.KLONK_DIC = {
 "Un drop set al final": "Un drop set al final",
 "Las series especiales (calentamiento, drop set y al fallo) están apagadas. Se encienden en Ajustes, en «Progresión».": "Les sèries especials (escalfament, drop set i fins a la fallada) estan apagades. S'encenen a Configuració, a «Progressió».",
 "GUARDAR PARA ESTE EJERCICIO": "DESA PER A AQUEST EXERCICI",
-"Es la primera vez. Busca un peso con el que llegues a {max} repeticiones dejando una o dos en la recámara. La próxima vez, la app ya te propondrá el peso y las repeticiones.": "És la primera vegada. Busca un pes amb què arribis a {max} repeticions deixant-ne una o dues de reserva. La pròxima vegada, l'app ja et proposarà el pes i les repeticions.",
+"Es la primera vez en este entreno. Busca un peso con el que llegues a {max} repeticiones dejando una o dos en la recámara. La próxima vez, la app ya te propondrá el peso y las repeticiones.": "És la primera vegada en aquest entreno. Busca un pes amb què arribis a {max} repeticions deixant-ne una o dues de reserva. La pròxima vegada, l'app ja et proposarà el pes i les repeticions.",
 "Llegaste a {max} en todas las series: hoy sube un {pct} %, redondeado a lo que se puede cargar, y vuelves a {min} repeticiones.": "Vas arribar a {max} a totes les sèries: avui puja un {pct} %, arrodonit al que es pot carregar, i tornes a {min} repeticions.",
 "Llegaste a {max} en todas. Tienes activado esperar a dos entrenos seguidos: repítelo hoy y la próxima vez sube.": "Vas arribar a {max} a totes. Tens activat esperar dos entrenaments seguits: repeteix-lo avui i la pròxima vegada puja.",
 "No llegaste a {min} en ninguna serie: hoy baja un {pct} % para hacerlo bien.": "No vas arribar a {min} a cap sèrie: avui baixa un {pct} % per fer-ho bé.",
