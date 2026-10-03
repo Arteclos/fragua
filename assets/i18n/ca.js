@@ -2600,5 +2600,18 @@ window.KLONK_DIC = {
 "principal": "principal",
 "secundario": "secundari",
 "Buscar por nombre o músculo": "Busca pel nom o pel múscul",
+"Completa una vuelta de tu rutina y te diré qué te sobra y qué te falta.": "Completa una volta de la teva rutina i et diré què et sobra i què et falta.",
+"Te falta: {x}.|Te faltan: {x}.": {
+"one": "Et falta: {x}.",
+"other": "Et falten: {x}."
+},
+"Cada músculo, del tamaño de lo que lo entrenas en una vuelta de tu rutina: naranja, de más; lila, de menos.": "Cada múscul, de la mida del que l'entrenes en una volta de la teva rutina: taronja, de més; lila, de menys.",
+"Vuelta completa": "Volta completa",
+"Tu vuelta: {k} de {m} entrenos": "La teva volta: {k} de {m} entrenaments",
+"Haces más pecho que espalda: {a} series contra {b} en cada vuelta de tu rutina. Mete remos o dominadas.": "Fas més pit que esquena: {a} sèries contra {b} a cada volta de la teva rutina. Posa-hi rems o dominades.",
+"Mucho cuádriceps y poco femoral: {a} series contra {b} en cada vuelta. Mete peso muerto rumano o curl femoral.": "Molt quàdriceps i poc femoral: {a} sèries contra {b} a cada volta. Posa-hi pes mort romanès o curl femoral.",
+"El hombro de delante trabaja más que el de detrás: {a} series contra {b} en cada vuelta. Mete pájaros o face pull.": "L'espatlla de davant treballa més que la de darrere: {a} sèries contra {b} a cada volta. Posa-hi ocells o face pull.",
+"Más bíceps que tríceps: {a} series contra {b} en cada vuelta. El tríceps es dos tercios del brazo.": "Més bíceps que tríceps: {a} sèries contra {b} a cada volta. El tríceps és dos terços del braç.",
+"Te saltas pierna: {a} series de tren superior contra {b} de pierna en cada vuelta.": "Et saltes la cama: {a} sèries de tren superior contra {b} de cama a cada volta.",
 "Versión": "Versió"
 };
