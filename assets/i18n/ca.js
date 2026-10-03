@@ -2650,6 +2650,22 @@ window.KLONK_DIC = {
 "Añade algún alimento a tu plan y te propongo combinaciones.": "Afegeix algun aliment al teu pla i et proposo combinacions.",
 "Pon los gramos con números.": "Posa els grams amb números.",
 "Mis alimentos": "Els meus aliments",
+"Compartir mi plan": "Compartir el meu pla",
+"Te paso mi plan de comidas de KLONK: {url}": "Et passo el meu pla d'àpats de KLONK: {url}",
+"Es un plan de comidas, y Mi plan es para mayores de edad.": "És un pla d'àpats, i El meu pla és per a majors d'edat.",
+"Ese enlace de plan no se puede leer.": "Aquest enllaç de pla no es pot llegir.",
+"{n} opción|{n} opciones": {
+"one": "{n} opció",
+"other": "{n} opcions"
+},
+"Te han pasado un plan de comidas:": "T'han passat un pla d'àpats:",
+"Lo tuyo se queda: lo suyo entra como opciones nuevas.": "El teu es queda: el seu hi entra com a opcions noves.",
+"AÑADIR A MI PLAN": "AFEGIR AL MEU PLA",
+"Un plan para ti": "Un pla per a tu",
+"Añadido a tu plan: {n} comida.|Añadido a tu plan: {n} comidas.": {
+"one": "Afegit al teu pla: {n} àpat.",
+"other": "Afegit al teu pla: {n} àpats."
+},
 "{n} alimento tuyo|{n} alimentos tuyos": {
 "one": "{n} aliment teu",
 "other": "{n} aliments teus"
