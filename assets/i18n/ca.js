@@ -2593,5 +2593,12 @@ window.KLONK_DIC = {
 "Tu squad lo verá.": "La teva squad ho veurà.",
 "Te recordaremos tus pasos del día": "Et recordarem els passos del dia",
 "Hoy descansa": "Avui descansa",
+"Pectoral": "Pectoral",
+"Músculos que trabaja este entreno": "Músculs que treballa aquest entrenament",
+"Aún no sabemos qué músculos trabajan estos ejercicios.": "Encara no sabem quins músculs treballen aquests exercicis.",
+"Músculos que buscas: {x}": "Músculs que busques: {x}",
+"principal": "principal",
+"secundario": "secundari",
+"Buscar por nombre o músculo": "Busca pel nom o pel múscul",
 "Versión": "Versió"
 };
