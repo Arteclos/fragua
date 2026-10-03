@@ -2106,7 +2106,7 @@ window.KLONK_DIC = {
 "Para cambiar el orden, mantén el dedo en ⠿ y arrastra, también a otro día. Con la cadena unes un ejercicio con el siguiente: una superserie": "Per canviar l'ordre, mantén el dit a ⠿ i arrossega, també a un altre dia. Amb la cadena uneixes un exercici amb el següent: una supersèrie",
 "Añadir un día": "Afegeix un dia",
 "Para crecer: cada músculo dos veces por semana y unas 10 a 20 series por músculo.": "Per créixer: cada múscul dos cops per setmana i entre 10 i 20 sèries per múscul.",
-"Salir sin guardar": "Surt sense desar",
+"Otros entrenos guardados": "Altres entrenos desats", "Todos tus meses": "Tots els teus mesos", "Con KLONK PRO ves todo tu calendario.": "Amb KLONK PRO veus tot el teu calendari.", "Hace {n} semanas que no lo haces: hoy empiezas un {pct} % más ligero y a {min} repeticiones. Si vas sobrado, súbelo tú.": "Fa {n} setmanes que no el fas: avui comences un {pct} % més lleuger i a {min} repeticions. Si vas sobrat, puja'l tu.", "Salir sin guardar": "Surt sense desar",
 "Elige por mí": "Tria per mi",
 "Elige primero un grupo o unos músculos.": "Tria primer un grup o uns músculs.",
 "Añadir 1 ejercicio|Añadir {n} ejercicios": {
