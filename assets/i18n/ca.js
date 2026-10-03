@@ -2824,5 +2824,8 @@ window.KLONK_DIC = {
 "{n} persona|{n} personas": {
 "one": "{n} persona",
 "other": "{n} persones"
-}
+},
+"Solicitar que añadan este alimento": "Demana que afegim aquest aliment",
+"Pedido. Le haremos su ilustración.": "Demanat. Li farem la il·lustració.",
+"Pedido.": "Demanat."
 };
