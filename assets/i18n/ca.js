@@ -2529,5 +2529,9 @@ window.KLONK_DIC = {
 "one": "{n} sol·licitud",
 "other": "{n} sol·licituds"
 },
+"{n} ejercicio|{n} ejercicios": {
+"one": "{n} exercici",
+"other": "{n} exercicis"
+},
 "Versión": "Versió"
 };
