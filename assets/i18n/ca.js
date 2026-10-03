@@ -2590,5 +2590,8 @@ window.KLONK_DIC = {
 "Lo puedes volver a añadir cuando quieras.": "El pots tornar a afegir quan vulguis.",
 "Catorce cartas es el máximo de una rutina.": "Catorze cartes és el màxim d'una rutina.",
 "{dia}: descanso": "{dia}: descans",
+"Tu squad lo verá.": "La teva squad ho veurà.",
+"Te recordaremos tus pasos del día": "Et recordarem els passos del dia",
+"Hoy descansa": "Avui descansa",
 "Versión": "Versió"
 };
