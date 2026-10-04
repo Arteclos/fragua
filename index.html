@@ -3399,8 +3399,11 @@ body.v-nit .r-flama b{color:var(--h-ffffff,#fff);text-shadow:0 2px 6px rgb(0 0 0
   box-shadow:inset 0 1px 0 rgb(255 255 255 / .6),0 4px 10px -4px var(--nt-menta-glow);margin-bottom:3px}
 .nt-dia{font-size:12px;font-weight:600;color:var(--nt-suau)}
 .nt-tit{font-size:19px;font-weight:900;line-height:1.15;text-shadow:var(--nt-text-o);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.nt-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:grid;place-items:center;overflow:hidden;border-radius:18px}
+
+.nt-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:18px}
 .nt-il img{position:relative;z-index:1;max-width:100%;max-height:100%;object-fit:contain;will-change:transform}
+
+@container (max-height:346px){.nt-carta .nt-ejs{display:none}}
 
 .nt-brill{position:absolute;inset:0;pointer-events:none;opacity:.55;background:radial-gradient(55% 48% at 50% 48%,rgb(var(--l-rgb) / .2),transparent 70%)}
 .nt-carta.davant .nt-brill{animation:nt-respira 3.6s ease-in-out infinite;will-change:opacity}
@@ -5107,7 +5110,7 @@ body.v-nit.descansant #toast{bottom:calc(158px + max(6px,calc(env(safe-area-inse
 .nm-dia{font-size:13px;font-weight:800;color:var(--h-8b98a4,#8b98a4)}
 .nm-tit{font-size:24px;font-weight:900;line-height:1.1}
 .nm-sig{position:absolute;right:-4px;top:-4px;width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 4px 8px rgb(0 0 0 / .6))}
-.nm-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:grid;place-items:center;overflow:hidden;border-radius:18px;isolation:isolate;
+.nm-il{position:relative;flex:1 1 auto;min-height:0;margin:8px -4px 6px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:18px;isolation:isolate;
   background:radial-gradient(60% 55% at 50% 50%,rgb(var(--l-rgb) / .16),transparent 70%)}
 .nm-il img{position:relative;z-index:1;max-width:100%;max-height:100%;object-fit:contain}
 .nm-holo{position:absolute;inset:-40%;z-index:2;pointer-events:none;opacity:0;mix-blend-mode:color-dodge;
