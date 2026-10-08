@@ -2847,5 +2847,30 @@ window.KLONK_DIC = {
 "{n} paso|{n} pasos": {
 "one": "{n} pas",
 "other": "{n} passos"
-}
+},
+"años": "anys",
+"de {n} kcal": "de {n} kcal",
+"Combinación {k} de {n}": "Combinació {k} de {n}",
+"Nueva combinación": "Combinació nova",
+"Quitar esta combinación": "Treu aquesta combinació",
+"Ver ranking": "Mira el rànquing",
+"Ranking de gimnasios": "Rànquing de gimnasos",
+"Más duro": "Més dur",
+"Más constante": "Més constant",
+"récord este mes|récords este mes": {"one": "rècord aquest mes", "other": "rècords aquest mes"},
+"ELO de media": "ELO de mitjana",
+"{xp} XP": "{xp} XP",
+"Acerca el mapa para ver los gimnasios": "Apropa el mapa per veure els gimnasos",
+"Ver gimnasio": "Mira el gimnàs",
+"Tus gimnasios": "Els teus gimnasos",
+"Buscar un gimnasio": "Cerca un gimnàs",
+"Tu ubicación": "La teva ubicació",
+"Modalidad": "Modalitat",
+"Aún no hay gimnasios con {minim} personas de KLONK aquí.": "Encara no hi ha gimnasos amb {minim} persones de KLONK aquí.",
+"El gimnasio más duro": "El gimnàs més dur",
+"Ciudad": "Ciutat",
+"País": "País",
+"Usa dos dedos para mover el mapa": "Fes servir dos dits per moure el mapa",
+"Usa Ctrl + rueda para acercar el mapa": "Fes servir Ctrl + roda per apropar el mapa",
+"Usa ⌘ + rueda para acercar el mapa": "Fes servir ⌘ + roda per apropar el mapa"
 };
