@@ -2872,5 +2872,9 @@ window.KLONK_DIC = {
 "País": "País",
 "Usa dos dedos para mover el mapa": "Fes servir dos dits per moure el mapa",
 "Usa Ctrl + rueda para acercar el mapa": "Fes servir Ctrl + roda per apropar el mapa",
-"Usa ⌘ + rueda para acercar el mapa": "Fes servir ⌘ + roda per apropar el mapa"
+"Usa ⌘ + rueda para acercar el mapa": "Fes servir ⌘ + roda per apropar el mapa",
+"Tu figura en el mapa de músculos": "La teva figura al mapa de músculs",
+"Tu figura<small>En el mapa de músculos.</small>": "La teva figura<small>Al mapa de músculs.</small>",
+"Tu figura": "La teva figura",
+"Figura {n}": "Figura {n}"
 };
