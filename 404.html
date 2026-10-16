@@ -12,6 +12,9 @@
    la memòria de la pàgina fins a l'alta (compte.js); les etiquetes de campanya de l'enllaç hi van darrere. Qualsevol altra
    adreça que no existeix porta a l'inici. */
 (function () {
+  // (15-10, el mode botiga: src/botiga.js) un enllaç que obre l'app d'Android (la TWA) arriba amb el referrer android-app://fit.klonk.app,
+  // i la redirecció se'l menjaria: el mode es desa abans a sessionStorage, que és el de la mateixa pestanya i botiga.js el llegeix
+  try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}
   var m = location.pathname.match(/^\/c\/([A-Za-z0-9._-]{1,32})\/?$/);
   location.replace(m ? "/?c=" + encodeURIComponent(m[1]) + location.search.replace(/^\?/, "&") : "/");
 })();

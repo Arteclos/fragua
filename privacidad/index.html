@@ -8,6 +8,8 @@
 <meta name="theme-color" content="#000000">
 <link rel="icon" href="../icono-192.png">
 <link rel="stylesheet" href="../legal.css">
+<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js) -->
+<script>try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}</script>
 </head>
 <body>
 <header class="cap">
@@ -16,7 +18,7 @@
 </header>
 <main>
 <h1>Política de privacidad</h1>
-<p class="data">Última actualización: 14 de octubre de 2026</p>
+<p class="data">Última actualización: 16 de octubre de 2026</p>
 
 <section class="curt">
   <h2>En pocas palabras</h2>
@@ -158,6 +160,11 @@
     <li>Las fotos que eliges (el plato, tu nevera o sus ingredientes, la etiqueta de un envase o una receta) y lo que escribes (el plato que quieres hacer, o la lista de tu despensa si generas un plato con ella), con el tipo de plato que eliges (equilibrado, con más proteína o ligero), si es para el desayuno, la comida, la cena o la merienda y para cuántas raciones, y, si pides un plato para tus números, cómo se reparten las calorías de una ración entre proteína, hidratos y grasas, en porcentajes (nunca tus calorías ni tus gramos), se envían, las fotos reducidas, a un modelo de inteligencia artificial de Anthropic, que lee el plato o te propone uno: el nombre, los ingredientes con sus cantidades y los pasos. Nosotros no guardamos las fotos.</li>
     <li>Lo que sale (el nombre del plato y sus ingredientes) se guarda con tu cuenta, en tus platos. No enviamos tu nombre, tu correo ni tu nickname. Haz la foto solo a la comida.</li>
   </ul>
+  <h3>El permiso de la IA, y lo que reportas</h3>
+  <ul>
+    <li>Antes de enviar nada a Anthropic por primera vez, la app te dice qué se envía y te pide permiso, uno para la rutina y otro para los platos. Guardamos la fecha en que lo diste. Lo quitas cuando quieras en Ajustes, «Tu cuenta», y desde entonces no se envía nada más, tampoco la revisión de cada domingo.</li>
+    <li>Si reportas un plato o una rutina que ha hecho la IA, guardamos cuál es, tal como lo hizo la IA, el motivo, lo que escribes y cuándo, para revisarlo. Se borra al cabo de un año, o antes si borras tu cuenta.</li>
+  </ul>
   <h3>Cómo llegaste a KLONK</h3>
   <ul>
     <li>Si nos lo dices, cómo nos conociste (TikTok, un amigo, tu gimnasio…) y, si alguien te pasó un código, ese código.</li>
@@ -173,7 +180,7 @@
   </ul>
   <h3>Cada vez que la app habla con el servidor</h3>
   <ul>
-    <li>Tu dirección IP, la hora y la dirección de la petición, en los registros técnicos del servidor. En el mapa, esa dirección lleva la zona redondeada a unos 100 metros. También usamos la IP, sin guardarla en la base de datos, para limitar el número de peticiones y frenar abusos.</li>
+    <li>Tu dirección IP, la hora, la dirección de la petición, la página desde la que se hace y el navegador, en los registros técnicos del servidor. En el mapa, esa dirección lleva la zona redondeada a unos 100 metros. También usamos la IP, sin guardarla en la base de datos, para limitar el número de peticiones y frenar abusos.</li>
   </ul>
 </section>
 
@@ -183,7 +190,7 @@
     <li><strong>Darte el servicio</strong> (la cuenta, guardar tu progreso, Social, las ligas, los amigos y las squads, las rutinas compartidas y el mercado, las fotos del entreno, las compras y KLONK PRO, con su rutina con IA): ejecución del contrato, artículo 6.1.b del RGPD.</li>
     <li><strong>Tus datos de salud</strong> (peso, altura, sexo y medidas): con tu consentimiento explícito, artículo 9.2.a del RGPD. Puedes retirarlo cuando quieras en Ajustes, y se borran de tu cuenta al momento, con lo que sale de ellos: tus marcas de fuerza relativa, tu ELO y tus puntos de powerlifting y de calistenia.</li>
     <li><strong>Las estampas que ya tenías</strong>: con el consentimiento que diste al sellarlas, artículo 6.1.a del RGPD. Si lo retiras, las borramos: escríbenos a hola@klonk.fit.</li>
-    <li><strong>La seguridad del servicio y la prevención de abusos</strong> (los registros, la IP y las denuncias de fotos y de rutinas): interés legítimo, artículo 6.1.f del RGPD.</li>
+    <li><strong>La seguridad del servicio y la prevención de abusos</strong> (los registros, la IP, las denuncias de fotos y de rutinas y lo que reportas de la IA): interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber cuánta gente vuelve a KLONK</strong> (los meses en que abres la app), siempre en números agregados: interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber si KLONK se comparte</strong> (cuántas de las personas que entrenan comparten una tarjeta o invitan a alguien), siempre en números agregados: interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber qué canales nos traen gente</strong> (cómo llegaste y el código del creador), para decidir dónde darnos a conocer y pagar a los creadores según las altas que traen: interés legítimo, artículo 6.1.f del RGPD. A los creadores solo les damos números agregados: cada uno ve únicamente las altas que llegan con su código, y nunca el nickname de nadie.</li>
@@ -219,6 +226,7 @@
     <li><strong>El permiso para enviarte ofertas:</strong> hasta que te des de baja o borres la cuenta.</li>
     <li><strong>Social:</strong> si sales de los rankings, se borran tus marcas y tu rango; tu cuenta se queda.</li>
     <li><strong>Las fotos del entreno:</strong> 24 horas. <strong>Las denuncias de fotos:</strong> un año.</li>
+    <li><strong>Lo que reportas de la IA:</strong> un año.</li>
     <li><strong>Los avisos de «voy al gimnasio» y los toques de las squads:</strong> dos días.</li>
     <li><strong>Los registros técnicos del servidor:</strong> 14 días.</li>
     <li><strong>Los meses en que abres la app:</strong> 25 meses.</li>
@@ -236,7 +244,7 @@
     <li><strong>Cloudflare, Inc.</strong> (Estados Unidos): el DNS de klonk.fit y la protección del servidor contra ataques. Ve el tráfico entre la app y el servidor.</li>
     <li><strong>GitHub, Inc.</strong> (Estados Unidos): aloja la web de la app. Ve tu IP cuando la cargas.</li>
     <li><strong>Resend, Inc.</strong> (Estados Unidos): envía desde no-reply@klonk.fit los correos de la cuenta, las confirmaciones de compra y el acuse del desistimiento.</li>
-    <li><strong>Anthropic, PBC</strong> (Estados Unidos): si tienes KLONK PRO y usas la rutina con IA o creas un plato con IA, recibe los datos de esos apartados (los de entreno, o las fotos y el texto del plato), sin tu nombre ni tu correo, para preparar y revisar tu rutina o leer o proponer el plato. Según su contrato, no los usa para entrenar sus modelos.</li>
+    <li><strong>Anthropic, PBC</strong> (Estados Unidos): si tienes KLONK PRO, nos das permiso y usas la rutina con IA o creas un plato con IA, recibe los datos de esos apartados (los de entreno, o las fotos y el texto del plato), sin tu nombre ni tu correo, para preparar y revisar tu rutina o leer o proponer el plato. Según su contrato, no los usa para entrenar sus modelos.</li>
   </ul>
   <p>Y otros que tratan los datos por su cuenta, solo si usas lo que depende de ellos:</p>
   <ul>
@@ -264,8 +272,9 @@
   <h2>Tus derechos</h2>
   <p>Puedes acceder a tus datos, corregirlos, borrarlos, oponerte a su uso, limitarlo, llevártelos a otro servicio y retirar tu consentimiento cuando quieras, sin que eso afecte a lo hecho antes.</p>
   <ul>
-    <li><strong>Desde la app:</strong> en Ajustes, «Tu cuenta», das o retiras el permiso de salud y el de las ofertas, y puedes borrar tu cuenta y todos tus datos. En «Tus datos» puedes descargar todo lo que tenemos de ti en un archivo (JSON), y tus entrenos también en una hoja de cálculo (CSV). En el archivo salen también tu suscripción, tus códigos y tus desistimientos, cuándo subiste tus fotos del entreno y las denuncias que han recibido (sin decir quién las hizo); la foto en sí la ves en la app mientras dura.</li>
+    <li><strong>Desde la app:</strong> en Ajustes, «Tu cuenta», das o retiras el permiso de salud, el de las ofertas y los de la IA, y puedes borrar tu cuenta y todos tus datos. En «Tus datos» puedes descargar todo lo que tenemos de ti en un archivo (JSON), y tus entrenos también en una hoja de cálculo (CSV). En el archivo salen también tu suscripción, tus códigos y tus desistimientos, cuándo subiste tus fotos del entreno y las denuncias que han recibido (sin decir quién las hizo); la foto en sí la ves en la app mientras dura.</li>
     <li><strong>Por correo:</strong> escribe a <a href="mailto:privacidad@klonk.fit">privacidad@klonk.fit</a> desde el correo de tu cuenta. Te respondemos en un mes como máximo.</li>
+    <li><strong>Para borrar tu cuenta</strong>, desde la app o sin ella, los pasos están en <a href="../borrar-cuenta/">Borrar tu cuenta de KLONK</a>.</li>
   </ul>
   <p>Si crees que no hemos tratado bien tus datos, puedes reclamar ante la Agencia Española de Protección de Datos, en <a href="https://www.aepd.es">aepd.es</a>.</p>
 </section>
