@@ -4,7 +4,8 @@
     "namespace": "android_app",
     "package_name": "fit.klonk.app",
     "sha256_cert_fingerprints": [
-      "0E:1E:A0:86:05:C8:28:3E:F8:F5:32:5B:7F:4B:0D:2E:EA:9A:36:CA:FD:ED:14:00:32:8B:A9:6E:83:05:A1:93"
+      "0E:1E:A0:86:05:C8:28:3E:F8:F5:32:5B:7F:4B:0D:2E:EA:9A:36:CA:FD:ED:14:00:32:8B:A9:6E:83:05:A1:93",
+      "F8:CD:FC:83:07:67:05:64:EA:EA:07:FE:7E:3F:CE:ED:9F:18:D9:14:90:5D:CB:89:5B:C0:6E:4D:0D:A1:A6:1C"
     ]
   }
 }]
