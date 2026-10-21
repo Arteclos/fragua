@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#f3f6f9" media="(prefers-color-scheme: light)">
 <link rel="icon" href="../icono-192.png">
 <link rel="stylesheet" href="../legal.css">
-<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js) -->
-<script>try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}</script>
+<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js). (18-10-2026, la revisió de la tanda A14) I A L'ANDROID, LA PÀGINA DIU EL MATEIX QUE EL FULL D'AJUSTES (app.js, obreLegal). Un enllaç a klonk.fit obert des d'una altra app (la fitxa de Google Play, un correu) obre la TWA directament aquí, sense obreLegal, i la pàgina sortia sencera: la targeta a Stripe, la compra a l'iPhone, el formulari de desistiment i els preus del PRO i de l'or, que dins de l'app d'Android no hi han de ser (la política de pagaments de Google Play). Ara se'n treu el mateix que treu obreLegal: l'apartat «KLONK PRO», la frase de l'or que es compra i el que porta «nomes-web» o «no-android». El mode també es llegeix de sessionStorage, perquè l'enllaç d'una pàgina legal a una altra ja no porta el referrer. Si obreLegal canvia el que treu, aquí també, a les quatre pàgines (prova_legal_android_nit.py, h). El script va en una sola línia perquè els formularis de les botigues (botigues/FORMULARIS-*.md) citen les línies d'aquestes pàgines -->
+<script>(() => { let android = false; try { android = /^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || ""); if (android) sessionStorage.setItem("klonk-botiga", "android"); else android = sessionStorage.getItem("klonk-botiga") === "android"; } catch (e) {} if (!android) return; const treu = () => { document.querySelectorAll("main section").forEach(s => { const h = s.querySelector("h2"); if (h && h.textContent.trim() === "KLONK PRO") s.remove(); }); document.querySelectorAll("main p").forEach(p => { const h = p.innerHTML, n = h.replace(/Los mayores de edad también pueden comprarlo:.*?IVA incluido\.\s*/, ""); if (n !== h) p.innerHTML = n; }); document.querySelectorAll(".nomes-web, .no-android").forEach(e => e.remove()); }; if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", treu); else treu(); })();</script>
 </head>
 <body>
 <header class="cap">
@@ -19,7 +19,7 @@
 </header>
 <main>
 <h1>Condiciones de uso</h1>
-<p class="data">Última actualización: 16 de octubre de 2026</p>
+<p class="data">Última actualización: 18 de octubre de 2026</p>
 
 <section>
   <h2>Quién presta el servicio</h2>
@@ -67,13 +67,24 @@
 <section>
   <h2>El oro</h2>
   <ul>
-    <li>El oro es la moneda de la app. Se gana entrenando<span class="no-android"> y también se puede comprar</span>. No es dinero: no tiene valor fuera de KLONK, no se puede cambiar por dinero ni pasar a otra cuenta.</li>
+    <li>El oro es la moneda de la app. Se gana entrenando<span class="no-android"> y también se puede comprar</span>. No es dinero: no tiene valor fuera de KLONK ni se puede cambiar por dinero. Solo pasa de una cuenta a otra en el mercado de rutinas: cuando alguien compra tu rutina, te llega el 70 % del precio en oro.</li>
     <li>Los personajes se desbloquean con nivel y con oro. Ningún personaje se compra directamente con dinero.</li>
     <li class="nomes-web">Los precios incluyen el IVA. El pago lo cobra Stripe.</li>
     <li class="nomes-web">El oro se entrega en el momento del pago, y te confirmamos la compra por correo.</li>
     <li class="nomes-web">Tienes 14 días naturales desde la compra para desistir del oro que no hayas gastado, sin dar ninguna razón: con el botón «Desistir del contrato aquí» de la Tienda de la app, escribiendo a <a href="mailto:hola@klonk.fit">hola@klonk.fit</a> o con el <a href="#formulario-desistimiento">modelo de formulario</a>. Te devolvemos la parte de la compra que siga sin gastar, en el mismo medio de pago y en 14 días como mucho. Para contarlo, el oro que ganas entrenando se gasta primero y, entre compras, primero la más antigua.</li>
     <li class="nomes-web">Si un pago falla o se cobra dos veces, escríbenos y lo arreglamos.</li>
     <li class="no-android">Solo pueden comprar las personas mayores de edad. Si tienes menos de 18 años, la app no te ofrece nada de pago.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>El mercado de rutinas</h2>
+  <ul>
+    <li>Solo pueden entrar las personas mayores de edad. Las rutinas se venden por oro, nunca por dinero.</li>
+    <li>Quien compra una rutina se la lleva entera y para siempre: la puede volver a bajar sin pagar, aunque quien la vende la retire después.</li>
+    <li>A quien la vende le llega el 70 % del precio en oro; el resto no va a nadie. El oro que pagas por una rutina no se devuelve.</li>
+    <li>Junto a la rutina sale el nickname de quien la vende. El título de la oferta se elige de una lista: no hay texto libre a la vista de todos.</li>
+    <li>Si una rutina no cumple estas condiciones, denúnciala: con tres denuncias de personas distintas deja de verse en el mercado.</li>
   </ul>
 </section>
 
@@ -91,7 +102,7 @@
   </ul>
 </section>
 
-<section>
+<section class="no-android">
   <h2>En la app del iPhone</h2>
   <ul>
     <li>En la app de KLONK para iPhone, KLONK PRO y el oro se compran con tu cuenta de Apple. El pago lo cobra Apple, al precio que ves en la App Store antes de confirmar, con el IVA incluido.</li>

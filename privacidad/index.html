@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#f3f6f9" media="(prefers-color-scheme: light)">
 <link rel="icon" href="../icono-192.png">
 <link rel="stylesheet" href="../legal.css">
-<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js) -->
-<script>try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}</script>
+<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js). (18-10-2026, la revisió de la tanda A14) I A L'ANDROID, LA PÀGINA DIU EL MATEIX QUE EL FULL D'AJUSTES (app.js, obreLegal). Un enllaç a klonk.fit obert des d'una altra app (la fitxa de Google Play, un correu) obre la TWA directament aquí, sense obreLegal, i la pàgina sortia sencera: la targeta a Stripe, la compra a l'iPhone, el formulari de desistiment i els preus del PRO i de l'or, que dins de l'app d'Android no hi han de ser (la política de pagaments de Google Play). Ara se'n treu el mateix que treu obreLegal: l'apartat «KLONK PRO», la frase de l'or que es compra i el que porta «nomes-web» o «no-android». El mode també es llegeix de sessionStorage, perquè l'enllaç d'una pàgina legal a una altra ja no porta el referrer. Si obreLegal canvia el que treu, aquí també, a les quatre pàgines (prova_legal_android_nit.py, h). El script va en una sola línia perquè els formularis de les botigues (botigues/FORMULARIS-*.md) citen les línies d'aquestes pàgines -->
+<script>(() => { let android = false; try { android = /^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || ""); if (android) sessionStorage.setItem("klonk-botiga", "android"); else android = sessionStorage.getItem("klonk-botiga") === "android"; } catch (e) {} if (!android) return; const treu = () => { document.querySelectorAll("main section").forEach(s => { const h = s.querySelector("h2"); if (h && h.textContent.trim() === "KLONK PRO") s.remove(); }); document.querySelectorAll("main p").forEach(p => { const h = p.innerHTML, n = h.replace(/Los mayores de edad también pueden comprarlo:.*?IVA incluido\.\s*/, ""); if (n !== h) p.innerHTML = n; }); document.querySelectorAll(".nomes-web, .no-android").forEach(e => e.remove()); }; if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", treu); else treu(); })();</script>
 </head>
 <body>
 <header class="cap">
@@ -19,14 +19,14 @@
 </header>
 <main>
 <h1>Política de privacidad</h1>
-<p class="data">Última actualización: 16 de octubre de 2026</p>
+<p class="data">Última actualización: 18 de octubre de 2026</p>
 
 <section class="curt">
-  <h2>En pocas palabras</h2>
+  <h2>Resumen</h2>
   <ul>
     <li>Tu progreso se guarda en tu cuenta, en nuestro servidor, para que no lo pierdas nunca. El móvil guarda una copia para cuando no hay red.</li>
     <li>Tu peso y tus medidas son datos de salud: solo se guardan en tu cuenta si tú lo permites.</li>
-    <li>Tu ubicación exacta y las fotos del escáner no salen de tu móvil.</li>
+    <li>Tu ubicación exacta no sale de tu móvil.</li>
     <li>No hay anuncios ni cookies, no usamos herramientas de analítica de otras empresas, y no vendemos ni cedemos tus datos. Solo te escribimos con ofertas si tú lo pides.</li>
     <li>Si nos dejas, contamos qué pantallas abres y qué botones tocas, sin saber quién eres. Lo decides tú, y lo cambias en Ajustes.</li>
     <li>Puedes borrar tu cuenta y lo que tenemos de ti desde la propia app, cuando quieras.</li>
@@ -46,7 +46,8 @@
     <li>Tu correo electrónico y tu contraseña, que guardamos de forma irreversible (con un algoritmo de hash), nunca tal cual.</li>
     <li>Si entras con Google: tu correo y el identificador de tu cuenta de Google. No recibimos tu nombre ni tu contraseña de Google.</li>
     <li>Tu franja de edad (de 16 a 17 años, o 18 o más), la versión de estas condiciones que aceptaste, y la fecha de alta y de tu último acceso.</li>
-    <li>Si nos lo das, tu año de nacimiento (solo si eres mayor de edad), para compararte en los rankings con los de tu edad, con las categorías de la IPF (sub-junior, junior, open y máster), y, en números agregados, para saber a qué edades le sirve KLONK. Lo pones, lo cambias o lo quitas en Ajustes, Tu perfil.</li>
+    <li>El mes y el año en que naciste (sin el día), para saber si eres mayor de edad, tratarte como adulto cuando cumplas 18 y ponerte en tu categoría de edad de los rankings. Se guardan mientras tengas la cuenta.</li>
+    <li>Las categorías de edad son las de la IPF (sub-junior, junior, open y máster), y con el año sabemos también, en números agregados, a qué edades le sirve KLONK. Si eres mayor de edad, el año con el que sales en el ranking de tu edad lo pones, lo cambias o lo quitas en Ajustes, Tu perfil.</li>
     <li>Si tienes 18 años o más, los meses en que abres la app (solo el mes, sin el día ni la hora), para saber cuánta gente vuelve.</li>
     <li>Si eres menor y formas parte del equipo de KLONK, puedes activar en Ajustes que tu cuenta cuente en nuestras estadísticas internas como la de un adulto: entonces también los meses en que abres la app, y siempre en números de cinco personas o más. Lo activas tú, guardamos la fecha en que lo hiciste y lo quitas cuando quieras. La marca de que eres del equipo la ponemos nosotros.</li>
     <li>Tu nickname, que es también el nombre de tu personaje. Es único: nadie más puede tenerlo.</li>
@@ -78,10 +79,10 @@
     <li>Las ligas de la semana: en qué liga y en qué grupo estás, tus puntos y la categoría (hombres o mujeres), que eliges al entrar en ellas y que sirve para ponerte en tu liga.</li>
     <li>Tus amigos (en la app, también «tu clan»): las solicitudes de amistad que envías y recibes, y quién es amigo tuyo. Al escribir un nickname, te sugerimos solo personas adultas con perfil público que ya salen en los rankings. A los menores y a los perfiles anónimos solo se les encuentra escribiendo su nickname exacto, y entonces solo se dice que existe.</li>
     <li>Las rutinas que compartes y lo que dices de un gimnasio: la cuota normal, la entrada de un día, los metros, cómo de lleno suele estar y las estrellas. En su ficha se ve la media y cuánta gente lo dice, nunca quién.</li>
-    <li>Tu gimnasio suma a su hermandad: en el mapa y en el ranking de gimnasios se ve cuántas personas de KLONK lo tienen en Social y la suma de su XP. Tus días de entreno de la semana también suman a tu gimnasio en la guerra de gimnasios y en el ranking del gimnasio más constante, donde solo salen gimnasios con tres personas de KLONK o más. Se ven gimnasios, nunca personas. Si tu gimnasio gana y entrenaste allí esa semana, te damos 10 de oro y lo apuntamos.</li>
-    <li><strong>Los entrenos que ven tus amigos:</strong> tus amigos ven tus entrenos de los últimos 30 días: el día (sin hora), los minutos, las series, los kilos, los récords y los ejercicios. Nunca tu gimnasio, tu ubicación ni tus notas, y un ejercicio que te has inventado sale como «Ejercicio propio». Puedes dejar de mostrarlos cuando quieras, en Social. Solo se puede reaccionar con tres reacciones fijas (🔥, 👏 y 💪): no hay mensajes ni texto libre. Guardamos quién ha reaccionado a qué; se borra si borras tu cuenta.</li>
+    <li>Tu gimnasio suma: en el mapa y en el ranking de gimnasios se ve cuántas personas de KLONK lo tienen en Social y la suma de su XP. Tus días de entreno de la semana también suman a tu gimnasio en la guerra de gimnasios y en el ranking del gimnasio más constante, donde solo salen gimnasios con tres personas de KLONK o más. Se ven gimnasios, nunca personas. Si tu gimnasio gana y entrenaste allí esa semana, te damos 10 de oro y lo apuntamos.</li>
+    <li><strong>Los entrenos que ven tus amigos:</strong> tus amigos ven tus entrenos de los últimos 30 días: el día (sin hora), los minutos, las series, los kilos, los récords y los ejercicios. Nunca tu gimnasio, tu ubicación ni tus notas, y un ejercicio que te has inventado sale como «Ejercicio propio». Puedes dejar de mostrarlos cuando quieras, en Social. Solo se puede reaccionar con un KLσNK! o una felicitación: no hay mensajes ni texto libre. Guardamos quién ha reaccionado a qué; se borra si borras tu cuenta.</li>
     <li><strong>Los enlaces para invitar a tus amigos:</strong> guardamos el enlace, hasta cuándo vale (7 días), cuántas veces se ha usado (como mucho 10) y quién lo ha usado, para que su solicitud te llegue. El enlace no hace amigo tuyo a nadie: lo es quien tú aceptas. Si tienes menos de 18 años, quien abre tu enlace no ve tu nickname hasta que lo aceptas.</li>
-    <li><strong>Tu squad</strong>, un grupo sin límite de gente en el que entras porque te invita alguien de tu clan (solo puedes estar en una). Guardamos en cuál estás, quién la lidera y quién la administra, su etiqueta y su color, el reto de la semana, los toques y los avisos de «voy al gimnasio» con su hora. Solo los ven los de esa squad. Los avisos se ven tres horas, y los avisos y los toques se borran a los dos días. La etiqueta de tu squad sale entre paréntesis junto a tu nombre allí donde se ve tu nickname (en los rankings, en el feed de tus amigos y en tu perfil), y nunca junto a «Anónimo».</li>
+    <li><strong>Tu squad</strong>, un grupo sin límite de gente en el que entras porque te invita alguien de tu clan (solo puedes estar en una). Guardamos en cuál estás, quién la lidera y quién la administra, su etiqueta y su color, el reto de la semana y los avisos de «voy al gimnasio» con su hora. Solo los ven los de esa squad. Los avisos se ven tres horas y se borran a los dos días. La etiqueta de tu squad sale entre corchetes junto a tu nombre allí donde se ve tu nickname (en los rankings, en el feed de tus amigos y en tu perfil), y nunca junto a «Anónimo».</li>
   </ul>
   <h3>Las fotos del entreno</h3>
   <ul>
@@ -89,12 +90,11 @@
     <li>La app la reduce y la vuelve a dibujar antes de enviarla, así que no lleva tu ubicación ni los datos de la cámara.</li>
     <li>Una copia pequeña se queda en tu móvil, para verla en el calendario el día que la hiciste. Si en esas 24 horas abres la app con tu cuenta en otro dispositivo, la copia también se guarda allí. No va a ningún otro sitio y se borra con la cuenta.</li>
     <li>No subas fotos de otras personas sin su permiso. Si alguien denuncia una foto, se oculta para todos menos para quien la subió. Guardamos qué foto se denunció, quién la denunció, de quién era y cuándo, durante un año, para poder actuar si alguien abusa. Se guarda también si quien la subió borra su cuenta.</li>
-    <li>Tus amigos pueden hacerle un KLσNK! a una foto tuya, sin escribir nada. Solo tú ves cuántos y de quién, y se borran con la foto. Si silencias a un amigo, deja de ver tus fotos y no se le avisa. Guardamos a quién has silenciado hasta que lo quites o borres la cuenta.</li>
+    <li>Tus amigos pueden hacerle un KLσNK! a una foto tuya, sin escribir nada. Solo tú ves cuántos y de quién, y se borran con la foto. Si le ocultas tus fotos a un amigo, deja de verlas y no se le avisa. Guardamos a quién se las has ocultado hasta que lo quites o borres la cuenta.</li>
   </ul>
   <h3>El escáner del cuerpo</h3>
   <ul>
-    <li>Las fotos y la silueta del escáner se quedan en tu móvil y no se suben a ningún sitio. Las medidas, también. El programa que las analiza se descarga de klonk.fit y funciona en tu móvil, y el «Antes y después» también se hace ahí. Si borras la app o los datos del navegador, esas fotos se pierden.</li>
-    <li>Nuestro servidor solo apunta que has hecho un escaneo, para cobrarlo en oro o descontarlo de tu KLONK PRO.</li>
+    <li>Hasta el 14 de octubre de 2026 había un escáner de cuerpo. Sus fotos, la silueta y las medidas se quedaban en tu móvil y no se subían a ningún sitio; las que hiciste siguen ahí hasta que borres la app o los datos del navegador. Nuestro servidor solo apuntaba que habías hecho un escaneo, para cobrarlo en oro o descontarlo de tu KLONK PRO.</li>
   </ul>
   <h3>Si añades un gimnasio o su dirección</h3>
   <ul>
@@ -135,24 +135,26 @@
   </ul>
   <h3>Si compras oro</h3>
   <ul>
-    <li>El paquete, el importe, la fecha, el estado del pago y desde dónde lo compraste (la tienda o, hasta el 9 de octubre de 2026, el escáner). El cobro lo hace Stripe: los datos de tu tarjeta van directamente a Stripe y nunca pasan por nuestro servidor.</li>
+    <li>El paquete, el importe, la fecha, el estado del pago y desde dónde lo compraste (la tienda o, hasta el 9 de octubre de 2026, el escáner). <span class="nomes-web">El cobro lo hace Stripe: los datos de tu tarjeta van directamente a Stripe y nunca pasan por nuestro servidor.</span></li>
   </ul>
   <h3>Si te suscribes a KLONK PRO</h3>
   <ul>
-    <li>El estado de tu suscripción, desde cuándo y hasta cuándo está pagada, y los identificadores que Stripe da a tu suscripción y a ti como cliente. El cobro de cada mes, la renovación y las devoluciones los hace Stripe: los datos de tu tarjeta van directamente a Stripe. Para saber de quién es cada pago le pasamos un identificador interno de tu cuenta, no tu nombre.</li>
+    <li>El estado de tu suscripción, y desde cuándo y hasta cuándo está pagada.</li>
+    <li class="nomes-web">Si la pagas en klonk.fit, los identificadores que Stripe da a tu suscripción y a ti como cliente. El cobro de cada mes, la renovación y las devoluciones los hace Stripe: los datos de tu tarjeta van directamente a Stripe. Para saber de quién es cada pago le pasamos un identificador interno de tu cuenta, no tu nombre.</li>
     <li>La casilla que marcas antes de pagar para empezar ya: cuándo la marcaste, el plan que elegiste y el texto que viste. Es la prueba de que pediste empezar ya, y sirve para calcular lo que te devolvemos si desistes.</li>
     <li>Desde qué pantalla de la app llegaste a KLONK PRO (por ejemplo, el menú o tus estadísticas), guardado con tu suscripción y con cada cobro. Además contamos cuántas veces se abre la página de KLONK PRO desde cada pantalla, cada día, sin guardar quién la abre.</li>
-    <li>Si desistes en los 14 días: cuándo desististe, lo que pagaste, lo que te devolvemos y las referencias del pago y de la devolución en Stripe. Te mandamos el acuse por correo.</li>
+    <li class="nomes-web">Si desistes en los 14 días: cuándo desististe, lo que pagaste, lo que te devolvemos y las referencias del pago y de la devolución en Stripe. Te mandamos el acuse por correo.</li>
     <li>Si canjeas un código de KLONK PRO (de tu gimnasio o de un creador), el código, cuándo lo usaste y hasta cuándo tienes el PRO de regalo. A quien te dio el código solo le damos números agregados, nunca quién lo ha usado.</li>
     <li>Si pides que te avisemos cuando salga KLONK PRO, la fecha en que lo pediste.</li>
     <li>Para saber si regalar unos días sirve, a la mitad de quienes llegan a un buen momento (su tercer entreno, un récord o subir de división) les regalamos tres días de KLONK PRO, sin tarjeta y una sola vez, y a la otra mitad no. Lo decide el azar la primera vez y no cambia. Guardamos en qué mitad estás, si te lo regalamos, cuándo, hasta cuándo y qué respondiste cuando se acabó. A los menores y a quien llega por un anuncio no se lo ofrecemos.</li>
     <li>Para saber si enseñar KLONK PRO el día que creas la cuenta sirve, a la mitad de los mayores de edad que no llegan desde un anuncio les enseñamos sus pantallas al llegar al inicio por primera vez, con «Ahora no», y a la otra mitad no. Lo decide el azar y no cambia. Guardamos en qué mitad estás. A los menores no se les enseña nunca.</li>
     <li>Te confirmamos por correo cada suscripción y cada compra de oro. Para no mandarte dos veces el mismo, guardamos qué compra ya te hemos confirmado.</li>
     <li>Si empiezas el anual con los días gratis, guardamos hasta cuándo duran, el precio que se cobrará y cuándo te avisamos por correo de que se acaban, dos días antes del primer cobro. Si en los dos últimos días abres la app, te lo recordamos también allí, y guardamos que lo viste y qué tocaste: seguir, cancelar la prueba o cerrar el aviso.</li>
+    <li>Cuando empiezas la prueba, canjeas un código de KLONK PRO o te regalamos los tres días, guardamos una huella de tu correo hecha de forma irreversible (con un algoritmo de hash), nunca el correo tal cual, para que cada persona tenga la prueba, cada código y el regalo una sola vez. La huella es la misma con las variantes de un mismo correo: con un «+» o, en Gmail, con o sin puntos. Si entras con Google, guardamos otra del identificador de tu cuenta de Google. Se guardan dos años desde que los usas, también si borras la cuenta.</li>
     <li>Si nos dejas, el uso de la app sin saber quién eres: cuántas veces se abre cada pantalla, cuánto rato está abierta, hasta dónde se baja y qué botones se tocan. Se envía sin tu cuenta y sin ningún identificador, en tu móvil no se guarda nada para esto, y nosotros solo guardamos la suma de cada día de todas las personas que nos dejan. No se lo preguntamos a los menores de edad. Lo activas o lo apagas en Ajustes, Legal y privacidad.</li>
   </ul>
-  <h3>Si compras en la app del iPhone</h3>
-  <ul>
+  <h3 class="no-android">Si compras en la app del iPhone</h3>
+  <ul class="no-android">
     <li>De cada compra de KLONK PRO o de oro en el App Store: el producto, el importe y la moneda, la fecha, hasta cuándo dura, si es de prueba, si Apple la ha devuelto, si se va a renovar y los identificadores que Apple da a la compra. El cobro lo hace Apple: no vemos tu tarjeta ni tu cuenta de Apple.</li>
     <li>Para saber de qué cuenta de KLONK es cada compra, la app pasa a Apple un número que sale de tu cuenta y no dice quién eres, y Apple nos lo devuelve con la compra.</li>
     <li>Apple nos avisa cuando una suscripción se renueva, se cancela, no se ha podido cobrar o se devuelve, para que tu PRO esté al día.</li>
@@ -197,7 +199,7 @@
     <li><strong>Darte el servicio</strong> (la cuenta, guardar tu progreso, Social, las ligas, los amigos y las squads, las rutinas compartidas y el mercado, las fotos del entreno, las compras y KLONK PRO, con su rutina con IA): ejecución del contrato, artículo 6.1.b del RGPD.</li>
     <li><strong>Tus datos de salud</strong> (peso, altura, sexo y medidas): con tu consentimiento explícito, artículo 9.2.a del RGPD. Puedes retirarlo cuando quieras en Ajustes, y se borran de tu cuenta al momento, con lo que sale de ellos: tus marcas de fuerza relativa, tu ELO y tus puntos de powerlifting y de calistenia.</li>
     <li><strong>Las estampas que ya tenías</strong>: con el consentimiento que diste al sellarlas, artículo 6.1.a del RGPD. Si lo retiras, las borramos: escríbenos a hola@klonk.fit.</li>
-    <li><strong>La seguridad del servicio y la prevención de abusos</strong> (los registros, la IP, las denuncias de fotos y de rutinas y lo que reportas de la IA): interés legítimo, artículo 6.1.f del RGPD.</li>
+    <li><strong>La seguridad del servicio y la prevención de abusos</strong> (los registros, la IP, las huellas que impiden repetir la prueba, un código o el regalo de KLONK PRO, las denuncias de fotos y de rutinas y lo que reportas de la IA): interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber cuánta gente vuelve a KLONK</strong> (los meses en que abres la app), siempre en números agregados: interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber si KLONK se comparte</strong> (cuántas de las personas que entrenan comparten una tarjeta o invitan a alguien), siempre en números agregados: interés legítimo, artículo 6.1.f del RGPD.</li>
     <li><strong>Saber qué canales nos traen gente</strong> (cómo llegaste y el código del creador), para decidir dónde darnos a conocer y pagar a los creadores según las altas que traen: interés legítimo, artículo 6.1.f del RGPD. A los creadores solo les damos números agregados: cada uno ve únicamente las altas que llegan con su código, y nunca el nickname de nadie.</li>
@@ -216,7 +218,7 @@
   <h2>Qué ven las demás personas</h2>
   <ul>
     <li><strong>Si no entras en Social:</strong> nadie ve nada tuyo.</li>
-    <li><strong>Con perfil público:</strong> si tienes 18 años o más, apareces en las sugerencias cuando alguien escribe un nickname parecido al tuyo. Y se ve tu nickname, tu personaje y su nivel, tu XP total, tu yunque (el rango), tu temple total y por grupo muscular, tu ELO y su división, el marco que eliges, tus días de gimnasio en total y este año, y desde cuándo entrenas.</li>
+    <li><strong>Con perfil público:</strong> si tienes 18 años o más, apareces en las sugerencias cuando alguien escribe un nickname parecido al tuyo. Y se ve tu nickname, tu personaje y su nivel, tu XP total, tu rango (la división de tu ELO), tu temple total y por grupo muscular, tu ELO, el marco que eliges, tus días de gimnasio en total y este año, y desde cuándo entrenas.</li>
     <li><strong>Con perfil anónimo:</strong> en los rankings sales como «Anónimo», con tu personaje, para todos, también para tus amigos. En las ligas de la semana tus amigos te ven con tu nickname, y el resto de tu grupo ve «Anónimo», tu personaje y tus puntos.</li>
     <li><strong>Tus amigos</strong> (las personas que has aceptado o que te han aceptado) te ven con tu nickname y pueden abrir tu perfil: tu personaje y su nivel, tu XP total, tu rango, tu temple, tu ELO, tus días de gimnasio y, si estáis en una squad con el ranking encendido y no te ocultas, tu puesto en él. Si tienes 18 años o más, también a qué gimnasio vas (lo puedes ocultar en Ajustes, Social); si tienes menos, tu gimnasio no lo ve nadie.</li>
     <li><strong>Si tienes menos de 18 años:</strong> tu nickname solo lo ven tus amigos, y en los rankings, nadie. Para el resto eres «Anónimo», también en las ligas.</li>
@@ -228,13 +230,14 @@
 <section>
   <h2>Cuánto tiempo los guardamos</h2>
   <ul>
-    <li><strong>Tu cuenta y tu progreso:</strong> mientras tengas la cuenta. Si la borras, se borra todo al momento de la base de datos, salvo lo que guardamos por obligación legal (tus pagos y, si desististe de KLONK PRO, el desistimiento, ya sin vínculo con tu cuenta) o para frenar abusos (la denuncia de una foto tuya, si la hubo). Si tienes KLONK PRO pagado en klonk.fit, antes cancelamos la suscripción en Stripe; si Stripe no responde, no borramos nada y te pedimos que lo intentes más tarde. Si lo pagas en el App Store, cancélalo allí, porque borrar la cuenta no cancela esa suscripción. Las copias de seguridad diarias se conservan 14 días, y pasado ese plazo desaparecen también de ellas.</li>
+    <li><strong>Tu cuenta y tu progreso:</strong> mientras tengas la cuenta. Si la borras, se borra todo al momento de la base de datos, salvo lo que guardamos por obligación legal (tus pagos y, si desististe de KLONK PRO, el desistimiento, ya sin vínculo con tu cuenta) o para frenar abusos (la denuncia de una foto tuya, si la hubo, y las huellas de la prueba, los códigos y el regalo de KLONK PRO, si los usaste). Si tienes KLONK PRO pagado en klonk.fit, antes cancelamos la suscripción en Stripe; si Stripe no responde, no borramos nada y te pedimos que lo intentes más tarde. Si lo pagas en el App Store, cancélalo allí, porque borrar la cuenta no cancela esa suscripción. Las copias de seguridad diarias se conservan 14 días, y pasado ese plazo desaparecen también de ellas.</li>
     <li><strong>Tus datos de salud:</strong> hasta que retires el permiso o borres la cuenta.</li>
     <li><strong>El permiso para enviarte ofertas:</strong> hasta que te des de baja o borres la cuenta.</li>
     <li><strong>Social:</strong> si sales de los rankings, se borran tus marcas y tu rango; tu cuenta se queda.</li>
     <li><strong>Las fotos del entreno:</strong> 24 horas. <strong>Las denuncias de fotos:</strong> un año.</li>
     <li><strong>Lo que reportas de la IA:</strong> un año.</li>
-    <li><strong>Los avisos de «voy al gimnasio» y los toques de las squads:</strong> dos días.</li>
+    <li><strong>Las huellas de la prueba, los códigos y el regalo de KLONK PRO:</strong> dos años desde que los usas, también si borras la cuenta.</li>
+    <li><strong>Los avisos de «voy al gimnasio» de las squads:</strong> dos días.</li>
     <li><strong>Los registros técnicos del servidor:</strong> 14 días.</li>
     <li><strong>Los meses en que abres la app:</strong> 25 meses.</li>
     <li><strong>Las estadísticas de uso:</strong> la suma de cada día, sin nadie detrás, 25 meses.</li>
@@ -256,7 +259,7 @@
   <p>Y otros que tratan los datos por su cuenta, solo si usas lo que depende de ellos:</p>
   <ul>
     <li><strong>Apple, Google, Mozilla o Microsoft</strong>, según tu navegador: entregan los avisos a tu móvil si los activas. Van cifrados y no pueden leerlos.</li>
-    <li><strong>Stripe Payments Europe, Ltd.</strong> (Irlanda): cobra las compras de oro y la suscripción a KLONK PRO, hace las devoluciones y es responsable de los datos de pago.</li>
+    <li><strong>Stripe Payments Europe, Ltd.</strong> (Irlanda): cobra las compras de oro y la suscripción a KLONK PRO que pagas en klonk.fit, hace las devoluciones de esos pagos y es responsable de los datos de pago.</li>
     <li><strong>Apple Distribution International Ltd.</strong> (Irlanda): cobra lo que compras en la app del iPhone, hace las devoluciones y es responsable de los datos de pago.</li>
     <li><strong>Google</strong>: si eliges entrar con Google, para identificarte. En la pantalla de entrada, el botón de Google se carga desde los servidores de Google, que ven tu IP.</li>
     <li><strong>OpenFreeMap</strong>: si abres el mapa de gimnasios, el mapa se pide a sus servidores, que ven tu IP y la zona del mapa.</li>
@@ -270,7 +273,7 @@
   <h2>Menores</h2>
   <ul>
     <li>KLONK es a partir de 16 años: sin cuenta no se puede usar, y para crearla hay que tener al menos 16.</li>
-    <li>Entre los 16 y los 17 años no puedes comprar nada (ni oro, ni KLONK PRO, ni canjear códigos de PRO), ni usar el escáner de cuerpo, ni entrar en el mercado de rutinas, ni subir o ver fotos del entreno, ni crear platos con IA. La app no te ofrece nada de pago.</li>
+    <li>Entre los 16 y los 17 años no puedes comprar nada (ni oro, ni KLONK PRO, ni canjear códigos de PRO), ni entrar en el mercado de rutinas, ni subir o ver fotos del entreno, ni crear platos con IA. La app no te ofrece nada de pago.</li>
     <li>Tu nickname solo lo ven tus amigos, y en los rankings, nadie: para el resto eres «Anónimo». Tu gimnasio no lo ve nadie.</li>
     <li>Solo te puede enviar una solicitud de amistad quien sabe tu nickname exacto, y nadie es amigo tuyo si tú no la aceptas.</li>
     <li>Si eres madre, padre o tutor y quieres consultar o borrar los datos de un menor, escríbenos a <a href="mailto:privacidad@klonk.fit">privacidad@klonk.fit</a>.</li>

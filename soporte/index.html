@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#f3f6f9" media="(prefers-color-scheme: light)">
 <link rel="icon" href="../icono-192.png">
 <link rel="stylesheet" href="../legal.css">
-<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js) -->
-<script>try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}</script>
+<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js). (19-10-2026) I a l'Android se'n treu el mateix que a les altres quatre pàgines legals (el comentari de privacidad.html): aquí, l'apartat «KLONK PRO», que explica com es paga a klonk.fit i a l'iPhone. Aquesta pàgina no s'obre des d'Ajustes, però és la URL de suport de la fitxa, i un enllaç a klonk.fit/soporte/ obre la TWA (prova_legal_android_nit.py, h) -->
+<script>(() => { let android = false; try { android = /^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || ""); if (android) sessionStorage.setItem("klonk-botiga", "android"); else android = sessionStorage.getItem("klonk-botiga") === "android"; } catch (e) {} if (!android) return; const treu = () => { document.querySelectorAll("main section").forEach(s => { const h = s.querySelector("h2"); if (h && h.textContent.trim() === "KLONK PRO") s.remove(); }); document.querySelectorAll("main p").forEach(p => { const h = p.innerHTML, n = h.replace(/Los mayores de edad también pueden comprarlo:.*?IVA incluido\.\s*/, ""); if (n !== h) p.innerHTML = n; }); document.querySelectorAll(".nomes-web, .no-android").forEach(e => e.remove()); }; if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", treu); else treu(); })();</script>
 </head>
 <body>
 <header class="cap">

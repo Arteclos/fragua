@@ -9,8 +9,8 @@
 <meta name="theme-color" content="#f3f6f9" media="(prefers-color-scheme: light)">
 <link rel="icon" href="../icono-192.png">
 <link rel="stylesheet" href="../legal.css">
-<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js) -->
-<script>try { if (/^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || "")) sessionStorage.setItem("klonk-botiga", "android"); } catch (e) {}</script>
+<!-- (16-10) l'app d'Android (la TWA) que entra per aquesta pàgina porta el referrer android-app://fit.klonk.app, i «Volver a la app» ja no: el mode botiga es desa aquí, com al 404.html (src/botiga.js). (18-10-2026, la revisió de la tanda A14) I A L'ANDROID, LA PÀGINA DIU EL MATEIX QUE EL FULL D'AJUSTES (app.js, obreLegal). Un enllaç a klonk.fit obert des d'una altra app (la fitxa de Google Play, un correu) obre la TWA directament aquí, sense obreLegal, i la pàgina sortia sencera: la targeta a Stripe, la compra a l'iPhone, el formulari de desistiment i els preus del PRO i de l'or, que dins de l'app d'Android no hi han de ser (la política de pagaments de Google Play). Ara se'n treu el mateix que treu obreLegal: l'apartat «KLONK PRO», la frase de l'or que es compra i el que porta «nomes-web» o «no-android». El mode també es llegeix de sessionStorage, perquè l'enllaç d'una pàgina legal a una altra ja no porta el referrer. Si obreLegal canvia el que treu, aquí també, a les quatre pàgines (prova_legal_android_nit.py, h). El script va en una sola línia perquè els formularis de les botigues (botigues/FORMULARIS-*.md) citen les línies d'aquestes pàgines -->
+<script>(() => { let android = false; try { android = /^android-app:\/\/fit\.klonk\.app(\/|$)/.test(document.referrer || ""); if (android) sessionStorage.setItem("klonk-botiga", "android"); else android = sessionStorage.getItem("klonk-botiga") === "android"; } catch (e) {} if (!android) return; const treu = () => { document.querySelectorAll("main section").forEach(s => { const h = s.querySelector("h2"); if (h && h.textContent.trim() === "KLONK PRO") s.remove(); }); document.querySelectorAll("main p").forEach(p => { const h = p.innerHTML, n = h.replace(/Los mayores de edad también pueden comprarlo:.*?IVA incluido\.\s*/, ""); if (n !== h) p.innerHTML = n; }); document.querySelectorAll(".nomes-web, .no-android").forEach(e => e.remove()); }; if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", treu); else treu(); })();</script>
 </head>
 <body>
 <header class="cap">
@@ -19,14 +19,14 @@
 </header>
 <main>
 <h1>Borrar tu cuenta de KLONK</h1>
-<p class="data">Última actualización: 16 de octubre de 2026</p>
+<p class="data">Última actualización: 18 de octubre de 2026</p>
 
 <section class="curt">
-  <h2>En pocas palabras</h2>
+  <h2>Resumen</h2>
   <ul>
     <li>Desde la app: en Ajustes, «Tu cuenta», toca «Borrar mi cuenta y todos mis datos».</li>
     <li>Sin la app: escribe a <a href="mailto:privacidad@klonk.fit">privacidad@klonk.fit</a> desde el correo de tu cuenta.</li>
-    <li>Se borra todo al momento, salvo tus pagos, que la ley nos obliga a guardar, y la denuncia de una foto tuya, si la hubo.</li>
+    <li>Se borra todo al momento, salvo tus pagos, que la ley nos obliga a guardar, y la denuncia de una foto tuya, si la hubo. Si usaste la prueba gratis, un código o el regalo de KLONK PRO, guardamos dos años una huella de tu correo.</li>
     <li>Si pagas KLONK PRO en el App Store, cancélalo allí, porque borrar la cuenta no cancela esa suscripción.</li>
   </ul>
 </section>
@@ -53,6 +53,7 @@
   <ul>
     <li><strong>Tus pagos</strong> (las compras de oro y los cobros de KLONK PRO), la casilla que marcaste para empezar KLONK PRO ya y, si desististe, el desistimiento: seis años, el tiempo que exige la ley para la contabilidad (artículo 30 del Código de Comercio), ya sin vínculo con tu cuenta.</li>
     <li><strong>La denuncia de una foto tuya</strong>, si la hubo: un año desde la denuncia, para poder actuar si alguien abusa.</li>
+    <li><strong>La huella de tu correo</strong>, si usaste la prueba gratis de KLONK PRO, un código o el regalo de tres días: dos años desde que los usaste, para que no se puedan volver a usar con una cuenta nueva. Es un código que sale de tu correo y del que no se puede sacar el correo. Si entras con Google, guardamos también una de tu cuenta de Google.</li>
     <li><strong>Las copias de seguridad</strong>, que se hacen cada día, duran 14 días. Pasado ese plazo, tu cuenta desaparece también de ellas.</li>
     <li><strong>Los registros técnicos del servidor</strong> (la IP, la hora, la dirección de cada petición, la página desde la que se hace y el navegador): 14 días.</li>
     <li><strong>Los gimnasios que añadiste al mapa</strong> se quedan en el mapa, sin el vínculo contigo.</li>
