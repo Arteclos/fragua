@@ -1,2 +1,0 @@
-MediaPipe Tasks Vision 1.0.1 (@mediapipe/tasks-vision) i els models pose_landmarker_full i pose_landmarker_heavy (BlazePose GHUM) i selfie_multiclass_256x256 (segmentació de pell, cabell i roba): Apache License 2.0, Google LLC.
-https://github.com/google-ai-edge/mediapipe · https://www.apache.org/licenses/LICENSE-2.0
