@@ -4007,7 +4007,7 @@ window.KLONK_DIC = {
 "Tu nickname nuevo": "El teu nickname nou",
 "Luego no podrás cambiarlo en 30 días.": "Després no el podràs canviar en 30 dies.",
 // (29-10-2026, la fase 11) el full de l'activitat lligada al compte (nit.js, demanaUs) i el seu interruptor a Ajustes
-"¿Nos dejas ver cómo usas KLONK?": "Ens deixes veure com fas servir KLONK?",
+"Ayúdanos a mejorar KLONK": "Ajuda'ns a millorar KLONK",
 "Si dices que sí, guardamos con tu cuenta qué pantallas abres, cuánto rato, qué botones tocas, cuándo entrenas y los errores de la app. Así vemos dónde se atasca la gente y lo arreglamos. No lo vendemos ni lo cruzamos con nada.": "Si dius que sí, desem amb el teu compte quines pantalles obres, quanta estona, quins botons toques, quan entrenes i els errors de l'app. Així veiem on s'encalla la gent i ho arreglem. No ho venem ni ho creuem amb res.",
 "Lo quitas cuando quieras en Ajustes, en «Legal y privacidad», y lo borramos.": "Ho treus quan vulguis a Configuració, a «Legal i privacitat», i ho esborrem.",
 "Sí, vale": "Sí, d'acord",
@@ -4079,7 +4079,7 @@ window.KLONK_DIC = {
 "Confirmar mi correo": "Confirmar el meu correu",
 "Tu contraseña ha cambiado en otro dispositivo y aquí se ha cerrado la sesión. Entra con la nueva.": "La teva contrasenya ha canviat en un altre dispositiu i aquí s'ha tancat la sessió. Entra amb la nova.",
 "Tu cuenta se ha borrado en otro dispositivo.": "El teu compte s'ha esborrat en un altre dispositiu.",
-"El enlace del correo se abre en Safari: elige allí la contraseña y vuelve aquí para entrar con ella.": "L'enllaç del correu s'obre al Safari: tria-hi la contrasenya i torna aquí per entrar amb ella.",
+"El enlace del correo se abre en tu navegador: elige allí la contraseña y vuelve aquí para entrar con ella.": "L'enllaç del correu s'obre al teu navegador: tria-hi la contrasenya i torna aquí per entrar amb ella.",
 "KLONK no responde ahora. Tu progreso se guarda en el móvil y se sube solo.": "KLONK no respon ara. El teu progrés es desa al mòbil i es puja sol.",
 "Tus datos ya no caben en tu cuenta y no se suben. Escríbenos a hola@klonk.fit.": "Les teves dades ja no caben al teu compte i no es pugen. Escriu-nos a hola@klonk.fit.",
 "Tus datos ya no caben en tu cuenta: siguen en este móvil, pero no se suben. Escríbenos a hola@klonk.fit.": "Les teves dades ja no caben al teu compte: continuen en aquest mòbil, però no es pugen. Escriu-nos a hola@klonk.fit.",
