@@ -65,6 +65,7 @@ window.KLONK_DIC = {
 "Activados en este móvil.": "Activats en aquest mòbil.",
 "Desactivados en este móvil.": "Desactivats en aquest mòbil.",
 "Bloqueados en el navegador.": "Bloquejats al navegador.",
+"Bloqueados en los ajustes del iPhone.": "Bloquejats a la configuració de l'iPhone.",
 "En iPhone llegan solo con KLONK en la pantalla de inicio.": "A l'iPhone només arriben amb KLONK a la pantalla d'inici.",
 "Este navegador no deja recibir avisos.": "Aquest navegador no deixa rebre avisos.",
 "Desactivar": "Desactiva",
